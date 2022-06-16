@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@grpc/grpc-js": "^1.6.7",
+    "@types/jest": "^28.1.1",
+    "ioredis": "^5.0.6",
+    "jest": "^28.1.1",
+    "mongodb": "^4.7.0",
+    "rxjs": "^7.5.5",
+    "ts-proto": "^1.115.4"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.17.12",
+    "ts-jest": "^28.0.4"
+  }
+}

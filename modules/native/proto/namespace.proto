@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package native_namespace;
+
+option go_package = "slamy/openERP/native/namespace;native_namespace_grpc";
+
+message Namespace {
+    // Unique name of the namespace
+    string name = 1;
+}
+
+message EnsureNamespaceRequest {
+    // Unique name of the namespace
+    string name = 1;
+}
+message EnsureNamespaceResponse {
+    // Created namespace
+    Namespace namespace = 1;
+}
+
+message DeleteNamespaceRequest {
+    // Name of the namespace to delete
+    string name = 1;
+}
+message DeleteNamespaceResponse {}
+
+message GetNamespaceRequest {
+    // Name of the namespace to get
+    string name = 1;
+    // Use cache or not. Cache have very small chance to be inconsisten on frequent read/writes operations to same namespace. Concurrent reads are safe. Inconsistent cache will be deleted after some period of time.
+    bool useCache = 2;
+}
+message GetNamespaceResponse {
+    Namespace namespace = 1;
+}
+
+message GetAllNamespacesRequest {
+    // Use cache or not. Cache have very small chance to be inconsisten on frequent read/writes operations to any namespace. Concurrent reads are safe. Inconsistent cache will be deleted after some period of time.
+    bool useCache = 1;
+}
+message GetAllNamespacesResponse {
+    Namespace namespace = 1;
+}
+
+message IsNamespaceExistRequest {
+    // Name of the namespace to get
+    string name = 1;
+    // Use cache or not. Cache have very small chance to be inconsisten on frequent read/writes operations to same namespace. Inconsistent cache will be deleted after some period of time.
+    bool useCache = 2;
+}
+message IsNamespaceExistResponse {
+    // True if namespace exist, else - False
+    bool exist = 1;
+}
+
+/*
+message NamespaceStatsRequest {
+    // Name of the namespace to get statistics
+    string name = 1;
+}
+message NamespaceStatsResponse {
+    // Number of the collections
+    int64 collections = 1;
+    // Number of the virtual collections
+    int64 views = 2;
+    // Number of the unique documents
+    int64 documents = 3;
+    // Number of the defined indexes
+    int64 indexes = 4;
+
+    // Total, uncompressed size (in bytes) of the data stored in the namespace
+    int64 totalSize = 5;
+    // Total, uncompressed space (in bytes) used for storing documents in the namespace
+    int64 dataSize = 6;
+    // Total, uncompressed space (in bytes) used for indexes on the collection of documents
+    int64 indexesSize = 7;
+}
+
+message NamespaceDumpRequest {
+    // Name of the namespace to dump
+    string name = 1;
+}
+message NamespaceDumpResponse {
+    // Chunk of the data
+    bytes data = 1;
+
+    // The ammount of work to do in order to reach 100%
+    int64 totalProgress = 2;
+    // The ammount of work completed
+    int64 currentProgress = 3;
+}
+
+message NamespaceRestoreRequest {
+    // Name of the namespace
+    string name = 1;
+
+    // Chunk of the data
+    bytes data = 2;
+}
+message NamespaceRestoreResponse {}
+*/
+
+service NamespaceService {
+    // Create new namespace if it doesnt exist
+    rpc Ensure(EnsureNamespaceRequest) returns (EnsureNamespaceResponse) {};
+    // Deletes namespace and all its data
+    rpc Delete(DeleteNamespaceRequest) returns (DeleteNamespaceResponse) {};
+    // Returns namespace information by its name
+    rpc Get(GetNamespaceRequest) returns (GetNamespaceResponse) {};
+    // Streams list of all namespaces
+    rpc GetAll(GetAllNamespacesRequest) returns (stream GetAllNamespacesResponse) {};
+    // Checks if namespace exists
+    rpc Exists(IsNamespaceExistRequest) returns (IsNamespaceExistResponse) {};
+
+    // Returns namespace statistics
+    // rpc Stats(NamespaceStatsRequest) returns (NamespaceStatsResponse) {};
+    // Dumps entire namespace data
+    // rpc Dump(NamespaceDumpRequest) returns (stream NamespaceDumpResponse) {};
+    // Restores data from the dump
+    // rpc Restore(stream NamespaceRestoreRequest) returns (NamespaceRestoreResponse) {};
+}

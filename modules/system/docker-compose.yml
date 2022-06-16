@@ -1,0 +1,42 @@
+version: "3.4"
+services:
+  system_cache:
+    container_name: system_cache
+    build:
+      context: services/redis-cache
+      dockerfile: Dockerfile
+    environment:
+      MAXMEMORY: 512mb
+
+  system_bigCache:
+    container_name: system_bigCache
+    build:
+      context: services/redis-bigCache
+      dockerfile: Dockerfile
+    environment:
+      MAXMEMORY: 1024mb
+
+  system_db:
+    container_name: system_db
+    build:
+      context: services/mongodb
+      dockerfile: Dockerfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  system_rabbitmq:
+    container_name: system_rabbitmq
+    hostname: rabbitmq
+    build:
+      context: services/rabbitmq
+      dockerfile: Dockerfile
+
+  system_jaeger:
+    container_name: system_jaeger
+    image: jaegertracing/opentelemetry-all-in-one:latest
+    ports:
+    - 55680:55680
+    - 16686:16686
+    - 14269:14269
+    - 14268:14268
