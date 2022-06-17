@@ -1,1 +1,1 @@
-sed -e "s/{MAXMEMORY}/$MAXMEMORY/g" < /usr/local/etc/redis/redis.conf| redis-server -
+sed -e "s/{MAXMEMORY}/$MAXMEMORY/g" < /usr/local/etc/redis/redis.conf | redis-server -

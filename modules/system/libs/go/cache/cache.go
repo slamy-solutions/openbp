@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/go-redis/redis/v9"
@@ -29,9 +28,8 @@ type Cache interface {
 }
 
 type cache struct {
-	rdb           *redis.Client
-	backendConfig *BackendConfig
-	tracer        trace.Tracer
+	rdb    *redis.Client
+	tracer trace.Tracer
 }
 
 type CacheEntry struct {
@@ -43,30 +41,15 @@ type CacheEntry struct {
 	Timeout time.Duration
 }
 
-// Tries to create backend configuration from environment variables
-func ConfigFromEnv() (*BackendConfig, error) {
-	connectionString := os.Getenv("NATIVE_CACHE_REDIS_CONNECTION_URL")
-	options, err := redis.ParseURL(connectionString)
+// Creates new cache instance and initializes tracing
+func New(url string) (Cache, error) {
+	options, err := redis.ParseURL(url)
 	if err != nil {
 		return nil, err
 	}
-
-	config := &BackendConfig{
-		RedisOptions: options,
-	}
-
-	return config, nil
-}
-
-// Creates new cache instance and initializes tracing
-func NewCache(backend *BackendConfig, tracer trace.Tracer) Cache {
-	rdb := redis.NewClient(backend.RedisOptions)
-
-	if tracer == nil {
-		tracer = otel.GetTracerProvider().Tracer("native_lib_cache")
-	}
-
-	return &cache{rdb: rdb, tracer: tracer, backendConfig: backend}
+	rdb := redis.NewClient(options)
+	tracer := otel.GetTracerProvider().Tracer("github.com/slamy-solutions/open-erp/modules/system/libs/go/cache")
+	return &cache{rdb: rdb, tracer: tracer}, nil
 }
 
 // Set cache under specified key

@@ -3,15 +3,15 @@ services:
   system_cache:
     container_name: system_cache
     build:
-      context: services/redis-cache
+      context: modules/system/services/redis-cache
       dockerfile: Dockerfile
     environment:
       MAXMEMORY: 512mb
 
-  system_bigCache:
-    container_name: system_bigCache
+  system_bigcache:
+    container_name: system_bigcache
     build:
-      context: services/redis-bigCache
+      context: modules/system/services/redis-bigCache
       dockerfile: Dockerfile
     environment:
       MAXMEMORY: 1024mb
@@ -19,7 +19,7 @@ services:
   system_db:
     container_name: system_db
     build:
-      context: services/mongodb
+      context: modules/system/services/mongodb
       dockerfile: Dockerfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -29,7 +29,7 @@ services:
     container_name: system_rabbitmq
     hostname: rabbitmq
     build:
-      context: services/rabbitmq
+      context: modules/system/services/rabbitmq
       dockerfile: Dockerfile
 
   system_jaeger:

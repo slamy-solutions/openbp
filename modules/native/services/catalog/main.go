@@ -1,9 +1,10 @@
 package main
 
 import (
-	context "context"
+	"context"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	native_catalog_grpc "slamy/opencrm/native/catalog/grpc/native_catalog_grpc"
@@ -19,7 +20,16 @@ import (
 	"google.golang.org/grpc"
 )
 
+func getConfigEnv(key: string, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+
 func main() {
+	SERVICE_DB_URL :=  getConfigEnv("SERVICE_DB_URL", "mongodb://root:example@system_db/admin")
+
 	// Starting OpenTelemetry
 	ctx := context.Background()
 
@@ -58,7 +68,9 @@ func main() {
 	// Initializing
 
 	// Starting gRPC servers
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		
+	)
 
 	catalogServer := services.CatalogServer{DB: db, Cache: &cache, Tracer: traceProvider.Tracer("native_catalog")}
 

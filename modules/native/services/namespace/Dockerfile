@@ -5,7 +5,7 @@ ENV GOPATH=/src
 
 COPY go.sum /src/go.sum
 COPY go.mod /src/go.mod
-RUN cd /src/&& go mod download
+RUN cd /src/ && go mod download
 
 WORKDIR /src
 

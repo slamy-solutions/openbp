@@ -1,7 +1,8 @@
 go 1.18
 
 use (
-	./catalog
-	./lib
-	./namespace
+	./modules/native/services/namespace
+	./modules/system/libs/go/cache
+	./modules/system/libs/go/mongodb
+	./modules/system/libs/go/telemetry
 )

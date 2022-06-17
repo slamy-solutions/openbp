@@ -1,65 +1,9 @@
 version: "3.4"
-services:
   # SYSTEM
 
-  system_cache:
-    container_name: system_cache
-    build:
-      context: modules/system/services/redis-cache
-      dockerfile: Dockerfile
-    environment:
-      MAXMEMORY: 512mb
-
-  system_bigCache:
-    container_name: system_bigCache
-    build:
-      context: modules/system/services/redis-bigCache
-      dockerfile: Dockerfile
-    environment:
-      MAXMEMORY: 1024mb
-
-  system_db:
-    container_name: system_db
-    build:
-      context: modules/system/services/mongodb
-      dockerfile: Dockerfile
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-
-  system_rabbitmq:
-    container_name: system_rabbitmq
-    hostname: rabbitmq
-    build:
-      context: modules/system/rabbitmq
-      dockerfile: Dockerfile
-
-  system_jaeger:
-    container_name: system_jaeger
-    image: jaegertracing/opentelemetry-all-in-one:latest
-    ports:
-    - 55680:55680
-    - 16686:16686
-    - 14269:14269
-    - 14268:14268
 
 
   # NATIVE
-
-  native_namespace:
-    container_name: native_namespace
-    build:
-      context: modules/native/services/namespace
-      dockerfile: Dockerfile
-    environment:
-      SYSTEM_MONGODB_URL: mongodb://root:example@system_db
-      SYSTEM_REDIS_CACHE_CONNECTION_URL: redis://system_cache
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://system_jaeger:55680"
-      OTEL_SERVICE_NAME: "native_namespace"
-    depends_on:
-      - system_db
-      - system_cache
-      - system_jaeger
 
   #native_catalog:
   #  container_name: native_catalog

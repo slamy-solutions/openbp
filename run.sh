@@ -1,0 +1,1 @@
+docker-compose up -f system/docker-compose.yml -f native/docker-compose.yml
