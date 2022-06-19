@@ -54,7 +54,7 @@ func New(url string) (Cache, error) {
 
 // Set cache under specified key
 func (c cache) Set(ctx context.Context, key string, value []byte, expiration time.Duration) error {
-	ctx, span := c.tracer.Start(ctx, "set")
+	ctx, span := c.tracer.Start(ctx, "cache.set")
 	defer span.End()
 	span.SetAttributes(attribute.String("db.type", "redis"))
 	err := c.rdb.Set(ctx, key, value, expiration).Err()
@@ -68,7 +68,7 @@ func (c cache) Set(ctx context.Context, key string, value []byte, expiration tim
 
 // Set multiple cache values at once
 func (c cache) BulkSet(ctx context.Context, entries ...CacheEntry) error {
-	ctx, span := c.tracer.Start(ctx, "bulkSet")
+	ctx, span := c.tracer.Start(ctx, "cache.bulkSet")
 	defer span.End()
 	span.SetAttributes(attribute.String("db.type", "redis"), attribute.Int("cache.bulkCount", len(entries)))
 
@@ -94,7 +94,7 @@ func (c cache) BulkSet(ctx context.Context, entries ...CacheEntry) error {
 
 // Remove cache for keys. If cache doesnt exist - does nothing
 func (c cache) Remove(ctx context.Context, keys ...string) error {
-	ctx, span := c.tracer.Start(ctx, "remove")
+	ctx, span := c.tracer.Start(ctx, "cache.remove")
 	defer span.End()
 	span.SetAttributes(attribute.String("db.type", "redis"))
 
@@ -110,7 +110,7 @@ func (c cache) Remove(ctx context.Context, keys ...string) error {
 
 // Tries to get cache for key
 func (c cache) Get(ctx context.Context, key string) ([]byte, error) {
-	ctx, span := c.tracer.Start(ctx, "get")
+	ctx, span := c.tracer.Start(ctx, "cache.get")
 	defer span.End()
 	span.SetAttributes(attribute.String("db.type", "redis"))
 
@@ -133,7 +133,7 @@ func (c cache) Get(ctx context.Context, key string) ([]byte, error) {
 
 // Get multiple cache values at once
 func (c cache) BulkGet(ctx context.Context, keys ...string) ([][]byte, error) {
-	ctx, span := c.tracer.Start(ctx, "bulkGet")
+	ctx, span := c.tracer.Start(ctx, "cache.bulkGet")
 	defer span.End()
 	span.SetAttributes(attribute.String("db.type", "redis"), attribute.Int("cache.bulkCount", len(keys)))
 
@@ -164,7 +164,7 @@ func (c cache) BulkGet(ctx context.Context, keys ...string) ([][]byte, error) {
 
 // Checks if there is cache for specified key. Returns false on error
 func (c cache) Has(ctx context.Context, key string) (bool, error) {
-	ctx, span := c.tracer.Start(ctx, "has")
+	ctx, span := c.tracer.Start(ctx, "cache.has")
 	defer span.End()
 	span.SetAttributes(attribute.String("db.type", "redis"))
 

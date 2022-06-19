@@ -10,7 +10,7 @@ message Namespace {
 }
 
 message EnsureNamespaceRequest {
-    // Unique name of the namespace
+    // Unique name of the namespace. Name must match the regex "[A-Za-z0-9]+$"
     string name = 1;
 }
 message EnsureNamespaceResponse {

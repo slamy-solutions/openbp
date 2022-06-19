@@ -1,8 +1,8 @@
-import { Client } from '../../system/grpc'
+import { Client } from '../../../../system/libs/ts/grpc'
 
 import { NamespaceServiceClientImpl } from './proto/namespace'
 
-const grpcClient = new Client("")
+const grpcClient = new Client("native_namespace:80")
 export const client = new NamespaceServiceClientImpl(grpcClient)
 
 export async function connect() {
@@ -11,4 +11,4 @@ export async function connect() {
 
 export async function close() {
     grpcClient.close()
-}
+}   

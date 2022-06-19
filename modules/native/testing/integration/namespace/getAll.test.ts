@@ -1,25 +1,37 @@
-import { Status } from '@grpc/grpc-js/build/src/constants'
+import { MongoServerError } from 'mongodb'
 
-import { client as mongoClient } from '../../../../system/testing/tools/mongo'
-import { client as cacheClient } from '../../../../system/testing/tools/cache'
+import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../system/testing/tools/mongo'
+import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../system/testing/tools/cache'
+import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
+import { client as grpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
 
-import { grpc } from '../../tools/namespace'
+const DB_PREFIX = process.env.SYSTEM_DB_PREFIX || "openerp_"
+const GLOBAL_DB_NAME = `${DB_PREFIX}global`
 
 beforeAll(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await connectToMongo()
+    await connectToCache()
+    await connectToNativeNamespace()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
 })
 
 afterEach(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
+})
+
+afterAll(async () => {
+    await closeNativeNamespace()
+    await closeCache()
+    await closeMongo()
 })
 
 /**
  * @group native/namescape/getAll/whitebox
  * @group whitebox
  */
- describe("Whitebox", async () => {
+ describe("Whitebox", () => {
     test("Value is added to the cache on cache enabled", async () => {
         const name = "testname"
         await grpc.Ensure({ name })
@@ -31,13 +43,13 @@ afterEach(async ()=>{
     test("Value is not added to the cache on cache disabled", async () => {
         const name = "testname"
         await grpc.Ensure({ name })
-        await grpc.GetAll({ useCache: true }).forEach(() => undefined)
+        await grpc.GetAll({ useCache: false }).forEach(() => undefined)
         const response = await cacheClient.get("native_namespace_list")
         expect(response).toBeNull()
     })
 
     test("Value is returned from cache when cache enabled and not from cache when disabled", async () => {
-        const namespaces = new Array<string>(10).map((_, index) => `testname${index}`)
+        const namespaces = new Array<string>(10).fill("").map((_, index) => `testname${index}`)
         await Promise.all(namespaces.map((name) => grpc.Ensure({ name })))
         
         // load to cache
@@ -45,10 +57,14 @@ afterEach(async ()=>{
 
         // Change value in database to contain wrong data without invalidating cache
         const newName = "newtestname"
-        await mongoClient.db('openerp_global').collection<{ name: string }>('namespace').updateOne({ name: "testname1" }, { "$set": { name: newName } })
+        await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').updateOne({ name: "testname1" }, { "$set": { name: newName } })
 
         const cachedResponse = new Array<string>()
+        console.error(await cacheClient.get("native_namespace_list"))
         await grpc.GetAll({ useCache: true }).forEach((r) => cachedResponse.push(r.namespace?.name as string))
+        console.error(await cacheClient.get("native_namespace_list"))
+        console.error(cachedResponse)
+        console.error(namespaces)
         if (cachedResponse.length !== namespaces.length) fail()
         cachedResponse.forEach((namespace) => expect(namespaces.indexOf(namespace)).toBeGreaterThanOrEqual(0))
         namespaces.forEach((namespace) => expect(cachedResponse.indexOf(namespace)).toBeGreaterThanOrEqual(0))
@@ -66,7 +82,7 @@ afterEach(async ()=>{
  * @group native/namescape/getAll/blackbox
  * @group blackbox
  */
- describe("Blackbox", async () => {
+ describe("Blackbox", () => {
     test("Returs actual namespaces list (cache disabled)", async () => {
         const name = "testname" 
         let response = new Array<string>()

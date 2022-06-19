@@ -1,25 +1,37 @@
 import { Status } from '@grpc/grpc-js/build/src/constants'
 
-import { client as mongoClient } from '../../../../system/testing/tools/mongo'
-import { client as cacheClient } from '../../../../system/testing/tools/cache'
+import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../system/testing/tools/mongo'
+import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../system/testing/tools/cache'
 import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
-import { client as grpc } from '../../tools/namespace/grpc'
+import { client as grpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
+
+const DB_PREFIX = process.env.SYSTEM_DB_PREFIX || "openerp_"
+const GLOBAL_DB_NAME = `${DB_PREFIX}global`
 
 beforeAll(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await connectToMongo()
+    await connectToCache()
+    await connectToNativeNamespace()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
 })
 
 afterEach(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
+})
+
+afterAll(async () => {
+    await closeNativeNamespace()
+    await closeCache()
+    await closeMongo()
 })
 
 /**
  * @group native/namescape/get/whitebox
  * @group whitebox
  */
-describe("Whitebox", async () => {
+describe("Whitebox", () => {
     test("Value is added to the cache on cache enabled", async () => {
         const name = "testname"
         await grpc.Ensure({ name })
@@ -43,11 +55,19 @@ describe("Whitebox", async () => {
 
         // Change value in database to contain wrong data without invalidating cache
         const newName = "newtestname"
-        await mongoClient.db('openerp_global').collection<{ name: string }>('namespace').updateOne({ name }, { "$set": { name: newName } })
+        await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').updateOne({ name }, { "$set": { name: newName } })
 
         const cachedResponse = await grpc.Get({ name, useCache: true })
         expect(cachedResponse.namespace?.name).toBe(name)
-        const uncachedResponse = await grpc.Get({ name, useCache: false })
+
+        try {
+            await grpc.Get({ name, useCache: false })
+            fail()
+        } catch (e) {
+            if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) fail()
+        }
+
+        const uncachedResponse = await grpc.Get({ name: newName, useCache: false })
         expect(uncachedResponse.namespace?.name).toBe(newName)
     })
 })
@@ -56,7 +76,7 @@ describe("Whitebox", async () => {
  * @group native/namescape/get/blackbox
  * @group blackbox
  */
-describe("Blackbox", async () => {
+describe("Blackbox", () => {
     test("Get value same as created", async () => {
         const name = "testname"
         await grpc.Ensure({ name })
@@ -65,11 +85,11 @@ describe("Blackbox", async () => {
     })
 
     test("Get value for asked namespace", async () => {
-        const namespaces = new Array<string>(16).map((_v, index) => `namespace${index}`)
-        await Promise.all(namespaces.map((namespace) => grpc.Ensure({ name: namespace })))
+        const namespaces = new Array<string>(16).fill("").map((_v, index) => `namespace${index}`)
+        const r = await Promise.all(namespaces.map((namespace) => grpc.Ensure({ name: namespace })))
         const results = await Promise.all(namespaces.map((namespace) => grpc.Get({ name: namespace, useCache: true })))
         const resultsNames = results.map(result => result.namespace?.name)
-        expect(namespaces).toBe(resultsNames)
+        expect(namespaces).toEqual(resultsNames)
     })
 
     test("Returns error if not found", async () => {

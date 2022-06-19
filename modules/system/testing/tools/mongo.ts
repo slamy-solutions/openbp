@@ -1,7 +1,9 @@
 
-import { MongoClient } from 'mongodb'
+import { Collection, MongoClient } from 'mongodb'
 
-export const client = new MongoClient("");
+
+
+export const client = new MongoClient(process.env.SYSTEM_DB_URL || "mongodb://root:example@system_db/admin");
 
 export async function connect() {
     await client.connect();

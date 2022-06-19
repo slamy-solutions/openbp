@@ -1,15 +1,27 @@
-import { client as mongoClient } from '../../../../system/testing/tools/mongo'
-import { client as cacheClient } from '../../../../system/testing/tools/cache'
-import { client as grpc } from '../../tools/namespace/grpc'
+import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../system/testing/tools/mongo'
+import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../system/testing/tools/cache'
+import { client as grpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
+
+const DB_PREFIX = process.env.SYSTEM_DB_PREFIX || "openerp_"
+const GLOBAL_DB_NAME = `${DB_PREFIX}global`
 
 beforeAll(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await connectToMongo()
+    await connectToCache()
+    await connectToNativeNamespace()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
 })
 
 afterEach(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
+})
+
+afterAll(async () => {
+    await closeNativeNamespace()
+    await closeCache()
+    await closeMongo()
 })
 
 /**
@@ -37,7 +49,7 @@ describe("Whitebox", () => {
         await grpc.Get({ name, useCache: true })
 
         // Change value in database to contain wrong data without invalidating cache
-        await mongoClient.db('openerp_global').collection<{ name: string }>('namespace').deleteOne({ name })
+        await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').deleteOne({ name })
 
         const cachedResponse = await grpc.Exists({ name, useCache: true })
         expect(cachedResponse.exist).toBeTruthy()
@@ -50,7 +62,7 @@ describe("Whitebox", () => {
  * @group native/namescape/get/blackbox
  * @group blackbox
  */
- describe("Blackbox", async () => {
+ describe("Blackbox", () => {
      test("Returs actual namespace status (cache disabled)", async () => {
         const name = "testname" 
         let response = await grpc.Exists({ name, useCache: false })

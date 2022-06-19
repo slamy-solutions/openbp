@@ -1,32 +1,45 @@
+import { MongoServerError } from 'mongodb'
 import { Status } from '@grpc/grpc-js/build/src/constants'
 
-import { client as mongoClient } from '../../../../system/testing/tools/mongo'
-import { client as cacheClient } from '../../../../system/testing/tools/cache'
+import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../system/testing/tools/mongo'
+import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../system/testing/tools/cache'
 import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
-import { client as grpc } from '../../tools/namespace/grpc'
+import { client as grpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
+
+const DB_PREFIX = process.env.SYSTEM_DB_PREFIX || "openerp_"
+const GLOBAL_DB_NAME = `${DB_PREFIX}global`
 
 beforeAll(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await connectToMongo()
+    await connectToCache()
+    await connectToNativeNamespace()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
 })
 
 afterEach(async ()=>{
-    await mongoClient.db('openerp_global').collection('namespace').drop()
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
+})
+
+afterAll(async () => {
+    await closeMongo()
+    await closeCache()
+    await closeNativeNamespace()
 })
 
 /**
  * @group native/namescape/delete/whitebox
  * @group whitebox
  */
-describe("Whitebox", async () => {
+describe("Whitebox", () => {
     test("Value is deleted from the database", async () => {
         const name = "testname"
         await grpc.Ensure({ name })
-        let entry = await mongoClient.db('openerp_global').collection<{ name: string }>('namespace').findOne({ name })
+        let entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').findOne({ name })
         expect(entry).not.toBeNull()
         await grpc.Delete({ name })
-        entry = await mongoClient.db('openerp_global').collection<{ name: string }>('namespace').findOne({ name })
+        entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').findOne({ name })
         expect(entry).toBeNull()
     })
 
@@ -58,11 +71,13 @@ describe("Whitebox", async () => {
         await grpc.Ensure({ name })
 
         const collectionName = "testingcollection"
-        await mongoClient.db(`openerp_namespace_${name}`).collection<{ name: string }>(collectionName).insertOne({ name: "testinsert" })
+        await mongoClient.db(`${DB_PREFIX}namespace_${name}`).collection<{ name: string }>(collectionName).insertOne({ name: "testinsert" })
 
         await grpc.Delete({ name })
 
-        await mongoClient.db(`openerp_namespace_${name}`).listCollections({ name: collectionName }).forEach(() => {
+        await new Promise<void>((resolve) => setTimeout(resolve, 4000))
+
+        await mongoClient.db(`${DB_PREFIX}namespace_${name}`).listCollections({ name: collectionName }).forEach((c) => {
             fail()
         })
     })
@@ -72,7 +87,7 @@ describe("Whitebox", async () => {
  * @group native/namescape/delete/blackbox
  * @group blackbox
  */
- describe("Blackbox", async () => {
+ describe("Blackbox", () => {
     test("Can\'t be accessed after deletion", async () => {
         const name = "testname"
         await grpc.Ensure({ name })

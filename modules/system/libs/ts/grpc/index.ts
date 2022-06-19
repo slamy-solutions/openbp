@@ -1,4 +1,4 @@
-import { Client as GRPCClient, requestCallback, ServiceError } from '@grpc/grpc-js'
+import { Client as GRPCClient, requestCallback, ServiceError, ChannelCredentials, ClientOptions } from '@grpc/grpc-js'
 import { Observable } from 'rxjs'
 
 export interface Rpc {
@@ -29,8 +29,32 @@ export type RequestError = ServiceError
 export class Client implements Rpc {
     private client: GRPCClient
 
-    constructor(client: GRPCClient) {
-        this.client = client
+    constructor(address: string, chanelCredentials: ChannelCredentials | undefined = undefined, options: ClientOptions | undefined = undefined ) {
+        if (chanelCredentials === undefined) {
+            chanelCredentials = ChannelCredentials.createInsecure()
+        }
+        if (options === undefined) {
+            options = {}
+        }
+
+        this.client = new GRPCClient(address, chanelCredentials, options)
+    }
+
+    connect(waitSeconds: number = 10) {
+        const deadline = new Date()
+        deadline.setSeconds(deadline.getSeconds() + waitSeconds)
+        return new Promise<void>((resolve, reject) => {
+            this.client.waitForReady(deadline, (err) => {
+                if (err !== undefined) {
+                    return reject(err)
+                }
+                resolve()
+            })
+        })
+    }
+
+    close() {
+        this.client.close()
     }
 
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array> {
