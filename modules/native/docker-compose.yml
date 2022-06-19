@@ -3,8 +3,8 @@ services:
   native_namespace:
     container_name: native_namespace
     build:
-      context: modules/native/services/namespace
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: modules/native/services/namespace/Dockerfile
     environment:
       SYSTEM_MONGODB_URL: mongodb://root:example@system_db
       SYSTEM_REDIS_CACHE_CONNECTION_URL: redis://system_cache

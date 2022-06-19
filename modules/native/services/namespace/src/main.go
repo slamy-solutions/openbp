@@ -1,4 +1,4 @@
-package namespace
+package main
 
 import (
 	"context"

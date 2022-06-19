@@ -1,11 +1,9 @@
 import { Status } from '@grpc/grpc-js/build/src/constants'
 
-import { client as mongoClient } from '../../../../tools/system/mongo'
-import { RequestError as GRPCRequestError } from '../../../../tools/system/grpc'
-import { client as cacheClient } from '../../../../tools/system/cache'
-
-import { grpc, grpc as namespaceGRPC } from '../../../../tools/native/namespace'
-import { GetAllNamespacesResponse } from '../../../../tools/native/namespace/proto/namespace'
+import { client as mongoClient } from '../../../../system/testing/tools/mongo'
+import { client as cacheClient } from '../../../../system/testing/tools/cache'
+import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
+import { client as grpc } from '../../tools/namespace/grpc'
 
 beforeAll(async ()=>{
     await mongoClient.db('openerp_global').collection('namespace').drop()

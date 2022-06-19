@@ -32,8 +32,8 @@ services:
       context: modules/system/services/rabbitmq
       dockerfile: Dockerfile
 
-  system_jaeger:
-    container_name: system_jaeger
+  system_telemetry:
+    container_name: system_telemetry
     image: jaegertracing/opentelemetry-all-in-one:latest
     ports:
     - 55680:55680

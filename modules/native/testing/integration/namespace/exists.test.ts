@@ -1,7 +1,6 @@
-import { client as mongoClient } from '../../../../tools/system/mongo'
-import { client as cacheClient } from '../../../../tools/system/cache'
-
-import { grpc } from '../../../../tools/native/namespace'
+import { client as mongoClient } from '../../../../system/testing/tools/mongo'
+import { client as cacheClient } from '../../../../system/testing/tools/cache'
+import { client as grpc } from '../../tools/namespace/grpc'
 
 beforeAll(async ()=>{
     await mongoClient.db('openerp_global').collection('namespace').drop()
