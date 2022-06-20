@@ -56,6 +56,10 @@ func makeNamespaceDataCacheKey(namespaceName string) string {
 	return fmt.Sprintf("native_namespace_data_%s", namespaceName)
 }
 
+type NamespacesList struct {
+	Namespaces []NamespaceInMongo `bson:"namespaces"`
+}
+
 type NamespaceInMongo struct {
 	ID   primitive.ObjectID `bson:"_id,omitempty"`
 	Name string             `bson:"name"`
@@ -157,9 +161,9 @@ func (s *NamespaceServer) GetAll(in *grpc.GetAllNamespacesRequest, out grpc.Name
 	if in.UseCache {
 		data, err := s.cache.Get(ctx, NAMESPACE_LIST_CACHE_KEY)
 		if err == nil && data != nil {
-			var result []NamespaceInMongo
+			var result NamespacesList
 			bson.Unmarshal(data, &result)
-			for _, namespace := range result {
+			for _, namespace := range result.Namespaces {
 				err := out.Send(&grpc.GetAllNamespacesResponse{
 					Namespace: namespace.ToGRPCNamespace(),
 				})
@@ -195,7 +199,7 @@ func (s *NamespaceServer) GetAll(in *grpc.GetAllNamespacesRequest, out grpc.Name
 	}
 
 	if in.UseCache {
-		dataBytes, _ := bson.Marshal(namespaces)
+		dataBytes, _ := bson.Marshal(NamespacesList{Namespaces: namespaces})
 		s.cache.Set(ctx, NAMESPACE_LIST_CACHE_KEY, dataBytes, NAMESPACE_LIST_CACHE_TIMEOUT)
 	}
 

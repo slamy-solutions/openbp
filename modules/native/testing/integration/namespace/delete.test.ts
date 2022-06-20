@@ -1,4 +1,3 @@
-import { MongoServerError } from 'mongodb'
 import { Status } from '@grpc/grpc-js/build/src/constants'
 
 import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../system/testing/tools/mongo'
@@ -13,12 +12,20 @@ beforeAll(async ()=>{
     await connectToMongo()
     await connectToCache()
     await connectToNativeNamespace()
-    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+    try {
+        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+    } catch (e) {
+        if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
+    }
     await cacheClient.flushall()
 })
 
 afterEach(async ()=>{
-    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+    try {
+        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+    } catch (e) {
+        if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
+    }
     await cacheClient.flushall()
 })
 
@@ -91,14 +98,14 @@ describe("Whitebox", () => {
     test("Can\'t be accessed after deletion", async () => {
         const name = "testname"
         await grpc.Ensure({ name })
-        expect(async () => await grpc.Get({ name, useCache: false })).not.toThrow()
+        await grpc.Get({ name, useCache: false })
         await grpc.Delete({ name })
         
         try {
             await grpc.Get({ name, useCache: false })
             fail()
         } catch (e) {
-            if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) fail()
+            if ((e as GRPCRequestError)?.code !== 5) fail()
         }
     })
  })
