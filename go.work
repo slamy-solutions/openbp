@@ -1,8 +1,10 @@
 go 1.18
 
 use (
+	./modules/native/services/file
 	./modules/native/services/namespace
 	./modules/system/libs/go/cache
 	./modules/system/libs/go/mongodb
+	./modules/system/libs/go/rabbitmq
 	./modules/system/libs/go/telemetry
 )

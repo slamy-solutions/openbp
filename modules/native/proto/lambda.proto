@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+
+package native_files;
+
+option go_package = "slamy/openCRM/native/catalog;native_files_grpc";
+
+message Lambda {
+    // Namespace where lambda is located
+    string namespace = 1;
+    // Unique name inside namespace.
+    string name = 2;
+    // Type of the lambda runner, that will execute lambda
+    string runner = 3;
+    // Execution file to run (like binary file)
+    string file = 4;
+
+
+    // User-defined version of the lambda. Runners will try to pull new executable of the lambda on version change.
+    string version = 5;
+
+    // When lambda was creted
+    google.protobuf.Timestamp _created = 100;
+    // When lambda was updated last time
+    google.protobuf.Timestamp _updated = 101;
+}
+
+// Creates/Deletes/Updates/Agregates information about lambdas
+service LambdaManagerService {
+
+}
+
+// Provides API to execute lambda functions
+service LambdaEntrypointService {
+
+}

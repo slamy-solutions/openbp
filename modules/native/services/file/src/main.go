@@ -8,16 +8,15 @@ import (
 
 	"google.golang.org/grpc"
 
-	amqp "github.com/rabbitmq/amqp091-go"
-
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/mongodb"
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
 
-	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/namespace/src/grpc/native_namespace"
-	"github.com/slamy-solutions/open-erp/modules/native/services/namespace/src/services"
+	native_file_grpc "github.com/slamy-solutions/open-erp/modules/native/services/file/src/grpc/native_file"
+	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/file/src/grpc/native_namespace"
+	"github.com/slamy-solutions/open-erp/modules/native/services/file/src/services"
 )
 
 const (
@@ -35,8 +34,9 @@ func main() {
 	SYSTEM_DB_URL := getConfigEnv("SYSTEM_DB_URL", "mongodb://root:example@system_db/admin")
 	SYSTEM_DB_PREFIX := getConfigEnv("SYSTEM_DB_PREFIX", "openerp_")
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
-	SYSTEM_RABBITMQ_URL := getConfigEnv("SYSTEM_RABBITMQ_URL", "")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
+
+	NATIVE_NAMESPACE_URL := getConfigEnv("NATIVE_NAMESPACE_URL", "native_namespace:80")
 
 	ctx := context.Background()
 
@@ -64,21 +64,19 @@ func main() {
 	defer dbClient.Disconnect(ctx)
 	fmt.Println("Initialized DB")
 
-	// Setting up AMQP
-	amqpConenction, err := amqp.Dial(SYSTEM_RABBITMQ_URL)
+	// Setting up native_namespace connection
+	nativeNamespaceConnection, err := grpc.Dial(
+		NATIVE_NAMESPACE_URL,
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	)
 	if err != nil {
 		panic(err)
 	}
-	defer amqpConenction.Close()
-	channel, err := amqpConenction.Channel()
-	if err != nil {
-		panic(err)
-	}
-	err = channel.ExchangeDeclare(fmt.Sprintf("%snative_namespace_events", SYSTEM_DB_PREFIX), "direct", true, false, false, false, amqp.Table{})
-	if err != nil {
-		panic(err)
-	}
-	//rabbitmqPublisher.Publish(d, ["ds"], rabbitmq.WithPublishOptionsHeaders())
+	defer nativeNamespaceConnection.Close()
+	nativeNamespaceClient := native_namespace_grpc.NewNamespaceServiceClient(nativeNamespaceConnection)
+	fmt.Println("Initialized native_namespace connection")
 
 	// Creating grpc server
 	grpcServer := grpc.NewServer(
@@ -86,8 +84,8 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	namespaceServer := services.New(dbClient, cacheClient, SYSTEM_DB_PREFIX)
-	native_namespace_grpc.RegisterNamespaceServiceServer(grpcServer, namespaceServer)
+	fileServer := services.New(dbClient, SYSTEM_DB_PREFIX, cacheClient, nativeNamespaceClient)
+	native_file_grpc.RegisterFileServiceServer(grpcServer, fileServer)
 
 	fmt.Println("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")

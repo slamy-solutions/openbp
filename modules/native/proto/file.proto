@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package native_files;
+
+option go_package = "slamy/openCRM/native/catalog;native_files_grpc";
+
+// Represents file information (metadata) that is directly binded to the binary data
+message File {
+    // Namespace where file is located
+    string namespace = 1;
+    // Unique file id
+    string uuid = 2;
+    // Indicates if file can be modified after creation. Making file readonly allows caching. In most cases its better to reacreate file on changes, than make it writeable.
+    bool readonly = 3;
+    // Mime type of the file
+    string mimeType = 4;
+    // Size of the file in bytes
+    uint64 size = 5;
+
+    // Indicates if SHA512 hash for this file was calculated or not. When file is readoly, hash calculates on creation. For non readonly files, calculation of the hash has to be manually trigerred.
+    bool SHA512HashCalculated = 6;
+    // Unique SHA512 hash of the data in the file
+    bytes SHA512Hash = 7;
+
+    // Disables caching for this file. Use it when you think that file will not be used often, so caching of this file will not pollute cache servers. If file is not readonly, does nothing.
+    bool disableCache = 8;
+    // Forcelly apply cache. By default, service will not cache files with size more, than 50 megabytes. If you think, that this file will be used very often, you can force service to always cache it. Remember, that in this case it will use space on cache service, to other important files may not be cached. This parameter doesnt have effect when file is writeable or caching is disabled.
+    bool forceCaching = 9;
+
+    // When file was creted
+    google.protobuf.Timestamp _created = 100;
+    // When file was updated last time
+    google.protobuf.Timestamp _updated = 101;
+    // Version of the file. Automatically increases on every update to the file binary data or file information
+    int64 _version = 102;
+}
+
+message FileCreateRequest {
+    message FileInfo {
+        // Namespace where file is located
+        string namespace = 11;
+        // Indicates if file can be modified after creation. Making file readonly allows caching. In most cases its better to reacreate file on changes, than make it writeable.
+        bool readonly = 12;
+        // Mime type of the file
+        string mimeType = 13;
+        // Disables caching for this file. Use it when you think that file will not be used often, so caching of this file will not pollute cache servers. If file is not readonly, does nothing.
+        bool disableCache = 14;
+        // Forcelly apply cache. By default, service will not cache files with size more, than 50 megabytes. If you think, that this file will be used very often, you can force service to always cache it. Remember, that in this case it will use space on cache service, to other important files may not be cached. This parameter doesnt have effect when file is writeable or caching is disabled.
+        bool forceCaching = 15;
+    }
+    message FileChunk {
+        bytes data = 21;
+    }
+
+    oneof package {
+        FileInfo info = 1;
+        FileChunk chunk = 2;
+    }
+}
+message FileCreateResponse {
+    //Created file
+    File file = 1;
+}
+
+message FileExistRequest {
+    // File namespace
+    string namespace = 1;
+    // File identifier in the namespace
+    string uuid = 2;
+    // Use cache or not. This cache is not the same as file data cache. This cache can be invalid under very rare circumstances (Race condition can occure on reading and updating at same time). Cache automatically invalidates after 60 seconds
+    bool useCache = 3;
+}
+message FileExistResponse {
+    // True if file exists, else false
+    bool exist = 1;
+}
+
+message StatFileRequest {
+    // File namespace
+    string namespace = 1;
+    // File identifier in the namespace
+    string uuid = 2;
+    // Use cache or not. This cache is not the same as file data cache. This cache can be invalid under very rare circumstances (Race condition can occure on reading and updating at same time). Cache automatically invalidates after 60 seconds
+    bool useCache = 3;
+}
+message StatFileResponse {
+    File file = 1;
+}
+
+message ReadFileRequest {
+    // File namespace
+    string namespace = 1;
+    // File identifier in the namespace
+    string uuid = 2;
+    // Location in the file (in bytes) where to start read data. 0 to start from the begining of the file
+    uint64 start = 3;
+    // Number of bytes to read. 0 to read up to the end
+    uint64 toRead = 4;
+}
+message ReadFileResponse {
+    // Total ammount of data (in bytes) to be transfered. May differ from file size if transfer started from the middle of the file.
+    uint64 totalSize = 1;
+    // Total ammount of data already transfered including current chunk
+    uint64 transfered = 2;
+    // Starting index of the chunk in the original file.
+    uint64 chunkStart = 3;
+    // Chunk of data
+    bytes chunk = 4;
+}
+
+message CalculateFileSHA512Request {
+    // File namespace
+    string namespace = 1;
+    // File identifier in the namespace
+    string uuid = 2;
+}
+message CalculateFileSHA512Response {
+    // Calculated SHA512
+    bytes SHA512 = 1;
+}
+
+message DeleteFileRequest {
+    // File namespace
+    string namespace = 1;
+    // File identifier in the namespace
+    string uuid = 2;
+}
+message DeleteFileResponse {}
+
+service FileService {
+    // Creates new file. First message in the client stream must have file information. All next messages must have bytes chunk data. Information about created file file will be returned only on EOF of client stream.
+    rpc Create(stream FileCreateRequest) returns (FileCreateResponse);
+    // Check if file at specified location exists
+    rpc Exists(FileExistRequest) returns (FileExistResponse);
+    // Get file information. Has same meaning as POSIX stat function
+    rpc Stat(StatFileRequest) returns (StatFileResponse);
+    // Read data from the file
+    rpc Read(ReadFileRequest) returns (stream ReadFileResponse);
+    // rpc Append();
+    // rpc Write();
+    rpc Delete(DeleteFileRequest) returns (DeleteFileResponse);
+
+    // Calculates SHA512 for the file data and adds it to the file information. If SHA512 was already calculated, returns stored hash value. This method is not concurrency safe. Writing to file while calculating hash will result in wrong hash stored in file information.
+    rpc CalculateSHA512(CalculateFileSHA512Request) returns (CalculateFileSHA512Response);
+}
