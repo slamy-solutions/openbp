@@ -14,3 +14,19 @@ services:
       - system_db
       - system_cache
       - system_telemetry
+  
+  native_file:
+    container_name: native_file
+    build:
+      context: .
+      dockerfile: modules/native/services/file/Dockerfile
+    environment:
+      SYSTEM_MONGODB_URL: mongodb://root:example@system_db
+      SYSTEM_REDIS_CACHE_CONNECTION_URL: redis://system_cache
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_file"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - native_namespace

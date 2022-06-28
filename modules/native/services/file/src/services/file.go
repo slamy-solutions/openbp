@@ -87,7 +87,7 @@ func (s *FileServer) getFileCollection(namespace string) *mongo.Collection {
 func (s *FileServer) getBucket(namespace string) (*gridfs.Bucket, error) {
 	return gridfs.NewBucket(
 		s.getDB(namespace),
-		options.GridFSBucket().SetName("native_file"),
+		options.GridFSBucket().SetName("native_file_bucket"),
 	)
 }
 

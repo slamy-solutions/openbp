@@ -30,10 +30,15 @@ message Lambda {
 
 // Creates/Deletes/Updates/Agregates information about lambdas
 service LambdaManagerService {
-
+    rpc Create() returns ();
+    rpc Update() returns ();
+    rpc Delete() returns ();
+    rpc Get() returns ();
+    rpc Getoo() returns ();
 }
 
 // Provides API to execute lambda functions
 service LambdaEntrypointService {
-
+    rpc Execute() returns ();
+    
 }
