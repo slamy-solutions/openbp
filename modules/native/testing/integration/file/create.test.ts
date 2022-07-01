@@ -9,6 +9,7 @@ import { client as namespaceGrpc, connect as connectToNativeNamespace, close as 
 import { client as fileGrpc, connect as connectToNativeFile, close as closeNativeFile } from '../../tools/file/grpc'
 import { TestFile } from '../../tools/file/testfile'
 import { observable, Observable } from 'rxjs'
+import { FileCreateRequest } from '../../tools/file/proto/file'
 
 const TEST_NAMESPACE_NAME = "filetestnamespace"
 const DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}namespace_${TEST_NAMESPACE_NAME}`
@@ -86,6 +87,49 @@ afterAll(async ()=>{
  * @group blackbox
  */
 describe("Blackbox", () => {
+    test("Fails with ABORTED error on sensing zero packages", async () => {
+        const sender = new Observable<FileCreateRequest>((obs) => {
+            obs.complete()
+        })
+
+        try {
+            await fileGrpc.Create(sender)
+            fail()
+        } catch(e) {
+            expect((e as GRPCRequestError)?.code).toBe(Status.ABORTED)
+        }
+    })
+
+    test("Fails with DATA_LOSS error when first package is not info package", async () => {
+        const sender = new Observable<FileCreateRequest>((obs) => {
+            obs.next({
+                chunk: {
+                    data: Buffer.from("")
+                },
+                info: undefined
+            })
+
+            obs.complete()
+        })
+
+        try {
+            await fileGrpc.Create(sender)
+            fail()
+        } catch(e) {
+            expect((e as GRPCRequestError)?.code).toBe(Status.DATA_LOSS)
+        }
+    })
+
+    test("Fails with FAILED_PRECONDITION error when namespace doesnt exist", async () => {
+        const file = new TestFile(1, "unexistingnamespace", false, false, "", true)
+        try {
+            await file.create()
+            fail()
+        } catch (e) {
+            expect((e as GRPCRequestError)?.code).toBe(Status.FAILED_PRECONDITION)
+        }
+    })
+    
     test("Creates entry and returns data on creation", async () => {
         const size = 64328
         const mimeType = "text"
