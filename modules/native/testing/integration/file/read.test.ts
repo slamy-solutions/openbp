@@ -105,6 +105,27 @@ afterAll(async ()=>{
         }
     })
 
+    test("While toRead is zero - reads till the end", async () => {
+        const file = new TestFile(10, TEST_NAMESPACE_NAME, false, false, "", true)
+        await file.with(async (f) => {
+            const start = 5
+            const readStream = fileGrpc.Read({
+                namespace: TEST_NAMESPACE_NAME,
+                start,
+                toRead: 0,
+                uuid: f.UUID
+            })
+            let readed = 0
+            const readBuf = Buffer.allocUnsafe(5)
+            await readStream.forEach((p) => {
+                readed += p.chunk.length
+                p.chunk.copy(readBuf, p.chunkStart - start, 0, p.chunk.length)
+            })
+            expect(readed).toBe(5)
+            expect(readBuf.compare(file.data, start, start+5, 0, readBuf.length)).toBe(0)
+        })
+    })
+
     test("Reads from the middle of the file", async () => {
         const file = new TestFile(1024*1024*50, TEST_NAMESPACE_NAME, false, false, "", true)
         await file.with(async (f) => {
