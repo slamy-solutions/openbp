@@ -39,7 +39,7 @@ afterAll(async ()=>{
 })
 
 /**
- * @group native/file/create/blackbox
+ * @group native/file/read/blackbox
  * @group blackbox
  */
  describe("Blackbox", () => {
