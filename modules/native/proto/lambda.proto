@@ -1,44 +1,110 @@
 syntax = "proto3";
 
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/struct.proto";
-import "google/protobuf/wrappers.proto";
+package native_lambda;
 
-package native_files;
-
-option go_package = "slamy/openCRM/native/catalog;native_files_grpc";
+option go_package = "slamy/openCRM/native/lambda;native_lambda_grpc";
 
 message Lambda {
-    // Namespace where lambda is located
-    string namespace = 1;
-    // Unique name inside namespace.
-    string name = 2;
-    // Type of the lambda runner, that will execute lambda
-    string runner = 3;
-    // Execution file to run (like binary file)
-    string file = 4;
+    // Unique identifier.
+    string uuid = 1;
+    // Type of the lambda environment, that will run lambda
+    string environment = 2;
+    // Unique identifier of the bundle
+    string bundle = 3;
+    // Make sure, that when this lambda will be executed, it will be executed only ones. If set to True, it will be very slow, because it has to use distributed lock to prevent multiple executions. Multiple executions are VERY rare, only at 0.1% of the times or less. Better implement you functions in such way, that several executions of the function with same data is ok.
+    bool ensureExactlyOneDelivery = 4;
+}
+
+message CodeBundle {
+    // Unique indentifier of the code bundle. Must be binded to the code. Better to use hash of the code or binary file.
+    bytes uuid = 1;
+    // Number of refenrences pointing to this code bundle. When number of references will be zero, bundle will be deleted.
+    int32 references = 2;
+}
 
 
-    // User-defined version of the lambda. Runners will try to pull new executable of the lambda on version change.
-    string version = 5;
+message CreateLambdaRequest {
+    message LambdaInfo {
+        // Unique identifier.
+        string uuid = 10;
+        // Type of the lambda environment, that will run lambda
+        string environment = 11;
+        // Unique identifier of the bundle. Must be strictly binded to the code. Use SHA256 of the code/binary if not sure
+        bytes bundle = 12;
+    }
+    message BundleChunk {
+        bytes data = 21;
+    }
 
-    // When lambda was creted
-    google.protobuf.Timestamp _created = 100;
-    // When lambda was updated last time
-    google.protobuf.Timestamp _updated = 101;
+    oneof package {
+        LambdaInfo info = 1;
+        BundleChunk chunk = 2;
+    }
+}
+message CreateLambdaResponse {
+    // Created lambda
+    Lambda lambda = 1;
+}
+
+message DeleteLambdaRequest {
+    // Unique identifier of the lambda to delete.
+    string uuid = 1;
+}
+message DeleteLambdaResponse {
+
+}
+
+message ExistsLambdaRequest {
+    // Unique identifier of the lambda.
+    string uuid = 1;
+}
+message ExistsLambdaResponse {
+    // Lambda exists or not
+    bool exists = 1;
+}
+
+message GetLambdaRequest {
+    // Unique identifier of the lambda to get.
+    string uuid = 1;
+}
+message GetLambdaResponse {
+    Lambda Lambda = 1;
+}
+
+message GetBundleRequest {
+    // Unique identifier of the lambda to get.
+    string bundle = 1;
+}
+message GetBundleResponse {
+    // Chunk of bundle data
+    bytes chunk = 1;
+}
+
+message ExecuteLambdaRequest {
+    // UUID of the lambda
+    string lambda = 1;
+    // JSON data that will be passed to the function
+    string data = 2;
+    
+    // Execution timeout in miliseconds
+    //uint64 timeout = 2;
+}
+message ExecuteLambdaResponse {
+    // JSON execution result
+    string result = 1;
 }
 
 // Creates/Deletes/Updates/Agregates information about lambdas
 service LambdaManagerService {
-    rpc Create() returns ();
-    rpc Update() returns ();
-    rpc Delete() returns ();
-    rpc Get() returns ();
-    rpc Getoo() returns ();
+    rpc Create(stream CreateLambdaRequest) returns (CreateLambdaResponse);
+    rpc Delete(DeleteLambdaRequest) returns (DeleteLambdaResponse);
+    rpc Exists(ExistsLambdaRequest) returns (ExistsLambdaResponse);
+    rpc Get(GetLambdaRequest) returns (GetLambdaResponse);
+    rpc GetBundle(GetBundleRequest) returns (stream GetBundleResponse);
 }
 
 // Provides API to execute lambda functions
 service LambdaEntrypointService {
-    rpc Execute() returns ();
-    
+    // Runs function and returns its response. Returns error if something went wrong during the execution.
+    rpc Execute(ExecuteLambdaRequest) returns (ExecuteLambdaResponse);
 }
