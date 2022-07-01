@@ -170,6 +170,7 @@ func (s *FileServer) Create(in fileGRPC.FileService_CreateServer) error {
 		DataId:   stream.FileID.(primitive.ObjectID),
 		Readonly: info.Readonly,
 		Size:     uint64(totalSize),
+		MimeType: info.MimeType,
 
 		SHA512HashCalculated: true,
 		SHA512Hash:           sha512sum,

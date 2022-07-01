@@ -88,11 +88,23 @@ export class Client implements Rpc {
                 return argument
             }
             const stream = this.client.makeClientStreamRequest(path, passThrough, passThrough, resultCallback)
-            data.subscribe({
-                next: stream.write,
-                error: stream.destroy,
-                complete: stream.end
-            })
+            try {
+                await data.forEach(async (v) => {
+                    await new Promise<void>((resolve, reject) => {
+                        stream.write(v, (err: unknown) => {
+                            if (err) {
+                                reject(err)
+                            } else {
+                                resolve()
+                            }
+                        })
+                    })
+                })
+                stream.end()
+            } catch (e) {
+                stream.destroy(new Error(String(e)))
+                throw e
+            } 
         })
     }
     serverStreamingRequest(service: string, method: string, data: Uint8Array): Observable<Uint8Array> {

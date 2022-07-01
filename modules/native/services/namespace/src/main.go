@@ -8,8 +8,6 @@ import (
 
 	"google.golang.org/grpc"
 
-	amqp "github.com/rabbitmq/amqp091-go"
-
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
@@ -35,7 +33,7 @@ func main() {
 	SYSTEM_DB_URL := getConfigEnv("SYSTEM_DB_URL", "mongodb://root:example@system_db/admin")
 	SYSTEM_DB_PREFIX := getConfigEnv("SYSTEM_DB_PREFIX", "openerp_")
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
-	SYSTEM_RABBITMQ_URL := getConfigEnv("SYSTEM_RABBITMQ_URL", "")
+	// SYSTEM_RABBITMQ_URL := getConfigEnv("SYSTEM_RABBITMQ_URL", "amqp://system_rabbitmq:5672")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
 
 	ctx := context.Background()
@@ -65,7 +63,7 @@ func main() {
 	fmt.Println("Initialized DB")
 
 	// Setting up AMQP
-	amqpConenction, err := amqp.Dial(SYSTEM_RABBITMQ_URL)
+	/*amqpConenction, err := amqp.Dial(SYSTEM_RABBITMQ_URL)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +75,7 @@ func main() {
 	err = channel.ExchangeDeclare(fmt.Sprintf("%snative_namespace_events", SYSTEM_DB_PREFIX), "direct", true, false, false, false, amqp.Table{})
 	if err != nil {
 		panic(err)
-	}
+	}*/
 	//rabbitmqPublisher.Publish(d, ["ds"], rabbitmq.WithPublishOptionsHeaders())
 
 	// Creating grpc server

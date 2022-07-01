@@ -2,6 +2,7 @@ version: "3.4"
 services:
   native_namespace:
     container_name: native_namespace
+    restart: always
     build:
       context: .
       dockerfile: modules/native/services/namespace/Dockerfile
@@ -14,9 +15,11 @@ services:
       - system_db
       - system_cache
       - system_telemetry
+      - system_rabbitmq
   
   native_file:
     container_name: native_file
+    restart: always
     build:
       context: .
       dockerfile: modules/native/services/file/Dockerfile
@@ -29,4 +32,5 @@ services:
       - system_db
       - system_cache
       - system_telemetry
+      - system_rabbitmq
       - native_namespace

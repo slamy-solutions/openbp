@@ -8,6 +8,7 @@ import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grp
 import { client as namespaceGrpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
 import { client as fileGrpc, connect as connectToNativeFile, close as closeNativeFile } from '../../tools/file/grpc'
 import { TestFile } from '../../tools/file/testfile'
+import { observable, Observable } from 'rxjs'
 
 const TEST_NAMESPACE_NAME = "filetestnamespace"
 const DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}namespace_${TEST_NAMESPACE_NAME}`
@@ -58,22 +59,24 @@ afterAll(async ()=>{
         const mimeType = "text"
         const file = new TestFile(size, TEST_NAMESPACE_NAME, false, false, mimeType, true)
         await file.with(async (f) => {
-            const entry = await mongoClient.db(DB_NAME).collection<{ dataId: string }>('native_file').findOne({ _id: f.mongoId })
-            const dataId = ObjectId.createFromHexString(entry?.dataId as string)
-
+            const entry = await mongoClient.db(DB_NAME).collection<{ dataId: ObjectId }>('native_file').findOne({ _id: f.mongoId })
             const bucket = new GridFSBucket(mongoClient.db(DB_NAME), { bucketName: "native_file_bucket" })
-            const download = bucket.openDownloadStream(dataId)
+            const download = bucket.openDownloadStream(entry?.dataId as ObjectId)
+
+            const reader = new Observable<Buffer>((observable) => {
+                download.addListener('data', (data: Buffer) => observable.next(data))
+                download.addListener('error', (e: Error) => observable.error(e))
+                download.addListener('end', () => observable.complete())
+                download.resume()
+            })
 
             let currentIndex = 0
-            while (true) {
-                const data: Buffer | null = await download.read()
-                if (data === null) break
+            await reader.forEach((data: Buffer) => {
                 expect(f.data.slice(currentIndex, currentIndex + data.length).compare(data)).toBe(0)
                 currentIndex += data.length
-            }
-            if (currentIndex != f.data.length) {
-                fail("Returned file size is not same")
-            }
+            })
+            download.destroy()
+            expect(currentIndex).toBe(f.data.length)
         })
     })
 })

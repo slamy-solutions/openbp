@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto'
-import { Observable } from 'rxjs'
+import { Observable, Subscriber, map } from 'rxjs'
 
-import { FileCreateRequest } from './proto/file'
+import { FileCreateRequest, FileCreateRequest_FileInfo } from './proto/file'
 import { client } from './grpc'
 import { ObjectId } from 'mongodb'
 
@@ -40,6 +40,7 @@ export class TestFile {
 
     get obs(): Observable<FileCreateRequest> {
         return new Observable<FileCreateRequest>((subscriber) => {
+            
             subscriber.next({info: {
                 namespace: this.namespace,
                 disableCache: this.disableCache,
@@ -49,6 +50,7 @@ export class TestFile {
             },
             chunk: undefined
             })
+            
 
             for (let index = 0; index < this.buf.length; index += SEND_CHUNK_SIZE) {
                 subscriber.next({
@@ -58,12 +60,13 @@ export class TestFile {
                     info: undefined
                 })
             }
+
+            subscriber.complete()
         })
     }
 
     async with<T>(call: (file: TestFile) => Promise<T>) {
         const createResponse = await this.create()
-        this.uuid = createResponse.file?.uuid as string
         try {
             return await call(this)
         } finally {
@@ -72,26 +75,35 @@ export class TestFile {
     }
 
     async create() {
+        const infoPackage = {
+            namespace: this.namespace,
+            disableCache: this.disableCache,
+            forceCaching: this.forceCaching,
+            mimeType: this.mimeType,
+            readonly: this.readonly
+        } as FileCreateRequest_FileInfo
+
+        const buf = this.buf
+
         const inputStream = new Observable<FileCreateRequest>((subscriber) => {
-            subscriber.next({info: {
-                namespace: this.namespace,
-                disableCache: this.disableCache,
-                forceCaching: this.forceCaching,
-                mimeType: this.mimeType,
-                readonly: this.readonly
-            },
-            chunk: undefined
+            subscriber.next({
+                info: infoPackage,
+                chunk: undefined
             })
 
-            for (let i = 0; i < this.buf.length; i+= 32000) {
+            for (let i = 0; i < buf.length; i+= 32000) {
                 subscriber.next({
                     chunk: {
-                        data: this.buf.slice(i, Math.min(i + 32000, this.buf.length))
+                        data: buf.slice(i, Math.min(i + 32000, buf.length))
                     },
                     info: undefined
                 })
             }
+            subscriber.complete()
         })
-        return client.Create(inputStream)
+
+        const created = await client.Create(inputStream)
+        this.uuid = created.file?.uuid as string
+        return created
     }
 }
