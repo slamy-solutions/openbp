@@ -243,6 +243,14 @@ func (s *FileServer) Read(in *fileGRPC.ReadFileRequest, out fileGRPC.FileService
 		}
 		return status.Error(grpccodes.Internal, err.Error())
 	}
+
+	if in.Start > info.Size {
+		return status.Error(grpccodes.InvalidArgument, "Start index is greater than file size")
+	}
+	if in.Start+in.ToRead > info.Size {
+		return status.Error(grpccodes.InvalidArgument, "Number of bytes to read is out of file range. (start + toRead > fileSize)")
+	}
+
 	bytesToTransfer := info.Size - in.Start
 	if in.ToRead > 0 {
 		bytesToTransfer = in.ToRead
@@ -259,14 +267,19 @@ func (s *FileServer) Read(in *fileGRPC.ReadFileRequest, out fileGRPC.FileService
 	}
 	defer stream.Close()
 
-	_, err = stream.Skip(int64(in.Start))
-	if err != nil {
-		return status.Error(grpccodes.Internal, err.Error())
+	if in.Start > 0 {
+		_, err = stream.Skip(int64(in.Start))
+		if err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
 	}
 	buf := make([]byte, 32*1024)
 	transfered := uint64(0)
 	for {
 		readed, err := stream.Read(buf)
+		if uint64(readed) > bytesToTransfer-transfered {
+			readed = int(bytesToTransfer - transfered)
+		}
 		transfered += uint64(readed)
 		if err != nil {
 			if err == io.EOF {
@@ -280,6 +293,9 @@ func (s *FileServer) Read(in *fileGRPC.ReadFileRequest, out fileGRPC.FileService
 			ChunkStart: in.Start + transfered - uint64(readed),
 			Chunk:      buf[:readed],
 		})
+		if transfered == bytesToTransfer {
+			break
+		}
 	}
 
 	return status.Error(codes.OK, "")
