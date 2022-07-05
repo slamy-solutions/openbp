@@ -9,8 +9,8 @@ message Lambda {
     string uuid = 1;
     // Type of the lambda environment, that will run lambda
     string environment = 2;
-    // Unique identifier of the bundle
-    string bundle = 3;
+    // Unique identifier of the bundle. It is used for better lambda provisioning. If two lambdas have same bundle they will be executed using same execution pod
+    bytes bundle = 3;
     // Make sure, that when this lambda will be executed, it will be executed only ones. If set to True, it will be very slow, because it has to use distributed lock to prevent multiple executions. Multiple executions are VERY rare, only at 0.1% of the times or less. Better implement you functions in such way, that several executions of the function with same data is ok.
     bool ensureExactlyOneDelivery = 4;
 }
@@ -24,22 +24,16 @@ message CodeBundle {
 
 
 message CreateLambdaRequest {
-    message LambdaInfo {
-        // Unique identifier.
-        string uuid = 10;
-        // Type of the lambda environment, that will run lambda
-        string environment = 11;
-        // Unique identifier of the bundle. Must be strictly binded to the code. Use SHA256 of the code/binary if not sure
-        bytes bundle = 12;
-    }
-    message BundleChunk {
-        bytes data = 21;
-    }
-
-    oneof package {
-        LambdaInfo info = 1;
-        BundleChunk chunk = 2;
-    }
+    // Unique identifier.
+    string uuid = 10;
+    // Type of the lambda environment, that will run lambda
+    string environment = 11;
+    // Unique identifier of the bundle. Must be strictly binded to the code. SHA256 of the code/binary will be used if empty
+    bytes bundle = 12;
+    // Bundle binary data
+    bytes data = 21;
+    // Make sure, that when this lambda will be executed, it will be executed only ones. If set to True, it will be very slow, because it has to use distributed lock to prevent multiple executions. Multiple executions are VERY rare, only at 0.1% of the times or less. Better implement you functions in such way, that several executions of the function with same data is ok.
+    bool ensureExactlyOneDelivery = 13;
 }
 message CreateLambdaResponse {
     // Created lambda
@@ -96,11 +90,16 @@ message ExecuteLambdaResponse {
 
 // Creates/Deletes/Updates/Agregates information about lambdas
 service LambdaManagerService {
-    rpc Create(stream CreateLambdaRequest) returns (CreateLambdaResponse);
+    // Create new lambda
+    rpc Create(CreateLambdaRequest) returns (CreateLambdaResponse);
+    // Deletes lambda
     rpc Delete(DeleteLambdaRequest) returns (DeleteLambdaResponse);
+    // Checks if lambda exists or not
     rpc Exists(ExistsLambdaRequest) returns (ExistsLambdaResponse);
+    // Get lambda information
     rpc Get(GetLambdaRequest) returns (GetLambdaResponse);
-    rpc GetBundle(GetBundleRequest) returns (stream GetBundleResponse);
+    // Gets lambda bundle
+    rpc GetBundle(GetBundleRequest) returns (GetBundleResponse);
 }
 
 // Provides API to execute lambda functions
