@@ -16,6 +16,22 @@ services:
       - system_cache
       - system_telemetry
       - system_rabbitmq
+
+  native_lambda_manager:
+    container_name: native_lambda_manager
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/lambda-manager/Dockerfile
+    environment:
+      SYSTEM_MONGODB_URL: mongodb://root:example@system_db
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_lambda_manager"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - system_rabbitmq
   
   native_file:
     container_name: native_file

@@ -2,17 +2,16 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"google.golang.org/grpc/codes"
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
 
-	fileGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_file"
 	lambdaGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_lambda"
 )
 
@@ -24,7 +23,7 @@ type LambdaManagerServer struct {
 	mongoInfoCollection   *mongo.Collection
 	mongoBundleCollection *mongo.Collection
 	cacheClient           cache.Cache
-	fileClient            fileGRPC.FileServiceClient
+	bigCacheClient        cache.Cache
 }
 
 type lambdaInMongo struct {
@@ -38,6 +37,19 @@ type lambdaBundleInMongo struct {
 	Uuid       []byte `bson:"uuid,omitempty"`
 	Data       []byte `bson:"bundleData,omitempty"`
 	References int    `bson:"references,omitempty"`
+}
+
+func New(mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, bigCacheClient cache.Cache) *LambdaManagerServer {
+	dbName := fmt.Sprintf("%sglobal", dbPrefix)
+	db := mongoClient.Database(dbName)
+	return &LambdaManagerServer{
+		mongoClient:           mongoClient,
+		mongoDatabase:         db,
+		mongoInfoCollection:   db.Collection("native_lambda_manager_info"),
+		mongoBundleCollection: db.Collection("native_lambda_manager_bundle"),
+		cacheClient:           cacheClient,
+		bigCacheClient:        bigCacheClient,
+	}
 }
 
 func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateLambdaRequest) (*lambdaGRPC.CreateLambdaResponse, error) {
@@ -141,12 +153,50 @@ func (s *LambdaManagerServer) Delete(ctx context.Context, in *lambdaGRPC.DeleteL
 
 	return &lambdaGRPC.DeleteLambdaResponse{}, status.Error(grpccodes.OK, "")
 }
+
 func (s *LambdaManagerServer) Exists(ctx context.Context, in *lambdaGRPC.ExistsLambdaRequest) (*lambdaGRPC.ExistsLambdaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Exists not implemented")
+	err := s.mongoInfoCollection.FindOne(ctx, bson.M{"uuid": in.Uuid}).Err()
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return &lambdaGRPC.ExistsLambdaResponse{Exists: false}, status.Error(grpccodes.OK, "")
+		}
+		return nil, status.Error(grpccodes.Internal, err.Error())
+	}
+	return &lambdaGRPC.ExistsLambdaResponse{Exists: true}, status.Error(grpccodes.OK, "")
 }
+
 func (s *LambdaManagerServer) Get(ctx context.Context, in *lambdaGRPC.GetLambdaRequest) (*lambdaGRPC.GetLambdaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+	var lambda lambdaInMongo
+	err := s.mongoInfoCollection.FindOne(ctx, bson.M{"uuid": in.Uuid}).Decode(&lambda)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(grpccodes.NotFound, "Bundle with specified Id not found")
+		}
+		return nil, status.Error(grpccodes.Internal, err.Error())
+	}
+
+	return &lambdaGRPC.GetLambdaResponse{
+		Lambda: &lambdaGRPC.Lambda{
+			Uuid:                     lambda.Uuid,
+			Environment:              lambda.Environment,
+			Bundle:                   lambda.Bundle,
+			EnsureExactlyOneDelivery: lambda.EnsureExactlyOneDelivery,
+		},
+	}, status.Error(grpccodes.OK, "")
 }
-func (s *LambdaManagerServer) GetBundle(in *lambdaGRPC.GetBundleRequest, out lambdaGRPC.LambdaManagerService_GetBundleServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetBundle not implemented")
+
+func (s *LambdaManagerServer) GetBundle(ctx context.Context, in *lambdaGRPC.GetBundleRequest) (*lambdaGRPC.GetBundleResponse, error) {
+	var bundle lambdaBundleInMongo
+	projection := bson.M{
+		"data": 1,
+	}
+	err := s.mongoBundleCollection.FindOne(ctx, bson.M{"uuid": in.Bundle}, options.FindOne().SetProjection(projection)).Decode(&bundle)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(grpccodes.NotFound, "Bundle with specified Id not found")
+		}
+		return nil, status.Error(grpccodes.Internal, err.Error())
+	}
+
+	return &lambdaGRPC.GetBundleResponse{Data: bundle.Data}, status.Error(grpccodes.OK, "")
 }

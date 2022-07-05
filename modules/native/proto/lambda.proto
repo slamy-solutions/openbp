@@ -70,8 +70,8 @@ message GetBundleRequest {
     string bundle = 1;
 }
 message GetBundleResponse {
-    // Chunk of bundle data
-    bytes chunk = 1;
+    // Bundle data
+    bytes data = 1;
 }
 
 message ExecuteLambdaRequest {
