@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,7 +29,7 @@ type LambdaManagerServer struct {
 
 type lambdaInMongo struct {
 	Uuid                     string `bson:"uuid,omitempty"`
-	Environment              string `bson:"environment,omitempty"`
+	Runtime                  string `bson:"runtime,omitempty"`
 	Bundle                   []byte `bson:"bundle,omitempty"`
 	EnsureExactlyOneDelivery bool   `bson:"ensureExactlyOneDelivery,omitempty"`
 }
@@ -39,10 +40,10 @@ type lambdaBundleInMongo struct {
 	References int    `bson:"references,omitempty"`
 }
 
-func New(mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, bigCacheClient cache.Cache) *LambdaManagerServer {
+func New(ctx context.Context, mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, bigCacheClient cache.Cache) (*LambdaManagerServer, error) {
 	dbName := fmt.Sprintf("%sglobal", dbPrefix)
 	db := mongoClient.Database(dbName)
-	return &LambdaManagerServer{
+	server := &LambdaManagerServer{
 		mongoClient:           mongoClient,
 		mongoDatabase:         db,
 		mongoInfoCollection:   db.Collection("native_lambda_manager_info"),
@@ -50,12 +51,37 @@ func New(mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, bi
 		cacheClient:           cacheClient,
 		bigCacheClient:        bigCacheClient,
 	}
+
+	err := createIndexes(ctx, server)
+	return server, err
+}
+
+func createIndexes(ctx context.Context, s *LambdaManagerServer) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	defer cancel()
+
+	indexModel := mongo.IndexModel{
+		Keys: bson.D{
+			bson.E{Key: "uuid", Value: 1},
+		},
+		Options: options.Index().SetUnique(true),
+	}
+	_, err := s.mongoInfoCollection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		return err
+	}
+	_, err = s.mongoBundleCollection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateLambdaRequest) (*lambdaGRPC.CreateLambdaResponse, error) {
 	lambdaMongoInfo := lambdaInMongo{
 		Uuid:                     in.Uuid,
-		Environment:              in.Environment,
+		Runtime:                  in.Runtime,
 		Bundle:                   in.Bundle,
 		EnsureExactlyOneDelivery: in.EnsureExactlyOneDelivery,
 	}
@@ -70,7 +96,7 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 		_, err := s.mongoInfoCollection.InsertOne(sessCtx, lambdaMongoInfo)
 		if err != nil {
 			if mongo.IsDuplicateKeyError(err) {
-				return nil, status.Error(grpccodes.AlreadyExists, "Lambda with same UUID and environment already exists")
+				return nil, status.Error(grpccodes.AlreadyExists, "Lambda with same UUID already exists")
 			}
 			return nil, status.Error(grpccodes.Internal, err.Error())
 		}
@@ -98,7 +124,7 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 
 	lambda := &lambdaGRPC.Lambda{
 		Uuid:                     in.Uuid,
-		Environment:              in.Environment,
+		Runtime:                  in.Runtime,
 		Bundle:                   in.Bundle,
 		EnsureExactlyOneDelivery: in.EnsureExactlyOneDelivery,
 	}
@@ -178,7 +204,7 @@ func (s *LambdaManagerServer) Get(ctx context.Context, in *lambdaGRPC.GetLambdaR
 	return &lambdaGRPC.GetLambdaResponse{
 		Lambda: &lambdaGRPC.Lambda{
 			Uuid:                     lambda.Uuid,
-			Environment:              lambda.Environment,
+			Runtime:                  lambda.Runtime,
 			Bundle:                   lambda.Bundle,
 			EnsureExactlyOneDelivery: lambda.EnsureExactlyOneDelivery,
 		},

@@ -76,7 +76,10 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	lambdaManagerServer := services.New(dbClient, SYSTEM_DB_PREFIX, cacheClient, bigCacheClient)
+	lambdaManagerServer, err := services.New(ctx, dbClient, SYSTEM_DB_PREFIX, cacheClient, bigCacheClient)
+	if err != nil {
+		panic(err)
+	}
 	native_lambda_grpc.RegisterLambdaManagerServiceServer(grpcServer, lambdaManagerServer)
 
 	fmt.Println("Start listening for gRPC connections")

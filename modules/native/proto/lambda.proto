@@ -7,8 +7,8 @@ option go_package = "slamy/openCRM/native/lambda;native_lambda_grpc";
 message Lambda {
     // Unique identifier.
     string uuid = 1;
-    // Type of the lambda environment, that will run lambda
-    string environment = 2;
+    // Type of the lambda runtime, that will run lambda
+    string runtime = 2;
     // Unique identifier of the bundle. It is used for better lambda provisioning. If two lambdas have same bundle they will be executed using same execution pod
     bytes bundle = 3;
     // Make sure, that when this lambda will be executed, it will be executed only ones. If set to True, it will be very slow, because it has to use distributed lock to prevent multiple executions. Multiple executions are VERY rare, only at 0.1% of the times or less. Better implement you functions in such way, that several executions of the function with same data is ok.
@@ -26,8 +26,8 @@ message CodeBundle {
 message CreateLambdaRequest {
     // Unique identifier.
     string uuid = 10;
-    // Type of the lambda environment, that will run lambda
-    string environment = 11;
+    // Type of the lambda runtime, that will run lambda
+    string runtime = 11;
     // Unique identifier of the bundle. Must be strictly binded to the code. SHA256 of the code/binary will be used if empty
     bytes bundle = 12;
     // Bundle binary data
