@@ -99,7 +99,7 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 	lambdaMongoBundle := lambdaBundleInMongo{
 		Uuid:       in.Bundle,
 		Data:       in.Data,
-		References: 1,
+		References: 0,
 	}
 
 	insertTransactionCallback := func(sessCtx mongo.SessionContext) (interface{}, error) {
