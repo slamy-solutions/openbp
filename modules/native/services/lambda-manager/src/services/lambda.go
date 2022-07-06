@@ -69,7 +69,7 @@ func createIndexes(ctx context.Context, s *LambdaManagerServer) error {
 }
 
 func (s *LambdaManagerServer) getInfoDatabase(namespace string) *mongo.Database {
-	return s.mongoClient.Database(fmt.Sprintf("%snamespace_%s"))
+	return s.mongoClient.Database(fmt.Sprintf("%snamespace_%s", s.mongoDbPrefix, namespace))
 }
 
 func (s *LambdaManagerServer) getInfoCollection(namespace string) *mongo.Collection {
