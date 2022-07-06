@@ -5,14 +5,16 @@ package native_lambda;
 option go_package = "slamy/openCRM/native/lambda;native_lambda_grpc";
 
 message Lambda {
-    // Unique identifier.
-    string uuid = 1;
+    // Namespace where lambda was created
+    string namespace = 1;
+    // Unique identifier inside UUID.
+    string uuid = 2;
     // Type of the lambda runtime, that will run lambda
-    string runtime = 2;
+    string runtime = 3;
     // Unique identifier of the bundle. It is used for better lambda provisioning. If two lambdas have same bundle they will be executed using same execution pod
-    bytes bundle = 3;
+    bytes bundle = 4;
     // Make sure, that when this lambda will be executed, it will be executed only ones. If set to True, it will be very slow, because it has to use distributed lock to prevent multiple executions. Multiple executions are VERY rare, only at 0.1% of the times or less. Better implement you functions in such way, that several executions of the function with same data is ok.
-    bool ensureExactlyOneDelivery = 4;
+    bool ensureExactlyOneDelivery = 5;
 }
 
 message CodeBundle {
@@ -24,16 +26,18 @@ message CodeBundle {
 
 
 message CreateLambdaRequest {
+    // Namespace where to create lambda
+    string namespace = 1;
     // Unique identifier.
-    string uuid = 10;
+    string uuid = 2;
     // Type of the lambda runtime, that will run lambda
-    string runtime = 11;
+    string runtime = 3;
     // Unique identifier of the bundle. Must be strictly binded to the code. SHA256 of the code/binary will be used if empty
-    bytes bundle = 12;
+    bytes bundle = 4;
     // Bundle binary data
-    bytes data = 21;
+    bytes data = 5;
     // Make sure, that when this lambda will be executed, it will be executed only ones. If set to True, it will be very slow, because it has to use distributed lock to prevent multiple executions. Multiple executions are VERY rare, only at 0.1% of the times or less. Better implement you functions in such way, that several executions of the function with same data is ok.
-    bool ensureExactlyOneDelivery = 13;
+    bool ensureExactlyOneDelivery = 6;
 }
 message CreateLambdaResponse {
     // Created lambda
@@ -41,16 +45,20 @@ message CreateLambdaResponse {
 }
 
 message DeleteLambdaRequest {
+    // Namespace of the lambda
+    string namespace = 1;
     // Unique identifier of the lambda to delete.
-    string uuid = 1;
+    string uuid = 2;
 }
 message DeleteLambdaResponse {
 
 }
 
 message ExistsLambdaRequest {
-    // Unique identifier of the lambda.
-    string uuid = 1;
+    // Namespace of the lambda
+    string namespace = 1;
+    // Unique identifier of the lambda inside namespace.
+    string uuid = 2;
 }
 message ExistsLambdaResponse {
     // Lambda exists or not
@@ -58,8 +66,10 @@ message ExistsLambdaResponse {
 }
 
 message GetLambdaRequest {
+    // Namespace of the lambda
+    string namespace = 1;
     // Unique identifier of the lambda to get.
-    string uuid = 1;
+    string uuid = 2;
 }
 message GetLambdaResponse {
     Lambda Lambda = 1;
@@ -75,10 +85,12 @@ message GetBundleResponse {
 }
 
 message ExecuteLambdaRequest {
+    // Namespace of the lambda
+    string namespace = 1;
     // UUID of the lambda
-    string lambda = 1;
+    string lambda = 2;
     // JSON data that will be passed to the function
-    string data = 2;
+    string data = 3;
     
     // Execution timeout in miliseconds
     //uint64 timeout = 2;

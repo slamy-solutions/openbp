@@ -20,8 +20,7 @@ type LambdaManagerServer struct {
 	lambdaGRPC.UnimplementedLambdaManagerServiceServer
 
 	mongoClient           *mongo.Client
-	mongoDatabase         *mongo.Database
-	mongoInfoCollection   *mongo.Collection
+	mongoDbPrefix         string
 	mongoBundleCollection *mongo.Collection
 	cacheClient           cache.Cache
 	bigCacheClient        cache.Cache
@@ -45,8 +44,7 @@ func New(ctx context.Context, mongoClient *mongo.Client, dbPrefix string, cacheC
 	db := mongoClient.Database(dbName)
 	server := &LambdaManagerServer{
 		mongoClient:           mongoClient,
-		mongoDatabase:         db,
-		mongoInfoCollection:   db.Collection("native_lambda_manager_info"),
+		mongoDbPrefix:         dbPrefix,
 		mongoBundleCollection: db.Collection("native_lambda_manager_bundle"),
 		cacheClient:           cacheClient,
 		bigCacheClient:        bigCacheClient,
@@ -64,21 +62,33 @@ func createIndexes(ctx context.Context, s *LambdaManagerServer) error {
 		Keys: bson.D{
 			bson.E{Key: "uuid", Value: 1},
 		},
-		Options: options.Index().SetUnique(true),
+		Options: options.Index().SetUnique(true).SetName("unique_uuid"),
 	}
-	_, err := s.mongoInfoCollection.Indexes().CreateOne(ctx, indexModel)
-	if err != nil {
-		return err
-	}
-	_, err = s.mongoBundleCollection.Indexes().CreateOne(ctx, indexModel)
-	if err != nil {
-		return err
-	}
+	_, err := s.mongoBundleCollection.Indexes().CreateOne(ctx, indexModel)
+	return err
+}
 
-	return nil
+func (s *LambdaManagerServer) getInfoDatabase(namespace string) *mongo.Database {
+	return s.mongoClient.Database(fmt.Sprintf("%snamespace_%s"))
+}
+
+func (s *LambdaManagerServer) getInfoCollection(namespace string) *mongo.Collection {
+	return s.getInfoDatabase(namespace).Collection("native_lambda_manager_info")
 }
 
 func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateLambdaRequest) (*lambdaGRPC.CreateLambdaResponse, error) {
+	// Verify if info collection exist. Collection can not be created in multishard transaction. Create index if not exist
+	indexModel := mongo.IndexModel{
+		Keys: bson.D{
+			bson.E{Key: "uuid", Value: 1},
+		},
+		Options: options.Index().SetUnique(true).SetName("unique_uuid"),
+	}
+	_, err := s.getInfoCollection(in.Namespace).Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, err.Error())
+	}
+
 	lambdaMongoInfo := lambdaInMongo{
 		Uuid:                     in.Uuid,
 		Runtime:                  in.Runtime,
@@ -93,7 +103,7 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 	}
 
 	insertTransactionCallback := func(sessCtx mongo.SessionContext) (interface{}, error) {
-		_, err := s.mongoInfoCollection.InsertOne(sessCtx, lambdaMongoInfo)
+		_, err := s.getInfoCollection(in.Namespace).InsertOne(sessCtx, lambdaMongoInfo)
 		if err != nil {
 			if mongo.IsDuplicateKeyError(err) {
 				return nil, status.Error(grpccodes.AlreadyExists, "Lambda with same UUID already exists")
@@ -123,6 +133,7 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 	}
 
 	lambda := &lambdaGRPC.Lambda{
+		Namespace:                in.Namespace,
 		Uuid:                     in.Uuid,
 		Runtime:                  in.Runtime,
 		Bundle:                   in.Bundle,
@@ -136,7 +147,7 @@ func (s *LambdaManagerServer) Delete(ctx context.Context, in *lambdaGRPC.DeleteL
 		"bundle": 1,
 	}
 	var existingLambda lambdaInMongo
-	err := s.mongoInfoCollection.FindOne(ctx, bson.M{"uuid": in.Uuid}, options.FindOne().SetProjection(projection)).Decode(&existingLambda)
+	err := s.getInfoCollection(in.Namespace).FindOne(ctx, bson.M{"uuid": in.Uuid}, options.FindOne().SetProjection(projection)).Decode(&existingLambda)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return &lambdaGRPC.DeleteLambdaResponse{}, status.Error(grpccodes.OK, "")
@@ -145,7 +156,7 @@ func (s *LambdaManagerServer) Delete(ctx context.Context, in *lambdaGRPC.DeleteL
 	}
 
 	deleteTransactionCallback := func(sessCtx mongo.SessionContext) (interface{}, error) {
-		infoDeleteResult, err := s.mongoInfoCollection.DeleteOne(sessCtx, bson.M{"uuid": in.Uuid})
+		infoDeleteResult, err := s.getInfoCollection(in.Namespace).DeleteOne(sessCtx, bson.M{"uuid": in.Uuid})
 		if err != nil {
 			return nil, status.Error(grpccodes.Internal, err.Error())
 		}
@@ -181,7 +192,7 @@ func (s *LambdaManagerServer) Delete(ctx context.Context, in *lambdaGRPC.DeleteL
 }
 
 func (s *LambdaManagerServer) Exists(ctx context.Context, in *lambdaGRPC.ExistsLambdaRequest) (*lambdaGRPC.ExistsLambdaResponse, error) {
-	err := s.mongoInfoCollection.FindOne(ctx, bson.M{"uuid": in.Uuid}).Err()
+	err := s.getInfoCollection(in.Namespace).FindOne(ctx, bson.M{"uuid": in.Uuid}).Err()
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return &lambdaGRPC.ExistsLambdaResponse{Exists: false}, status.Error(grpccodes.OK, "")
@@ -193,7 +204,7 @@ func (s *LambdaManagerServer) Exists(ctx context.Context, in *lambdaGRPC.ExistsL
 
 func (s *LambdaManagerServer) Get(ctx context.Context, in *lambdaGRPC.GetLambdaRequest) (*lambdaGRPC.GetLambdaResponse, error) {
 	var lambda lambdaInMongo
-	err := s.mongoInfoCollection.FindOne(ctx, bson.M{"uuid": in.Uuid}).Decode(&lambda)
+	err := s.getInfoCollection(in.Namespace).FindOne(ctx, bson.M{"uuid": in.Uuid}).Decode(&lambda)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "Bundle with specified Id not found")
@@ -203,6 +214,7 @@ func (s *LambdaManagerServer) Get(ctx context.Context, in *lambdaGRPC.GetLambdaR
 
 	return &lambdaGRPC.GetLambdaResponse{
 		Lambda: &lambdaGRPC.Lambda{
+			Namespace:                in.Namespace,
 			Uuid:                     lambda.Uuid,
 			Runtime:                  lambda.Runtime,
 			Bundle:                   lambda.Bundle,

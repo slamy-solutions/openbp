@@ -16,3 +16,4 @@ function generate {
 # namespace
 generate ./namespace/proto ../../proto namespace.proto
 generate ./file/proto ../../proto namespace.proto file.proto
+generate ./lambda/proto ../../proto lambda.proto

@@ -11,4 +11,4 @@ export async function connect() {
 
 export async function close() {
     grpcClient.close()
-}   
+}
