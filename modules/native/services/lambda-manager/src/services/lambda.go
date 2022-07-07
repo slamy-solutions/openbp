@@ -14,6 +14,7 @@ import (
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
 
 	lambdaGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_lambda"
+	namespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_namespace"
 )
 
 type LambdaManagerServer struct {
@@ -24,6 +25,7 @@ type LambdaManagerServer struct {
 	mongoBundleCollection *mongo.Collection
 	cacheClient           cache.Cache
 	bigCacheClient        cache.Cache
+	namespaceClient       namespaceGRPC.NamespaceServiceClient
 }
 
 type lambdaInMongo struct {
@@ -35,11 +37,11 @@ type lambdaInMongo struct {
 
 type lambdaBundleInMongo struct {
 	Uuid       []byte `bson:"uuid,omitempty"`
-	Data       []byte `bson:"bundleData,omitempty"`
+	Data       []byte `bson:"data,omitempty"`
 	References int    `bson:"references,omitempty"`
 }
 
-func New(ctx context.Context, mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, bigCacheClient cache.Cache) (*LambdaManagerServer, error) {
+func New(ctx context.Context, mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, bigCacheClient cache.Cache, namespaceClient namespaceGRPC.NamespaceServiceClient) (*LambdaManagerServer, error) {
 	dbName := fmt.Sprintf("%sglobal", dbPrefix)
 	db := mongoClient.Database(dbName)
 	server := &LambdaManagerServer{
@@ -48,6 +50,7 @@ func New(ctx context.Context, mongoClient *mongo.Client, dbPrefix string, cacheC
 		mongoBundleCollection: db.Collection("native_lambda_manager_bundle"),
 		cacheClient:           cacheClient,
 		bigCacheClient:        bigCacheClient,
+		namespaceClient:       namespaceClient,
 	}
 
 	err := createIndexes(ctx, server)
@@ -77,6 +80,16 @@ func (s *LambdaManagerServer) getInfoCollection(namespace string) *mongo.Collect
 }
 
 func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateLambdaRequest) (*lambdaGRPC.CreateLambdaResponse, error) {
+
+	// Check if namespace exist.
+	existResponse, err := s.namespaceClient.Exists(ctx, &namespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, err.Error())
+	}
+	if !existResponse.Exist {
+		return nil, status.Error(grpccodes.FailedPrecondition, "Namespace does not exist")
+	}
+
 	// Verify if info collection exist. Collection can not be created in multishard transaction. Create index if not exist
 	indexModel := mongo.IndexModel{
 		Keys: bson.D{
@@ -84,7 +97,7 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 		},
 		Options: options.Index().SetUnique(true).SetName("unique_uuid"),
 	}
-	_, err := s.getInfoCollection(in.Namespace).Indexes().CreateOne(ctx, indexModel)
+	_, err = s.getInfoCollection(in.Namespace).Indexes().CreateOne(ctx, indexModel)
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, err.Error())
 	}

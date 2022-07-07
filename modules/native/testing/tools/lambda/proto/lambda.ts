@@ -5,7 +5,9 @@ import * as _m0 from "protobufjs/minimal";
 export const protobufPackage = "native_lambda";
 
 export interface Lambda {
-  /** Unique identifier. */
+  /** Namespace where lambda was created */
+  namespace: string;
+  /** Unique identifier inside UUID. */
   uuid: string;
   /** Type of the lambda runtime, that will run lambda */
   runtime: string;
@@ -23,6 +25,8 @@ export interface CodeBundle {
 }
 
 export interface CreateLambdaRequest {
+  /** Namespace where to create lambda */
+  namespace: string;
   /** Unique identifier. */
   uuid: string;
   /** Type of the lambda runtime, that will run lambda */
@@ -41,6 +45,8 @@ export interface CreateLambdaResponse {
 }
 
 export interface DeleteLambdaRequest {
+  /** Namespace of the lambda */
+  namespace: string;
   /** Unique identifier of the lambda to delete. */
   uuid: string;
 }
@@ -48,7 +54,9 @@ export interface DeleteLambdaRequest {
 export interface DeleteLambdaResponse {}
 
 export interface ExistsLambdaRequest {
-  /** Unique identifier of the lambda. */
+  /** Namespace of the lambda */
+  namespace: string;
+  /** Unique identifier of the lambda inside namespace. */
   uuid: string;
 }
 
@@ -58,6 +66,8 @@ export interface ExistsLambdaResponse {
 }
 
 export interface GetLambdaRequest {
+  /** Namespace of the lambda */
+  namespace: string;
   /** Unique identifier of the lambda to get. */
   uuid: string;
 }
@@ -77,6 +87,8 @@ export interface GetBundleResponse {
 }
 
 export interface ExecuteLambdaRequest {
+  /** Namespace of the lambda */
+  namespace: string;
   /** UUID of the lambda */
   lambda: string;
   /** JSON data that will be passed to the function */
@@ -90,6 +102,7 @@ export interface ExecuteLambdaResponse {
 
 function createBaseLambda(): Lambda {
   return {
+    namespace: "",
     uuid: "",
     runtime: "",
     bundle: Buffer.alloc(0),
@@ -102,17 +115,20 @@ export const Lambda = {
     message: Lambda,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.uuid !== "") {
-      writer.uint32(10).string(message.uuid);
+      writer.uint32(18).string(message.uuid);
     }
     if (message.runtime !== "") {
-      writer.uint32(18).string(message.runtime);
+      writer.uint32(26).string(message.runtime);
     }
     if (message.bundle.length !== 0) {
-      writer.uint32(26).bytes(message.bundle);
+      writer.uint32(34).bytes(message.bundle);
     }
     if (message.ensureExactlyOneDelivery === true) {
-      writer.uint32(32).bool(message.ensureExactlyOneDelivery);
+      writer.uint32(40).bool(message.ensureExactlyOneDelivery);
     }
     return writer;
   },
@@ -125,15 +141,18 @@ export const Lambda = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.uuid = reader.string();
+          message.namespace = reader.string();
           break;
         case 2:
-          message.runtime = reader.string();
+          message.uuid = reader.string();
           break;
         case 3:
-          message.bundle = reader.bytes() as Buffer;
+          message.runtime = reader.string();
           break;
         case 4:
+          message.bundle = reader.bytes() as Buffer;
+          break;
+        case 5:
           message.ensureExactlyOneDelivery = reader.bool();
           break;
         default:
@@ -146,6 +165,7 @@ export const Lambda = {
 
   fromJSON(object: any): Lambda {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
       runtime: isSet(object.runtime) ? String(object.runtime) : "",
       bundle: isSet(object.bundle)
@@ -159,6 +179,7 @@ export const Lambda = {
 
   toJSON(message: Lambda): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     message.runtime !== undefined && (obj.runtime = message.runtime);
     message.bundle !== undefined &&
@@ -172,6 +193,7 @@ export const Lambda = {
 
   fromPartial<I extends Exact<DeepPartial<Lambda>, I>>(object: I): Lambda {
     const message = createBaseLambda();
+    message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     message.runtime = object.runtime ?? "";
     message.bundle = object.bundle ?? Buffer.alloc(0);
@@ -251,6 +273,7 @@ export const CodeBundle = {
 
 function createBaseCreateLambdaRequest(): CreateLambdaRequest {
   return {
+    namespace: "",
     uuid: "",
     runtime: "",
     bundle: Buffer.alloc(0),
@@ -264,20 +287,23 @@ export const CreateLambdaRequest = {
     message: CreateLambdaRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.uuid !== "") {
-      writer.uint32(82).string(message.uuid);
+      writer.uint32(18).string(message.uuid);
     }
     if (message.runtime !== "") {
-      writer.uint32(90).string(message.runtime);
+      writer.uint32(26).string(message.runtime);
     }
     if (message.bundle.length !== 0) {
-      writer.uint32(98).bytes(message.bundle);
+      writer.uint32(34).bytes(message.bundle);
     }
     if (message.data.length !== 0) {
-      writer.uint32(170).bytes(message.data);
+      writer.uint32(42).bytes(message.data);
     }
     if (message.ensureExactlyOneDelivery === true) {
-      writer.uint32(104).bool(message.ensureExactlyOneDelivery);
+      writer.uint32(48).bool(message.ensureExactlyOneDelivery);
     }
     return writer;
   },
@@ -289,19 +315,22 @@ export const CreateLambdaRequest = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        case 10:
+        case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
           message.uuid = reader.string();
           break;
-        case 11:
+        case 3:
           message.runtime = reader.string();
           break;
-        case 12:
+        case 4:
           message.bundle = reader.bytes() as Buffer;
           break;
-        case 21:
+        case 5:
           message.data = reader.bytes() as Buffer;
           break;
-        case 13:
+        case 6:
           message.ensureExactlyOneDelivery = reader.bool();
           break;
         default:
@@ -314,6 +343,7 @@ export const CreateLambdaRequest = {
 
   fromJSON(object: any): CreateLambdaRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
       runtime: isSet(object.runtime) ? String(object.runtime) : "",
       bundle: isSet(object.bundle)
@@ -330,6 +360,7 @@ export const CreateLambdaRequest = {
 
   toJSON(message: CreateLambdaRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     message.runtime !== undefined && (obj.runtime = message.runtime);
     message.bundle !== undefined &&
@@ -349,6 +380,7 @@ export const CreateLambdaRequest = {
     object: I
   ): CreateLambdaRequest {
     const message = createBaseCreateLambdaRequest();
+    message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     message.runtime = object.runtime ?? "";
     message.bundle = object.bundle ?? Buffer.alloc(0);
@@ -420,7 +452,7 @@ export const CreateLambdaResponse = {
 };
 
 function createBaseDeleteLambdaRequest(): DeleteLambdaRequest {
-  return { uuid: "" };
+  return { namespace: "", uuid: "" };
 }
 
 export const DeleteLambdaRequest = {
@@ -428,8 +460,11 @@ export const DeleteLambdaRequest = {
     message: DeleteLambdaRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.uuid !== "") {
-      writer.uint32(10).string(message.uuid);
+      writer.uint32(18).string(message.uuid);
     }
     return writer;
   },
@@ -442,6 +477,9 @@ export const DeleteLambdaRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
           message.uuid = reader.string();
           break;
         default:
@@ -454,12 +492,14 @@ export const DeleteLambdaRequest = {
 
   fromJSON(object: any): DeleteLambdaRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
     };
   },
 
   toJSON(message: DeleteLambdaRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     return obj;
   },
@@ -468,6 +508,7 @@ export const DeleteLambdaRequest = {
     object: I
   ): DeleteLambdaRequest {
     const message = createBaseDeleteLambdaRequest();
+    message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     return message;
   },
@@ -521,7 +562,7 @@ export const DeleteLambdaResponse = {
 };
 
 function createBaseExistsLambdaRequest(): ExistsLambdaRequest {
-  return { uuid: "" };
+  return { namespace: "", uuid: "" };
 }
 
 export const ExistsLambdaRequest = {
@@ -529,8 +570,11 @@ export const ExistsLambdaRequest = {
     message: ExistsLambdaRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.uuid !== "") {
-      writer.uint32(10).string(message.uuid);
+      writer.uint32(18).string(message.uuid);
     }
     return writer;
   },
@@ -543,6 +587,9 @@ export const ExistsLambdaRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
           message.uuid = reader.string();
           break;
         default:
@@ -555,12 +602,14 @@ export const ExistsLambdaRequest = {
 
   fromJSON(object: any): ExistsLambdaRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
     };
   },
 
   toJSON(message: ExistsLambdaRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     return obj;
   },
@@ -569,6 +618,7 @@ export const ExistsLambdaRequest = {
     object: I
   ): ExistsLambdaRequest {
     const message = createBaseExistsLambdaRequest();
+    message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     return message;
   },
@@ -632,7 +682,7 @@ export const ExistsLambdaResponse = {
 };
 
 function createBaseGetLambdaRequest(): GetLambdaRequest {
-  return { uuid: "" };
+  return { namespace: "", uuid: "" };
 }
 
 export const GetLambdaRequest = {
@@ -640,8 +690,11 @@ export const GetLambdaRequest = {
     message: GetLambdaRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.uuid !== "") {
-      writer.uint32(10).string(message.uuid);
+      writer.uint32(18).string(message.uuid);
     }
     return writer;
   },
@@ -654,6 +707,9 @@ export const GetLambdaRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
           message.uuid = reader.string();
           break;
         default:
@@ -666,12 +722,14 @@ export const GetLambdaRequest = {
 
   fromJSON(object: any): GetLambdaRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
     };
   },
 
   toJSON(message: GetLambdaRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     return obj;
   },
@@ -680,6 +738,7 @@ export const GetLambdaRequest = {
     object: I
   ): GetLambdaRequest {
     const message = createBaseGetLambdaRequest();
+    message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     return message;
   },
@@ -857,7 +916,7 @@ export const GetBundleResponse = {
 };
 
 function createBaseExecuteLambdaRequest(): ExecuteLambdaRequest {
-  return { lambda: "", data: "" };
+  return { namespace: "", lambda: "", data: "" };
 }
 
 export const ExecuteLambdaRequest = {
@@ -865,11 +924,14 @@ export const ExecuteLambdaRequest = {
     message: ExecuteLambdaRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.lambda !== "") {
-      writer.uint32(10).string(message.lambda);
+      writer.uint32(18).string(message.lambda);
     }
     if (message.data !== "") {
-      writer.uint32(18).string(message.data);
+      writer.uint32(26).string(message.data);
     }
     return writer;
   },
@@ -885,9 +947,12 @@ export const ExecuteLambdaRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.lambda = reader.string();
+          message.namespace = reader.string();
           break;
         case 2:
+          message.lambda = reader.string();
+          break;
+        case 3:
           message.data = reader.string();
           break;
         default:
@@ -900,6 +965,7 @@ export const ExecuteLambdaRequest = {
 
   fromJSON(object: any): ExecuteLambdaRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       lambda: isSet(object.lambda) ? String(object.lambda) : "",
       data: isSet(object.data) ? String(object.data) : "",
     };
@@ -907,6 +973,7 @@ export const ExecuteLambdaRequest = {
 
   toJSON(message: ExecuteLambdaRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.lambda !== undefined && (obj.lambda = message.lambda);
     message.data !== undefined && (obj.data = message.data);
     return obj;
@@ -916,6 +983,7 @@ export const ExecuteLambdaRequest = {
     object: I
   ): ExecuteLambdaRequest {
     const message = createBaseExecuteLambdaRequest();
+    message.namespace = object.namespace ?? "";
     message.lambda = object.lambda ?? "";
     message.data = object.data ?? "";
     return message;

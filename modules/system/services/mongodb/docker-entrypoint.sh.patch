@@ -1,0 +1,18 @@
+--- docker-entrypoint.sh	2022-07-07 16:57:03.349006878 +0200
++++ docker-entrypoint-patched.sh	2022-07-07 16:58:25.631487693 +0200
+@@ -411,6 +411,15 @@
+ 	unset "${!MONGO_INITDB_@}"
+ fi
+ 
++openssl rand -base64 756 > /etc/mongo-key/mongodb.key
++chmod 400 /etc/mongo-key/mongodb.key
++
++echo 'Initiating replica set'
++"$@" --logpath "/proc/$$/fd/1" --fork
++echo 'rs.initiate({"_id":"rs","members":[{"_id":0,"host":"system_db:27017"}]});' | mongosh -u "root" -p "example"
++"$@" --logpath "/proc/$$/fd/1" --shutdown
++echo 'Done initiating replica set'
++
+ rm -f "$jsonConfigFile" "$tempConfigFile"
+ 
+ exec "$@"

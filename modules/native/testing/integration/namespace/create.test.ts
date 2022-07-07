@@ -12,20 +12,12 @@ beforeAll(async ()=>{
     await connectToMongo()
     await connectToCache()
     await connectToNativeNamespace()
-    try {
-        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
-    } catch (e) {
-        if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
-    }
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
 })
 
 afterEach(async ()=>{
-    try {
-        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
-    } catch (e) {
-        if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
-    }
+    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
     await cacheClient.flushall()
 })
 

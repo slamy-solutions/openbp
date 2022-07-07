@@ -15,6 +15,7 @@ import (
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
 
 	native_lambda_grpc "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_lambda"
+	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_namespace"
 	"github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/services"
 )
 
@@ -35,6 +36,8 @@ func main() {
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
 	SYSTEM_BIGCACHE_URL := getConfigEnv("SYSTEM_BIGCACHE_URL", "redis://system_bigcache")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
+
+	NATIVE_NAMESPACE_URL := getConfigEnv("NATIVE_NAMESPACE_URL", "native_namespace:80")
 
 	ctx := context.Background()
 
@@ -70,13 +73,27 @@ func main() {
 	defer dbClient.Disconnect(ctx)
 	fmt.Println("Initialized DB")
 
+	// Setting up native_namespace connection
+	nativeNamespaceConnection, err := grpc.Dial(
+		NATIVE_NAMESPACE_URL,
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer nativeNamespaceConnection.Close()
+	nativeNamespaceClient := native_namespace_grpc.NewNamespaceServiceClient(nativeNamespaceConnection)
+	fmt.Println("Initialized native_namespace connection")
+
 	// Creating grpc server
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	lambdaManagerServer, err := services.New(ctx, dbClient, SYSTEM_DB_PREFIX, cacheClient, bigCacheClient)
+	lambdaManagerServer, err := services.New(ctx, dbClient, SYSTEM_DB_PREFIX, cacheClient, bigCacheClient, nativeNamespaceClient)
 	if err != nil {
 		panic(err)
 	}
