@@ -121,6 +121,9 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 			if mongo.IsDuplicateKeyError(err) {
 				return nil, status.Error(grpccodes.AlreadyExists, "Lambda with same UUID already exists")
 			}
+			if cmdErr, ok := err.(mongo.CommandError); ok && cmdErr.HasErrorLabel("TransientTransactionError") {
+				return nil, err
+			}
 			return nil, status.Error(grpccodes.Internal, err.Error())
 		}
 
@@ -128,6 +131,9 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 		update := bson.M{"$inc": bson.M{"references": 1}, "$setOnInsert": lambdaMongoBundle}
 		_, err = s.mongoBundleCollection.UpdateOne(sessCtx, filter, update, options.Update().SetUpsert(true))
 		if err != nil {
+			if cmdErr, ok := err.(mongo.CommandError); ok && cmdErr.HasErrorLabel("TransientTransactionError") {
+				return nil, err
+			}
 			return nil, status.Error(grpccodes.Internal, err.Error())
 		}
 
@@ -140,9 +146,18 @@ func (s *LambdaManagerServer) Create(ctx context.Context, in *lambdaGRPC.CreateL
 	}
 	defer session.EndSession(ctx)
 
-	_, err = session.WithTransaction(ctx, insertTransactionCallback)
-	if err != nil {
-		return nil, err
+	retries := 3
+	for {
+		retries -= 1
+		// Retry transaction several times
+		_, err = session.WithTransaction(ctx, insertTransactionCallback)
+		if err != nil {
+			if cmdErr, ok := err.(mongo.CommandError); ok && retries >= 0 && cmdErr.HasErrorLabel("TransientTransactionError") {
+				continue
+			}
+			return nil, err
+		}
+		break
 	}
 
 	lambda := &lambdaGRPC.Lambda{
@@ -171,19 +186,28 @@ func (s *LambdaManagerServer) Delete(ctx context.Context, in *lambdaGRPC.DeleteL
 	deleteTransactionCallback := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		infoDeleteResult, err := s.getInfoCollection(in.Namespace).DeleteOne(sessCtx, bson.M{"uuid": in.Uuid})
 		if err != nil {
+			if cmdErr, ok := err.(mongo.CommandError); ok && cmdErr.HasErrorLabel("TransientTransactionError") {
+				return nil, err
+			}
 			return nil, status.Error(grpccodes.Internal, err.Error())
 		}
 		if infoDeleteResult.DeletedCount == 0 {
 			return nil, nil
 		}
 
-		_, err = s.mongoBundleCollection.UpdateOne(sessCtx, bson.M{"uuid": existingLambda.Bundle}, bson.M{"$dec": bson.M{"references": 1}})
+		_, err = s.mongoBundleCollection.UpdateOne(sessCtx, bson.M{"uuid": existingLambda.Bundle}, bson.M{"$inc": bson.M{"references": -1}})
 		if err != nil {
+			if cmdErr, ok := err.(mongo.CommandError); ok && cmdErr.HasErrorLabel("TransientTransactionError") {
+				return nil, err
+			}
 			return nil, status.Error(grpccodes.Internal, err.Error())
 		}
 
 		_, err = s.mongoBundleCollection.DeleteOne(sessCtx, bson.M{"uuid": existingLambda.Bundle, "references": 0})
 		if err != nil {
+			if cmdErr, ok := err.(mongo.CommandError); ok && cmdErr.HasErrorLabel("TransientTransactionError") {
+				return nil, err
+			}
 			return nil, status.Error(grpccodes.Internal, err.Error())
 		}
 
@@ -196,9 +220,18 @@ func (s *LambdaManagerServer) Delete(ctx context.Context, in *lambdaGRPC.DeleteL
 	}
 	defer session.EndSession(ctx)
 
-	_, err = session.WithTransaction(ctx, deleteTransactionCallback)
-	if err != nil {
-		return nil, err
+	retries := 3
+	for {
+		retries -= 1
+		// Retry transaction several times
+		_, err = session.WithTransaction(ctx, deleteTransactionCallback)
+		if err != nil {
+			if cmdErr, ok := err.(mongo.CommandError); ok && retries >= 0 && cmdErr.HasErrorLabel("TransientTransactionError") {
+				continue
+			}
+			return nil, err
+		}
+		break
 	}
 
 	return &lambdaGRPC.DeleteLambdaResponse{}, status.Error(grpccodes.OK, "")

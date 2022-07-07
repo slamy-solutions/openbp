@@ -46,7 +46,7 @@ afterAll(async ()=>{
 })
 
 /**
- * @group native/lambda/manager/whitebox
+ * @group native/lambda/manager/create/whitebox
  * @group whitebox
  */
 describe("Whitebox", () => {
@@ -144,7 +144,7 @@ describe("Whitebox", () => {
 })
 
 /**
- * @group native/lambda/create/blackbox
+ * @group native/lambda/manager/create/blackbox
  * @group blackbox
  */
 describe("Blackbox", () => {
