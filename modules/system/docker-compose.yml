@@ -1,6 +1,7 @@
 version: "3.4"
 services:
   system_cache:
+    restart: always
     container_name: system_cache
     build:
       context: modules/system/services/redis-cache
@@ -9,6 +10,7 @@ services:
       MAXMEMORY: 512mb
 
   system_bigcache:
+    restart: always
     container_name: system_bigcache
     build:
       context: modules/system/services/redis-bigCache
@@ -17,6 +19,7 @@ services:
       MAXMEMORY: 1024mb
 
   system_db:
+    restart: always
     container_name: system_db
     build:
       context: modules/system/services/mongodb
@@ -26,6 +29,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
 
   system_rabbitmq:
+    restart: always
     container_name: system_rabbitmq
     hostname: rabbitmq
     build:
@@ -33,6 +37,7 @@ services:
       dockerfile: Dockerfile
 
   system_telemetry:
+    restart: always
     container_name: system_telemetry
     image: jaegertracing/opentelemetry-all-in-one:latest
     ports:

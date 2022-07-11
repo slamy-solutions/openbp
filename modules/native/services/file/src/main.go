@@ -41,7 +41,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "namespace", VERSION, "1")
+	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "file", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}

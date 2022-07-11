@@ -1,11 +1,11 @@
 import { randomBytes } from 'crypto'
 import { Status } from '@grpc/grpc-js/build/src/constants'
 
-import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
-import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../system/testing/tools/mongo'
-import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../system/testing/tools/cache'
-import { client as namespaceGrpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
-import { managerClient as lambdaManagerGrpc, connect as connectToNativeLambda, close as closeNativeLambda } from '../../tools/lambda/grpc'
+import { RequestError as GRPCRequestError } from '../../../../../system/libs/ts/grpc'
+import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../../system/testing/tools/mongo'
+import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../../system/testing/tools/cache'
+import { client as namespaceGrpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../../tools/namespace/grpc'
+import { managerClient as lambdaManagerGrpc, connect as connectToNativeLambda, close as closeNativeLambda } from '../../../tools/lambda/grpc'
 
 
 const TEST_NAMESPACE_NAME = "lambdanamespace"

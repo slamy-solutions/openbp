@@ -14,9 +14,9 @@ import (
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/mongodb"
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
 
-	native_lambda_grpc "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_lambda"
-	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_namespace"
-	"github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/services"
+	native_lambda_grpc "github.com/slamy-solutions/open-erp/modules/native/services/lambda/manager/src/grpc/native_lambda"
+	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/lambda/manager/src/grpc/native_namespace"
+	"github.com/slamy-solutions/open-erp/modules/native/services/lambda/manager/src/services"
 )
 
 const (
@@ -42,7 +42,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "namespace", VERSION, "1")
+	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "lambda.manager", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}

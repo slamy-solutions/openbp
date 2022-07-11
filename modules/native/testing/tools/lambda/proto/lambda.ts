@@ -24,6 +24,19 @@ export interface CodeBundle {
   references: number;
 }
 
+/** Structure in wich tasks are getting submited to the AMQP and received by runtime */
+export interface AMQPLambdaTaskRequest {
+  lambda: Lambda | undefined;
+  data: Buffer;
+}
+
+/** Response from the lambda runtime in the amqp */
+export interface AMQPLambdaTaskResponse {
+  statusCode: number;
+  message: string;
+  data: Buffer;
+}
+
 export interface CreateLambdaRequest {
   /** Namespace where to create lambda */
   namespace: string;
@@ -77,8 +90,8 @@ export interface GetLambdaResponse {
 }
 
 export interface GetBundleRequest {
-  /** Unique identifier of the lambda to get. */
-  bundle: string;
+  /** Unique identifier of the bundle to get. */
+  bundle: Buffer;
 }
 
 export interface GetBundleResponse {
@@ -91,14 +104,27 @@ export interface ExecuteLambdaRequest {
   namespace: string;
   /** UUID of the lambda */
   lambda: string;
-  /** JSON data that will be passed to the function */
-  data: string;
+  /** Data that will be passed to the function */
+  data: Buffer;
+  /** Execution timeout in miliseconds */
+  timeout: number;
 }
 
 export interface ExecuteLambdaResponse {
-  /** JSON execution result */
-  result: string;
+  /** Execution result */
+  result: Buffer;
 }
+
+export interface CallLambdaRequest {
+  /** Namespace of the lambda */
+  namespace: string;
+  /** UUID of the lambda */
+  lambda: string;
+  /** Data that will be passed to the function */
+  data: Buffer;
+}
+
+export interface CallLambdaResponse {}
 
 function createBaseLambda(): Lambda {
   return {
@@ -267,6 +293,162 @@ export const CodeBundle = {
     const message = createBaseCodeBundle();
     message.uuid = object.uuid ?? Buffer.alloc(0);
     message.references = object.references ?? 0;
+    return message;
+  },
+};
+
+function createBaseAMQPLambdaTaskRequest(): AMQPLambdaTaskRequest {
+  return { lambda: undefined, data: Buffer.alloc(0) };
+}
+
+export const AMQPLambdaTaskRequest = {
+  encode(
+    message: AMQPLambdaTaskRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.lambda !== undefined) {
+      Lambda.encode(message.lambda, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.data.length !== 0) {
+      writer.uint32(18).bytes(message.data);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): AMQPLambdaTaskRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAMQPLambdaTaskRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.lambda = Lambda.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.data = reader.bytes() as Buffer;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AMQPLambdaTaskRequest {
+    return {
+      lambda: isSet(object.lambda) ? Lambda.fromJSON(object.lambda) : undefined,
+      data: isSet(object.data)
+        ? Buffer.from(bytesFromBase64(object.data))
+        : Buffer.alloc(0),
+    };
+  },
+
+  toJSON(message: AMQPLambdaTaskRequest): unknown {
+    const obj: any = {};
+    message.lambda !== undefined &&
+      (obj.lambda = message.lambda ? Lambda.toJSON(message.lambda) : undefined);
+    message.data !== undefined &&
+      (obj.data = base64FromBytes(
+        message.data !== undefined ? message.data : Buffer.alloc(0)
+      ));
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<AMQPLambdaTaskRequest>, I>>(
+    object: I
+  ): AMQPLambdaTaskRequest {
+    const message = createBaseAMQPLambdaTaskRequest();
+    message.lambda =
+      object.lambda !== undefined && object.lambda !== null
+        ? Lambda.fromPartial(object.lambda)
+        : undefined;
+    message.data = object.data ?? Buffer.alloc(0);
+    return message;
+  },
+};
+
+function createBaseAMQPLambdaTaskResponse(): AMQPLambdaTaskResponse {
+  return { statusCode: 0, message: "", data: Buffer.alloc(0) };
+}
+
+export const AMQPLambdaTaskResponse = {
+  encode(
+    message: AMQPLambdaTaskResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.statusCode !== 0) {
+      writer.uint32(8).uint32(message.statusCode);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    if (message.data.length !== 0) {
+      writer.uint32(26).bytes(message.data);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): AMQPLambdaTaskResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAMQPLambdaTaskResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.statusCode = reader.uint32();
+          break;
+        case 2:
+          message.message = reader.string();
+          break;
+        case 3:
+          message.data = reader.bytes() as Buffer;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AMQPLambdaTaskResponse {
+    return {
+      statusCode: isSet(object.statusCode) ? Number(object.statusCode) : 0,
+      message: isSet(object.message) ? String(object.message) : "",
+      data: isSet(object.data)
+        ? Buffer.from(bytesFromBase64(object.data))
+        : Buffer.alloc(0),
+    };
+  },
+
+  toJSON(message: AMQPLambdaTaskResponse): unknown {
+    const obj: any = {};
+    message.statusCode !== undefined &&
+      (obj.statusCode = Math.round(message.statusCode));
+    message.message !== undefined && (obj.message = message.message);
+    message.data !== undefined &&
+      (obj.data = base64FromBytes(
+        message.data !== undefined ? message.data : Buffer.alloc(0)
+      ));
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<AMQPLambdaTaskResponse>, I>>(
+    object: I
+  ): AMQPLambdaTaskResponse {
+    const message = createBaseAMQPLambdaTaskResponse();
+    message.statusCode = object.statusCode ?? 0;
+    message.message = object.message ?? "";
+    message.data = object.data ?? Buffer.alloc(0);
     return message;
   },
 };
@@ -803,7 +985,7 @@ export const GetLambdaResponse = {
 };
 
 function createBaseGetBundleRequest(): GetBundleRequest {
-  return { bundle: "" };
+  return { bundle: Buffer.alloc(0) };
 }
 
 export const GetBundleRequest = {
@@ -811,8 +993,8 @@ export const GetBundleRequest = {
     message: GetBundleRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.bundle !== "") {
-      writer.uint32(10).string(message.bundle);
+    if (message.bundle.length !== 0) {
+      writer.uint32(10).bytes(message.bundle);
     }
     return writer;
   },
@@ -825,7 +1007,7 @@ export const GetBundleRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.bundle = reader.string();
+          message.bundle = reader.bytes() as Buffer;
           break;
         default:
           reader.skipType(tag & 7);
@@ -837,13 +1019,18 @@ export const GetBundleRequest = {
 
   fromJSON(object: any): GetBundleRequest {
     return {
-      bundle: isSet(object.bundle) ? String(object.bundle) : "",
+      bundle: isSet(object.bundle)
+        ? Buffer.from(bytesFromBase64(object.bundle))
+        : Buffer.alloc(0),
     };
   },
 
   toJSON(message: GetBundleRequest): unknown {
     const obj: any = {};
-    message.bundle !== undefined && (obj.bundle = message.bundle);
+    message.bundle !== undefined &&
+      (obj.bundle = base64FromBytes(
+        message.bundle !== undefined ? message.bundle : Buffer.alloc(0)
+      ));
     return obj;
   },
 
@@ -851,7 +1038,7 @@ export const GetBundleRequest = {
     object: I
   ): GetBundleRequest {
     const message = createBaseGetBundleRequest();
-    message.bundle = object.bundle ?? "";
+    message.bundle = object.bundle ?? Buffer.alloc(0);
     return message;
   },
 };
@@ -916,7 +1103,7 @@ export const GetBundleResponse = {
 };
 
 function createBaseExecuteLambdaRequest(): ExecuteLambdaRequest {
-  return { namespace: "", lambda: "", data: "" };
+  return { namespace: "", lambda: "", data: Buffer.alloc(0), timeout: 0 };
 }
 
 export const ExecuteLambdaRequest = {
@@ -930,8 +1117,11 @@ export const ExecuteLambdaRequest = {
     if (message.lambda !== "") {
       writer.uint32(18).string(message.lambda);
     }
-    if (message.data !== "") {
-      writer.uint32(26).string(message.data);
+    if (message.data.length !== 0) {
+      writer.uint32(26).bytes(message.data);
+    }
+    if (message.timeout !== 0) {
+      writer.uint32(32).uint64(message.timeout);
     }
     return writer;
   },
@@ -953,7 +1143,10 @@ export const ExecuteLambdaRequest = {
           message.lambda = reader.string();
           break;
         case 3:
-          message.data = reader.string();
+          message.data = reader.bytes() as Buffer;
+          break;
+        case 4:
+          message.timeout = longToNumber(reader.uint64() as Long);
           break;
         default:
           reader.skipType(tag & 7);
@@ -967,7 +1160,10 @@ export const ExecuteLambdaRequest = {
     return {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       lambda: isSet(object.lambda) ? String(object.lambda) : "",
-      data: isSet(object.data) ? String(object.data) : "",
+      data: isSet(object.data)
+        ? Buffer.from(bytesFromBase64(object.data))
+        : Buffer.alloc(0),
+      timeout: isSet(object.timeout) ? Number(object.timeout) : 0,
     };
   },
 
@@ -975,7 +1171,12 @@ export const ExecuteLambdaRequest = {
     const obj: any = {};
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.lambda !== undefined && (obj.lambda = message.lambda);
-    message.data !== undefined && (obj.data = message.data);
+    message.data !== undefined &&
+      (obj.data = base64FromBytes(
+        message.data !== undefined ? message.data : Buffer.alloc(0)
+      ));
+    message.timeout !== undefined &&
+      (obj.timeout = Math.round(message.timeout));
     return obj;
   },
 
@@ -985,13 +1186,14 @@ export const ExecuteLambdaRequest = {
     const message = createBaseExecuteLambdaRequest();
     message.namespace = object.namespace ?? "";
     message.lambda = object.lambda ?? "";
-    message.data = object.data ?? "";
+    message.data = object.data ?? Buffer.alloc(0);
+    message.timeout = object.timeout ?? 0;
     return message;
   },
 };
 
 function createBaseExecuteLambdaResponse(): ExecuteLambdaResponse {
-  return { result: "" };
+  return { result: Buffer.alloc(0) };
 }
 
 export const ExecuteLambdaResponse = {
@@ -999,8 +1201,8 @@ export const ExecuteLambdaResponse = {
     message: ExecuteLambdaResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.result !== "") {
-      writer.uint32(10).string(message.result);
+    if (message.result.length !== 0) {
+      writer.uint32(10).bytes(message.result);
     }
     return writer;
   },
@@ -1016,7 +1218,7 @@ export const ExecuteLambdaResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.result = reader.string();
+          message.result = reader.bytes() as Buffer;
           break;
         default:
           reader.skipType(tag & 7);
@@ -1028,13 +1230,18 @@ export const ExecuteLambdaResponse = {
 
   fromJSON(object: any): ExecuteLambdaResponse {
     return {
-      result: isSet(object.result) ? String(object.result) : "",
+      result: isSet(object.result)
+        ? Buffer.from(bytesFromBase64(object.result))
+        : Buffer.alloc(0),
     };
   },
 
   toJSON(message: ExecuteLambdaResponse): unknown {
     const obj: any = {};
-    message.result !== undefined && (obj.result = message.result);
+    message.result !== undefined &&
+      (obj.result = base64FromBytes(
+        message.result !== undefined ? message.result : Buffer.alloc(0)
+      ));
     return obj;
   },
 
@@ -1042,7 +1249,128 @@ export const ExecuteLambdaResponse = {
     object: I
   ): ExecuteLambdaResponse {
     const message = createBaseExecuteLambdaResponse();
-    message.result = object.result ?? "";
+    message.result = object.result ?? Buffer.alloc(0);
+    return message;
+  },
+};
+
+function createBaseCallLambdaRequest(): CallLambdaRequest {
+  return { namespace: "", lambda: "", data: Buffer.alloc(0) };
+}
+
+export const CallLambdaRequest = {
+  encode(
+    message: CallLambdaRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
+    if (message.lambda !== "") {
+      writer.uint32(18).string(message.lambda);
+    }
+    if (message.data.length !== 0) {
+      writer.uint32(26).bytes(message.data);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CallLambdaRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCallLambdaRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
+          message.lambda = reader.string();
+          break;
+        case 3:
+          message.data = reader.bytes() as Buffer;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CallLambdaRequest {
+    return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
+      lambda: isSet(object.lambda) ? String(object.lambda) : "",
+      data: isSet(object.data)
+        ? Buffer.from(bytesFromBase64(object.data))
+        : Buffer.alloc(0),
+    };
+  },
+
+  toJSON(message: CallLambdaRequest): unknown {
+    const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
+    message.lambda !== undefined && (obj.lambda = message.lambda);
+    message.data !== undefined &&
+      (obj.data = base64FromBytes(
+        message.data !== undefined ? message.data : Buffer.alloc(0)
+      ));
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CallLambdaRequest>, I>>(
+    object: I
+  ): CallLambdaRequest {
+    const message = createBaseCallLambdaRequest();
+    message.namespace = object.namespace ?? "";
+    message.lambda = object.lambda ?? "";
+    message.data = object.data ?? Buffer.alloc(0);
+    return message;
+  },
+};
+
+function createBaseCallLambdaResponse(): CallLambdaResponse {
+  return {};
+}
+
+export const CallLambdaResponse = {
+  encode(
+    _: CallLambdaResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CallLambdaResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCallLambdaResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CallLambdaResponse {
+    return {};
+  },
+
+  toJSON(_: CallLambdaResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CallLambdaResponse>, I>>(
+    _: I
+  ): CallLambdaResponse {
+    const message = createBaseCallLambdaResponse();
     return message;
   },
 };
@@ -1134,6 +1462,8 @@ export class LambdaManagerServiceClientImpl implements LambdaManagerService {
 
 /** Provides API to execute lambda functions */
 export interface LambdaEntrypointService {
+  /** Runs lambda and doesnt wait for response. Call will be resheduled on internal error, also it can be resheduled by lambda code. */
+  Call(request: CallLambdaRequest): Promise<CallLambdaResponse>;
   /** Runs function and returns its response. Returns error if something went wrong during the execution. */
   Execute(request: ExecuteLambdaRequest): Promise<ExecuteLambdaResponse>;
 }
@@ -1144,8 +1474,21 @@ export class LambdaEntrypointServiceClientImpl
   private readonly rpc: Rpc;
   constructor(rpc: Rpc) {
     this.rpc = rpc;
+    this.Call = this.Call.bind(this);
     this.Execute = this.Execute.bind(this);
   }
+  Call(request: CallLambdaRequest): Promise<CallLambdaResponse> {
+    const data = CallLambdaRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "native_lambda.LambdaEntrypointService",
+      "Call",
+      data
+    );
+    return promise.then((data) =>
+      CallLambdaResponse.decode(new _m0.Reader(data))
+    );
+  }
+
   Execute(request: ExecuteLambdaRequest): Promise<ExecuteLambdaResponse> {
     const data = ExecuteLambdaRequest.encode(request).finish();
     const promise = this.rpc.request(
@@ -1227,6 +1570,13 @@ export type Exact<P, I extends P> = P extends Builtin
         Exclude<keyof I, KeysOfUnion<P>>,
         never
       >;
+
+function longToNumber(long: Long): number {
+  if (long.gt(Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

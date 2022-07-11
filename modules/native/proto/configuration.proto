@@ -23,3 +23,8 @@ message Installation {
     // Installed version
     string version = 3;
 }
+
+service ConfigurationService {
+    // Creates configuration
+    rpc Publish()
+}

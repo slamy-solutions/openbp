@@ -38,7 +38,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "namespace", VERSION, "1")
+	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "lambda.entrypoint", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +92,7 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	lambdaManagerServer := services.NewLambdaEntrypointServer(nativeLambdaManagerClient, amqpRequestChannel, emmiter, responseBindKey)
+	lambdaManagerServer, err := services.NewLambdaEntrypointServer(nativeLambdaManagerClient, amqpRequestChannel, emmiter, responseBindKey)
 	if err != nil {
 		panic(err)
 	}

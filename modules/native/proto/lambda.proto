@@ -89,7 +89,7 @@ message GetLambdaResponse {
 
 message GetBundleRequest {
     // Unique identifier of the bundle to get.
-    string bundle = 1;
+    bytes bundle = 1;
 }
 message GetBundleResponse {
     // Bundle data

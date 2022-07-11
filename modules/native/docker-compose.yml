@@ -22,7 +22,7 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: modules/native/services/lambda-manager/Dockerfile
+      dockerfile: modules/native/services/lambda/manager/Dockerfile
     environment:
       SYSTEM_MONGODB_URL: mongodb://root:example@system_db
       OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"

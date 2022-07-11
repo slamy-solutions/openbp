@@ -28,13 +28,18 @@ type LambdaEntrypointServer struct {
 
 const TASKS_EXCHANGE = "native_lambda_entrypoint_input"
 
-func NewLambdaEntrypointServer(lambdaManagerClient lambdaGRPC.LambdaManagerServiceClient, amqpChanel *amqp.Channel, responseEmitter *emitter.Emitter, replyQueue string) *LambdaEntrypointServer {
+func NewLambdaEntrypointServer(lambdaManagerClient lambdaGRPC.LambdaManagerServiceClient, amqpChanel *amqp.Channel, responseEmitter *emitter.Emitter, replyQueue string) (*LambdaEntrypointServer, error) {
+	err := amqpChanel.ExchangeDeclare(TASKS_EXCHANGE, "direct", true, false, false, false, amqp.Table{})
+	if err != nil {
+		return nil, err
+	}
+
 	return &LambdaEntrypointServer{
 		lambdaManagerClient: lambdaManagerClient,
 		amqpChanel:          amqpChanel,
 		responseEmitter:     responseEmitter,
 		replyQueue:          replyQueue,
-	}
+	}, nil
 }
 
 func (s *LambdaEntrypointServer) Call(ctx context.Context, in *lambdaGRPC.CallLambdaRequest) (*lambdaGRPC.CallLambdaResponse, error) {

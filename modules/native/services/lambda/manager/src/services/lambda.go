@@ -13,8 +13,8 @@ import (
 
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
 
-	lambdaGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_lambda"
-	namespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda-manager/src/grpc/native_namespace"
+	lambdaGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda/manager/src/grpc/native_lambda"
+	namespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda/manager/src/grpc/native_namespace"
 )
 
 type LambdaManagerServer struct {
