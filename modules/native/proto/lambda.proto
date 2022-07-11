@@ -25,6 +25,18 @@ message CodeBundle {
 }
 
 
+// Structure in wich tasks are getting submited to the AMQP and received by runtime
+message AMQPLambdaTaskRequest {
+    Lambda lambda = 1;
+    bytes data = 2;
+}
+// Response from the lambda runtime in the amqp
+message AMQPLambdaTaskResponse {
+    uint32 statusCode = 1;
+    string message = 2;
+    bytes data = 3;
+}
+
 message CreateLambdaRequest {
     // Namespace where to create lambda
     string namespace = 1;
@@ -76,7 +88,7 @@ message GetLambdaResponse {
 }
 
 message GetBundleRequest {
-    // Unique identifier of the lambda to get.
+    // Unique identifier of the bundle to get.
     string bundle = 1;
 }
 message GetBundleResponse {
@@ -89,16 +101,26 @@ message ExecuteLambdaRequest {
     string namespace = 1;
     // UUID of the lambda
     string lambda = 2;
-    // JSON data that will be passed to the function
-    string data = 3;
+    // Data that will be passed to the function
+    bytes data = 3;
     
     // Execution timeout in miliseconds
-    //uint64 timeout = 2;
+    uint64 timeout = 4;
 }
 message ExecuteLambdaResponse {
-    // JSON execution result
-    string result = 1;
+    // Execution result
+    bytes result = 1;
 }
+
+message CallLambdaRequest {
+    // Namespace of the lambda
+    string namespace = 1;
+    // UUID of the lambda
+    string lambda = 2;
+    // Data that will be passed to the function
+    bytes data = 3;
+}
+message CallLambdaResponse {}
 
 // Creates/Deletes/Updates/Agregates information about lambdas
 service LambdaManagerService {
@@ -116,6 +138,8 @@ service LambdaManagerService {
 
 // Provides API to execute lambda functions
 service LambdaEntrypointService {
+    // Runs lambda and doesnt wait for response. Call will be resheduled on internal error, also it can be resheduled by lambda code.
+    rpc Call(CallLambdaRequest) returns (CallLambdaResponse);
     // Runs function and returns its response. Returns error if something went wrong during the execution.
     rpc Execute(ExecuteLambdaRequest) returns (ExecuteLambdaResponse);
 }

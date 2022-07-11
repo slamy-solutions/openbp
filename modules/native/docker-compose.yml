@@ -32,6 +32,20 @@ services:
       - system_cache
       - system_telemetry
       - system_rabbitmq
+
+  native_lambda_entrypoint:
+    container_name: native_lambda_entrypoint
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/lambda/entrypoint/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_lambda_entrypoint"
+    depends_on:
+      - system_telemetry
+      - system_rabbitmq
+      - native_lambda_manager
   
   native_file:
     container_name: native_file
