@@ -1,0 +1,207 @@
+syntax = "proto3";
+
+package native_iam;
+
+option go_package = "slamy/openCRM/native/iam;native_iam_grpc";
+
+message User {
+    // Unique user identifier
+    string uuid = 1;
+    // Public user name
+    string name = 2;
+    // User avatar image URL
+    string avatar = 3;
+
+    // Security policies assigned to the user
+    repeated string policies = 4;
+}
+
+message Policy {
+    // Namespace where policy was created. Namespace can be empty for global policy.
+    string namespace = 1;
+    // Unique identifier of the policy in the namespace
+    string uuid = 2;
+    // Public name
+    string name = 3;
+    // List of privileges that policy applies
+    repeated string privileges = 4;
+}
+
+// Configuration of the IAM
+message Configuration {
+    // Configuration of specific OAuth2 provider
+    message OAuth2 {
+        // Enable or disable this provider of OAuth2 
+        bool enabled = 1;
+        // OAuth2 client ID
+        string clientId = 2;
+        // OAuth2 client secret
+        string clientSecret = 3;
+        // Allow registration using this OAuth2 provider
+        bool allowRegistration = 4;
+    }
+
+    message PasswordAuth {
+        // Allow password authorization or not
+        bool enabled = 1;
+        // Minimal password length
+        //uint32 minPasswordLength = 2;
+        //  
+        //bool lowercase = 3;
+        //bool uppercase = 4;
+        //bool digits = 5;
+        //bool specialCharacters = 6;
+        //uint32 passwordExpiration = 7;
+         
+    }
+
+    // Time to live of access token in milliseconds
+    uint32 accessTokenTTL = 1;
+    // Time to live ot refresh token in milliseconds
+    uint32 refreshTokenTTL = 2;
+
+    // Password authentication configuration
+    PasswordAuth passwordAuth = 10;
+    // Google oauth2 configuration
+    OAuth2 googleOAuth2 = 11;
+    // Facebook oauth2 configuration
+    OAuth2 facebookOAuth2 = 12;
+    // Github oauth2 configuration
+    OAuth2 githubOAuth2 = 13;
+    // Github oauth2 configuration
+    OAuth2 gitlabOAuth2 = 14;
+}
+
+message GetConfigRequest { }
+message GetConfigresponse {
+    // Current configuration
+    Configuration configuration = 1;
+}
+
+message SetConfigRequest {
+    // Configuration to set
+    Configuration configuration = 1;
+}
+message SetConfigResponse {}
+
+// Provides general configuration API for IAM
+service IAMConfigService {
+    rpc Get(GetConfigRequest) returns (GetConfigresponse);
+    rpc Set(SetConfigRequest) returns (SetConfigResponse);
+}
+
+
+
+message GetUserRequest {
+    // User unique identifier
+    string uuid = 1;
+}
+message GetUserResponse {
+    // User information
+    User user = 1;
+}
+
+// Provides API to manage IAM users 
+service IAMUserService {
+    // Get user 
+    rpc Get(GetUserRequest) returns (GetUserResponse);
+}
+
+message AuthenticationResponse {
+    message TwoFactorAuthorization {
+        // 2FA method
+        string method = 1;
+        // Token used for 2FA
+        string token = 2;
+    }
+    message AuthData {
+        string accessToken = 1;
+        string refreshToken = 2;
+    }
+    
+    oneof result {
+        // 2FA information if it ise required
+        TwoFactorAuthorization twoFactorAuth = 1;
+        // Authorization data if 2FA is not required
+        AuthData authData = 2;
+    }
+}
+
+message LoginWithPasswordRequest {
+    // User email to autheticate
+    string email = 1;
+    // User password
+    string password = 2;
+}
+message LoginWithPasswordResponse {
+    AuthenticationResponse authData = 1;
+}
+
+message LoginWithOAuth2Request {
+    // OAuth2 provider
+    string provider = 1;
+    // Token issued by OAuth2 provider``
+    string token = 2;
+}
+message LoginWithOAuth2Response {
+    AuthenticationResponse authData = 1;
+}
+
+
+message CompleteTwoFactorTOTPRequest {
+    string token = 1;
+    string totpKey = 2;
+}
+message CompleteTwoFactorTOTPResponse {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+
+message RefreshTokenRequest {
+    string refreshToken = 1;
+}
+message RefreshTokenResponse {
+    // New access token
+    string accessToken = 1;
+}
+
+message InvalidateTokenRequest {
+    // Refresh or access token to invalidate. Both token will be invalidated
+    string token = 1;
+}
+message InvalidateTokenResponse {}
+
+message VerifyAccessRequest {
+    message VerifyPolicy {
+        // Namespace where to verify. Namespace can be empty for global policy.
+        string namespace = 1;
+        // List of privileges to verify
+        repeated string privileges = 4;
+    }
+
+    // Token to verify
+    string accessToken = 1;
+    // What to verify
+    string policies = 2;
+}
+message VerifyAccessResponse {
+    bool hasAccess = 1;
+}
+
+// Provides API to verify identity and determine access rights of the user or application.
+service IAMAuthService {
+    // Create access token and refresh token using password. Creates user if not exist
+    rpc LoginWithPassword(LoginWithPasswordRequest) returns (LoginWithPasswordResponse);
+    // Create access token and refresh token using thrid party OAuth2 provider. Creates user if not exist
+    rpc LoginWithOAuth2(LoginWithOAuth2Request) returns (LoginWithOAuth2Response);
+    // Create access token and refresh token using SSO (Single Sign On) 
+    // rpc LoginWithSSO() returns ();
+    // Completes started two factor TOTP (Time-based one-time password) authetication and returns actual access asn refresh tokens
+    rpc CompleteTwoFactorTOTP(CompleteTwoFactorTOTPRequest) returns (CompleteTwoFactorTOTPResponse);
+    // Creates new access token using refresh token
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+    // Invalidates pare of access token and refresh tokens
+    rpc InvalidateToken(InvalidateTokenRequest) returns (InvalidateTokenResponse);
+    // Verifies if token has access to provided resources
+    rpc VerifyAccess(VerifyAccessRequest) returns (VerifyAccessResponse);
+}
