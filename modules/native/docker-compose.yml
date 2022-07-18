@@ -46,6 +46,22 @@ services:
       - system_telemetry
       - system_rabbitmq
       - native_lambda_manager
+
+  native_keyvaluestorage:
+    container_name: native_keyvaluestorage
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/keyvaluestorage/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_keyvaluestorage"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - system_rabbitmq
+      - native_namespace
   
   native_file:
     container_name: native_file

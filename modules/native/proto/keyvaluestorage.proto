@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package native_keyvalueprstorage;
+
+option go_package = "slamy/openCRM/native/native_keyvaluestorage;native_native_keyvaluestorage_grpc";
+
+message SetRequest {
+    // Namespace where to set key. Use empty for global key
+    string namespace = 1;
+    // Unique key that will be associated with value
+    string key = 2;
+    // Value to store. Dont use big value (maximum size is 15 mb). Values wich are more than 1mb in size will not be cached.
+    bytes value = 3;
+}
+message SetResponse {}
+
+message GetRequest {
+    // Namespace where to get value. Use empty for global value.
+    string namespace = 1;
+    // Key associated with value
+    string key = 2;
+    // Use cache or not. Cache may not be valid at very rare conditions (multiple write and read at same time), but will be invalidated after small period of time.
+    bool useCache = 3;
+}
+message GetResponse {
+    // Value that was stored under specified namespace and key
+    bytes value = 1;
+}
+
+// Provides API for persistent key-value storage. Unlike system redis service it guaratees, that data will not be lost. Uses system_db to store data. Value+key size is limited to 15mb. 
+service KeyValueStorageService {
+    // Sets value under the key in specified namespace.
+    rpc Set(SetRequest) returns (SetResponse);
+    // Gets value for specified key.
+    rpc Get(GetRequest) returns (GetResponse);
+}

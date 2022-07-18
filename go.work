@@ -2,8 +2,10 @@ go 1.18
 
 use (
 	./modules/native/services/file
-	./modules/native/services/lambda/manager
+	./modules/native/services/iam/config
+	./modules/native/services/keyvaluestorage
 	./modules/native/services/lambda/entrypoint
+	./modules/native/services/lambda/manager
 	./modules/native/services/namespace
 	./modules/system/libs/go/cache
 	./modules/system/libs/go/mongodb
