@@ -27,8 +27,8 @@ type KeyValueStorageServer struct {
 }
 
 type keyInMongo struct {
-	key   string `bson:"key"`
-	value []byte `bson:"sha512hash"`
+	Key   string `bson:"key"`
+	Value []byte `bson:"value"`
 }
 
 const (
@@ -64,12 +64,19 @@ func (s *KeyValueStorageServer) Set(ctx context.Context, in *keyValueStorageGRPC
 		return nil, status.Error(grpccodes.InvalidArgument, "Size of key+value is too big. It must be less than 15 megabytes.")
 	}
 
+	if in.Namespace != "" {
+		r, err := s.namespaceClient.Exists(ctx, &namespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, err.Error())
+		}
+		if !r.Exist {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+		}
+	}
+
 	// TODO: Index key field
 	collection := getCollectionByNamespace(s, in.Namespace)
-	updateData := keyInMongo{
-		key:   in.Key,
-		value: in.Value,
-	}
+	updateData := bson.M{"$setOnInsert": bson.M{"key": in.Key}, "$set": bson.M{"value": in.Value}}
 	_, err := collection.UpdateOne(ctx, bson.M{"key": in.Key}, updateData, options.Update().SetUpsert(true))
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, err.Error())
@@ -92,7 +99,7 @@ func (s *KeyValueStorageServer) Get(ctx context.Context, in *keyValueStorageGRPC
 
 	var entry keyInMongo
 	collection := getCollectionByNamespace(s, in.Namespace)
-	err := collection.FindOne(ctx, bson.M{"key": in.Key}).Decode(entry)
+	err := collection.FindOne(ctx, bson.M{"key": in.Key}).Decode(&entry)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "Value for specified namespaces and key wasnt founded")
@@ -101,8 +108,8 @@ func (s *KeyValueStorageServer) Get(ctx context.Context, in *keyValueStorageGRPC
 	}
 
 	if in.UseCache {
-		s.cacheClient.Set(ctx, cacheKey, entry.value, CACHE_KEY_EXPIRATION_TIME)
+		s.cacheClient.Set(ctx, cacheKey, entry.Value, CACHE_KEY_EXPIRATION_TIME)
 	}
 
-	return &keyValueStorageGRPC.GetResponse{Value: entry.value}, status.Error(grpccodes.OK, "")
+	return &keyValueStorageGRPC.GetResponse{Value: entry.Value}, status.Error(grpccodes.OK, "")
 }

@@ -17,7 +17,7 @@ RUN cd /src && \
 RUN cd /src/modules/system/libs/go/cache && go mod download
 RUN cd /src/modules/system/libs/go/mongodb && go mod download
 RUN cd /src/modules/system/libs/go/telemetry && go mod download
-RUN cd /src/modules/native/services/file && go mod download
+RUN cd /src/modules/native/services/keyvaluestorage && go mod download
 
 # Code
 WORKDIR /src/modules/native/services/keyvaluestorage/src

@@ -82,6 +82,8 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.MaxRecvMsgSize(1024*1024*16), // 16 megabytes
+		grpc.MaxSendMsgSize(1024*1024*16), // 16 megabytes
 	)
 
 	storageServer := services.NewKeyValueStorageServer(SYSTEM_DB_PREFIX, dbClient, cacheClient, nativeNamespaceClient)
