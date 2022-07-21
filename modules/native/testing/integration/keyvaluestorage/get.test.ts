@@ -42,13 +42,109 @@ afterAll(async ()=>{
  * @group whitebox
  */
 describe("Whitebox", () => {
-    test("Creates cache entry if cache enabled", async () => {fail()})
+    test("Creates cache entry if cache enabled", async () => {
+        const key = randomBytes(32).toString("hex")
+        const value = randomBytes(32)
 
-    test("Doesnt create cache entry if cache disabled", async () => {fail()})
+        const cacheKey = `native_keyvaluestorage_key_${TEST_NAMESPACE_NAME}_${key}`
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            value
+        })
 
-    test("Gets from cache if cache enabled", async () => {fail()})
+        let hasKey = await cacheClient.exists(cacheKey)
+        expect(hasKey).toBe(0)
 
-    test("Gets from DB if cache disabled", async () => {fail()})
+        await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            useCache: true
+        })
+
+        hasKey = await cacheClient.exists(cacheKey)
+        expect(hasKey).toBe(1)
+    })
+
+    test("Doesnt create cache entry if cache disabled", async () => {
+        const key = randomBytes(32).toString("hex")
+        const value = randomBytes(32)
+
+        const cacheKey = `native_keyvaluestorage_key_${TEST_NAMESPACE_NAME}_${key}`
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            value
+        })
+
+        let hasKey = await cacheClient.exists(cacheKey)
+        expect(hasKey).toBe(0)
+
+        await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            useCache: false
+        })
+
+        hasKey = await cacheClient.exists(cacheKey)
+        expect(hasKey).toBe(0)
+    })
+
+    test("Gets from cache if cache enabled", async () => {
+        const key = randomBytes(32).toString("hex")
+        const value = randomBytes(32)
+
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            value
+        })
+
+        await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            useCache: true
+        })
+
+        const updateResult = await mongoClient.db(DB_NAME).collection("native_keyvaluestorage").updateOne({ key }, { "$set": {value: Buffer.from("123")} })
+        expect(updateResult.modifiedCount).toBe(1)
+
+        const response = await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            useCache: true
+        })
+
+        expect(response.value).toStrictEqual(value)
+    })
+
+    test("Gets from DB if cache disabled", async () => {
+        const key = randomBytes(32).toString("hex")
+        const value = randomBytes(32)
+
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            value
+        })
+
+        await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            useCache: true
+        })
+
+        const updateResult = await mongoClient.db(DB_NAME).collection("native_keyvaluestorage").updateOne({ key }, { "$set": {value: Buffer.from("123")} })
+        expect(updateResult.modifiedCount).toBe(1)
+
+        const response = await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key,
+            useCache: false
+        })
+
+        expect(response.value).toStrictEqual(Buffer.from("123"))
+    })
 })
 
 /**
@@ -56,7 +152,80 @@ describe("Whitebox", () => {
  * @group blackbox
  */
  describe("Blackbox", () => {
-    test("Fails with NOT_FOUND error if key doesnt exist", async () => {fail()})
+    test("Fails with NOT_FOUND error if key doesnt exist", async () => {
+        try {
+            await keyvaluestorageGrpc.Get({
+                namespace: TEST_NAMESPACE_NAME,
+                key: "123lala",
+                useCache: false
+            })
+            fail()
+        } catch (e) {
+            expect((e as GRPCRequestError)?.code).toBe(Status.NOT_FOUND)
+        }
+    })
 
-    test("Returns value for specified key", async () => {fail()})
+    test("Returns value for specified key. Cache disabled.", async () => {
+        const key1 = randomBytes(32).toString("hex")
+        const value1 = randomBytes(32)
+        const key2 = randomBytes(32).toString("hex")
+        const value2 = randomBytes(32)
+
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key1,
+            value: value1
+        })
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key2,
+            value: value2
+        })
+
+        const r1 = await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key1,
+            useCache: false
+        })
+        expect(r1.value).toStrictEqual(value1)
+
+        const r2 = await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key2,
+            useCache: false
+        })
+        expect(r2.value).toStrictEqual(value2)
+    })
+
+    test("Returns value for specified key. Cache enabled.", async () => {
+        const key1 = randomBytes(32).toString("hex")
+        const value1 = randomBytes(32)
+        const key2 = randomBytes(32).toString("hex")
+        const value2 = randomBytes(32)
+
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key1,
+            value: value1
+        })
+        await keyvaluestorageGrpc.Set({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key2,
+            value: value2
+        })
+
+        const r1 = await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key1,
+            useCache: true
+        })
+        expect(r1.value).toStrictEqual(value1)
+
+        const r2 = await keyvaluestorageGrpc.Get({
+            namespace: TEST_NAMESPACE_NAME,
+            key: key2,
+            useCache: true
+        })
+        expect(r2.value).toStrictEqual(value2)
+    })
 })
