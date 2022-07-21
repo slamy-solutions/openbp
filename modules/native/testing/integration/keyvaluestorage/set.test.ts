@@ -38,7 +38,7 @@ afterAll(async ()=>{
 })
 
 /**
- * @group native/file/set/keyvaluestorage/whitebox
+ * @group native/keyvaluestorage/set/whitebox
  * @group whitebox
  */
 describe("Whitebox", () => {
@@ -89,7 +89,7 @@ describe("Whitebox", () => {
 })
 
 /**
- * @group native/file/set/keyvaluestorage/blackbox
+ * @group native/keyvaluestorage/set/blackbox
  * @group blackbox
  */
 describe("Blackbox", () => {
