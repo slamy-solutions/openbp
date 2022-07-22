@@ -10,7 +10,7 @@ import (
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
 	grpccodes "google.golang.org/grpc/codes"
 
-	iamGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/grpc/native_iam"
+	iamGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/grpc/native_iam_configuration"
 	keyValueStorageGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
 )
 

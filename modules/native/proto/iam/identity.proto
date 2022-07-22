@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package native_iam_identity;
+
+option go_package = "slamy/openCRM/native/iam/identity;native_iam_identity_grpc";
+
+message Identity {
+    // Unique identity identifier
+    string uuid = 1;
+    // Public identity name
+    string name = 2;
+    // If identity is not active, it will not be able to login and perform any actions.
+    bool active = 3;
+
+    // Security policies assigned to the identity
+    repeated string policies = 4;
+}
+
+message CreateIdentityRequest {
+    // Public name for newly created identity. It may not be unique - this is just human-readable name.
+    string name = 1;
+    // Should the identity be active on the start or not
+    bool initiallyActive = 2;
+}
+message CreateIdentityResponse {
+    // Created identity
+    Identity identity = 1;
+}
+
+message GetIdentityRequest {
+    // Identity unique identifier
+    string uuid = 1;
+}
+message GetIdentityResponse {
+    // Identity information
+    Identity identity = 1;
+}
+
+message AddPolicyRequest {
+    // Identity UUID to add policy
+    string identity = 1;
+    // Policy UUID to add
+    string policy = 2;
+}
+message AddPolicyResponse {}
+
+message RemovePolicyRequest {
+    // Identity UUID to remove policy
+    string identity = 1;
+    // Policy UUID to remove
+    string policy = 2;
+}
+message RemovePolicyResponse {}
+
+message SetIdentityActiveRequest {
+    // Identity UUID
+    string identity = 1;
+    // Set active or not
+    bool active = 2;
+}
+message SetIdentityActiveResponse {}
+
+// Provides API to manage IAM identities 
+service IAMIdentityService {
+    // Create new identity
+    rpc Create(CreateIdentityRequest) returns (CreateIdentityResponse);
+    // Get identity 
+    rpc Get(GetIdentityRequest) returns (GetIdentityResponse);
+
+    // Add policy to the identity. If policy was already added - does nothing.
+    rpc AddPolicy(AddPolicyRequest) returns (AddPolicyResponse);
+    // Removes policy from the identity. If policy was already removed - does nothing.
+    rpc RemovePolicy(RemovePolicyRequest) returns (RemovePolicyResponse);
+
+    // Set identity active or not.
+    rpc SetActive(SetIdentityActiveRequest) returns (SetIdentityActiveResponse);
+}

@@ -29,7 +29,13 @@ mkdir -p ./keyvaluestorage/src/grpc/native_keyvaluestorage
 protoc --go_out=./keyvaluestorage/src/grpc/native_keyvaluestorage --go_opt=paths=source_relative --go-grpc_out=./keyvaluestorage/src/grpc/native_keyvaluestorage --go-grpc_opt=paths=source_relative -I ../proto keyvaluestorage.proto
 
 #iam-config
-mkdir -p ./iam/config/src/grpc/native_iam
-protoc --go_out=./iam/config/src/grpc/native_iam --go_opt=paths=source_relative --go-grpc_out=./iam/config/src/grpc/native_iam --go-grpc_opt=paths=source_relative -I ../proto iam.proto
+mkdir -p ./iam/config/src/grpc/native_iam_configuration
+protoc --go_out=./iam/config/src/grpc/native_iam_configuration --go_opt=paths=source_relative --go-grpc_out=./iam/config/src/grpc/native_iam_configuration --go-grpc_opt=paths=source_relative -I ../proto/iam configuration.proto
 mkdir -p ./iam/config/src/grpc/native_keyvaluestorage
 protoc --go_out=./iam/config/src/grpc/native_keyvaluestorage --go_opt=paths=source_relative --go-grpc_out=./iam/config/src/grpc/native_keyvaluestorage --go-grpc_opt=paths=source_relative -I ../proto keyvaluestorage.proto
+
+#iam-policy
+mkdir -p ./iam/policy/src/grpc/native_namespace
+protoc --go_out=./iam/policy/src/grpc/native_namespace --go_opt=paths=source_relative --go-grpc_out=./iam/policy/src/grpc/native_namespace --go-grpc_opt=paths=source_relative -I ../proto namespace.proto
+mkdir -p ./iam/policy/src/grpc/native_iam_policy
+protoc --go_out=./iam/policy/src/grpc/native_iam_policy --go_opt=paths=source_relative --go-grpc_out=./iam/policy/src/grpc/native_iam_policy --go-grpc_opt=paths=source_relative -I ../proto/iam policy.proto

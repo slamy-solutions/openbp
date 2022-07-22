@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package native_iam_configuration;
+
+option go_package = "slamy/openCRM/native/iam/configuration;native_iam_configuration_grpc";
+
+// Configuration of the IAM
+message Configuration {
+    // Configuration of specific OAuth2 provider
+    message OAuth2 {
+        // Enable or disable this provider of OAuth2 
+        bool enabled = 1;
+        // OAuth2 client ID
+        string clientId = 2;
+        // OAuth2 client secret
+        string clientSecret = 3;
+        // Allow registration using this OAuth2 provider
+        bool allowRegistration = 4;
+    }
+
+    message PasswordAuth {
+        // Allow password authorization or not
+        bool enabled = 1;
+        // Allow registration using password method
+        bool allowRegistration = 2;
+        // Minimal password length
+        //uint32 minPasswordLength = 2;
+        //  
+        //bool lowercase = 3;
+        //bool uppercase = 4;
+        //bool digits = 5;
+        //bool specialCharacters = 6;
+        //uint32 passwordExpiration = 7;
+         
+    }
+
+    // Time to live of access token in milliseconds
+    uint32 accessTokenTTL = 1;
+    // Time to live ot refresh token in milliseconds
+    uint32 refreshTokenTTL = 2;
+
+    // Password authentication configuration
+    PasswordAuth passwordAuth = 10;
+    // Google oauth2 configuration
+    OAuth2 googleOAuth2 = 11;
+    // Facebook oauth2 configuration
+    OAuth2 facebookOAuth2 = 12;
+    // Github oauth2 configuration
+    OAuth2 githubOAuth2 = 13;
+    // Github oauth2 configuration
+    OAuth2 gitlabOAuth2 = 14;
+}
+
+message GetConfigRequest {
+    // Use cache or not. Cache have a very low chance to be invalid. Cache invalidates after short period of thime (60 seconds). Cache can only be invalid on multiple simultanious read and writes. Its safe to use cache in most of the cases.
+    bool useCache = 1;
+}
+message GetConfigresponse {
+    // Current configuration
+    Configuration configuration = 1;
+}
+
+message SetConfigRequest {
+    // Configuration to set
+    Configuration configuration = 1;
+}
+message SetConfigResponse {}
+
+// Provides general configuration API for IAM
+service IAMConfigService {
+    rpc Get(GetConfigRequest) returns (GetConfigresponse);
+    rpc Set(SetConfigRequest) returns (SetConfigResponse);
+}

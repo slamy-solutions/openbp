@@ -1,3 +1,6 @@
+
+import { Status } from '@grpc/grpc-js/build/src/constants'
+import { RequestError as GRPCRequestError } from '../../../../../system/libs/ts/grpc'
 import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../../system/testing/tools/mongo'
 import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../../system/testing/tools/cache'
 import { configClient as iamConfigGRPC, connect as connectToNativeIAMConfig, close as closeNativeIAMConfig } from '../../../tools/iam/grpc'
@@ -33,5 +36,12 @@ describe("Blackbox", () => {
         const config = await iamConfigGRPC.Get({ useCache: false })
         expect(config.configuration).not.toBeNull()
         expect(config.configuration).not.toBeUndefined()
+
+        try {
+            await nativeKeyValueStorageClient.Get({ namespace: "", key: "native_iam_config_global", useCache: false })
+            fail()
+        } catch (e) {
+            if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) fail()
+        }
     })
 })

@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package native_iam_policy;
+
+option go_package = "slamy/openCRM/native/iam/policy;native_iam_policy_grpc";
+
+message Policy {
+    // Namespace where policy was created. Namespace can be empty for global policy.
+    string namespace = 1;
+    // Unique identifier of the policy in the namespace
+    string uuid = 2;
+    // Public name
+    string name = 3;
+    // List of actions that can be performed
+    repeated string actions = 4;
+}
+
+message CreatePolicyRequest {
+    // Namespace where policy will be created. Namespace can be empty for global policy.
+    string namespace = 1;
+    // Public name. May not be unique.
+    string name = 3;
+    // List of actions that can be performed with this policy
+    repeated string actions = 4;
+}
+message CreatePolicyResponse {
+    Policy policy = 1;
+}
+
+message GetPolicyRequest {
+    // Namespace of the policy
+    string namespace = 1;
+    // Unique identifier of the policy in the namespace
+    string uuid = 2;
+    // Use cache or not. Cache may be invalid under very rare conditions (simultanious read and writes to the policy while it is not in cache). Cache automatically deletes after short period of time (30 seconds by default).
+    bool useCache = 3;
+}
+message GetPolicyResponse {
+    Policy policy = 1;
+}
+
+message UpdatePolicyRequest {
+    // Namespace of the policy
+    string namespace = 1;
+    // Unique identifier of the policy in the namespace
+    string uuid = 2;
+    // Public name
+    string name = 3;
+    // List of actions that can be performed
+    repeated string actions = 4;
+}
+message UpdatePolicyResponse {
+    // Updated policy
+    Policy policy = 1;
+}
+
+message DeletePolicyRequest {
+    // Namespace of the policy
+    string namespace = 1;
+    // Unique identifier of the policy in the namespace
+    string uuid = 2;
+}
+message DeletePolicyResponse {}
+
+message ListPoliciesRequest {
+    // Namespace from where to list policies
+    string namespace = 1;
+}
+message ListPoliciesResponse {
+    Policy policy = 1;
+}
+
+// Provides API to manage policies
+service IAMPolicyService {
+    // Create new policy
+    rpc Create(CreatePolicyRequest) returns (CreatePolicyResponse);
+    // Get existing policy by uuid
+    rpc Get(GetPolicyRequest) returns (GetPolicyResponse);
+    // Update policy
+    rpc Update(UpdatePolicyRequest) returns (UpdatePolicyResponse);
+    // Delete policy
+    rpc Delete(DeletePolicyRequest) returns (DeletePolicyResponse);
+    // List policies in namespace
+    rpc List(ListPoliciesRequest) returns (stream ListPoliciesResponse);
+}

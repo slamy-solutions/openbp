@@ -4,14 +4,12 @@ import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "native_iam";
 
-export interface User {
-  /** Unique user identifier */
+export interface Identity {
+  /** Unique identity identifier */
   uuid: string;
-  /** Public user name */
+  /** Public identity name */
   name: string;
-  /** User avatar image URL */
-  avatar: string;
-  /** Security policies assigned to the user */
+  /** Security policies assigned to the identity */
   policies: string[];
 }
 
@@ -80,14 +78,14 @@ export interface SetConfigRequest {
 
 export interface SetConfigResponse {}
 
-export interface GetUserRequest {
-  /** User unique identifier */
+export interface GetIdentityRequest {
+  /** Identity unique identifier */
   uuid: string;
 }
 
-export interface GetUserResponse {
-  /** User information */
-  user: User | undefined;
+export interface GetIdentityResponse {
+  /** Identity information */
+  identity: Identity | undefined;
 }
 
 export interface AuthenticationResponse {
@@ -109,15 +107,24 @@ export interface AuthenticationResponse_AuthData {
   refreshToken: string;
 }
 
+/** Meta informations of the new identity */
+export interface NewIdentityInformation {
+  /** Identifies if new identity was created or not */
+  newIdentityWasCreated: boolean;
+  /** URL to the avatar image (may be empty if not applyable) */
+  avatarURL: string;
+}
+
 export interface LoginWithPasswordRequest {
-  /** User email to autheticate */
+  /** Identity email to autheticate */
   email: string;
-  /** User password */
+  /** Identity password */
   password: string;
 }
 
 export interface LoginWithPasswordResponse {
   authData: AuthenticationResponse | undefined;
+  newIdentity: NewIdentityInformation | undefined;
 }
 
 export interface LoginWithOAuth2Request {
@@ -129,6 +136,7 @@ export interface LoginWithOAuth2Request {
 
 export interface LoginWithOAuth2Response {
   authData: AuthenticationResponse | undefined;
+  newIdentity: NewIdentityInformation | undefined;
 }
 
 export interface CompleteTwoFactorTOTPRequest {
@@ -175,20 +183,20 @@ export interface VerifyAccessResponse {
   hasAccess: boolean;
 }
 
-function createBaseUser(): User {
-  return { uuid: "", name: "", avatar: "", policies: [] };
+function createBaseIdentity(): Identity {
+  return { uuid: "", name: "", policies: [] };
 }
 
-export const User = {
-  encode(message: User, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const Identity = {
+  encode(
+    message: Identity,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.uuid !== "") {
       writer.uint32(10).string(message.uuid);
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
-    }
-    if (message.avatar !== "") {
-      writer.uint32(26).string(message.avatar);
     }
     for (const v of message.policies) {
       writer.uint32(34).string(v!);
@@ -196,10 +204,10 @@ export const User = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): User {
+  decode(input: _m0.Reader | Uint8Array, length?: number): Identity {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUser();
+    const message = createBaseIdentity();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -208,9 +216,6 @@ export const User = {
           break;
         case 2:
           message.name = reader.string();
-          break;
-        case 3:
-          message.avatar = reader.string();
           break;
         case 4:
           message.policies.push(reader.string());
@@ -223,22 +228,20 @@ export const User = {
     return message;
   },
 
-  fromJSON(object: any): User {
+  fromJSON(object: any): Identity {
     return {
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
       name: isSet(object.name) ? String(object.name) : "",
-      avatar: isSet(object.avatar) ? String(object.avatar) : "",
       policies: Array.isArray(object?.policies)
         ? object.policies.map((e: any) => String(e))
         : [],
     };
   },
 
-  toJSON(message: User): unknown {
+  toJSON(message: Identity): unknown {
     const obj: any = {};
     message.uuid !== undefined && (obj.uuid = message.uuid);
     message.name !== undefined && (obj.name = message.name);
-    message.avatar !== undefined && (obj.avatar = message.avatar);
     if (message.policies) {
       obj.policies = message.policies.map((e) => e);
     } else {
@@ -247,11 +250,10 @@ export const User = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<User>, I>>(object: I): User {
-    const message = createBaseUser();
+  fromPartial<I extends Exact<DeepPartial<Identity>, I>>(object: I): Identity {
+    const message = createBaseIdentity();
     message.uuid = object.uuid ?? "";
     message.name = object.name ?? "";
-    message.avatar = object.avatar ?? "";
     message.policies = object.policies?.map((e) => e) || [];
     return message;
   },
@@ -926,13 +928,13 @@ export const SetConfigResponse = {
   },
 };
 
-function createBaseGetUserRequest(): GetUserRequest {
+function createBaseGetIdentityRequest(): GetIdentityRequest {
   return { uuid: "" };
 }
 
-export const GetUserRequest = {
+export const GetIdentityRequest = {
   encode(
-    message: GetUserRequest,
+    message: GetIdentityRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.uuid !== "") {
@@ -941,10 +943,10 @@ export const GetUserRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetUserRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetIdentityRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetUserRequest();
+    const message = createBaseGetIdentityRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -959,51 +961,51 @@ export const GetUserRequest = {
     return message;
   },
 
-  fromJSON(object: any): GetUserRequest {
+  fromJSON(object: any): GetIdentityRequest {
     return {
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
     };
   },
 
-  toJSON(message: GetUserRequest): unknown {
+  toJSON(message: GetIdentityRequest): unknown {
     const obj: any = {};
     message.uuid !== undefined && (obj.uuid = message.uuid);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetUserRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<GetIdentityRequest>, I>>(
     object: I
-  ): GetUserRequest {
-    const message = createBaseGetUserRequest();
+  ): GetIdentityRequest {
+    const message = createBaseGetIdentityRequest();
     message.uuid = object.uuid ?? "";
     return message;
   },
 };
 
-function createBaseGetUserResponse(): GetUserResponse {
-  return { user: undefined };
+function createBaseGetIdentityResponse(): GetIdentityResponse {
+  return { identity: undefined };
 }
 
-export const GetUserResponse = {
+export const GetIdentityResponse = {
   encode(
-    message: GetUserResponse,
+    message: GetIdentityResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.user !== undefined) {
-      User.encode(message.user, writer.uint32(10).fork()).ldelim();
+    if (message.identity !== undefined) {
+      Identity.encode(message.identity, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetUserResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetIdentityResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetUserResponse();
+    const message = createBaseGetIdentityResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.user = User.decode(reader, reader.uint32());
+          message.identity = Identity.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -1013,26 +1015,30 @@ export const GetUserResponse = {
     return message;
   },
 
-  fromJSON(object: any): GetUserResponse {
+  fromJSON(object: any): GetIdentityResponse {
     return {
-      user: isSet(object.user) ? User.fromJSON(object.user) : undefined,
+      identity: isSet(object.identity)
+        ? Identity.fromJSON(object.identity)
+        : undefined,
     };
   },
 
-  toJSON(message: GetUserResponse): unknown {
+  toJSON(message: GetIdentityResponse): unknown {
     const obj: any = {};
-    message.user !== undefined &&
-      (obj.user = message.user ? User.toJSON(message.user) : undefined);
+    message.identity !== undefined &&
+      (obj.identity = message.identity
+        ? Identity.toJSON(message.identity)
+        : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetUserResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<GetIdentityResponse>, I>>(
     object: I
-  ): GetUserResponse {
-    const message = createBaseGetUserResponse();
-    message.user =
-      object.user !== undefined && object.user !== null
-        ? User.fromPartial(object.user)
+  ): GetIdentityResponse {
+    const message = createBaseGetIdentityResponse();
+    message.identity =
+      object.identity !== undefined && object.identity !== null
+        ? Identity.fromPartial(object.identity)
         : undefined;
     return message;
   },
@@ -1278,6 +1284,75 @@ export const AuthenticationResponse_AuthData = {
   },
 };
 
+function createBaseNewIdentityInformation(): NewIdentityInformation {
+  return { newIdentityWasCreated: false, avatarURL: "" };
+}
+
+export const NewIdentityInformation = {
+  encode(
+    message: NewIdentityInformation,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.newIdentityWasCreated === true) {
+      writer.uint32(8).bool(message.newIdentityWasCreated);
+    }
+    if (message.avatarURL !== "") {
+      writer.uint32(18).string(message.avatarURL);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): NewIdentityInformation {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNewIdentityInformation();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.newIdentityWasCreated = reader.bool();
+          break;
+        case 2:
+          message.avatarURL = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): NewIdentityInformation {
+    return {
+      newIdentityWasCreated: isSet(object.newIdentityWasCreated)
+        ? Boolean(object.newIdentityWasCreated)
+        : false,
+      avatarURL: isSet(object.avatarURL) ? String(object.avatarURL) : "",
+    };
+  },
+
+  toJSON(message: NewIdentityInformation): unknown {
+    const obj: any = {};
+    message.newIdentityWasCreated !== undefined &&
+      (obj.newIdentityWasCreated = message.newIdentityWasCreated);
+    message.avatarURL !== undefined && (obj.avatarURL = message.avatarURL);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<NewIdentityInformation>, I>>(
+    object: I
+  ): NewIdentityInformation {
+    const message = createBaseNewIdentityInformation();
+    message.newIdentityWasCreated = object.newIdentityWasCreated ?? false;
+    message.avatarURL = object.avatarURL ?? "";
+    return message;
+  },
+};
+
 function createBaseLoginWithPasswordRequest(): LoginWithPasswordRequest {
   return { email: "", password: "" };
 }
@@ -1345,7 +1420,7 @@ export const LoginWithPasswordRequest = {
 };
 
 function createBaseLoginWithPasswordResponse(): LoginWithPasswordResponse {
-  return { authData: undefined };
+  return { authData: undefined, newIdentity: undefined };
 }
 
 export const LoginWithPasswordResponse = {
@@ -1357,6 +1432,12 @@ export const LoginWithPasswordResponse = {
       AuthenticationResponse.encode(
         message.authData,
         writer.uint32(10).fork()
+      ).ldelim();
+    }
+    if (message.newIdentity !== undefined) {
+      NewIdentityInformation.encode(
+        message.newIdentity,
+        writer.uint32(18).fork()
       ).ldelim();
     }
     return writer;
@@ -1378,6 +1459,12 @@ export const LoginWithPasswordResponse = {
             reader.uint32()
           );
           break;
+        case 2:
+          message.newIdentity = NewIdentityInformation.decode(
+            reader,
+            reader.uint32()
+          );
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -1391,6 +1478,9 @@ export const LoginWithPasswordResponse = {
       authData: isSet(object.authData)
         ? AuthenticationResponse.fromJSON(object.authData)
         : undefined,
+      newIdentity: isSet(object.newIdentity)
+        ? NewIdentityInformation.fromJSON(object.newIdentity)
+        : undefined,
     };
   },
 
@@ -1399,6 +1489,10 @@ export const LoginWithPasswordResponse = {
     message.authData !== undefined &&
       (obj.authData = message.authData
         ? AuthenticationResponse.toJSON(message.authData)
+        : undefined);
+    message.newIdentity !== undefined &&
+      (obj.newIdentity = message.newIdentity
+        ? NewIdentityInformation.toJSON(message.newIdentity)
         : undefined);
     return obj;
   },
@@ -1410,6 +1504,10 @@ export const LoginWithPasswordResponse = {
     message.authData =
       object.authData !== undefined && object.authData !== null
         ? AuthenticationResponse.fromPartial(object.authData)
+        : undefined;
+    message.newIdentity =
+      object.newIdentity !== undefined && object.newIdentity !== null
+        ? NewIdentityInformation.fromPartial(object.newIdentity)
         : undefined;
     return message;
   },
@@ -1482,7 +1580,7 @@ export const LoginWithOAuth2Request = {
 };
 
 function createBaseLoginWithOAuth2Response(): LoginWithOAuth2Response {
-  return { authData: undefined };
+  return { authData: undefined, newIdentity: undefined };
 }
 
 export const LoginWithOAuth2Response = {
@@ -1494,6 +1592,12 @@ export const LoginWithOAuth2Response = {
       AuthenticationResponse.encode(
         message.authData,
         writer.uint32(10).fork()
+      ).ldelim();
+    }
+    if (message.newIdentity !== undefined) {
+      NewIdentityInformation.encode(
+        message.newIdentity,
+        writer.uint32(18).fork()
       ).ldelim();
     }
     return writer;
@@ -1515,6 +1619,12 @@ export const LoginWithOAuth2Response = {
             reader.uint32()
           );
           break;
+        case 2:
+          message.newIdentity = NewIdentityInformation.decode(
+            reader,
+            reader.uint32()
+          );
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -1528,6 +1638,9 @@ export const LoginWithOAuth2Response = {
       authData: isSet(object.authData)
         ? AuthenticationResponse.fromJSON(object.authData)
         : undefined,
+      newIdentity: isSet(object.newIdentity)
+        ? NewIdentityInformation.fromJSON(object.newIdentity)
+        : undefined,
     };
   },
 
@@ -1536,6 +1649,10 @@ export const LoginWithOAuth2Response = {
     message.authData !== undefined &&
       (obj.authData = message.authData
         ? AuthenticationResponse.toJSON(message.authData)
+        : undefined);
+    message.newIdentity !== undefined &&
+      (obj.newIdentity = message.newIdentity
+        ? NewIdentityInformation.toJSON(message.newIdentity)
         : undefined);
     return obj;
   },
@@ -1547,6 +1664,10 @@ export const LoginWithOAuth2Response = {
     message.authData =
       object.authData !== undefined && object.authData !== null
         ? AuthenticationResponse.fromPartial(object.authData)
+        : undefined;
+    message.newIdentity =
+      object.newIdentity !== undefined && object.newIdentity !== null
+        ? NewIdentityInformation.fromPartial(object.newIdentity)
         : undefined;
     return message;
   },
@@ -2138,32 +2259,38 @@ export class IAMConfigServiceClientImpl implements IAMConfigService {
   }
 }
 
-/** Provides API to manage IAM users */
-export interface IAMUserService {
-  /** Get user */
-  Get(request: GetUserRequest): Promise<GetUserResponse>;
+/** Provides API to manage IAM identities */
+export interface IAMIdentityService {
+  /** Get identity */
+  Get(request: GetIdentityRequest): Promise<GetIdentityResponse>;
 }
 
-export class IAMUserServiceClientImpl implements IAMUserService {
+export class IAMIdentityServiceClientImpl implements IAMIdentityService {
   private readonly rpc: Rpc;
   constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.Get = this.Get.bind(this);
   }
-  Get(request: GetUserRequest): Promise<GetUserResponse> {
-    const data = GetUserRequest.encode(request).finish();
-    const promise = this.rpc.request("native_iam.IAMUserService", "Get", data);
-    return promise.then((data) => GetUserResponse.decode(new _m0.Reader(data)));
+  Get(request: GetIdentityRequest): Promise<GetIdentityResponse> {
+    const data = GetIdentityRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "native_iam.IAMIdentityService",
+      "Get",
+      data
+    );
+    return promise.then((data) =>
+      GetIdentityResponse.decode(new _m0.Reader(data))
+    );
   }
 }
 
-/** Provides API to verify identity and determine access rights of the user or application. */
+/** Provides API to verify identity and determine access rights of the identity */
 export interface IAMAuthService {
-  /** Create access token and refresh token using password. Creates user if not exist */
+  /** Create access token and refresh token using password. Creates identity if not exist */
   LoginWithPassword(
     request: LoginWithPasswordRequest
   ): Promise<LoginWithPasswordResponse>;
-  /** Create access token and refresh token using thrid party OAuth2 provider. Creates user if not exist */
+  /** Create access token and refresh token using thrid party OAuth2 provider. Creates identity if not exist */
   LoginWithOAuth2(
     request: LoginWithOAuth2Request
   ): Promise<LoginWithOAuth2Response>;
