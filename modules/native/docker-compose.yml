@@ -63,6 +63,20 @@ services:
       - system_rabbitmq
       - native_namespace
   
+  native_iam_config:
+    container_name: native_iam_config
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/iam/config/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_iam_config"
+    depends_on:
+      - system_cache
+      - system_telemetry
+      - native_keyvaluestorage
+
   native_file:
     container_name: native_file
     restart: always

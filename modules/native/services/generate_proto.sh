@@ -31,3 +31,5 @@ protoc --go_out=./keyvaluestorage/src/grpc/native_keyvaluestorage --go_opt=paths
 #iam-config
 mkdir -p ./iam/config/src/grpc/native_iam
 protoc --go_out=./iam/config/src/grpc/native_iam --go_opt=paths=source_relative --go-grpc_out=./iam/config/src/grpc/native_iam --go-grpc_opt=paths=source_relative -I ../proto iam.proto
+mkdir -p ./iam/config/src/grpc/native_keyvaluestorage
+protoc --go_out=./iam/config/src/grpc/native_keyvaluestorage --go_opt=paths=source_relative --go-grpc_out=./iam/config/src/grpc/native_keyvaluestorage --go-grpc_opt=paths=source_relative -I ../proto keyvaluestorage.proto

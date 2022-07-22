@@ -44,6 +44,8 @@ message Configuration {
     message PasswordAuth {
         // Allow password authorization or not
         bool enabled = 1;
+        // Allow registration using password method
+        bool allowRegistration = 2;
         // Minimal password length
         //uint32 minPasswordLength = 2;
         //  
@@ -72,7 +74,10 @@ message Configuration {
     OAuth2 gitlabOAuth2 = 14;
 }
 
-message GetConfigRequest { }
+message GetConfigRequest {
+    // Use cache or not. Cache have a very low chance to be invalid. Cache invalidates after short period of thime (60 seconds). Cache can only be invalid on multiple simultanious read and writes. Its safe to use cache in most of the cases.
+    bool useCache = 1;
+}
 message GetConfigresponse {
     // Current configuration
     Configuration configuration = 1;

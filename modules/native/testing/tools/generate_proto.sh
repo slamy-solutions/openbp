@@ -18,3 +18,4 @@ generate ./namespace/proto ../../proto namespace.proto
 generate ./file/proto ../../proto namespace.proto file.proto
 generate ./lambda/proto ../../proto lambda.proto
 generate ./keyvaluestorage/proto ../../proto keyvaluestorage.proto
+generate ./iam/proto ../../proto iam.proto
