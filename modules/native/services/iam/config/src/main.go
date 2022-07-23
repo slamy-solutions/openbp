@@ -65,7 +65,7 @@ func main() {
 	}
 	defer nativeKeyValueStorageConnection.Close()
 	nativeKeyValueStorageClient := native_keyvaluestorage_grpc.NewKeyValueStorageServiceClient(nativeKeyValueStorageConnection)
-	fmt.Println("Initialized native_namespace connection")
+	fmt.Println("Initialized native_keyvaluestorage connection")
 
 	// Creating grpc server
 	grpcServer := grpc.NewServer(

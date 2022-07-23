@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
@@ -49,6 +50,17 @@ func collectionByNamespace(s *IAMPolicyServer, namespace string) *mongo.Collecti
 
 func makePolicyCacheKey(namespace string, uuid string) string {
 	return fmt.Sprintf("native_iam_policy_data_%s_%s", namespace, uuid)
+}
+
+func NewIAMPolicyServer(mongoClient *mongo.Client, mongoDbPrefix string, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *IAMPolicyServer {
+	mongoGlobalCollection := mongoClient.Database(fmt.Sprintf("%sglobal", mongoDbPrefix)).Collection("native_iam_policy")
+	return &IAMPolicyServer{
+		mongoClient:           mongoClient,
+		mongoDbPrefix:         mongoDbPrefix,
+		mongoGlobalCollection: mongoGlobalCollection,
+		cacheClient:           cacheClient,
+		nativeNamespaceClient: nativeNamespaceClient,
+	}
 }
 
 func (s *IAMPolicyServer) Create(ctx context.Context, in *nativeIAmPolicyGRPC.CreatePolicyRequest) (*nativeIAmPolicyGRPC.CreatePolicyResponse, error) {
@@ -131,13 +143,94 @@ func (s *IAMPolicyServer) Get(ctx context.Context, in *nativeIAmPolicyGRPC.GetPo
 }
 
 func (s *IAMPolicyServer) Update(ctx context.Context, in *nativeIAmPolicyGRPC.UpdatePolicyRequest) (*nativeIAmPolicyGRPC.UpdatePolicyResponse, error) {
-	return nil, status.Errorf(grpccodes.Unimplemented, "method Update not implemented")
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Bad UUID format")
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	updateData := &policyInMongo{
+		Name:    in.Name,
+		Actions: in.Actions,
+	}
+	r, err := collection.UpdateByID(ctx, id, updateData)
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, err.Error())
+	}
+
+	if r.MatchedCount == 0 {
+		return nil, status.Error(grpccodes.NotFound, "Policy with specified namespace and uuid not found")
+	}
+
+	s.cacheClient.Remove(ctx, makePolicyCacheKey(in.Namespace, in.Uuid))
+
+	return &nativeIAmPolicyGRPC.UpdatePolicyResponse{
+		Policy: &nativeIAmPolicyGRPC.Policy{
+			Namespace: in.Namespace,
+			Uuid:      in.Uuid,
+			Name:      in.Name,
+			Actions:   in.Actions,
+		},
+	}, status.Error(grpccodes.OK, "")
 }
 
 func (s *IAMPolicyServer) Delete(ctx context.Context, in *nativeIAmPolicyGRPC.DeletePolicyRequest) (*nativeIAmPolicyGRPC.DeletePolicyResponse, error) {
-	return nil, status.Errorf(grpccodes.Unimplemented, "method Delete not implemented")
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Bad UUID format")
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	r, err := collection.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, err.Error())
+	}
+
+	if r.DeletedCount != 0 {
+		s.cacheClient.Remove(ctx, makePolicyCacheKey(in.Namespace, in.Uuid))
+	}
+
+	return &nativeIAmPolicyGRPC.DeletePolicyResponse{}, status.Error(grpccodes.OK, "")
 }
 
 func (s *IAMPolicyServer) List(in *nativeIAmPolicyGRPC.ListPoliciesRequest, out nativeIAmPolicyGRPC.IAMPolicyService_ListServer) error {
-	return status.Errorf(grpccodes.Unimplemented, "method List not implemented")
+	ctx := out.Context()
+
+	collection := collectionByNamespace(s, in.Namespace)
+	findOptions := options.Find()
+	if in.Skip != 0 {
+		findOptions = findOptions.SetSkip(int64(in.Skip))
+	}
+	if in.Limit != 0 {
+		findOptions = findOptions.SetLimit(int64(in.Limit))
+	}
+
+	cursor, err := collection.Find(ctx, bson.M{}, findOptions)
+	if err != nil {
+		return status.Error(grpccodes.Internal, err.Error())
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var result policyInMongo
+		if err := cursor.Decode(&result); err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
+		sendData := &nativeIAmPolicyGRPC.ListPoliciesResponse{
+			Policy: &nativeIAmPolicyGRPC.Policy{
+				Namespace: in.Namespace,
+				Uuid:      result.ID.Hex(),
+				Name:      result.Name,
+				Actions:   result.Actions,
+			},
+		}
+		if err := out.Send(sendData); err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return status.Error(grpccodes.Internal, err.Error())
+	}
+
+	return status.Error(grpccodes.OK, "")
 }
