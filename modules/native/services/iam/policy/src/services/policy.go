@@ -160,7 +160,7 @@ func (s *IAMPolicyServer) Update(ctx context.Context, in *nativeIAmPolicyGRPC.Up
 		Actions:   in.Actions,
 		Resources: in.Resources,
 	}
-	r, err := collection.UpdateByID(ctx, id, updateData)
+	r, err := collection.UpdateByID(ctx, id, bson.M{"$set": updateData})
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, err.Error())
 	}
