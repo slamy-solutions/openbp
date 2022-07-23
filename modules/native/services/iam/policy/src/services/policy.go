@@ -65,12 +65,14 @@ func NewIAMPolicyServer(mongoClient *mongo.Client, mongoDbPrefix string, cacheCl
 
 func (s *IAMPolicyServer) Create(ctx context.Context, in *nativeIAmPolicyGRPC.CreatePolicyRequest) (*nativeIAmPolicyGRPC.CreatePolicyResponse, error) {
 	// Check if namespace really exist
-	r, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Name, UseCache: true})
-	if err != nil {
-		return nil, status.Error(grpccodes.Internal, err.Error())
-	}
-	if !r.Exist {
-		return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+	if in.Namespace != "" {
+		r, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, err.Error())
+		}
+		if !r.Exist {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+		}
 	}
 
 	policy := policyInMongo{
