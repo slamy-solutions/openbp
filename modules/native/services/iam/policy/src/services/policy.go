@@ -30,9 +30,10 @@ type IAMPolicyServer struct {
 }
 
 type policyInMongo struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty"`
-	Name    string             `bson:"name"`
-	Actions []string           `bson:"actions"`
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	Name      string             `bson:"name"`
+	Resources []string           `bson:"resources"`
+	Actions   []string           `bson:"actions"`
 }
 
 const (
@@ -76,8 +77,9 @@ func (s *IAMPolicyServer) Create(ctx context.Context, in *nativeIAmPolicyGRPC.Cr
 	}
 
 	policy := policyInMongo{
-		Name:    in.Name,
-		Actions: in.Actions,
+		Name:      in.Name,
+		Actions:   in.Actions,
+		Resources: in.Resources,
 	}
 	collection := collectionByNamespace(s, in.Namespace)
 	insertResponse, err := collection.InsertOne(ctx, policy)
@@ -92,6 +94,7 @@ func (s *IAMPolicyServer) Create(ctx context.Context, in *nativeIAmPolicyGRPC.Cr
 			Uuid:      id.Hex(),
 			Name:      in.Name,
 			Actions:   in.Actions,
+			Resources: in.Resources,
 		},
 	}, status.Error(grpccodes.OK, "")
 }
@@ -131,6 +134,7 @@ func (s *IAMPolicyServer) Get(ctx context.Context, in *nativeIAmPolicyGRPC.GetPo
 		Uuid:      in.Uuid,
 		Name:      mongoPolicy.Name,
 		Actions:   mongoPolicy.Actions,
+		Resources: mongoPolicy.Resources,
 	}
 
 	if in.UseCache {
@@ -152,8 +156,9 @@ func (s *IAMPolicyServer) Update(ctx context.Context, in *nativeIAmPolicyGRPC.Up
 
 	collection := collectionByNamespace(s, in.Namespace)
 	updateData := &policyInMongo{
-		Name:    in.Name,
-		Actions: in.Actions,
+		Name:      in.Name,
+		Actions:   in.Actions,
+		Resources: in.Resources,
 	}
 	r, err := collection.UpdateByID(ctx, id, updateData)
 	if err != nil {
@@ -172,6 +177,7 @@ func (s *IAMPolicyServer) Update(ctx context.Context, in *nativeIAmPolicyGRPC.Up
 			Uuid:      in.Uuid,
 			Name:      in.Name,
 			Actions:   in.Actions,
+			Resources: in.Resources,
 		},
 	}, status.Error(grpccodes.OK, "")
 }
@@ -224,6 +230,7 @@ func (s *IAMPolicyServer) List(in *nativeIAmPolicyGRPC.ListPoliciesRequest, out 
 				Uuid:      result.ID.Hex(),
 				Name:      result.Name,
 				Actions:   result.Actions,
+				Resources: result.Resources,
 			},
 		}
 		if err := out.Send(sendData); err != nil {

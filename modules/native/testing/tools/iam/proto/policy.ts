@@ -13,6 +13,8 @@ export interface Policy {
   uuid: string;
   /** Public name */
   name: string;
+  /** List of resource for wich actions will be performed */
+  resources: string[];
   /** List of actions that can be performed */
   actions: string[];
 }
@@ -22,6 +24,8 @@ export interface CreatePolicyRequest {
   namespace: string;
   /** Public name. May not be unique. */
   name: string;
+  /** List of resource for wich actions will be performed */
+  resources: string[];
   /** List of actions that can be performed with this policy */
   actions: string[];
 }
@@ -50,6 +54,8 @@ export interface UpdatePolicyRequest {
   uuid: string;
   /** Public name */
   name: string;
+  /** List of resource for wich actions will be performed */
+  resources: string[];
   /** List of actions that can be performed */
   actions: string[];
 }
@@ -82,7 +88,7 @@ export interface ListPoliciesResponse {
 }
 
 function createBasePolicy(): Policy {
-  return { namespace: "", uuid: "", name: "", actions: [] };
+  return { namespace: "", uuid: "", name: "", resources: [], actions: [] };
 }
 
 export const Policy = {
@@ -99,8 +105,11 @@ export const Policy = {
     if (message.name !== "") {
       writer.uint32(26).string(message.name);
     }
-    for (const v of message.actions) {
+    for (const v of message.resources) {
       writer.uint32(34).string(v!);
+    }
+    for (const v of message.actions) {
+      writer.uint32(42).string(v!);
     }
     return writer;
   },
@@ -122,6 +131,9 @@ export const Policy = {
           message.name = reader.string();
           break;
         case 4:
+          message.resources.push(reader.string());
+          break;
+        case 5:
           message.actions.push(reader.string());
           break;
         default:
@@ -137,6 +149,9 @@ export const Policy = {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
       name: isSet(object.name) ? String(object.name) : "",
+      resources: Array.isArray(object?.resources)
+        ? object.resources.map((e: any) => String(e))
+        : [],
       actions: Array.isArray(object?.actions)
         ? object.actions.map((e: any) => String(e))
         : [],
@@ -148,6 +163,11 @@ export const Policy = {
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     message.name !== undefined && (obj.name = message.name);
+    if (message.resources) {
+      obj.resources = message.resources.map((e) => e);
+    } else {
+      obj.resources = [];
+    }
     if (message.actions) {
       obj.actions = message.actions.map((e) => e);
     } else {
@@ -161,13 +181,14 @@ export const Policy = {
     message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     message.name = object.name ?? "";
+    message.resources = object.resources?.map((e) => e) || [];
     message.actions = object.actions?.map((e) => e) || [];
     return message;
   },
 };
 
 function createBaseCreatePolicyRequest(): CreatePolicyRequest {
-  return { namespace: "", name: "", actions: [] };
+  return { namespace: "", name: "", resources: [], actions: [] };
 }
 
 export const CreatePolicyRequest = {
@@ -181,8 +202,11 @@ export const CreatePolicyRequest = {
     if (message.name !== "") {
       writer.uint32(26).string(message.name);
     }
-    for (const v of message.actions) {
+    for (const v of message.resources) {
       writer.uint32(34).string(v!);
+    }
+    for (const v of message.actions) {
+      writer.uint32(42).string(v!);
     }
     return writer;
   },
@@ -201,6 +225,9 @@ export const CreatePolicyRequest = {
           message.name = reader.string();
           break;
         case 4:
+          message.resources.push(reader.string());
+          break;
+        case 5:
           message.actions.push(reader.string());
           break;
         default:
@@ -215,6 +242,9 @@ export const CreatePolicyRequest = {
     return {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       name: isSet(object.name) ? String(object.name) : "",
+      resources: Array.isArray(object?.resources)
+        ? object.resources.map((e: any) => String(e))
+        : [],
       actions: Array.isArray(object?.actions)
         ? object.actions.map((e: any) => String(e))
         : [],
@@ -225,6 +255,11 @@ export const CreatePolicyRequest = {
     const obj: any = {};
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.name !== undefined && (obj.name = message.name);
+    if (message.resources) {
+      obj.resources = message.resources.map((e) => e);
+    } else {
+      obj.resources = [];
+    }
     if (message.actions) {
       obj.actions = message.actions.map((e) => e);
     } else {
@@ -239,6 +274,7 @@ export const CreatePolicyRequest = {
     const message = createBaseCreatePolicyRequest();
     message.namespace = object.namespace ?? "";
     message.name = object.name ?? "";
+    message.resources = object.resources?.map((e) => e) || [];
     message.actions = object.actions?.map((e) => e) || [];
     return message;
   },
@@ -436,7 +472,7 @@ export const GetPolicyResponse = {
 };
 
 function createBaseUpdatePolicyRequest(): UpdatePolicyRequest {
-  return { namespace: "", uuid: "", name: "", actions: [] };
+  return { namespace: "", uuid: "", name: "", resources: [], actions: [] };
 }
 
 export const UpdatePolicyRequest = {
@@ -453,8 +489,11 @@ export const UpdatePolicyRequest = {
     if (message.name !== "") {
       writer.uint32(26).string(message.name);
     }
-    for (const v of message.actions) {
+    for (const v of message.resources) {
       writer.uint32(34).string(v!);
+    }
+    for (const v of message.actions) {
+      writer.uint32(42).string(v!);
     }
     return writer;
   },
@@ -476,6 +515,9 @@ export const UpdatePolicyRequest = {
           message.name = reader.string();
           break;
         case 4:
+          message.resources.push(reader.string());
+          break;
+        case 5:
           message.actions.push(reader.string());
           break;
         default:
@@ -491,6 +533,9 @@ export const UpdatePolicyRequest = {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
       name: isSet(object.name) ? String(object.name) : "",
+      resources: Array.isArray(object?.resources)
+        ? object.resources.map((e: any) => String(e))
+        : [],
       actions: Array.isArray(object?.actions)
         ? object.actions.map((e: any) => String(e))
         : [],
@@ -502,6 +547,11 @@ export const UpdatePolicyRequest = {
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     message.name !== undefined && (obj.name = message.name);
+    if (message.resources) {
+      obj.resources = message.resources.map((e) => e);
+    } else {
+      obj.resources = [];
+    }
     if (message.actions) {
       obj.actions = message.actions.map((e) => e);
     } else {
@@ -517,6 +567,7 @@ export const UpdatePolicyRequest = {
     message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     message.name = object.name ?? "";
+    message.resources = object.resources?.map((e) => e) || [];
     message.actions = object.actions?.map((e) => e) || [];
     return message;
   },

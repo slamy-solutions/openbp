@@ -54,7 +54,8 @@ describe("Whitebox", () => {
         const response = await nativeIAmPolicyGRPC.Create({
             namespace: "",
             name,
-            actions: []
+            actions: [],
+            resources: []
         })
         const id = ObjectId.createFromHexString(response.policy?.uuid as string)
         const entry = await mongoClient.db(GLOBAL_DB_NAME).collection('native_iam_policy').findOne<{ name: string }>({ "_id": id })
@@ -67,7 +68,8 @@ describe("Whitebox", () => {
         const response = await nativeIAmPolicyGRPC.Create({
             namespace: TEST_NAMESPACE_NAME,
             name,
-            actions: []
+            actions: [],
+            resources: []
         })
         const id = ObjectId.createFromHexString(response.policy?.uuid as string)
         const entry = await mongoClient.db(NAMESPACE_DB_NAME).collection('native_iam_policy').findOne<{ name: string }>({ "_id": id })
@@ -83,13 +85,16 @@ describe("Whitebox", () => {
 describe("Blackbox", () => {
     test("Creates policy and returns its data", async () => {
         const name = randomBytes(32).toString("hex")
+        const resources = new Array<string>(10).fill("").map(() => randomBytes(16).toString("hex"))
         const actions = new Array<string>(10).fill("").map(() => randomBytes(16).toString("hex"))
         const response = await nativeIAmPolicyGRPC.Create({
             namespace: TEST_NAMESPACE_NAME,
             name,
-            actions
+            actions,
+            resources
         })
         expect(response.policy?.name).toBe(name)
+        expect(response.policy?.resources).toStrictEqual(resources)
         expect(response.policy?.actions).toStrictEqual(actions)
         expect(response.policy?.namespace).toBe(TEST_NAMESPACE_NAME)
     })
@@ -98,6 +103,7 @@ describe("Blackbox", () => {
             await nativeIAmPolicyGRPC.Create({
                 namespace: TEST_NAMESPACE_NAME + "invalid",
                 name: "",
+                resources: [],
                 actions: []
             })
             fail()
