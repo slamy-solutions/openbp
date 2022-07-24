@@ -5,22 +5,33 @@ package native_iam_identity;
 option go_package = "slamy/openCRM/native/iam/identity;native_iam_identity_grpc";
 
 message Identity {
+    message PolicyReference {
+        // Policy namespace. Empty for global policy
+        string namespace = 1;
+        // Policy uuid (unique identifier) inside namespace
+        string uuid = 2;
+    }
+
+    // Namespaces of the identity. Can be empty for global identities.
+    string namespace = 1;
     // Unique identity identifier
-    string uuid = 1;
+    string uuid = 2;
     // Public identity name
-    string name = 2;
+    string name = 3;
     // If identity is not active, it will not be able to login and perform any actions.
-    bool active = 3;
+    bool active = 4;
 
     // Security policies assigned to the identity
-    repeated string policies = 4;
+    repeated PolicyReference policies = 5;
 }
 
 message CreateIdentityRequest {
+    // Namespace where to create identity
+    string namespace = 1;
     // Public name for newly created identity. It may not be unique - this is just human-readable name.
-    string name = 1;
+    string name = 2;
     // Should the identity be active on the start or not
-    bool initiallyActive = 2;
+    bool initiallyActive = 3;
 }
 message CreateIdentityResponse {
     // Created identity
@@ -28,8 +39,12 @@ message CreateIdentityResponse {
 }
 
 message GetIdentityRequest {
-    // Identity unique identifier
-    string uuid = 1;
+    // Identity namespace
+    string namespace = 1;
+    // Identity unique identifier inside namespace
+    string uuid = 2;
+    // Use cache or not. Cache may not be valid under very rare conditions (simultaniour read and writes). Cache automatically clears after short period of time (30 seconds by default).
+    bool useCache = 3;
 }
 message GetIdentityResponse {
     // Identity information
@@ -37,28 +52,47 @@ message GetIdentityResponse {
 }
 
 message AddPolicyRequest {
-    // Identity UUID to add policy
-    string identity = 1;
-    // Policy UUID to add
-    string policy = 2;
+    // Identity namespace
+    string identityNamespace = 1;
+    // Identity identifier inside identity namespace
+    string identityUUID = 2;
+    // Policy namespace
+    string policyNamespace = 3;
+    // Policy UUID inside policy namespace
+    string policyUUID = 4;
 }
-message AddPolicyResponse {}
+message AddPolicyResponse {
+    // Updated identity (after adding policy)
+    Identity identity = 1;
+}
 
 message RemovePolicyRequest {
-    // Identity UUID to remove policy
-    string identity = 1;
-    // Policy UUID to remove
-    string policy = 2;
+    // Identity namespace
+    string identityNamespace = 1;
+    // Identity unique identifier inside identity namespace
+    string identityUUID = 2;
+    // Policy namespace
+    string policyNamespace = 3;
+    // Policy UUID inside policy namespace
+    string policyUUID = 4;
 }
-message RemovePolicyResponse {}
+message RemovePolicyResponse {
+    // Updated identity (after removing policy)
+    Identity identity = 1;
+}
 
 message SetIdentityActiveRequest {
-    // Identity UUID
-    string identity = 1;
+    // Namespace of the identity
+    string namespace = 1;
+    // Identity UUID (unique identifier) inside namespace
+    string identity = 2;
     // Set active or not
-    bool active = 2;
+    bool active = 3;
 }
-message SetIdentityActiveResponse {}
+message SetIdentityActiveResponse {
+    // Identity after update
+    Identity identity = 1;
+}
 
 // Provides API to manage IAM identities 
 service IAMIdentityService {

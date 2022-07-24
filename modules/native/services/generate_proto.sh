@@ -39,3 +39,11 @@ mkdir -p ./iam/policy/src/grpc/native_namespace
 protoc --go_out=./iam/policy/src/grpc/native_namespace --go_opt=paths=source_relative --go-grpc_out=./iam/policy/src/grpc/native_namespace --go-grpc_opt=paths=source_relative -I ../proto namespace.proto
 mkdir -p ./iam/policy/src/grpc/native_iam_policy
 protoc --go_out=./iam/policy/src/grpc/native_iam_policy --go_opt=paths=source_relative --go-grpc_out=./iam/policy/src/grpc/native_iam_policy --go-grpc_opt=paths=source_relative -I ../proto/iam policy.proto
+
+#iam-identity
+mkdir -p ./iam/identity/src/grpc/native_namespace
+protoc --go_out=./iam/identity/src/grpc/native_namespace --go_opt=paths=source_relative --go-grpc_out=./iam/identity/src/grpc/native_namespace --go-grpc_opt=paths=source_relative -I ../proto namespace.proto
+mkdir -p ./iam/identity/src/grpc/native_iam_policy
+protoc --go_out=./iam/identity/src/grpc/native_iam_policy --go_opt=paths=source_relative --go-grpc_out=./iam/identity/src/grpc/native_iam_policy --go-grpc_opt=paths=source_relative -I ../proto/iam policy.proto
+mkdir -p ./iam/identity/src/grpc/native_iam_identity
+protoc --go_out=./iam/identity/src/grpc/native_iam_identity --go_opt=paths=source_relative --go-grpc_out=./iam/identity/src/grpc/native_iam_identity --go-grpc_opt=paths=source_relative -I ../proto/iam identity.proto

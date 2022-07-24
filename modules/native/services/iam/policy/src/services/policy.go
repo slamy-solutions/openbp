@@ -212,6 +212,10 @@ func (s *IAMPolicyServer) List(in *nativeIAmPolicyGRPC.ListPoliciesRequest, out 
 	if in.Limit != 0 {
 		findOptions = findOptions.SetLimit(int64(in.Limit))
 	}
+	if in.Skip != 0 || in.Limit != 0 {
+		// Make sure that same data will be returned for same skip and limit parameters
+		findOptions = findOptions.SetSort(bson.D{primitive.E{Key: "_id", Value: 1}})
+	}
 
 	cursor, err := collection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
