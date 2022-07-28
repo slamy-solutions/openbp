@@ -21,7 +21,7 @@ import (
 	nativeNamespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_namespace"
 )
 
-type IAMIdentityServer struct {
+type IAmIdentityServer struct {
 	nativeIAmIdentityGRPC.UnimplementedIAMIdentityServiceServer
 
 	mongoClient           *mongo.Client
@@ -43,11 +43,23 @@ const (
 	IDENTITY_CACHE_TIMEOUT = time.Second * 30
 )
 
+func NewIAmIdentityServer(mongoClient *mongo.Client, mongoDbPrefix string, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient, nativeIAmPolicyClient nativeIAmPolicyGRPC.IAMPolicyServiceClient) *IAmIdentityServer {
+	mongoGlobalCollection := mongoClient.Database(fmt.Sprintf("%sglobal", mongoDbPrefix)).Collection("native_iam_identity")
+	return &IAmIdentityServer{
+		mongoClient:           mongoClient,
+		mongoDbPrefix:         mongoDbPrefix,
+		mongoGlobalCollection: mongoGlobalCollection,
+		cacheClient:           cacheClient,
+		nativeNamespaceClient: nativeNamespaceClient,
+		nativeIAmPolicyClient: nativeIAmPolicyClient,
+	}
+}
+
 func makeIndetityCacheKey(namespace string, uuid string) string {
 	return fmt.Sprintf("native_iam_identity_data_%s_%s", namespace, uuid)
 }
 
-func collectionByNamespace(s *IAMIdentityServer, namespace string) *mongo.Collection {
+func collectionByNamespace(s *IAmIdentityServer, namespace string) *mongo.Collection {
 	if namespace == "" {
 		return s.mongoGlobalCollection
 	} else {
@@ -77,7 +89,7 @@ func identityFromMongo(mongoIdentity identityInMongo, namespace string, uuid str
 	}, nil
 }
 
-func (s *IAMIdentityServer) Create(ctx context.Context, in *nativeIAmIdentityGRPC.CreateIdentityRequest) (*nativeIAmIdentityGRPC.CreateIdentityResponse, error) {
+func (s *IAmIdentityServer) Create(ctx context.Context, in *nativeIAmIdentityGRPC.CreateIdentityRequest) (*nativeIAmIdentityGRPC.CreateIdentityResponse, error) {
 	if in.Namespace != "" {
 		r, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
 		if err != nil {
@@ -111,7 +123,7 @@ func (s *IAMIdentityServer) Create(ctx context.Context, in *nativeIAmIdentityGRP
 	}, status.Errorf(grpccodes.OK, "")
 }
 
-func (s *IAMIdentityServer) Get(ctx context.Context, in *nativeIAmIdentityGRPC.GetIdentityRequest) (*nativeIAmIdentityGRPC.GetIdentityResponse, error) {
+func (s *IAmIdentityServer) Get(ctx context.Context, in *nativeIAmIdentityGRPC.GetIdentityRequest) (*nativeIAmIdentityGRPC.GetIdentityResponse, error) {
 	var cacheKey string
 	if in.UseCache {
 		cacheKey = makeIndetityCacheKey(in.Namespace, in.Uuid)
@@ -157,7 +169,7 @@ func (s *IAMIdentityServer) Get(ctx context.Context, in *nativeIAmIdentityGRPC.G
 	return &nativeIAmIdentityGRPC.GetIdentityResponse{Identity: identity}, status.Error(grpccodes.OK, "")
 }
 
-func (s *IAMIdentityServer) AddPolicy(ctx context.Context, in *nativeIAmIdentityGRPC.AddPolicyRequest) (*nativeIAmIdentityGRPC.AddPolicyResponse, error) {
+func (s *IAmIdentityServer) AddPolicy(ctx context.Context, in *nativeIAmIdentityGRPC.AddPolicyRequest) (*nativeIAmIdentityGRPC.AddPolicyResponse, error) {
 	identityId, err := primitive.ObjectIDFromHex(in.IdentityUUID)
 	if err != nil {
 		return nil, status.Error(grpccodes.InvalidArgument, "Identity UUID has bad format")
@@ -189,7 +201,7 @@ func (s *IAMIdentityServer) AddPolicy(ctx context.Context, in *nativeIAmIdentity
 	return &nativeIAmIdentityGRPC.AddPolicyResponse{Identity: identity}, status.Error(grpccodes.OK, "")
 }
 
-func (s *IAMIdentityServer) RemovePolicy(ctx context.Context, in *nativeIAmIdentityGRPC.RemovePolicyRequest) (*nativeIAmIdentityGRPC.RemovePolicyResponse, error) {
+func (s *IAmIdentityServer) RemovePolicy(ctx context.Context, in *nativeIAmIdentityGRPC.RemovePolicyRequest) (*nativeIAmIdentityGRPC.RemovePolicyResponse, error) {
 	identityId, err := primitive.ObjectIDFromHex(in.IdentityUUID)
 	if err != nil {
 		return nil, status.Error(grpccodes.InvalidArgument, "Identity UUID has bad format")
@@ -221,7 +233,7 @@ func (s *IAMIdentityServer) RemovePolicy(ctx context.Context, in *nativeIAmIdent
 	return &nativeIAmIdentityGRPC.RemovePolicyResponse{Identity: identity}, status.Error(grpccodes.OK, "")
 }
 
-func (s *IAMIdentityServer) SetActive(ctx context.Context, in *nativeIAmIdentityGRPC.SetIdentityActiveRequest) (*nativeIAmIdentityGRPC.SetIdentityActiveResponse, error) {
+func (s *IAmIdentityServer) SetActive(ctx context.Context, in *nativeIAmIdentityGRPC.SetIdentityActiveRequest) (*nativeIAmIdentityGRPC.SetIdentityActiveResponse, error) {
 	id, err := primitive.ObjectIDFromHex(in.Identity)
 	if err != nil {
 		return nil, status.Error(grpccodes.InvalidArgument, "Identity UUID has bad format")
