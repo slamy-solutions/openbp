@@ -20,13 +20,13 @@ export const policyClient = new IAMPolicyServiceClientImpl(grpcPolicyClient)
 export async function connect() {
     // await grpcAuthClient.connect()
     await grpcConfigClient.connect()
-    // await grpcIdentityClient.connect()
+    await grpcIdentityClient.connect()
     await grpcPolicyClient.connect()
 }
 
 export async function close() {
     // grpcAuthClient.close()
     grpcConfigClient.close()
-    // grpcIdentityClient.close()
+    grpcIdentityClient.close()
     grpcPolicyClient.close()
 }

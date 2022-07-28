@@ -5,6 +5,8 @@ import * as _m0 from "protobufjs/minimal";
 export const protobufPackage = "native_iam_identity";
 
 export interface Identity {
+  /** Namespaces of the identity. Can be empty for global identities. */
+  namespace: string;
   /** Unique identity identifier */
   uuid: string;
   /** Public identity name */
@@ -12,10 +14,19 @@ export interface Identity {
   /** If identity is not active, it will not be able to login and perform any actions. */
   active: boolean;
   /** Security policies assigned to the identity */
-  policies: string[];
+  policies: Identity_PolicyReference[];
+}
+
+export interface Identity_PolicyReference {
+  /** Policy namespace. Empty for global policy */
+  namespace: string;
+  /** Policy uuid (unique identifier) inside namespace */
+  uuid: string;
 }
 
 export interface CreateIdentityRequest {
+  /** Namespace where to create identity */
+  namespace: string;
   /** Public name for newly created identity. It may not be unique - this is just human-readable name. */
   name: string;
   /** Should the identity be active on the start or not */
@@ -28,8 +39,12 @@ export interface CreateIdentityResponse {
 }
 
 export interface GetIdentityRequest {
-  /** Identity unique identifier */
+  /** Identity namespace */
+  namespace: string;
+  /** Identity unique identifier inside namespace */
   uuid: string;
+  /** Use cache or not. Cache may not be valid under very rare conditions (simultaniour read and writes). Cache automatically clears after short period of time (30 seconds by default). */
+  useCache: boolean;
 }
 
 export interface GetIdentityResponse {
@@ -38,34 +53,53 @@ export interface GetIdentityResponse {
 }
 
 export interface AddPolicyRequest {
-  /** Identity UUID to add policy */
-  identity: string;
-  /** Policy UUID to add */
-  policy: string;
+  /** Identity namespace */
+  identityNamespace: string;
+  /** Identity identifier inside identity namespace */
+  identityUUID: string;
+  /** Policy namespace */
+  policyNamespace: string;
+  /** Policy UUID inside policy namespace */
+  policyUUID: string;
 }
 
-export interface AddPolicyResponse {}
+export interface AddPolicyResponse {
+  /** Updated identity (after adding policy) */
+  identity: Identity | undefined;
+}
 
 export interface RemovePolicyRequest {
-  /** Identity UUID to remove policy */
-  identity: string;
-  /** Policy UUID to remove */
-  policy: string;
+  /** Identity namespace */
+  identityNamespace: string;
+  /** Identity unique identifier inside identity namespace */
+  identityUUID: string;
+  /** Policy namespace */
+  policyNamespace: string;
+  /** Policy UUID inside policy namespace */
+  policyUUID: string;
 }
 
-export interface RemovePolicyResponse {}
+export interface RemovePolicyResponse {
+  /** Updated identity (after removing policy) */
+  identity: Identity | undefined;
+}
 
 export interface SetIdentityActiveRequest {
-  /** Identity UUID */
+  /** Namespace of the identity */
+  namespace: string;
+  /** Identity UUID (unique identifier) inside namespace */
   identity: string;
   /** Set active or not */
   active: boolean;
 }
 
-export interface SetIdentityActiveResponse {}
+export interface SetIdentityActiveResponse {
+  /** Identity after update */
+  identity: Identity | undefined;
+}
 
 function createBaseIdentity(): Identity {
-  return { uuid: "", name: "", active: false, policies: [] };
+  return { namespace: "", uuid: "", name: "", active: false, policies: [] };
 }
 
 export const Identity = {
@@ -73,17 +107,20 @@ export const Identity = {
     message: Identity,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.uuid !== "") {
-      writer.uint32(10).string(message.uuid);
+      writer.uint32(18).string(message.uuid);
     }
     if (message.name !== "") {
-      writer.uint32(18).string(message.name);
+      writer.uint32(26).string(message.name);
     }
     if (message.active === true) {
-      writer.uint32(24).bool(message.active);
+      writer.uint32(32).bool(message.active);
     }
     for (const v of message.policies) {
-      writer.uint32(34).string(v!);
+      Identity_PolicyReference.encode(v!, writer.uint32(42).fork()).ldelim();
     }
     return writer;
   },
@@ -96,16 +133,21 @@ export const Identity = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.uuid = reader.string();
+          message.namespace = reader.string();
           break;
         case 2:
-          message.name = reader.string();
+          message.uuid = reader.string();
           break;
         case 3:
-          message.active = reader.bool();
+          message.name = reader.string();
           break;
         case 4:
-          message.policies.push(reader.string());
+          message.active = reader.bool();
+          break;
+        case 5:
+          message.policies.push(
+            Identity_PolicyReference.decode(reader, reader.uint32())
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -117,22 +159,26 @@ export const Identity = {
 
   fromJSON(object: any): Identity {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
       name: isSet(object.name) ? String(object.name) : "",
       active: isSet(object.active) ? Boolean(object.active) : false,
       policies: Array.isArray(object?.policies)
-        ? object.policies.map((e: any) => String(e))
+        ? object.policies.map((e: any) => Identity_PolicyReference.fromJSON(e))
         : [],
     };
   },
 
   toJSON(message: Identity): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     message.name !== undefined && (obj.name = message.name);
     message.active !== undefined && (obj.active = message.active);
     if (message.policies) {
-      obj.policies = message.policies.map((e) => e);
+      obj.policies = message.policies.map((e) =>
+        e ? Identity_PolicyReference.toJSON(e) : undefined
+      );
     } else {
       obj.policies = [];
     }
@@ -141,16 +187,85 @@ export const Identity = {
 
   fromPartial<I extends Exact<DeepPartial<Identity>, I>>(object: I): Identity {
     const message = createBaseIdentity();
+    message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     message.name = object.name ?? "";
     message.active = object.active ?? false;
-    message.policies = object.policies?.map((e) => e) || [];
+    message.policies =
+      object.policies?.map((e) => Identity_PolicyReference.fromPartial(e)) ||
+      [];
+    return message;
+  },
+};
+
+function createBaseIdentity_PolicyReference(): Identity_PolicyReference {
+  return { namespace: "", uuid: "" };
+}
+
+export const Identity_PolicyReference = {
+  encode(
+    message: Identity_PolicyReference,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
+    if (message.uuid !== "") {
+      writer.uint32(18).string(message.uuid);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): Identity_PolicyReference {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseIdentity_PolicyReference();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
+          message.uuid = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Identity_PolicyReference {
+    return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
+      uuid: isSet(object.uuid) ? String(object.uuid) : "",
+    };
+  },
+
+  toJSON(message: Identity_PolicyReference): unknown {
+    const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
+    message.uuid !== undefined && (obj.uuid = message.uuid);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Identity_PolicyReference>, I>>(
+    object: I
+  ): Identity_PolicyReference {
+    const message = createBaseIdentity_PolicyReference();
+    message.namespace = object.namespace ?? "";
+    message.uuid = object.uuid ?? "";
     return message;
   },
 };
 
 function createBaseCreateIdentityRequest(): CreateIdentityRequest {
-  return { name: "", initiallyActive: false };
+  return { namespace: "", name: "", initiallyActive: false };
 }
 
 export const CreateIdentityRequest = {
@@ -158,11 +273,14 @@ export const CreateIdentityRequest = {
     message: CreateIdentityRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.name !== "") {
-      writer.uint32(10).string(message.name);
+      writer.uint32(18).string(message.name);
     }
     if (message.initiallyActive === true) {
-      writer.uint32(16).bool(message.initiallyActive);
+      writer.uint32(24).bool(message.initiallyActive);
     }
     return writer;
   },
@@ -178,9 +296,12 @@ export const CreateIdentityRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.name = reader.string();
+          message.namespace = reader.string();
           break;
         case 2:
+          message.name = reader.string();
+          break;
+        case 3:
           message.initiallyActive = reader.bool();
           break;
         default:
@@ -193,6 +314,7 @@ export const CreateIdentityRequest = {
 
   fromJSON(object: any): CreateIdentityRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       name: isSet(object.name) ? String(object.name) : "",
       initiallyActive: isSet(object.initiallyActive)
         ? Boolean(object.initiallyActive)
@@ -202,6 +324,7 @@ export const CreateIdentityRequest = {
 
   toJSON(message: CreateIdentityRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.name !== undefined && (obj.name = message.name);
     message.initiallyActive !== undefined &&
       (obj.initiallyActive = message.initiallyActive);
@@ -212,6 +335,7 @@ export const CreateIdentityRequest = {
     object: I
   ): CreateIdentityRequest {
     const message = createBaseCreateIdentityRequest();
+    message.namespace = object.namespace ?? "";
     message.name = object.name ?? "";
     message.initiallyActive = object.initiallyActive ?? false;
     return message;
@@ -284,7 +408,7 @@ export const CreateIdentityResponse = {
 };
 
 function createBaseGetIdentityRequest(): GetIdentityRequest {
-  return { uuid: "" };
+  return { namespace: "", uuid: "", useCache: false };
 }
 
 export const GetIdentityRequest = {
@@ -292,8 +416,14 @@ export const GetIdentityRequest = {
     message: GetIdentityRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.uuid !== "") {
-      writer.uint32(10).string(message.uuid);
+      writer.uint32(18).string(message.uuid);
+    }
+    if (message.useCache === true) {
+      writer.uint32(24).bool(message.useCache);
     }
     return writer;
   },
@@ -306,7 +436,13 @@ export const GetIdentityRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
           message.uuid = reader.string();
+          break;
+        case 3:
+          message.useCache = reader.bool();
           break;
         default:
           reader.skipType(tag & 7);
@@ -318,13 +454,17 @@ export const GetIdentityRequest = {
 
   fromJSON(object: any): GetIdentityRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
+      useCache: isSet(object.useCache) ? Boolean(object.useCache) : false,
     };
   },
 
   toJSON(message: GetIdentityRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
+    message.useCache !== undefined && (obj.useCache = message.useCache);
     return obj;
   },
 
@@ -332,7 +472,9 @@ export const GetIdentityRequest = {
     object: I
   ): GetIdentityRequest {
     const message = createBaseGetIdentityRequest();
+    message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
+    message.useCache = object.useCache ?? false;
     return message;
   },
 };
@@ -400,7 +542,12 @@ export const GetIdentityResponse = {
 };
 
 function createBaseAddPolicyRequest(): AddPolicyRequest {
-  return { identity: "", policy: "" };
+  return {
+    identityNamespace: "",
+    identityUUID: "",
+    policyNamespace: "",
+    policyUUID: "",
+  };
 }
 
 export const AddPolicyRequest = {
@@ -408,11 +555,17 @@ export const AddPolicyRequest = {
     message: AddPolicyRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.identity !== "") {
-      writer.uint32(10).string(message.identity);
+    if (message.identityNamespace !== "") {
+      writer.uint32(10).string(message.identityNamespace);
     }
-    if (message.policy !== "") {
-      writer.uint32(18).string(message.policy);
+    if (message.identityUUID !== "") {
+      writer.uint32(18).string(message.identityUUID);
+    }
+    if (message.policyNamespace !== "") {
+      writer.uint32(26).string(message.policyNamespace);
+    }
+    if (message.policyUUID !== "") {
+      writer.uint32(34).string(message.policyUUID);
     }
     return writer;
   },
@@ -425,10 +578,16 @@ export const AddPolicyRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.identity = reader.string();
+          message.identityNamespace = reader.string();
           break;
         case 2:
-          message.policy = reader.string();
+          message.identityUUID = reader.string();
+          break;
+        case 3:
+          message.policyNamespace = reader.string();
+          break;
+        case 4:
+          message.policyUUID = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -440,15 +599,28 @@ export const AddPolicyRequest = {
 
   fromJSON(object: any): AddPolicyRequest {
     return {
-      identity: isSet(object.identity) ? String(object.identity) : "",
-      policy: isSet(object.policy) ? String(object.policy) : "",
+      identityNamespace: isSet(object.identityNamespace)
+        ? String(object.identityNamespace)
+        : "",
+      identityUUID: isSet(object.identityUUID)
+        ? String(object.identityUUID)
+        : "",
+      policyNamespace: isSet(object.policyNamespace)
+        ? String(object.policyNamespace)
+        : "",
+      policyUUID: isSet(object.policyUUID) ? String(object.policyUUID) : "",
     };
   },
 
   toJSON(message: AddPolicyRequest): unknown {
     const obj: any = {};
-    message.identity !== undefined && (obj.identity = message.identity);
-    message.policy !== undefined && (obj.policy = message.policy);
+    message.identityNamespace !== undefined &&
+      (obj.identityNamespace = message.identityNamespace);
+    message.identityUUID !== undefined &&
+      (obj.identityUUID = message.identityUUID);
+    message.policyNamespace !== undefined &&
+      (obj.policyNamespace = message.policyNamespace);
+    message.policyUUID !== undefined && (obj.policyUUID = message.policyUUID);
     return obj;
   },
 
@@ -456,21 +628,26 @@ export const AddPolicyRequest = {
     object: I
   ): AddPolicyRequest {
     const message = createBaseAddPolicyRequest();
-    message.identity = object.identity ?? "";
-    message.policy = object.policy ?? "";
+    message.identityNamespace = object.identityNamespace ?? "";
+    message.identityUUID = object.identityUUID ?? "";
+    message.policyNamespace = object.policyNamespace ?? "";
+    message.policyUUID = object.policyUUID ?? "";
     return message;
   },
 };
 
 function createBaseAddPolicyResponse(): AddPolicyResponse {
-  return {};
+  return { identity: undefined };
 }
 
 export const AddPolicyResponse = {
   encode(
-    _: AddPolicyResponse,
+    message: AddPolicyResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.identity !== undefined) {
+      Identity.encode(message.identity, writer.uint32(10).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -481,6 +658,9 @@ export const AddPolicyResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.identity = Identity.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -489,25 +669,42 @@ export const AddPolicyResponse = {
     return message;
   },
 
-  fromJSON(_: any): AddPolicyResponse {
-    return {};
+  fromJSON(object: any): AddPolicyResponse {
+    return {
+      identity: isSet(object.identity)
+        ? Identity.fromJSON(object.identity)
+        : undefined,
+    };
   },
 
-  toJSON(_: AddPolicyResponse): unknown {
+  toJSON(message: AddPolicyResponse): unknown {
     const obj: any = {};
+    message.identity !== undefined &&
+      (obj.identity = message.identity
+        ? Identity.toJSON(message.identity)
+        : undefined);
     return obj;
   },
 
   fromPartial<I extends Exact<DeepPartial<AddPolicyResponse>, I>>(
-    _: I
+    object: I
   ): AddPolicyResponse {
     const message = createBaseAddPolicyResponse();
+    message.identity =
+      object.identity !== undefined && object.identity !== null
+        ? Identity.fromPartial(object.identity)
+        : undefined;
     return message;
   },
 };
 
 function createBaseRemovePolicyRequest(): RemovePolicyRequest {
-  return { identity: "", policy: "" };
+  return {
+    identityNamespace: "",
+    identityUUID: "",
+    policyNamespace: "",
+    policyUUID: "",
+  };
 }
 
 export const RemovePolicyRequest = {
@@ -515,11 +712,17 @@ export const RemovePolicyRequest = {
     message: RemovePolicyRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.identity !== "") {
-      writer.uint32(10).string(message.identity);
+    if (message.identityNamespace !== "") {
+      writer.uint32(10).string(message.identityNamespace);
     }
-    if (message.policy !== "") {
-      writer.uint32(18).string(message.policy);
+    if (message.identityUUID !== "") {
+      writer.uint32(18).string(message.identityUUID);
+    }
+    if (message.policyNamespace !== "") {
+      writer.uint32(26).string(message.policyNamespace);
+    }
+    if (message.policyUUID !== "") {
+      writer.uint32(34).string(message.policyUUID);
     }
     return writer;
   },
@@ -532,10 +735,16 @@ export const RemovePolicyRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.identity = reader.string();
+          message.identityNamespace = reader.string();
           break;
         case 2:
-          message.policy = reader.string();
+          message.identityUUID = reader.string();
+          break;
+        case 3:
+          message.policyNamespace = reader.string();
+          break;
+        case 4:
+          message.policyUUID = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -547,15 +756,28 @@ export const RemovePolicyRequest = {
 
   fromJSON(object: any): RemovePolicyRequest {
     return {
-      identity: isSet(object.identity) ? String(object.identity) : "",
-      policy: isSet(object.policy) ? String(object.policy) : "",
+      identityNamespace: isSet(object.identityNamespace)
+        ? String(object.identityNamespace)
+        : "",
+      identityUUID: isSet(object.identityUUID)
+        ? String(object.identityUUID)
+        : "",
+      policyNamespace: isSet(object.policyNamespace)
+        ? String(object.policyNamespace)
+        : "",
+      policyUUID: isSet(object.policyUUID) ? String(object.policyUUID) : "",
     };
   },
 
   toJSON(message: RemovePolicyRequest): unknown {
     const obj: any = {};
-    message.identity !== undefined && (obj.identity = message.identity);
-    message.policy !== undefined && (obj.policy = message.policy);
+    message.identityNamespace !== undefined &&
+      (obj.identityNamespace = message.identityNamespace);
+    message.identityUUID !== undefined &&
+      (obj.identityUUID = message.identityUUID);
+    message.policyNamespace !== undefined &&
+      (obj.policyNamespace = message.policyNamespace);
+    message.policyUUID !== undefined && (obj.policyUUID = message.policyUUID);
     return obj;
   },
 
@@ -563,21 +785,26 @@ export const RemovePolicyRequest = {
     object: I
   ): RemovePolicyRequest {
     const message = createBaseRemovePolicyRequest();
-    message.identity = object.identity ?? "";
-    message.policy = object.policy ?? "";
+    message.identityNamespace = object.identityNamespace ?? "";
+    message.identityUUID = object.identityUUID ?? "";
+    message.policyNamespace = object.policyNamespace ?? "";
+    message.policyUUID = object.policyUUID ?? "";
     return message;
   },
 };
 
 function createBaseRemovePolicyResponse(): RemovePolicyResponse {
-  return {};
+  return { identity: undefined };
 }
 
 export const RemovePolicyResponse = {
   encode(
-    _: RemovePolicyResponse,
+    message: RemovePolicyResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.identity !== undefined) {
+      Identity.encode(message.identity, writer.uint32(10).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -591,6 +818,9 @@ export const RemovePolicyResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.identity = Identity.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -599,25 +829,37 @@ export const RemovePolicyResponse = {
     return message;
   },
 
-  fromJSON(_: any): RemovePolicyResponse {
-    return {};
+  fromJSON(object: any): RemovePolicyResponse {
+    return {
+      identity: isSet(object.identity)
+        ? Identity.fromJSON(object.identity)
+        : undefined,
+    };
   },
 
-  toJSON(_: RemovePolicyResponse): unknown {
+  toJSON(message: RemovePolicyResponse): unknown {
     const obj: any = {};
+    message.identity !== undefined &&
+      (obj.identity = message.identity
+        ? Identity.toJSON(message.identity)
+        : undefined);
     return obj;
   },
 
   fromPartial<I extends Exact<DeepPartial<RemovePolicyResponse>, I>>(
-    _: I
+    object: I
   ): RemovePolicyResponse {
     const message = createBaseRemovePolicyResponse();
+    message.identity =
+      object.identity !== undefined && object.identity !== null
+        ? Identity.fromPartial(object.identity)
+        : undefined;
     return message;
   },
 };
 
 function createBaseSetIdentityActiveRequest(): SetIdentityActiveRequest {
-  return { identity: "", active: false };
+  return { namespace: "", identity: "", active: false };
 }
 
 export const SetIdentityActiveRequest = {
@@ -625,11 +867,14 @@ export const SetIdentityActiveRequest = {
     message: SetIdentityActiveRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
     if (message.identity !== "") {
-      writer.uint32(10).string(message.identity);
+      writer.uint32(18).string(message.identity);
     }
     if (message.active === true) {
-      writer.uint32(16).bool(message.active);
+      writer.uint32(24).bool(message.active);
     }
     return writer;
   },
@@ -645,9 +890,12 @@ export const SetIdentityActiveRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.identity = reader.string();
+          message.namespace = reader.string();
           break;
         case 2:
+          message.identity = reader.string();
+          break;
+        case 3:
           message.active = reader.bool();
           break;
         default:
@@ -660,6 +908,7 @@ export const SetIdentityActiveRequest = {
 
   fromJSON(object: any): SetIdentityActiveRequest {
     return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       identity: isSet(object.identity) ? String(object.identity) : "",
       active: isSet(object.active) ? Boolean(object.active) : false,
     };
@@ -667,6 +916,7 @@ export const SetIdentityActiveRequest = {
 
   toJSON(message: SetIdentityActiveRequest): unknown {
     const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.identity !== undefined && (obj.identity = message.identity);
     message.active !== undefined && (obj.active = message.active);
     return obj;
@@ -676,6 +926,7 @@ export const SetIdentityActiveRequest = {
     object: I
   ): SetIdentityActiveRequest {
     const message = createBaseSetIdentityActiveRequest();
+    message.namespace = object.namespace ?? "";
     message.identity = object.identity ?? "";
     message.active = object.active ?? false;
     return message;
@@ -683,14 +934,17 @@ export const SetIdentityActiveRequest = {
 };
 
 function createBaseSetIdentityActiveResponse(): SetIdentityActiveResponse {
-  return {};
+  return { identity: undefined };
 }
 
 export const SetIdentityActiveResponse = {
   encode(
-    _: SetIdentityActiveResponse,
+    message: SetIdentityActiveResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.identity !== undefined) {
+      Identity.encode(message.identity, writer.uint32(10).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -704,6 +958,9 @@ export const SetIdentityActiveResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.identity = Identity.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -712,19 +969,31 @@ export const SetIdentityActiveResponse = {
     return message;
   },
 
-  fromJSON(_: any): SetIdentityActiveResponse {
-    return {};
+  fromJSON(object: any): SetIdentityActiveResponse {
+    return {
+      identity: isSet(object.identity)
+        ? Identity.fromJSON(object.identity)
+        : undefined,
+    };
   },
 
-  toJSON(_: SetIdentityActiveResponse): unknown {
+  toJSON(message: SetIdentityActiveResponse): unknown {
     const obj: any = {};
+    message.identity !== undefined &&
+      (obj.identity = message.identity
+        ? Identity.toJSON(message.identity)
+        : undefined);
     return obj;
   },
 
   fromPartial<I extends Exact<DeepPartial<SetIdentityActiveResponse>, I>>(
-    _: I
+    object: I
   ): SetIdentityActiveResponse {
     const message = createBaseSetIdentityActiveResponse();
+    message.identity =
+      object.identity !== undefined && object.identity !== null
+        ? Identity.fromPartial(object.identity)
+        : undefined;
     return message;
   },
 };
