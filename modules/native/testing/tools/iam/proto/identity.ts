@@ -87,8 +87,8 @@ export interface RemovePolicyResponse {
 export interface SetIdentityActiveRequest {
   /** Namespace of the identity */
   namespace: string;
-  /** Identity UUID (unique identifier) inside namespace */
-  identity: string;
+  /** Identity unique identifier inside namespace */
+  uuid: string;
   /** Set active or not */
   active: boolean;
 }
@@ -859,7 +859,7 @@ export const RemovePolicyResponse = {
 };
 
 function createBaseSetIdentityActiveRequest(): SetIdentityActiveRequest {
-  return { namespace: "", identity: "", active: false };
+  return { namespace: "", uuid: "", active: false };
 }
 
 export const SetIdentityActiveRequest = {
@@ -870,8 +870,8 @@ export const SetIdentityActiveRequest = {
     if (message.namespace !== "") {
       writer.uint32(10).string(message.namespace);
     }
-    if (message.identity !== "") {
-      writer.uint32(18).string(message.identity);
+    if (message.uuid !== "") {
+      writer.uint32(18).string(message.uuid);
     }
     if (message.active === true) {
       writer.uint32(24).bool(message.active);
@@ -893,7 +893,7 @@ export const SetIdentityActiveRequest = {
           message.namespace = reader.string();
           break;
         case 2:
-          message.identity = reader.string();
+          message.uuid = reader.string();
           break;
         case 3:
           message.active = reader.bool();
@@ -909,7 +909,7 @@ export const SetIdentityActiveRequest = {
   fromJSON(object: any): SetIdentityActiveRequest {
     return {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
-      identity: isSet(object.identity) ? String(object.identity) : "",
+      uuid: isSet(object.uuid) ? String(object.uuid) : "",
       active: isSet(object.active) ? Boolean(object.active) : false,
     };
   },
@@ -917,7 +917,7 @@ export const SetIdentityActiveRequest = {
   toJSON(message: SetIdentityActiveRequest): unknown {
     const obj: any = {};
     message.namespace !== undefined && (obj.namespace = message.namespace);
-    message.identity !== undefined && (obj.identity = message.identity);
+    message.uuid !== undefined && (obj.uuid = message.uuid);
     message.active !== undefined && (obj.active = message.active);
     return obj;
   },
@@ -927,7 +927,7 @@ export const SetIdentityActiveRequest = {
   ): SetIdentityActiveRequest {
     const message = createBaseSetIdentityActiveRequest();
     message.namespace = object.namespace ?? "";
-    message.identity = object.identity ?? "";
+    message.uuid = object.uuid ?? "";
     message.active = object.active ?? false;
     return message;
   },

@@ -84,8 +84,8 @@ message RemovePolicyResponse {
 message SetIdentityActiveRequest {
     // Namespace of the identity
     string namespace = 1;
-    // Identity UUID (unique identifier) inside namespace
-    string identity = 2;
+    // Identity unique identifier inside namespace
+    string uuid = 2;
     // Set active or not
     bool active = 3;
 }
