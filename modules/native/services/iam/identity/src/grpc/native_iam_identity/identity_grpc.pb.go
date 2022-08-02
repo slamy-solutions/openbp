@@ -26,6 +26,8 @@ type IAMIdentityServiceClient interface {
 	Create(ctx context.Context, in *CreateIdentityRequest, opts ...grpc.CallOption) (*CreateIdentityResponse, error)
 	// Get identity
 	Get(ctx context.Context, in *GetIdentityRequest, opts ...grpc.CallOption) (*GetIdentityResponse, error)
+	// Delete identity
+	Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*DeleteIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(ctx context.Context, in *AddPolicyRequest, opts ...grpc.CallOption) (*AddPolicyResponse, error)
 	// Removes policy from the identity. If policy was already removed - does nothing.
@@ -54,6 +56,15 @@ func (c *iAMIdentityServiceClient) Create(ctx context.Context, in *CreateIdentit
 func (c *iAMIdentityServiceClient) Get(ctx context.Context, in *GetIdentityRequest, opts ...grpc.CallOption) (*GetIdentityResponse, error) {
 	out := new(GetIdentityResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMIdentityServiceClient) Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*DeleteIdentityResponse, error) {
+	out := new(DeleteIdentityResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +106,8 @@ type IAMIdentityServiceServer interface {
 	Create(context.Context, *CreateIdentityRequest) (*CreateIdentityResponse, error)
 	// Get identity
 	Get(context.Context, *GetIdentityRequest) (*GetIdentityResponse, error)
+	// Delete identity
+	Delete(context.Context, *DeleteIdentityRequest) (*DeleteIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error)
 	// Removes policy from the identity. If policy was already removed - does nothing.
@@ -113,6 +126,9 @@ func (UnimplementedIAMIdentityServiceServer) Create(context.Context, *CreateIden
 }
 func (UnimplementedIAMIdentityServiceServer) Get(context.Context, *GetIdentityRequest) (*GetIdentityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) Delete(context.Context, *DeleteIdentityRequest) (*DeleteIdentityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedIAMIdentityServiceServer) AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPolicy not implemented")
@@ -168,6 +184,24 @@ func _IAMIdentityService_Get_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IAMIdentityServiceServer).Get(ctx, req.(*GetIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMIdentityService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).Delete(ctx, req.(*DeleteIdentityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -240,6 +274,10 @@ var IAMIdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _IAMIdentityService_Get_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _IAMIdentityService_Delete_Handler,
 		},
 		{
 			MethodName: "AddPolicy",

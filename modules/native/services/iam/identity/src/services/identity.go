@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
@@ -169,6 +170,25 @@ func (s *IAmIdentityServer) Get(ctx context.Context, in *nativeIAmIdentityGRPC.G
 	return &nativeIAmIdentityGRPC.GetIdentityResponse{Identity: identity}, status.Error(grpccodes.OK, "")
 }
 
+func (s *IAmIdentityServer) Delete(ctx context.Context, in *nativeIAmIdentityGRPC.DeleteIdentityRequest) (*nativeIAmIdentityGRPC.DeleteIdentityResponse, error) {
+	identityId, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Identity UUID has bad format")
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": identityId})
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, "Error while deleting data from mongo: "+err.Error())
+	}
+
+	if result.DeletedCount != 0 {
+		s.cacheClient.Remove(ctx, makeIndetityCacheKey(in.Namespace, in.Uuid))
+	}
+
+	return &nativeIAmIdentityGRPC.DeleteIdentityResponse{}, status.Error(grpccodes.OK, "")
+}
+
 func (s *IAmIdentityServer) AddPolicy(ctx context.Context, in *nativeIAmIdentityGRPC.AddPolicyRequest) (*nativeIAmIdentityGRPC.AddPolicyResponse, error) {
 	identityId, err := primitive.ObjectIDFromHex(in.IdentityUUID)
 	if err != nil {
@@ -180,10 +200,22 @@ func (s *IAmIdentityServer) AddPolicy(ctx context.Context, in *nativeIAmIdentity
 		return nil, status.Error(grpccodes.InvalidArgument, "Policy UUID has bad format")
 	}
 
+	existResponse, err := s.nativeIAmPolicyClient.Exist(ctx, &nativeIAmPolicyGRPC.ExistPolicyRequest{
+		Namespace: in.PolicyNamespace,
+		Uuid:      in.PolicyUUID,
+		UseCache:  true,
+	})
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, "Failed to check existance of policy: "+err.Error())
+	}
+	if !existResponse.Exist {
+		return nil, status.Error(grpccodes.FailedPrecondition, "Policy doesnt exist")
+	}
+
 	policyData := in.PolicyNamespace + ":" + in.PolicyUUID
 	collection := collectionByNamespace(s, in.IdentityNamespace)
 	var mongoIdentity identityInMongo
-	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": identityId}, bson.M{"$addToSet": bson.M{"policies": policyData}}).Decode(&mongoIdentity)
+	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": identityId}, bson.M{"$addToSet": bson.M{"policies": policyData}}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&mongoIdentity)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "Identity not found")
@@ -215,7 +247,7 @@ func (s *IAmIdentityServer) RemovePolicy(ctx context.Context, in *nativeIAmIdent
 	policyData := in.PolicyNamespace + ":" + in.PolicyUUID
 	collection := collectionByNamespace(s, in.IdentityNamespace)
 	var mongoIdentity identityInMongo
-	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": identityId}, bson.M{"$pull": bson.M{"policies": policyData}}).Decode(&mongoIdentity)
+	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": identityId}, bson.M{"$pull": bson.M{"policies": policyData}}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&mongoIdentity)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "Identity not found")
@@ -234,14 +266,14 @@ func (s *IAmIdentityServer) RemovePolicy(ctx context.Context, in *nativeIAmIdent
 }
 
 func (s *IAmIdentityServer) SetActive(ctx context.Context, in *nativeIAmIdentityGRPC.SetIdentityActiveRequest) (*nativeIAmIdentityGRPC.SetIdentityActiveResponse, error) {
-	id, err := primitive.ObjectIDFromHex(in.Identity)
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
 	if err != nil {
 		return nil, status.Error(grpccodes.InvalidArgument, "Identity UUID has bad format")
 	}
 
 	collection := collectionByNamespace(s, in.Namespace)
 	var mongoIdentity identityInMongo
-	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{"$set": bson.M{"active": in.Active}}).Decode(&mongoIdentity)
+	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{"$set": bson.M{"active": in.Active}}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&mongoIdentity)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "Identity not found")
@@ -249,12 +281,12 @@ func (s *IAmIdentityServer) SetActive(ctx context.Context, in *nativeIAmIdentity
 		return nil, status.Error(grpccodes.Internal, "Error on updating identity: "+err.Error())
 	}
 
-	identity, err := identityFromMongo(mongoIdentity, in.Namespace, in.Identity)
+	identity, err := identityFromMongo(mongoIdentity, in.Namespace, in.Uuid)
 	if err != nil {
 		return nil, err
 	}
 
-	s.cacheClient.Remove(ctx, makeIndetityCacheKey(in.Namespace, in.Identity))
+	s.cacheClient.Remove(ctx, makeIndetityCacheKey(in.Namespace, in.Uuid))
 
 	return &nativeIAmIdentityGRPC.SetIdentityActiveResponse{Identity: identity}, status.Error(grpccodes.OK, "")
 }

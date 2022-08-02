@@ -69,7 +69,7 @@ describe("Whitebox", () => {
         const response = await nativeIAmIdentityGRPC.Create({
             name,
             initiallyActive: false,
-            namespace: NAMESPACE_DB_NAME
+            namespace: TEST_NAMESPACE_NAME
         })
         const id = ObjectId.createFromHexString(response.identity?.uuid as string)
 
@@ -91,12 +91,12 @@ describe("Blackbox", () => {
         const response = await nativeIAmIdentityGRPC.Create({
             name,
             initiallyActive: initiallyActive,
-            namespace: NAMESPACE_DB_NAME
+            namespace: TEST_NAMESPACE_NAME
         })
 
         expect(response.identity?.name).toBe(name)
         expect(response.identity?.active).toBe(initiallyActive)
-        expect(response.identity?.namespace).toBe(NAMESPACE_DB_NAME)
+        expect(response.identity?.namespace).toBe(TEST_NAMESPACE_NAME)
         expect(response.identity?.policies).toStrictEqual([])
     })
 

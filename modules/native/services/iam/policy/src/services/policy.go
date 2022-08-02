@@ -148,6 +148,55 @@ func (s *IAMPolicyServer) Get(ctx context.Context, in *nativeIAmPolicyGRPC.GetPo
 	return &nativeIAmPolicyGRPC.GetPolicyResponse{Policy: policy}, status.Error(grpccodes.OK, "")
 }
 
+func (s *IAMPolicyServer) Exist(ctx context.Context, in *nativeIAmPolicyGRPC.ExistPolicyRequest) (*nativeIAmPolicyGRPC.ExistPolicyResponse, error) {
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Policy UUID has bad format")
+	}
+
+	var cacheKey string
+	if in.UseCache {
+		cacheKey = makePolicyCacheKey(in.Namespace, in.Uuid)
+		exist, err := s.cacheClient.Has(ctx, cacheKey)
+		if err == nil && exist {
+			return &nativeIAmPolicyGRPC.ExistPolicyResponse{Exist: true}, status.Error(grpccodes.OK, "")
+		}
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	if in.UseCache {
+		var mongoPolicy policyInMongo
+		err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&mongoPolicy)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return &nativeIAmPolicyGRPC.ExistPolicyResponse{Exist: false}, status.Error(grpccodes.OK, "")
+			}
+			return nil, status.Error(grpccodes.Internal, err.Error())
+		}
+		policy := &nativeIAmPolicyGRPC.Policy{
+			Namespace: in.Namespace,
+			Uuid:      in.Uuid,
+			Name:      mongoPolicy.Name,
+			Actions:   mongoPolicy.Actions,
+			Resources: mongoPolicy.Resources,
+		}
+		policyBytes, err := proto.Marshal(policy)
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Error while marshaling policy to cache: "+err.Error())
+		}
+		s.cacheClient.Set(ctx, cacheKey, policyBytes, POLICY_CACHE_TIMEOUT)
+		return &nativeIAmPolicyGRPC.ExistPolicyResponse{Exist: true}, status.Error(grpccodes.OK, "")
+	} else {
+		// Fast check in mongo if exist without getting data
+		count, err := collection.CountDocuments(ctx, bson.M{"_id": id}, options.Count().SetLimit(1))
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, err.Error())
+		}
+
+		return &nativeIAmPolicyGRPC.ExistPolicyResponse{Exist: count == 1}, status.Error(grpccodes.OK, "")
+	}
+}
+
 func (s *IAMPolicyServer) Update(ctx context.Context, in *nativeIAmPolicyGRPC.UpdatePolicyRequest) (*nativeIAmPolicyGRPC.UpdatePolicyResponse, error) {
 	id, err := primitive.ObjectIDFromHex(in.Uuid)
 	if err != nil {

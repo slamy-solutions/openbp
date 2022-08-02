@@ -43,6 +43,19 @@ message GetPolicyResponse {
     Policy policy = 1;
 }
 
+message ExistPolicyRequest {
+    // Namespace of the policy
+    string namespace = 1;
+    // Unique identifier of the policy in the namespace
+    string uuid = 2;
+    // Use cache or not. Cache may be invalid under very rare conditions (simultanious read and writes to the policy while it is not in cache). Cache automatically deletes after short period of time (30 seconds by default).
+    bool useCache = 3;
+}
+message ExistPolicyResponse {
+    // True if policy exists, false if not
+    bool exist = 1;
+}
+
 message UpdatePolicyRequest {
     // Namespace of the policy
     string namespace = 1;
@@ -86,6 +99,8 @@ service IAMPolicyService {
     rpc Create(CreatePolicyRequest) returns (CreatePolicyResponse);
     // Get existing policy by uuid
     rpc Get(GetPolicyRequest) returns (GetPolicyResponse);
+    // Check if policy exist or not
+    rpc Exist(ExistPolicyRequest) returns (ExistPolicyResponse);
     // Update policy
     rpc Update(UpdatePolicyRequest) returns (UpdatePolicyResponse);
     // Delete policy

@@ -51,6 +51,14 @@ message GetIdentityResponse {
     Identity identity = 1;
 }
 
+message DeleteIdentityRequest {
+    // Identity namespace
+    string namespace = 1;
+    // Identity unique identifier inside namespace
+    string uuid = 2;
+}
+message DeleteIdentityResponse {}
+
 message AddPolicyRequest {
     // Identity namespace
     string identityNamespace = 1;
@@ -100,6 +108,8 @@ service IAMIdentityService {
     rpc Create(CreateIdentityRequest) returns (CreateIdentityResponse);
     // Get identity 
     rpc Get(GetIdentityRequest) returns (GetIdentityResponse);
+    // Delete identity
+    rpc Delete(DeleteIdentityRequest) returns (DeleteIdentityResponse);
 
     // Add policy to the identity. If policy was already added - does nothing.
     rpc AddPolicy(AddPolicyRequest) returns (AddPolicyResponse);

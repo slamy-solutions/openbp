@@ -88,7 +88,7 @@ describe("Whitebox", () => {
         const response = await nativeIAmIdentityGRPC.Create({
             name: "test",
             initiallyActive: false,
-            namespace: TEST_NAMESPACE_NAME
+            namespace: ""
         })
         const id = ObjectId.createFromHexString(response.identity?.uuid as string)
 
@@ -97,7 +97,7 @@ describe("Whitebox", () => {
         expect(existResponse).toBe(1)
         
         await nativeIAmIdentityGRPC.SetActive({
-            namespace: TEST_NAMESPACE_NAME,
+            namespace: "",
             uuid: id.toHexString(),
             active: true
         })

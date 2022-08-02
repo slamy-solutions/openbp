@@ -52,6 +52,15 @@ export interface GetIdentityResponse {
   identity: Identity | undefined;
 }
 
+export interface DeleteIdentityRequest {
+  /** Identity namespace */
+  namespace: string;
+  /** Identity unique identifier inside namespace */
+  uuid: string;
+}
+
+export interface DeleteIdentityResponse {}
+
 export interface AddPolicyRequest {
   /** Identity namespace */
   identityNamespace: string;
@@ -541,6 +550,119 @@ export const GetIdentityResponse = {
   },
 };
 
+function createBaseDeleteIdentityRequest(): DeleteIdentityRequest {
+  return { namespace: "", uuid: "" };
+}
+
+export const DeleteIdentityRequest = {
+  encode(
+    message: DeleteIdentityRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
+    if (message.uuid !== "") {
+      writer.uint32(18).string(message.uuid);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): DeleteIdentityRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteIdentityRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
+          message.uuid = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteIdentityRequest {
+    return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
+      uuid: isSet(object.uuid) ? String(object.uuid) : "",
+    };
+  },
+
+  toJSON(message: DeleteIdentityRequest): unknown {
+    const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
+    message.uuid !== undefined && (obj.uuid = message.uuid);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<DeleteIdentityRequest>, I>>(
+    object: I
+  ): DeleteIdentityRequest {
+    const message = createBaseDeleteIdentityRequest();
+    message.namespace = object.namespace ?? "";
+    message.uuid = object.uuid ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteIdentityResponse(): DeleteIdentityResponse {
+  return {};
+}
+
+export const DeleteIdentityResponse = {
+  encode(
+    _: DeleteIdentityResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): DeleteIdentityResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteIdentityResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): DeleteIdentityResponse {
+    return {};
+  },
+
+  toJSON(_: DeleteIdentityResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<DeleteIdentityResponse>, I>>(
+    _: I
+  ): DeleteIdentityResponse {
+    const message = createBaseDeleteIdentityResponse();
+    return message;
+  },
+};
+
 function createBaseAddPolicyRequest(): AddPolicyRequest {
   return {
     identityNamespace: "",
@@ -1004,6 +1126,8 @@ export interface IAMIdentityService {
   Create(request: CreateIdentityRequest): Promise<CreateIdentityResponse>;
   /** Get identity */
   Get(request: GetIdentityRequest): Promise<GetIdentityResponse>;
+  /** Delete identity */
+  Delete(request: DeleteIdentityRequest): Promise<DeleteIdentityResponse>;
   /** Add policy to the identity. If policy was already added - does nothing. */
   AddPolicy(request: AddPolicyRequest): Promise<AddPolicyResponse>;
   /** Removes policy from the identity. If policy was already removed - does nothing. */
@@ -1020,6 +1144,7 @@ export class IAMIdentityServiceClientImpl implements IAMIdentityService {
     this.rpc = rpc;
     this.Create = this.Create.bind(this);
     this.Get = this.Get.bind(this);
+    this.Delete = this.Delete.bind(this);
     this.AddPolicy = this.AddPolicy.bind(this);
     this.RemovePolicy = this.RemovePolicy.bind(this);
     this.SetActive = this.SetActive.bind(this);
@@ -1045,6 +1170,18 @@ export class IAMIdentityServiceClientImpl implements IAMIdentityService {
     );
     return promise.then((data) =>
       GetIdentityResponse.decode(new _m0.Reader(data))
+    );
+  }
+
+  Delete(request: DeleteIdentityRequest): Promise<DeleteIdentityResponse> {
+    const data = DeleteIdentityRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "native_iam_identity.IAMIdentityService",
+      "Delete",
+      data
+    );
+    return promise.then((data) =>
+      DeleteIdentityResponse.decode(new _m0.Reader(data))
     );
   }
 

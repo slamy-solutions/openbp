@@ -26,6 +26,8 @@ type IAMPolicyServiceClient interface {
 	Create(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
 	// Get existing policy by uuid
 	Get(ctx context.Context, in *GetPolicyRequest, opts ...grpc.CallOption) (*GetPolicyResponse, error)
+	// Check if policy exist or not
+	Exist(ctx context.Context, in *ExistPolicyRequest, opts ...grpc.CallOption) (*ExistPolicyResponse, error)
 	// Update policy
 	Update(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error)
 	// Delete policy
@@ -54,6 +56,15 @@ func (c *iAMPolicyServiceClient) Create(ctx context.Context, in *CreatePolicyReq
 func (c *iAMPolicyServiceClient) Get(ctx context.Context, in *GetPolicyRequest, opts ...grpc.CallOption) (*GetPolicyResponse, error) {
 	out := new(GetPolicyResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_policy.IAMPolicyService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMPolicyServiceClient) Exist(ctx context.Context, in *ExistPolicyRequest, opts ...grpc.CallOption) (*ExistPolicyResponse, error) {
+	out := new(ExistPolicyResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_policy.IAMPolicyService/Exist", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +129,8 @@ type IAMPolicyServiceServer interface {
 	Create(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
 	// Get existing policy by uuid
 	Get(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error)
+	// Check if policy exist or not
+	Exist(context.Context, *ExistPolicyRequest) (*ExistPolicyResponse, error)
 	// Update policy
 	Update(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error)
 	// Delete policy
@@ -136,6 +149,9 @@ func (UnimplementedIAMPolicyServiceServer) Create(context.Context, *CreatePolicy
 }
 func (UnimplementedIAMPolicyServiceServer) Get(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedIAMPolicyServiceServer) Exist(context.Context, *ExistPolicyRequest) (*ExistPolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Exist not implemented")
 }
 func (UnimplementedIAMPolicyServiceServer) Update(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
@@ -191,6 +207,24 @@ func _IAMPolicyService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IAMPolicyServiceServer).Get(ctx, req.(*GetPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMPolicyService_Exist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExistPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMPolicyServiceServer).Exist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_policy.IAMPolicyService/Exist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMPolicyServiceServer).Exist(ctx, req.(*ExistPolicyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -266,6 +300,10 @@ var IAMPolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _IAMPolicyService_Get_Handler,
+		},
+		{
+			MethodName: "Exist",
+			Handler:    _IAMPolicyService_Exist_Handler,
 		},
 		{
 			MethodName: "Update",

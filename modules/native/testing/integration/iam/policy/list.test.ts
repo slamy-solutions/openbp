@@ -62,10 +62,10 @@ afterAll(async ()=>{
             returnedPolicies.push(p.policy?.name as string)
         })
 
-        expect(policies).toStrictEqual(returnedPolicies)
+        expect(policies.sort()).toStrictEqual(returnedPolicies.sort())
     })
 
-    describe("Returns list of policies with skip and limit", async () => {        
+    describe("Returns list of policies with skip and limit", () => {        
         const testf = async (r: {skip: number, limit: number}) => {
             const policies = new Array<string>(10).fill("").map((_, index) => "policy"+index)
             await Promise.all(policies.map((p) => nativeIAmPolicyGRPC.Create({
@@ -74,15 +74,20 @@ afterAll(async ()=>{
                 actions: [],
                 resources: []
             })))
+
+            const allPolicies = [] as Array<string>
+            await nativeIAmPolicyGRPC.List({ namespace: "", limit: 999, skip: 0 }).forEach((p) => {
+                allPolicies.push(p.policy?.name as string)
+            })
             
             const returnedPolicies = [] as Array<string>
             await nativeIAmPolicyGRPC.List({ namespace: "", limit: r.limit, skip: r.skip }).forEach((p) => {
                 returnedPolicies.push(p.policy?.name as string)
             })
 
-            let policySlice = policies.slice(
-                Math.min(policies.length, r.skip),
-                Math.min(policies.length, r.skip+r.limit)
+            let policySlice = allPolicies.slice(
+                Math.min(allPolicies.length, r.skip),
+                Math.min(allPolicies.length, r.skip+(r.limit === 0 ? 9999 : r.limit))
             )
             expect(returnedPolicies).toStrictEqual(policySlice)
         }

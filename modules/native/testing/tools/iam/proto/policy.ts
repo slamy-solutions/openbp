@@ -47,6 +47,20 @@ export interface GetPolicyResponse {
   policy: Policy | undefined;
 }
 
+export interface ExistPolicyRequest {
+  /** Namespace of the policy */
+  namespace: string;
+  /** Unique identifier of the policy in the namespace */
+  uuid: string;
+  /** Use cache or not. Cache may be invalid under very rare conditions (simultanious read and writes to the policy while it is not in cache). Cache automatically deletes after short period of time (30 seconds by default). */
+  useCache: boolean;
+}
+
+export interface ExistPolicyResponse {
+  /** True if policy exists, false if not */
+  exist: boolean;
+}
+
 export interface UpdatePolicyRequest {
   /** Namespace of the policy */
   namespace: string;
@@ -471,6 +485,132 @@ export const GetPolicyResponse = {
   },
 };
 
+function createBaseExistPolicyRequest(): ExistPolicyRequest {
+  return { namespace: "", uuid: "", useCache: false };
+}
+
+export const ExistPolicyRequest = {
+  encode(
+    message: ExistPolicyRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
+    if (message.uuid !== "") {
+      writer.uint32(18).string(message.uuid);
+    }
+    if (message.useCache === true) {
+      writer.uint32(24).bool(message.useCache);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ExistPolicyRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExistPolicyRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
+          message.uuid = reader.string();
+          break;
+        case 3:
+          message.useCache = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExistPolicyRequest {
+    return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
+      uuid: isSet(object.uuid) ? String(object.uuid) : "",
+      useCache: isSet(object.useCache) ? Boolean(object.useCache) : false,
+    };
+  },
+
+  toJSON(message: ExistPolicyRequest): unknown {
+    const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
+    message.uuid !== undefined && (obj.uuid = message.uuid);
+    message.useCache !== undefined && (obj.useCache = message.useCache);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ExistPolicyRequest>, I>>(
+    object: I
+  ): ExistPolicyRequest {
+    const message = createBaseExistPolicyRequest();
+    message.namespace = object.namespace ?? "";
+    message.uuid = object.uuid ?? "";
+    message.useCache = object.useCache ?? false;
+    return message;
+  },
+};
+
+function createBaseExistPolicyResponse(): ExistPolicyResponse {
+  return { exist: false };
+}
+
+export const ExistPolicyResponse = {
+  encode(
+    message: ExistPolicyResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.exist === true) {
+      writer.uint32(8).bool(message.exist);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ExistPolicyResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExistPolicyResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.exist = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExistPolicyResponse {
+    return {
+      exist: isSet(object.exist) ? Boolean(object.exist) : false,
+    };
+  },
+
+  toJSON(message: ExistPolicyResponse): unknown {
+    const obj: any = {};
+    message.exist !== undefined && (obj.exist = message.exist);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ExistPolicyResponse>, I>>(
+    object: I
+  ): ExistPolicyResponse {
+    const message = createBaseExistPolicyResponse();
+    message.exist = object.exist ?? false;
+    return message;
+  },
+};
+
 function createBaseUpdatePolicyRequest(): UpdatePolicyRequest {
   return { namespace: "", uuid: "", name: "", resources: [], actions: [] };
 }
@@ -883,6 +1023,8 @@ export interface IAMPolicyService {
   Create(request: CreatePolicyRequest): Promise<CreatePolicyResponse>;
   /** Get existing policy by uuid */
   Get(request: GetPolicyRequest): Promise<GetPolicyResponse>;
+  /** Check if policy exist or not */
+  Exist(request: ExistPolicyRequest): Promise<ExistPolicyResponse>;
   /** Update policy */
   Update(request: UpdatePolicyRequest): Promise<UpdatePolicyResponse>;
   /** Delete policy */
@@ -897,6 +1039,7 @@ export class IAMPolicyServiceClientImpl implements IAMPolicyService {
     this.rpc = rpc;
     this.Create = this.Create.bind(this);
     this.Get = this.Get.bind(this);
+    this.Exist = this.Exist.bind(this);
     this.Update = this.Update.bind(this);
     this.Delete = this.Delete.bind(this);
     this.List = this.List.bind(this);
@@ -922,6 +1065,18 @@ export class IAMPolicyServiceClientImpl implements IAMPolicyService {
     );
     return promise.then((data) =>
       GetPolicyResponse.decode(new _m0.Reader(data))
+    );
+  }
+
+  Exist(request: ExistPolicyRequest): Promise<ExistPolicyResponse> {
+    const data = ExistPolicyRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "native_iam_policy.IAMPolicyService",
+      "Exist",
+      data
+    );
+    return promise.then((data) =>
+      ExistPolicyResponse.decode(new _m0.Reader(data))
     );
   }
 

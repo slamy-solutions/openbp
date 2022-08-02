@@ -134,7 +134,7 @@ describe("Blackbox", () => {
         expect(response.identity?.namespace).toBe(TEST_NAMESPACE_NAME)
         expect(response.identity?.uuid).toBe(id.toHexString())
         expect(response.identity?.name).toBe(name)
-        expect(response.identity?.active).toStrictEqual(nativeIAmIdentityGRPC)
+        expect(response.identity?.active).toStrictEqual(initiallyActive)
         expect(response.identity?.policies).toStrictEqual([])
     })
 

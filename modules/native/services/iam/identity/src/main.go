@@ -38,7 +38,7 @@ func main() {
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
 
 	NATIVE_NAMESPACE_URL := getConfigEnv("NATIVE_NAMESPACE_URL", "native_namespace:80")
-	NATIVE_IAM_IDENTITY_URL := getConfigEnv("NATIVE_IAM_IDENTITY_URL", "native_iam_identity:80")
+	NATIVE_IAM_POLICY_URL := getConfigEnv("NATIVE_IAM_IDENTITY_URL", "native_iam_policy:80")
 
 	ctx := context.Background()
 
@@ -82,7 +82,7 @@ func main() {
 
 	// Setting up native_iam_policy connection
 	nativeIAmPolicyConnection, err := grpc.Dial(
-		NATIVE_IAM_IDENTITY_URL,
+		NATIVE_IAM_POLICY_URL,
 		grpc.WithInsecure(),
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
