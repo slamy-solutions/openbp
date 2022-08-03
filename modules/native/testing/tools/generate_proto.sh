@@ -4,6 +4,7 @@ function generate {
     # $2 - source folder
     # $3,4,5,6,7 - source file relative to folder
     echo "Generating proto to $1 from $2"
+    mkdir -p $1
     protoc \
         --plugin=../../../../node_modules/.bin/protoc-gen-ts_proto \
         --ts_proto_out=$1 \
@@ -19,3 +20,4 @@ generate ./file/proto ../../proto namespace.proto file.proto
 generate ./lambda/proto ../../proto lambda.proto
 generate ./keyvaluestorage/proto ../../proto keyvaluestorage.proto
 generate ./iam/proto ../../proto/iam auth.proto configuration.proto identity.proto policy.proto
+generate ./iam/proto/authentication ../../proto/iam/authentication password.proto

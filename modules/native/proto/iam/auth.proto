@@ -4,57 +4,34 @@ package native_iam_auth;
 
 option go_package = "slamy/openCRM/native/iam/auth;native_iam_auth_grpc";
 
-message AuthenticationResponse {
-    message TwoFactorAuthorization {
-        // 2FA method
-        string method = 1;
-        // Token used for 2FA
-        string token = 2;
-    }
-    message AuthData {
-        string accessToken = 1;
-        string refreshToken = 2;
-    }
-    
-    oneof result {
-        // 2FA information if it ise required
-        TwoFactorAuthorization twoFactorAuth = 1;
-        // Authorization data if 2FA is not required
-        AuthData authData = 2;
-    }
-
+message CreateTokenWithPasswordRequest {
+    // Namespace where identity located. May be empty for global identity
+    string namespace = 1;
     // Identity UUID
-    string identity = 3;
-}
-
-message LoginWithPasswordRequest {
-    // Identity email to autheticate
-    string email = 1;
+    string identity = 2;
     // Identity password
-    string password = 2;
+    string password = 3;
 }
-message LoginWithPasswordResponse {
-    AuthenticationResponse authData = 1;
+message CreateTokenWithPasswordResponse {
+    // Token used for authentication and authorization
+    string accessToken = 1;
+    // Token used for refreshing accessToken
+    string refreshToken = 2;
 }
 
-message LoginWithOAuth2Request {
+message CreateTokenWithOAuth2Request {
     // OAuth2 provider
     string provider = 1;
     // Token issued by OAuth2 provider``
     string token = 2;
 }
-message LoginWithOAuth2Response {
-    AuthenticationResponse authData = 1;
-}
-
-
-message CompleteTwoFactorTOTPRequest {
-    string token = 1;
-    string totpKey = 2;
-}
-message CompleteTwoFactorTOTPResponse {
+message CreateTokenWithOAuth2Response {
+    // Token used for authentication and authorization
     string accessToken = 1;
+    // Token used for refreshing accessToken
     string refreshToken = 2;
+    // Identity UUID
+    string identity = 3;
 }
 
 message RefreshTokenRequest {
@@ -66,42 +43,39 @@ message RefreshTokenResponse {
 }
 
 message InvalidateTokenRequest {
-    // Refresh or access token to invalidate. Both token will be invalidated
+    // Refresh or access token to invalidate. Both tokens will be invalidated
     string token = 1;
 }
 message InvalidateTokenResponse {}
 
-message VerifyAccessRequest {
-    message VerifyPolicy {
-        // Namespace where to verify. Namespace can be empty for global policy.
-        string namespace = 1;
-        // List of privileges to verify
-        repeated string privileges = 4;
-    }
-
+message VerifyTokenAccessRequest {
     // Token to verify
     string accessToken = 1;
-    // What to verify
-    string policies = 2;
+    // What resources to theck
+    repeated string resources = 2;
+    // What actions token must be able to perform for resources
+    repeated string actions = 3;
 }
-message VerifyAccessResponse {
+message VerifyTokenAccessResponse {
     bool hasAccess = 1;
 }
 
 // Provides API to verify identity and determine access rights of the identity
 service IAMAuthService {
     // Create access token and refresh token using password. Creates identity if not exist
-    rpc LoginWithPassword(LoginWithPasswordRequest) returns (LoginWithPasswordResponse);
+    rpc CreateTokenWithPassword(CreateTokenWithPasswordRequest) returns (CreateTokenWithPasswordResponse);
     // Create access token and refresh token using thrid party OAuth2 provider. Creates identity if not exist
-    rpc LoginWithOAuth2(LoginWithOAuth2Request) returns (LoginWithOAuth2Response);
+    // rpc CreateTokenWithOAuth2(CreateTokenWithOAuth2Request) returns (CreateTokenWithOAuth2Response);
     // Create access token and refresh token using SSO (Single Sign On) 
-    // rpc LoginWithSSO() returns ();
+    // rpc CreateTokenWithSSO() returns ();
+
     // Completes started two factor TOTP (Time-based one-time password) authetication and returns actual access asn refresh tokens
-    rpc CompleteTwoFactorTOTP(CompleteTwoFactorTOTPRequest) returns (CompleteTwoFactorTOTPResponse);
+    // rpc ExtendTokenWithTOTP(CompleteTwoFactorTOTPRequest) returns (CompleteTwoFactorTOTPResponse);
+    
     // Creates new access token using refresh token
     rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
     // Invalidates pare of access token and refresh tokens
     rpc InvalidateToken(InvalidateTokenRequest) returns (InvalidateTokenResponse);
-    // Verifies if token has access to provided resources
-    rpc VerifyAccess(VerifyAccessRequest) returns (VerifyAccessResponse);
+    // Verifies if token can perform actions on the resources
+    rpc VerifyTokenAccess(VerifyTokenAccessRequest) returns (VerifyTokenAccessResponse);
 }

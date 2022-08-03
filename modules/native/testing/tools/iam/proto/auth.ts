@@ -4,57 +4,36 @@ import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "native_iam_auth";
 
-export interface AuthenticationResponse {
-  /** 2FA information if it ise required */
-  twoFactorAuth: AuthenticationResponse_TwoFactorAuthorization | undefined;
-  /** Authorization data if 2FA is not required */
-  authData: AuthenticationResponse_AuthData | undefined;
+export interface CreateTokenWithPasswordRequest {
+  /** Namespace where identity located. May be empty for global identity */
+  namespace: string;
   /** Identity UUID */
   identity: string;
-}
-
-export interface AuthenticationResponse_TwoFactorAuthorization {
-  /** 2FA method */
-  method: string;
-  /** Token used for 2FA */
-  token: string;
-}
-
-export interface AuthenticationResponse_AuthData {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface LoginWithPasswordRequest {
-  /** Identity email to autheticate */
-  email: string;
   /** Identity password */
   password: string;
 }
 
-export interface LoginWithPasswordResponse {
-  authData: AuthenticationResponse | undefined;
+export interface CreateTokenWithPasswordResponse {
+  /** Token used for authentication and authorization */
+  accessToken: string;
+  /** Token used for refreshing accessToken */
+  refreshToken: string;
 }
 
-export interface LoginWithOAuth2Request {
+export interface CreateTokenWithOAuth2Request {
   /** OAuth2 provider */
   provider: string;
   /** Token issued by OAuth2 provider`` */
   token: string;
 }
 
-export interface LoginWithOAuth2Response {
-  authData: AuthenticationResponse | undefined;
-}
-
-export interface CompleteTwoFactorTOTPRequest {
-  token: string;
-  totpKey: string;
-}
-
-export interface CompleteTwoFactorTOTPResponse {
+export interface CreateTokenWithOAuth2Response {
+  /** Token used for authentication and authorization */
   accessToken: string;
+  /** Token used for refreshing accessToken */
   refreshToken: string;
+  /** Identity UUID */
+  identity: string;
 }
 
 export interface RefreshTokenRequest {
@@ -67,53 +46,42 @@ export interface RefreshTokenResponse {
 }
 
 export interface InvalidateTokenRequest {
-  /** Refresh or access token to invalidate. Both token will be invalidated */
+  /** Refresh or access token to invalidate. Both tokens will be invalidated */
   token: string;
 }
 
 export interface InvalidateTokenResponse {}
 
-export interface VerifyAccessRequest {
+export interface VerifyTokenAccessRequest {
   /** Token to verify */
   accessToken: string;
-  /** What to verify */
-  policies: string;
+  /** What resources to theck */
+  resources: string[];
+  /** What actions token must be able to perform for resources */
+  actions: string[];
 }
 
-export interface VerifyAccessRequest_VerifyPolicy {
-  /** Namespace where to verify. Namespace can be empty for global policy. */
-  namespace: string;
-  /** List of privileges to verify */
-  privileges: string[];
-}
-
-export interface VerifyAccessResponse {
+export interface VerifyTokenAccessResponse {
   hasAccess: boolean;
 }
 
-function createBaseAuthenticationResponse(): AuthenticationResponse {
-  return { twoFactorAuth: undefined, authData: undefined, identity: "" };
+function createBaseCreateTokenWithPasswordRequest(): CreateTokenWithPasswordRequest {
+  return { namespace: "", identity: "", password: "" };
 }
 
-export const AuthenticationResponse = {
+export const CreateTokenWithPasswordRequest = {
   encode(
-    message: AuthenticationResponse,
+    message: CreateTokenWithPasswordRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.twoFactorAuth !== undefined) {
-      AuthenticationResponse_TwoFactorAuthorization.encode(
-        message.twoFactorAuth,
-        writer.uint32(10).fork()
-      ).ldelim();
-    }
-    if (message.authData !== undefined) {
-      AuthenticationResponse_AuthData.encode(
-        message.authData,
-        writer.uint32(18).fork()
-      ).ldelim();
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
     }
     if (message.identity !== "") {
-      writer.uint32(26).string(message.identity);
+      writer.uint32(18).string(message.identity);
+    }
+    if (message.password !== "") {
+      writer.uint32(26).string(message.password);
     }
     return writer;
   },
@@ -121,29 +89,22 @@ export const AuthenticationResponse = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): AuthenticationResponse {
+  ): CreateTokenWithPasswordRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAuthenticationResponse();
+    const message = createBaseCreateTokenWithPasswordRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.twoFactorAuth =
-            AuthenticationResponse_TwoFactorAuthorization.decode(
-              reader,
-              reader.uint32()
-            );
+          message.namespace = reader.string();
           break;
         case 2:
-          message.authData = AuthenticationResponse_AuthData.decode(
-            reader,
-            reader.uint32()
-          );
-          break;
-        case 3:
           message.identity = reader.string();
           break;
+        case 3:
+          message.password = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -152,131 +113,40 @@ export const AuthenticationResponse = {
     return message;
   },
 
-  fromJSON(object: any): AuthenticationResponse {
+  fromJSON(object: any): CreateTokenWithPasswordRequest {
     return {
-      twoFactorAuth: isSet(object.twoFactorAuth)
-        ? AuthenticationResponse_TwoFactorAuthorization.fromJSON(
-            object.twoFactorAuth
-          )
-        : undefined,
-      authData: isSet(object.authData)
-        ? AuthenticationResponse_AuthData.fromJSON(object.authData)
-        : undefined,
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       identity: isSet(object.identity) ? String(object.identity) : "",
+      password: isSet(object.password) ? String(object.password) : "",
     };
   },
 
-  toJSON(message: AuthenticationResponse): unknown {
+  toJSON(message: CreateTokenWithPasswordRequest): unknown {
     const obj: any = {};
-    message.twoFactorAuth !== undefined &&
-      (obj.twoFactorAuth = message.twoFactorAuth
-        ? AuthenticationResponse_TwoFactorAuthorization.toJSON(
-            message.twoFactorAuth
-          )
-        : undefined);
-    message.authData !== undefined &&
-      (obj.authData = message.authData
-        ? AuthenticationResponse_AuthData.toJSON(message.authData)
-        : undefined);
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     message.identity !== undefined && (obj.identity = message.identity);
+    message.password !== undefined && (obj.password = message.password);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AuthenticationResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<CreateTokenWithPasswordRequest>, I>>(
     object: I
-  ): AuthenticationResponse {
-    const message = createBaseAuthenticationResponse();
-    message.twoFactorAuth =
-      object.twoFactorAuth !== undefined && object.twoFactorAuth !== null
-        ? AuthenticationResponse_TwoFactorAuthorization.fromPartial(
-            object.twoFactorAuth
-          )
-        : undefined;
-    message.authData =
-      object.authData !== undefined && object.authData !== null
-        ? AuthenticationResponse_AuthData.fromPartial(object.authData)
-        : undefined;
+  ): CreateTokenWithPasswordRequest {
+    const message = createBaseCreateTokenWithPasswordRequest();
+    message.namespace = object.namespace ?? "";
     message.identity = object.identity ?? "";
+    message.password = object.password ?? "";
     return message;
   },
 };
 
-function createBaseAuthenticationResponse_TwoFactorAuthorization(): AuthenticationResponse_TwoFactorAuthorization {
-  return { method: "", token: "" };
-}
-
-export const AuthenticationResponse_TwoFactorAuthorization = {
-  encode(
-    message: AuthenticationResponse_TwoFactorAuthorization,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.method !== "") {
-      writer.uint32(10).string(message.method);
-    }
-    if (message.token !== "") {
-      writer.uint32(18).string(message.token);
-    }
-    return writer;
-  },
-
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): AuthenticationResponse_TwoFactorAuthorization {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAuthenticationResponse_TwoFactorAuthorization();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.method = reader.string();
-          break;
-        case 2:
-          message.token = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): AuthenticationResponse_TwoFactorAuthorization {
-    return {
-      method: isSet(object.method) ? String(object.method) : "",
-      token: isSet(object.token) ? String(object.token) : "",
-    };
-  },
-
-  toJSON(message: AuthenticationResponse_TwoFactorAuthorization): unknown {
-    const obj: any = {};
-    message.method !== undefined && (obj.method = message.method);
-    message.token !== undefined && (obj.token = message.token);
-    return obj;
-  },
-
-  fromPartial<
-    I extends Exact<
-      DeepPartial<AuthenticationResponse_TwoFactorAuthorization>,
-      I
-    >
-  >(object: I): AuthenticationResponse_TwoFactorAuthorization {
-    const message = createBaseAuthenticationResponse_TwoFactorAuthorization();
-    message.method = object.method ?? "";
-    message.token = object.token ?? "";
-    return message;
-  },
-};
-
-function createBaseAuthenticationResponse_AuthData(): AuthenticationResponse_AuthData {
+function createBaseCreateTokenWithPasswordResponse(): CreateTokenWithPasswordResponse {
   return { accessToken: "", refreshToken: "" };
 }
 
-export const AuthenticationResponse_AuthData = {
+export const CreateTokenWithPasswordResponse = {
   encode(
-    message: AuthenticationResponse_AuthData,
+    message: CreateTokenWithPasswordResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.accessToken !== "") {
@@ -291,10 +161,10 @@ export const AuthenticationResponse_AuthData = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): AuthenticationResponse_AuthData {
+  ): CreateTokenWithPasswordResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAuthenticationResponse_AuthData();
+    const message = createBaseCreateTokenWithPasswordResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -312,7 +182,7 @@ export const AuthenticationResponse_AuthData = {
     return message;
   },
 
-  fromJSON(object: any): AuthenticationResponse_AuthData {
+  fromJSON(object: any): CreateTokenWithPasswordResponse {
     return {
       accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
       refreshToken: isSet(object.refreshToken)
@@ -321,7 +191,7 @@ export const AuthenticationResponse_AuthData = {
     };
   },
 
-  toJSON(message: AuthenticationResponse_AuthData): unknown {
+  toJSON(message: CreateTokenWithPasswordResponse): unknown {
     const obj: any = {};
     message.accessToken !== undefined &&
       (obj.accessToken = message.accessToken);
@@ -330,160 +200,23 @@ export const AuthenticationResponse_AuthData = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AuthenticationResponse_AuthData>, I>>(
+  fromPartial<I extends Exact<DeepPartial<CreateTokenWithPasswordResponse>, I>>(
     object: I
-  ): AuthenticationResponse_AuthData {
-    const message = createBaseAuthenticationResponse_AuthData();
+  ): CreateTokenWithPasswordResponse {
+    const message = createBaseCreateTokenWithPasswordResponse();
     message.accessToken = object.accessToken ?? "";
     message.refreshToken = object.refreshToken ?? "";
     return message;
   },
 };
 
-function createBaseLoginWithPasswordRequest(): LoginWithPasswordRequest {
-  return { email: "", password: "" };
-}
-
-export const LoginWithPasswordRequest = {
-  encode(
-    message: LoginWithPasswordRequest,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.email !== "") {
-      writer.uint32(10).string(message.email);
-    }
-    if (message.password !== "") {
-      writer.uint32(18).string(message.password);
-    }
-    return writer;
-  },
-
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): LoginWithPasswordRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseLoginWithPasswordRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.email = reader.string();
-          break;
-        case 2:
-          message.password = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): LoginWithPasswordRequest {
-    return {
-      email: isSet(object.email) ? String(object.email) : "",
-      password: isSet(object.password) ? String(object.password) : "",
-    };
-  },
-
-  toJSON(message: LoginWithPasswordRequest): unknown {
-    const obj: any = {};
-    message.email !== undefined && (obj.email = message.email);
-    message.password !== undefined && (obj.password = message.password);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<LoginWithPasswordRequest>, I>>(
-    object: I
-  ): LoginWithPasswordRequest {
-    const message = createBaseLoginWithPasswordRequest();
-    message.email = object.email ?? "";
-    message.password = object.password ?? "";
-    return message;
-  },
-};
-
-function createBaseLoginWithPasswordResponse(): LoginWithPasswordResponse {
-  return { authData: undefined };
-}
-
-export const LoginWithPasswordResponse = {
-  encode(
-    message: LoginWithPasswordResponse,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.authData !== undefined) {
-      AuthenticationResponse.encode(
-        message.authData,
-        writer.uint32(10).fork()
-      ).ldelim();
-    }
-    return writer;
-  },
-
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): LoginWithPasswordResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseLoginWithPasswordResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.authData = AuthenticationResponse.decode(
-            reader,
-            reader.uint32()
-          );
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): LoginWithPasswordResponse {
-    return {
-      authData: isSet(object.authData)
-        ? AuthenticationResponse.fromJSON(object.authData)
-        : undefined,
-    };
-  },
-
-  toJSON(message: LoginWithPasswordResponse): unknown {
-    const obj: any = {};
-    message.authData !== undefined &&
-      (obj.authData = message.authData
-        ? AuthenticationResponse.toJSON(message.authData)
-        : undefined);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<LoginWithPasswordResponse>, I>>(
-    object: I
-  ): LoginWithPasswordResponse {
-    const message = createBaseLoginWithPasswordResponse();
-    message.authData =
-      object.authData !== undefined && object.authData !== null
-        ? AuthenticationResponse.fromPartial(object.authData)
-        : undefined;
-    return message;
-  },
-};
-
-function createBaseLoginWithOAuth2Request(): LoginWithOAuth2Request {
+function createBaseCreateTokenWithOAuth2Request(): CreateTokenWithOAuth2Request {
   return { provider: "", token: "" };
 }
 
-export const LoginWithOAuth2Request = {
+export const CreateTokenWithOAuth2Request = {
   encode(
-    message: LoginWithOAuth2Request,
+    message: CreateTokenWithOAuth2Request,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.provider !== "") {
@@ -498,10 +231,10 @@ export const LoginWithOAuth2Request = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): LoginWithOAuth2Request {
+  ): CreateTokenWithOAuth2Request {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseLoginWithOAuth2Request();
+    const message = createBaseCreateTokenWithOAuth2Request();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -519,174 +252,37 @@ export const LoginWithOAuth2Request = {
     return message;
   },
 
-  fromJSON(object: any): LoginWithOAuth2Request {
+  fromJSON(object: any): CreateTokenWithOAuth2Request {
     return {
       provider: isSet(object.provider) ? String(object.provider) : "",
       token: isSet(object.token) ? String(object.token) : "",
     };
   },
 
-  toJSON(message: LoginWithOAuth2Request): unknown {
+  toJSON(message: CreateTokenWithOAuth2Request): unknown {
     const obj: any = {};
     message.provider !== undefined && (obj.provider = message.provider);
     message.token !== undefined && (obj.token = message.token);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<LoginWithOAuth2Request>, I>>(
+  fromPartial<I extends Exact<DeepPartial<CreateTokenWithOAuth2Request>, I>>(
     object: I
-  ): LoginWithOAuth2Request {
-    const message = createBaseLoginWithOAuth2Request();
+  ): CreateTokenWithOAuth2Request {
+    const message = createBaseCreateTokenWithOAuth2Request();
     message.provider = object.provider ?? "";
     message.token = object.token ?? "";
     return message;
   },
 };
 
-function createBaseLoginWithOAuth2Response(): LoginWithOAuth2Response {
-  return { authData: undefined };
+function createBaseCreateTokenWithOAuth2Response(): CreateTokenWithOAuth2Response {
+  return { accessToken: "", refreshToken: "", identity: "" };
 }
 
-export const LoginWithOAuth2Response = {
+export const CreateTokenWithOAuth2Response = {
   encode(
-    message: LoginWithOAuth2Response,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.authData !== undefined) {
-      AuthenticationResponse.encode(
-        message.authData,
-        writer.uint32(10).fork()
-      ).ldelim();
-    }
-    return writer;
-  },
-
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): LoginWithOAuth2Response {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseLoginWithOAuth2Response();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.authData = AuthenticationResponse.decode(
-            reader,
-            reader.uint32()
-          );
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): LoginWithOAuth2Response {
-    return {
-      authData: isSet(object.authData)
-        ? AuthenticationResponse.fromJSON(object.authData)
-        : undefined,
-    };
-  },
-
-  toJSON(message: LoginWithOAuth2Response): unknown {
-    const obj: any = {};
-    message.authData !== undefined &&
-      (obj.authData = message.authData
-        ? AuthenticationResponse.toJSON(message.authData)
-        : undefined);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<LoginWithOAuth2Response>, I>>(
-    object: I
-  ): LoginWithOAuth2Response {
-    const message = createBaseLoginWithOAuth2Response();
-    message.authData =
-      object.authData !== undefined && object.authData !== null
-        ? AuthenticationResponse.fromPartial(object.authData)
-        : undefined;
-    return message;
-  },
-};
-
-function createBaseCompleteTwoFactorTOTPRequest(): CompleteTwoFactorTOTPRequest {
-  return { token: "", totpKey: "" };
-}
-
-export const CompleteTwoFactorTOTPRequest = {
-  encode(
-    message: CompleteTwoFactorTOTPRequest,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.token !== "") {
-      writer.uint32(10).string(message.token);
-    }
-    if (message.totpKey !== "") {
-      writer.uint32(18).string(message.totpKey);
-    }
-    return writer;
-  },
-
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): CompleteTwoFactorTOTPRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCompleteTwoFactorTOTPRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.token = reader.string();
-          break;
-        case 2:
-          message.totpKey = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CompleteTwoFactorTOTPRequest {
-    return {
-      token: isSet(object.token) ? String(object.token) : "",
-      totpKey: isSet(object.totpKey) ? String(object.totpKey) : "",
-    };
-  },
-
-  toJSON(message: CompleteTwoFactorTOTPRequest): unknown {
-    const obj: any = {};
-    message.token !== undefined && (obj.token = message.token);
-    message.totpKey !== undefined && (obj.totpKey = message.totpKey);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<CompleteTwoFactorTOTPRequest>, I>>(
-    object: I
-  ): CompleteTwoFactorTOTPRequest {
-    const message = createBaseCompleteTwoFactorTOTPRequest();
-    message.token = object.token ?? "";
-    message.totpKey = object.totpKey ?? "";
-    return message;
-  },
-};
-
-function createBaseCompleteTwoFactorTOTPResponse(): CompleteTwoFactorTOTPResponse {
-  return { accessToken: "", refreshToken: "" };
-}
-
-export const CompleteTwoFactorTOTPResponse = {
-  encode(
-    message: CompleteTwoFactorTOTPResponse,
+    message: CreateTokenWithOAuth2Response,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.accessToken !== "") {
@@ -695,16 +291,19 @@ export const CompleteTwoFactorTOTPResponse = {
     if (message.refreshToken !== "") {
       writer.uint32(18).string(message.refreshToken);
     }
+    if (message.identity !== "") {
+      writer.uint32(26).string(message.identity);
+    }
     return writer;
   },
 
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): CompleteTwoFactorTOTPResponse {
+  ): CreateTokenWithOAuth2Response {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCompleteTwoFactorTOTPResponse();
+    const message = createBaseCreateTokenWithOAuth2Response();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -714,6 +313,9 @@ export const CompleteTwoFactorTOTPResponse = {
         case 2:
           message.refreshToken = reader.string();
           break;
+        case 3:
+          message.identity = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -722,30 +324,33 @@ export const CompleteTwoFactorTOTPResponse = {
     return message;
   },
 
-  fromJSON(object: any): CompleteTwoFactorTOTPResponse {
+  fromJSON(object: any): CreateTokenWithOAuth2Response {
     return {
       accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
       refreshToken: isSet(object.refreshToken)
         ? String(object.refreshToken)
         : "",
+      identity: isSet(object.identity) ? String(object.identity) : "",
     };
   },
 
-  toJSON(message: CompleteTwoFactorTOTPResponse): unknown {
+  toJSON(message: CreateTokenWithOAuth2Response): unknown {
     const obj: any = {};
     message.accessToken !== undefined &&
       (obj.accessToken = message.accessToken);
     message.refreshToken !== undefined &&
       (obj.refreshToken = message.refreshToken);
+    message.identity !== undefined && (obj.identity = message.identity);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<CompleteTwoFactorTOTPResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<CreateTokenWithOAuth2Response>, I>>(
     object: I
-  ): CompleteTwoFactorTOTPResponse {
-    const message = createBaseCompleteTwoFactorTOTPResponse();
+  ): CreateTokenWithOAuth2Response {
+    const message = createBaseCreateTokenWithOAuth2Response();
     message.accessToken = object.accessToken ?? "";
     message.refreshToken = object.refreshToken ?? "";
+    message.identity = object.identity ?? "";
     return message;
   },
 };
@@ -969,84 +574,23 @@ export const InvalidateTokenResponse = {
   },
 };
 
-function createBaseVerifyAccessRequest(): VerifyAccessRequest {
-  return { accessToken: "", policies: "" };
+function createBaseVerifyTokenAccessRequest(): VerifyTokenAccessRequest {
+  return { accessToken: "", resources: [], actions: [] };
 }
 
-export const VerifyAccessRequest = {
+export const VerifyTokenAccessRequest = {
   encode(
-    message: VerifyAccessRequest,
+    message: VerifyTokenAccessRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.accessToken !== "") {
       writer.uint32(10).string(message.accessToken);
     }
-    if (message.policies !== "") {
-      writer.uint32(18).string(message.policies);
+    for (const v of message.resources) {
+      writer.uint32(18).string(v!);
     }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): VerifyAccessRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseVerifyAccessRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.accessToken = reader.string();
-          break;
-        case 2:
-          message.policies = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): VerifyAccessRequest {
-    return {
-      accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
-      policies: isSet(object.policies) ? String(object.policies) : "",
-    };
-  },
-
-  toJSON(message: VerifyAccessRequest): unknown {
-    const obj: any = {};
-    message.accessToken !== undefined &&
-      (obj.accessToken = message.accessToken);
-    message.policies !== undefined && (obj.policies = message.policies);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<VerifyAccessRequest>, I>>(
-    object: I
-  ): VerifyAccessRequest {
-    const message = createBaseVerifyAccessRequest();
-    message.accessToken = object.accessToken ?? "";
-    message.policies = object.policies ?? "";
-    return message;
-  },
-};
-
-function createBaseVerifyAccessRequest_VerifyPolicy(): VerifyAccessRequest_VerifyPolicy {
-  return { namespace: "", privileges: [] };
-}
-
-export const VerifyAccessRequest_VerifyPolicy = {
-  encode(
-    message: VerifyAccessRequest_VerifyPolicy,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.namespace !== "") {
-      writer.uint32(10).string(message.namespace);
-    }
-    for (const v of message.privileges) {
-      writer.uint32(34).string(v!);
+    for (const v of message.actions) {
+      writer.uint32(26).string(v!);
     }
     return writer;
   },
@@ -1054,18 +598,21 @@ export const VerifyAccessRequest_VerifyPolicy = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): VerifyAccessRequest_VerifyPolicy {
+  ): VerifyTokenAccessRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseVerifyAccessRequest_VerifyPolicy();
+    const message = createBaseVerifyTokenAccessRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.namespace = reader.string();
+          message.accessToken = reader.string();
           break;
-        case 4:
-          message.privileges.push(reader.string());
+        case 2:
+          message.resources.push(reader.string());
+          break;
+        case 3:
+          message.actions.push(reader.string());
           break;
         default:
           reader.skipType(tag & 7);
@@ -1075,43 +622,53 @@ export const VerifyAccessRequest_VerifyPolicy = {
     return message;
   },
 
-  fromJSON(object: any): VerifyAccessRequest_VerifyPolicy {
+  fromJSON(object: any): VerifyTokenAccessRequest {
     return {
-      namespace: isSet(object.namespace) ? String(object.namespace) : "",
-      privileges: Array.isArray(object?.privileges)
-        ? object.privileges.map((e: any) => String(e))
+      accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
+      resources: Array.isArray(object?.resources)
+        ? object.resources.map((e: any) => String(e))
+        : [],
+      actions: Array.isArray(object?.actions)
+        ? object.actions.map((e: any) => String(e))
         : [],
     };
   },
 
-  toJSON(message: VerifyAccessRequest_VerifyPolicy): unknown {
+  toJSON(message: VerifyTokenAccessRequest): unknown {
     const obj: any = {};
-    message.namespace !== undefined && (obj.namespace = message.namespace);
-    if (message.privileges) {
-      obj.privileges = message.privileges.map((e) => e);
+    message.accessToken !== undefined &&
+      (obj.accessToken = message.accessToken);
+    if (message.resources) {
+      obj.resources = message.resources.map((e) => e);
     } else {
-      obj.privileges = [];
+      obj.resources = [];
+    }
+    if (message.actions) {
+      obj.actions = message.actions.map((e) => e);
+    } else {
+      obj.actions = [];
     }
     return obj;
   },
 
-  fromPartial<
-    I extends Exact<DeepPartial<VerifyAccessRequest_VerifyPolicy>, I>
-  >(object: I): VerifyAccessRequest_VerifyPolicy {
-    const message = createBaseVerifyAccessRequest_VerifyPolicy();
-    message.namespace = object.namespace ?? "";
-    message.privileges = object.privileges?.map((e) => e) || [];
+  fromPartial<I extends Exact<DeepPartial<VerifyTokenAccessRequest>, I>>(
+    object: I
+  ): VerifyTokenAccessRequest {
+    const message = createBaseVerifyTokenAccessRequest();
+    message.accessToken = object.accessToken ?? "";
+    message.resources = object.resources?.map((e) => e) || [];
+    message.actions = object.actions?.map((e) => e) || [];
     return message;
   },
 };
 
-function createBaseVerifyAccessResponse(): VerifyAccessResponse {
+function createBaseVerifyTokenAccessResponse(): VerifyTokenAccessResponse {
   return { hasAccess: false };
 }
 
-export const VerifyAccessResponse = {
+export const VerifyTokenAccessResponse = {
   encode(
-    message: VerifyAccessResponse,
+    message: VerifyTokenAccessResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.hasAccess === true) {
@@ -1123,10 +680,10 @@ export const VerifyAccessResponse = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): VerifyAccessResponse {
+  ): VerifyTokenAccessResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseVerifyAccessResponse();
+    const message = createBaseVerifyTokenAccessResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1141,22 +698,22 @@ export const VerifyAccessResponse = {
     return message;
   },
 
-  fromJSON(object: any): VerifyAccessResponse {
+  fromJSON(object: any): VerifyTokenAccessResponse {
     return {
       hasAccess: isSet(object.hasAccess) ? Boolean(object.hasAccess) : false,
     };
   },
 
-  toJSON(message: VerifyAccessResponse): unknown {
+  toJSON(message: VerifyTokenAccessResponse): unknown {
     const obj: any = {};
     message.hasAccess !== undefined && (obj.hasAccess = message.hasAccess);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<VerifyAccessResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<VerifyTokenAccessResponse>, I>>(
     object: I
-  ): VerifyAccessResponse {
-    const message = createBaseVerifyAccessResponse();
+  ): VerifyTokenAccessResponse {
+    const message = createBaseVerifyTokenAccessResponse();
     message.hasAccess = object.hasAccess ?? false;
     return message;
   },
@@ -1165,81 +722,41 @@ export const VerifyAccessResponse = {
 /** Provides API to verify identity and determine access rights of the identity */
 export interface IAMAuthService {
   /** Create access token and refresh token using password. Creates identity if not exist */
-  LoginWithPassword(
-    request: LoginWithPasswordRequest
-  ): Promise<LoginWithPasswordResponse>;
-  /** Create access token and refresh token using thrid party OAuth2 provider. Creates identity if not exist */
-  LoginWithOAuth2(
-    request: LoginWithOAuth2Request
-  ): Promise<LoginWithOAuth2Response>;
-  /**
-   * Create access token and refresh token using SSO (Single Sign On)
-   * rpc LoginWithSSO() returns ();
-   * Completes started two factor TOTP (Time-based one-time password) authetication and returns actual access asn refresh tokens
-   */
-  CompleteTwoFactorTOTP(
-    request: CompleteTwoFactorTOTPRequest
-  ): Promise<CompleteTwoFactorTOTPResponse>;
+  CreateTokenWithPassword(
+    request: CreateTokenWithPasswordRequest
+  ): Promise<CreateTokenWithPasswordResponse>;
   /** Creates new access token using refresh token */
   RefreshToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse>;
   /** Invalidates pare of access token and refresh tokens */
   InvalidateToken(
     request: InvalidateTokenRequest
   ): Promise<InvalidateTokenResponse>;
-  /** Verifies if token has access to provided resources */
-  VerifyAccess(request: VerifyAccessRequest): Promise<VerifyAccessResponse>;
+  /** Verifies if token can perform actions on the resources */
+  VerifyTokenAccess(
+    request: VerifyTokenAccessRequest
+  ): Promise<VerifyTokenAccessResponse>;
 }
 
 export class IAMAuthServiceClientImpl implements IAMAuthService {
   private readonly rpc: Rpc;
   constructor(rpc: Rpc) {
     this.rpc = rpc;
-    this.LoginWithPassword = this.LoginWithPassword.bind(this);
-    this.LoginWithOAuth2 = this.LoginWithOAuth2.bind(this);
-    this.CompleteTwoFactorTOTP = this.CompleteTwoFactorTOTP.bind(this);
+    this.CreateTokenWithPassword = this.CreateTokenWithPassword.bind(this);
     this.RefreshToken = this.RefreshToken.bind(this);
     this.InvalidateToken = this.InvalidateToken.bind(this);
-    this.VerifyAccess = this.VerifyAccess.bind(this);
+    this.VerifyTokenAccess = this.VerifyTokenAccess.bind(this);
   }
-  LoginWithPassword(
-    request: LoginWithPasswordRequest
-  ): Promise<LoginWithPasswordResponse> {
-    const data = LoginWithPasswordRequest.encode(request).finish();
+  CreateTokenWithPassword(
+    request: CreateTokenWithPasswordRequest
+  ): Promise<CreateTokenWithPasswordResponse> {
+    const data = CreateTokenWithPasswordRequest.encode(request).finish();
     const promise = this.rpc.request(
       "native_iam_auth.IAMAuthService",
-      "LoginWithPassword",
+      "CreateTokenWithPassword",
       data
     );
     return promise.then((data) =>
-      LoginWithPasswordResponse.decode(new _m0.Reader(data))
-    );
-  }
-
-  LoginWithOAuth2(
-    request: LoginWithOAuth2Request
-  ): Promise<LoginWithOAuth2Response> {
-    const data = LoginWithOAuth2Request.encode(request).finish();
-    const promise = this.rpc.request(
-      "native_iam_auth.IAMAuthService",
-      "LoginWithOAuth2",
-      data
-    );
-    return promise.then((data) =>
-      LoginWithOAuth2Response.decode(new _m0.Reader(data))
-    );
-  }
-
-  CompleteTwoFactorTOTP(
-    request: CompleteTwoFactorTOTPRequest
-  ): Promise<CompleteTwoFactorTOTPResponse> {
-    const data = CompleteTwoFactorTOTPRequest.encode(request).finish();
-    const promise = this.rpc.request(
-      "native_iam_auth.IAMAuthService",
-      "CompleteTwoFactorTOTP",
-      data
-    );
-    return promise.then((data) =>
-      CompleteTwoFactorTOTPResponse.decode(new _m0.Reader(data))
+      CreateTokenWithPasswordResponse.decode(new _m0.Reader(data))
     );
   }
 
@@ -1269,15 +786,17 @@ export class IAMAuthServiceClientImpl implements IAMAuthService {
     );
   }
 
-  VerifyAccess(request: VerifyAccessRequest): Promise<VerifyAccessResponse> {
-    const data = VerifyAccessRequest.encode(request).finish();
+  VerifyTokenAccess(
+    request: VerifyTokenAccessRequest
+  ): Promise<VerifyTokenAccessResponse> {
+    const data = VerifyTokenAccessRequest.encode(request).finish();
     const promise = this.rpc.request(
       "native_iam_auth.IAMAuthService",
-      "VerifyAccess",
+      "VerifyTokenAccess",
       data
     );
     return promise.then((data) =>
-      VerifyAccessResponse.decode(new _m0.Reader(data))
+      VerifyTokenAccessResponse.decode(new _m0.Reader(data))
     );
   }
 }
