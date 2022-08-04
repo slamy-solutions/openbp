@@ -1,0 +1,169 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package native_iam_token;
+
+option go_package = "slamy/openCRM/native/iam/token;native_iam_token_grpc";
+
+// Scope defines what can be accessed by token and what actions can be performed on accessible resources. Scope is bounded the namespace where resources are located.
+message Scope {
+    // Namespace to which scope is bounded. Empty string if scope is not bounded to any namespace (is global)
+    string namespace = 1;
+    // Resources that can be accessed using this token
+    repeated string resources = 2;
+    // Actions that can be performed on accessible resources
+    repeated string actions = 3;
+}
+
+message TokenData {
+    // Namespace where token and identity are located. Epmty for global token (without namespace)
+    string namespace = 1;
+    // Unique identifier of the token inside namespace
+    string uuid = 2;
+    // Token identity unique identifier inside namespace
+    string identity = 3;
+    // Identifies if token was manually disabled. Disabled token always fails on authorization and can not be reenabled
+    bool disabled = 4;
+    // Datetime after with token will not be valid and will fail on Refresh and Authorize attempts
+    google.protobuf.Timestamp expiresAt = 5;
+    // List of token scopes. Describes what actions can token perform on what resources
+    repeated Scope scopes = 6;
+    // Datetime when token was created
+    google.protobuf.Timestamp createdAt = 7;
+    // Arbitrary metadata added on token creation. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested.
+    string creationMetadata = 8;
+}
+
+message CreateRequest {
+    // Namespace of the token. Empty for global token.
+    string namespace = 1;
+    // Identity UUID of the token
+    string identity = 2;
+    // Scopes that will be applied to the token
+    repeated Scope scopes = 3;
+    // Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested.
+    string metadata = 8;
+}
+message CreateResponse {
+    // Actual token formated to the string.
+    string token = 1;
+    // Refreshtoken is used to update token
+    string refreshToken = 2;
+    // Token data
+    TokenData tokenData = 3;
+}
+
+message GetByUUIDRequest {
+    // Namespace of the token. Empty for global token.
+    string namespace = 1;
+    // Unique identifier of the token inside namespace
+    string uuid = 2;
+    // Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default)
+    bool useCache = 3;
+}
+message GetByUUIDResponse {
+    // Actual token data
+    TokenData tokenData = 1;
+}
+
+message DisableByUUIDRequest {
+    // Namespace of the token. Empty for global token.
+    string namespace = 1;
+    // Unique identifier of the token inside namespace
+    string uuid = 2;
+}
+message DisableByUUIDResponse {}
+
+
+message AuthorizeRequest {
+    // Token to authorize
+    string token = 1;
+    // Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default)
+    bool useCache = 2;
+}
+message AuthorizeResponse {
+    enum Status {
+        // Token is valid
+        OK = 0;
+        // Token has bad format or invalid signature
+        INVALID = 1;
+        // Token not found
+        NOT_FOUND = 2;
+        // Token was manually disabled
+        DISABLED = 3;
+        // Token expired and is not valid
+        EXPIRED = 4;
+    }
+    Status status = 1;
+    // Token data. Null if status is not OK
+    TokenData tokenData = 2;
+}
+
+message RefreshRequest {
+    // Refresh token, based on which, new token will be returned
+    string refreshToken = 1;
+}
+message RefreshResponse {
+    enum Status {
+        // Token is valid
+        OK = 0;
+        // Token has bad format or invalid signature
+        INVALID = 1;
+        // Token not found
+        NOT_FOUND = 2;
+        // Token was manually disabled
+        DISABLED = 3;
+        // Token expired and is not valid
+        EXPIRED = 4;
+        // This token is valid but this is not refresh token
+        NOT_REFRESH_TOKEN = 5;
+    }
+    Status status = 1;
+    // New token if status is OK. Null otherwise
+    string token = 2;
+    // New token data if status is OK. Null otherwise
+    TokenData tokenData = 3;
+}
+
+message TokensForIdentityRequest {
+    enum ActiveFilter {
+        // Get all token
+        ALL = 0;
+        // Only get tokens that wasnt disabled and not expired
+        ONLY_ACTIVE = 1;
+        // Only get tokens that are disabled or expired
+        ONLY_NOT_ACTIVE = 2;
+    }
+    // Namespace where token is located. Empty for global token
+    string namespace = 1;
+    // Identity unique identifier inside namespace
+    string identity = 2;
+    // Perform results filtering on "active" property of the token
+    ActiveFilter activeFilter = 3;
+    // Skip number of results before returning actual tokens. Set to 0 in order not to skip
+    uint32 skip = 4;
+    // Limit number of returned results. Set to 0 in order to remove limit and return all possible results up to the end.
+    uint32 limit = 5;
+}
+
+message TokensForIdentityResponse {
+    // Actual token data
+    TokenData tokenData = 1;
+}
+
+// Provides API to manage auth tokens
+service IAMTokenService {
+    // Create new token
+    rpc Create(CreateRequest) returns (CreateResponse);
+    // Get token data using token UUID (unique identifier)
+    rpc GetByUUID(GetByUUIDRequest) returns (GetByUUIDResponse);
+    // Disable token using its unique identifier
+    rpc DisableByUUID(DisableByUUIDRequest) returns (DisableByUUIDResponse);
+    // Validates token and gets its scopes
+    rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse);
+    // Validates refresh token and create new token based on it. New token will have same scopes 
+    rpc Refresh(RefreshRequest) returns (RefreshResponse);
+    // Returns list of tokens for specified identity
+    rpc TokensForIdentity(TokensForIdentityRequest) returns (stream TokensForIdentityResponse);
+}

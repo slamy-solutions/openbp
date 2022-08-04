@@ -13,10 +13,17 @@ message CreateTokenWithPasswordRequest {
     string password = 3;
 }
 message CreateTokenWithPasswordResponse {
-    // Token used for authentication and authorization
-    string accessToken = 1;
-    // Token used for refreshing accessToken
-    string refreshToken = 2;
+    enum Status {
+        OK = 0;
+        UNAUTHENTICATED = 401;
+        UNAUTHORIZED = 403;
+    }
+    // Status of the token creation
+    Status status = 1;
+    // Token used for authentication and authorization. If status is not OK - empty string
+    string accessToken = 2;
+    // Token used for refreshing accessToken. If status is not OK - empty string
+    string refreshToken = 3;
 }
 
 message CreateTokenWithOAuth2Request {

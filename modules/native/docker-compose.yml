@@ -108,6 +108,21 @@ services:
       - native_namespace
       - native_iam_policy
 
+  native_iam_token:
+    container_name: native_iam_token
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/iam/token/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_iam_token"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - native_namespace
+
   native_iam_authentication_password:
     container_name: native_iam_authentication_password
     restart: always

@@ -14,10 +14,55 @@ export interface CreateTokenWithPasswordRequest {
 }
 
 export interface CreateTokenWithPasswordResponse {
-  /** Token used for authentication and authorization */
+  /** Status of the token creation */
+  status: CreateTokenWithPasswordResponse_Status;
+  /** Token used for authentication and authorization. If status is not OK - empty string */
   accessToken: string;
-  /** Token used for refreshing accessToken */
+  /** Token used for refreshing accessToken. If status is not OK - empty string */
   refreshToken: string;
+}
+
+export enum CreateTokenWithPasswordResponse_Status {
+  OK = 0,
+  UNAUTHENTICATED = 401,
+  UNAUTHORIZED = 403,
+  UNRECOGNIZED = -1,
+}
+
+export function createTokenWithPasswordResponse_StatusFromJSON(
+  object: any
+): CreateTokenWithPasswordResponse_Status {
+  switch (object) {
+    case 0:
+    case "OK":
+      return CreateTokenWithPasswordResponse_Status.OK;
+    case 401:
+    case "UNAUTHENTICATED":
+      return CreateTokenWithPasswordResponse_Status.UNAUTHENTICATED;
+    case 403:
+    case "UNAUTHORIZED":
+      return CreateTokenWithPasswordResponse_Status.UNAUTHORIZED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return CreateTokenWithPasswordResponse_Status.UNRECOGNIZED;
+  }
+}
+
+export function createTokenWithPasswordResponse_StatusToJSON(
+  object: CreateTokenWithPasswordResponse_Status
+): string {
+  switch (object) {
+    case CreateTokenWithPasswordResponse_Status.OK:
+      return "OK";
+    case CreateTokenWithPasswordResponse_Status.UNAUTHENTICATED:
+      return "UNAUTHENTICATED";
+    case CreateTokenWithPasswordResponse_Status.UNAUTHORIZED:
+      return "UNAUTHORIZED";
+    case CreateTokenWithPasswordResponse_Status.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
 export interface CreateTokenWithOAuth2Request {
@@ -141,7 +186,7 @@ export const CreateTokenWithPasswordRequest = {
 };
 
 function createBaseCreateTokenWithPasswordResponse(): CreateTokenWithPasswordResponse {
-  return { accessToken: "", refreshToken: "" };
+  return { status: 0, accessToken: "", refreshToken: "" };
 }
 
 export const CreateTokenWithPasswordResponse = {
@@ -149,11 +194,14 @@ export const CreateTokenWithPasswordResponse = {
     message: CreateTokenWithPasswordResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.status !== 0) {
+      writer.uint32(8).int32(message.status);
+    }
     if (message.accessToken !== "") {
-      writer.uint32(10).string(message.accessToken);
+      writer.uint32(18).string(message.accessToken);
     }
     if (message.refreshToken !== "") {
-      writer.uint32(18).string(message.refreshToken);
+      writer.uint32(26).string(message.refreshToken);
     }
     return writer;
   },
@@ -169,9 +217,12 @@ export const CreateTokenWithPasswordResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.accessToken = reader.string();
+          message.status = reader.int32() as any;
           break;
         case 2:
+          message.accessToken = reader.string();
+          break;
+        case 3:
           message.refreshToken = reader.string();
           break;
         default:
@@ -184,6 +235,9 @@ export const CreateTokenWithPasswordResponse = {
 
   fromJSON(object: any): CreateTokenWithPasswordResponse {
     return {
+      status: isSet(object.status)
+        ? createTokenWithPasswordResponse_StatusFromJSON(object.status)
+        : 0,
       accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
       refreshToken: isSet(object.refreshToken)
         ? String(object.refreshToken)
@@ -193,6 +247,10 @@ export const CreateTokenWithPasswordResponse = {
 
   toJSON(message: CreateTokenWithPasswordResponse): unknown {
     const obj: any = {};
+    message.status !== undefined &&
+      (obj.status = createTokenWithPasswordResponse_StatusToJSON(
+        message.status
+      ));
     message.accessToken !== undefined &&
       (obj.accessToken = message.accessToken);
     message.refreshToken !== undefined &&
@@ -204,6 +262,7 @@ export const CreateTokenWithPasswordResponse = {
     object: I
   ): CreateTokenWithPasswordResponse {
     const message = createBaseCreateTokenWithPasswordResponse();
+    message.status = object.status ?? 0;
     message.accessToken = object.accessToken ?? "";
     message.refreshToken = object.refreshToken ?? "";
     return message;

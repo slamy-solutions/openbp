@@ -7,6 +7,7 @@ use (
 	./modules/native/services/iam/config
 	./modules/native/services/iam/identity
 	./modules/native/services/iam/policy
+	./modules/native/services/iam/token
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/lambda/entrypoint
 	./modules/native/services/lambda/manager
