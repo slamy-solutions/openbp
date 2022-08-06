@@ -79,7 +79,7 @@ func (n *NamespaceInMongo) ToGRPCNamespace() *grpc.Namespace {
 
 func (s *NamespaceServer) Ensure(ctx context.Context, in *grpc.EnsureNamespaceRequest) (*grpc.EnsureNamespaceResponse, error) {
 	if !nameValidator.MatchString(in.Name) {
-		return nil, status.Error(grpccodes.InvalidArgument, "Namespace name doesnt match regex \"[A-Za-z0-9]+$\"")
+		return nil, status.Error(grpccodes.InvalidArgument, "Namespace name doesnt match regex \"^[A-Za-z0-9]+$\"")
 	}
 
 	filterData := bson.D{
