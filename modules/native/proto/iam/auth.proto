@@ -11,6 +11,8 @@ message CreateTokenWithPasswordRequest {
     string identity = 2;
     // Identity password
     string password = 3;
+    // Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested.
+    string metadata = 4;
 }
 message CreateTokenWithPasswordResponse {
     enum Status {
@@ -58,10 +60,12 @@ message InvalidateTokenResponse {}
 message VerifyTokenAccessRequest {
     // Token to verify
     string accessToken = 1;
+    // Namespace where to access resources
+    string namespace = 2;
     // What resources to theck
-    repeated string resources = 2;
+    repeated string resources = 3;
     // What actions token must be able to perform for resources
-    repeated string actions = 3;
+    repeated string actions = 4;
 }
 message VerifyTokenAccessResponse {
     bool hasAccess = 1;

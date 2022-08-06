@@ -107,6 +107,16 @@ func makeTokenCacheKey(namespace string, uuid string) string {
 	return fmt.Sprintf("native_iam_token_data_%s_%s", namespace, uuid)
 }
 
+func NewIAmTokenServer(mongoClient *mongo.Client, mongoDbPrefix string, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *IAmTokenServer {
+	return &IAmTokenServer{
+		mongoClient:           mongoClient,
+		mongoDbPrefix:         mongoDbPrefix,
+		mongoGlobalCollection: mongoClient.Database(fmt.Sprintf("%sglobal", mongoDbPrefix)).Collection("native_iam_token"),
+		cacheClient:           cacheClient,
+		nativeNamespaceClient: nativeNamespaceClient,
+	}
+}
+
 func (s *IAmTokenServer) Create(ctx context.Context, in *nativeIAmTokenGRPC.CreateRequest) (*nativeIAmTokenGRPC.CreateResponse, error) {
 	// Validating if namespace for new token exist
 	namespaceExistResponse, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
