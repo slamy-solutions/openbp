@@ -123,6 +123,21 @@ services:
       - system_telemetry
       - native_namespace
 
+  native_actor_user:
+    container_name: native_actor_user
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/actor/user/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_actor_user"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - native_iam_identity
+
   native_iam_authentication_password:
     container_name: native_iam_authentication_password
     restart: always

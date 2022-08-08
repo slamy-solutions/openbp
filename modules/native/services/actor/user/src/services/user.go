@@ -301,5 +301,10 @@ func (s *ActorUserServer) Delete(ctx context.Context, in *nativeActorUserGRPC.De
 
 	clearUserCache(ctx, s, &user)
 
+	s.nativeIAmIdentityClient.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
+		Namespace: "",
+		Uuid:      user.Identity,
+	})
+
 	return &nativeActorUserGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
 }
