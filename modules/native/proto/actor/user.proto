@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package native_user;
+
+option go_package = "slamy/openERP/native/user;native_user_grpc";
+
+message User {
+    // Unique identifier
+    string uuid = 1;
+    // Login unique identifies user (like UUID) but user defined and can be changed.
+    string login = 2;
+    // Nnative_iam_identity UUID
+    string identity = 3;
+
+    // User-defined name that will be displayed instead of login
+    string fullName = 4;
+    // Link to the user avatar image
+    string avatar = 5;
+    // Email address
+    string email = 6;
+}
+
+message CreateRequest {
+    // User-defined unique identifier
+    string login = 1;
+
+    // User-defined name that will be displayed instead of login
+    string fullName = 2;
+    // Link to the user avatar image
+    string avatar = 3;
+    // Email address
+    string email = 4;
+}
+message CreateResponse {
+    // Created user
+    User user = 1;
+}
+
+message GetRequest {
+    // User unique identifier to get
+    string uuid = 1;
+    bool useCache = 2;
+}
+message GetResponse {
+    User user = 2;
+}
+
+message GetByLoginRequest {
+    string login = 1;
+    bool useCache = 2;
+}
+message GetByLoginResponse {
+    User user = 1;
+}
+
+message GetByIdentityRequest {
+    string identity = 1;
+    bool useCache = 2;
+}
+message GetByIdentityResponse {
+    User user = 1;
+}
+
+message UpdateRequest {
+    // Unique identifier of user, that will be updated
+    string uuid = 1;
+    // User-defined unique identifier
+    string login = 2;
+    // User-defined name that will be displayed instead of login
+    string fullName = 3;
+    // Link to the user avatar image
+    string avatar = 4;
+    // Email address
+    string email = 5;
+}
+message UpdateResponse {
+    // User after update
+    User user = 1;
+}
+
+message DeleteRequest {
+    // Unique identifier of user to delete
+    string uuid = 1;
+}
+message DeleteResponse {}
+
+service UserService {
+    rpc Create(CreateRequest) returns (CreateResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByLogin(GetByLoginRequest) returns (GetByLoginResponse);
+    rpc GetByIdentity(GetByIdentityRequest) returns (GetByIdentityResponse);
+    rpc Update(UpdateRequest) returns (UpdateResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
