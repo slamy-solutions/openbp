@@ -39,25 +39,33 @@ message CreateResponse {
 message GetRequest {
     // User unique identifier to get
     string uuid = 1;
+    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
     bool useCache = 2;
 }
 message GetResponse {
+    // User with specified UUID
     User user = 2;
 }
 
 message GetByLoginRequest {
+    // Search for user that has this login
     string login = 1;
+    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
     bool useCache = 2;
 }
 message GetByLoginResponse {
+    // User with specified login
     User user = 1;
 }
 
 message GetByIdentityRequest {
+    // Search for user which has this identity uuid assigned to it
     string identity = 1;
+    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
     bool useCache = 2;
 }
 message GetByIdentityResponse {
+    // User wich has specified identity
     User user = 1;
 }
 
@@ -85,10 +93,16 @@ message DeleteRequest {
 message DeleteResponse {}
 
 service UserService {
+    // Create new user and assign identity to it.
     rpc Create(CreateRequest) returns (CreateResponse);
+    // Get user by its unique identifier
     rpc Get(GetRequest) returns (GetResponse);
+    // Get user by its login
     rpc GetByLogin(GetByLoginRequest) returns (GetByLoginResponse);
+    // Get user by the identity uuid that was assigned to it
     rpc GetByIdentity(GetByIdentityRequest) returns (GetByIdentityResponse);
+    // Update user information
     rpc Update(UpdateRequest) returns (UpdateResponse);
+    // Delete user
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 }
