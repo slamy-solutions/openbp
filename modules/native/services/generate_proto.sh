@@ -84,3 +84,10 @@ mkdir -p ./iam/auth/src/grpc/native_iam_token
 protoc --go_out=./iam/auth/src/grpc/native_iam_token --go_opt=paths=source_relative --go-grpc_out=./iam/auth/src/grpc/native_iam_token --go-grpc_opt=paths=source_relative -I ../proto/iam token.proto
 mkdir -p ./iam/auth/src/grpc/native_iam_authentication_password
 protoc --go_out=./iam/auth/src/grpc/native_iam_authentication_password --go_opt=paths=source_relative --go-grpc_out=./iam/auth/src/grpc/native_iam_authentication_password --go-grpc_opt=paths=source_relative -I ../proto/iam/authentication password.proto
+
+# actor-user
+echo "Generating proto for actor_user service"
+mkdir -p ./actor/user/src/grpc/native_iam_identity
+protoc --go_out=./actor/user/src/grpc/native_iam_identity --go_opt=paths=source_relative --go-grpc_out=./actor/user/src/grpc/native_iam_identity --go-grpc_opt=paths=source_relative -I ../proto/iam identity.proto
+mkdir -p ./actor/user/src/grpc/native_actor_user
+protoc --go_out=./actor/user/src/grpc/native_actor_user --go_opt=paths=source_relative --go-grpc_out=./actor/user/src/grpc/native_actor_user --go-grpc_opt=paths=source_relative -I ../proto/actor user.proto

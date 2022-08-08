@@ -14,10 +14,9 @@ import (
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/mongodb"
 	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
 
-	native_iam_identity_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_iam_identity"
-	native_iam_policy_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_iam_policy"
-	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_namespace"
-	"github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/services"
+	native_actor_user_grpc "github.com/slamy-solutions/open-erp/modules/native/services/actor/user/src/grpc/native_actor_user"
+	native_iam_identity_grpc "github.com/slamy-solutions/open-erp/modules/native/services/actor/user/src/grpc/native_iam_identity"
+	"github.com/slamy-solutions/open-erp/modules/native/services/actor/user/src/services"
 )
 
 const (
@@ -37,13 +36,12 @@ func main() {
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
 
-	NATIVE_NAMESPACE_URL := getConfigEnv("NATIVE_NAMESPACE_URL", "native_namespace:80")
-	NATIVE_IAM_POLICY_URL := getConfigEnv("NATIVE_IAM_POLICY_URL", "native_iam_policy:80")
+	NATIVE_IAM_IDENTITY_URL := getConfigEnv("NATIVE_IAM_IDENTITY_URL", "native_iam_identity:80")
 
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.identity", VERSION, "1")
+	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "actor.user", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}
@@ -66,9 +64,9 @@ func main() {
 	defer cacheClient.Shutdown(ctx)
 	fmt.Println("Initialized cache")
 
-	// Setting up native_namespace connection
-	nativeNamespaceConnection, err := grpc.Dial(
-		NATIVE_NAMESPACE_URL,
+	// Setting up native_iam_identity connection
+	nativeIAmIdentityConnection, err := grpc.Dial(
+		NATIVE_IAM_IDENTITY_URL,
 		grpc.WithInsecure(),
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
@@ -76,23 +74,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer nativeNamespaceConnection.Close()
-	nativeNamespaceClient := native_namespace_grpc.NewNamespaceServiceClient(nativeNamespaceConnection)
-	fmt.Println("Initialized native_namespace connection")
-
-	// Setting up native_iam_policy connection
-	nativeIAmPolicyConnection, err := grpc.Dial(
-		NATIVE_IAM_POLICY_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
-	if err != nil {
-		panic(err)
-	}
-	defer nativeIAmPolicyConnection.Close()
-	nativeIAmPolicyClient := native_iam_policy_grpc.NewIAMPolicyServiceClient(nativeIAmPolicyConnection)
-	fmt.Println("Initialized native_iam_policy connection")
+	defer nativeIAmIdentityConnection.Close()
+	nativeIAmIdentityClient := native_iam_identity_grpc.NewIAMIdentityServiceClient(nativeIAmIdentityConnection)
+	fmt.Println("Initialized native_iam_identity connection")
 
 	// Creating grpc server
 	grpcServer := grpc.NewServer(
@@ -100,8 +84,8 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	iamIdentityServer := services.NewIAmIdentityServer(dbClient, SYSTEM_DB_PREFIX, cacheClient, nativeNamespaceClient, nativeIAmPolicyClient)
-	native_iam_identity_grpc.RegisterIAMIdentityServiceServer(grpcServer, iamIdentityServer)
+	actorUserServer, err := services.NewActorUserServer(ctx, dbClient, SYSTEM_DB_PREFIX, cacheClient, nativeIAmIdentityClient)
+	native_actor_user_grpc.RegisterUserServiceServer(grpcServer, actorUserServer)
 
 	fmt.Println("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")

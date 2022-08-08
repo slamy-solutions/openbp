@@ -1,6 +1,8 @@
 go 1.18
 
 use (
+	./modules/native/services/actor/user
+	./modules/native/services/api
 	./modules/native/services/file
 	./modules/native/services/iam/auth
 	./modules/native/services/iam/authentication/password
