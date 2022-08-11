@@ -4,12 +4,12 @@ Native namespace is service for managing namespaceses in the entire platform eco
 After creation of the `namespace`, native_namespace service creates new `<GLOBAL_PREFIX>namespace_<name>` database, so every new namespace data can be placed in separate database. On `namespace` deletion, service will delete its database and all the data will be lost.
 
 ## API
-Communication with system is possible by gRPC interface. Definitions of the interface (proto file) is provided by native module.
+Communication with system is possible using gRPC interface. Definitions of the interface (proto file) are provided by native module.
 ### Ensure
 ```
     rpc Ensure(EnsureNamespaceRequest) returns (EnsureNamespaceResponse) {};
 ```
-This Endpoint allows you to create new namespace if it doesnt exist. If namespace already exists, this endpoint will do nothing.
+This endpoint allows you to create new namespace if it doesnt exist. If namespace already exists, this endpoint will do nothing.
 <!-- tabs:start -->
 
 #### **Request**

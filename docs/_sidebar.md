@@ -9,5 +9,6 @@
      - [Redis big cache](modules/system/redis_big_cache.md "System redis big cache service")
    - [Native](modules/native/readme.md)
      - [Namespace](modules/native/namespace.md "Native namespace service")
+     - [Key value storage](modules/native/keyvaluestorage.md "Native key value storage")
 - [Code of conduct](CODE_OF_CONDUCT.md)
 - [License](LICENSE.md)

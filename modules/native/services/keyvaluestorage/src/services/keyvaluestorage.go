@@ -33,7 +33,7 @@ type keyInMongo struct {
 
 const (
 	MAX_ENTRY_SIZE            = 1024 * 1024 * 15
-	CACHE_KEY_EXPIRATION_TIME = 30 * time.Second
+	CACHE_KEY_EXPIRATION_TIME = 60 * time.Second
 )
 
 func makeCacheKey(namespace string, key string) string {
