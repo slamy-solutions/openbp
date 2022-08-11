@@ -179,6 +179,8 @@ services:
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
       OTEL_SERVICE_NAME: "native_api"
+    ports:
+      - 8055:80
     depends_on:
       - system_db
       - system_cache
