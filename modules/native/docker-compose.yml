@@ -169,3 +169,26 @@ services:
       - system_telemetry
       - system_rabbitmq
       - native_namespace
+
+  native_api:
+    container_name: native_api
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/api/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_api"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - system_rabbitmq
+      - native_namespace
+      - native_keyvaluestorage
+      - native_iam_config
+      - native_iam_policy
+      - native_iam_identity
+      - native_iam_token
+      - native_actor_user
+      - native_iam_authentication_password

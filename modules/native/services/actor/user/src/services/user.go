@@ -21,7 +21,7 @@ import (
 )
 
 type ActorUserServer struct {
-	nativeActorUserGRPC.UnimplementedUserServiceServer
+	nativeActorUserGRPC.UnimplementedActorUserServiceServer
 
 	mongoClient             *mongo.Client
 	mongoCollection         *mongo.Collection

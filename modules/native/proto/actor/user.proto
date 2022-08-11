@@ -92,7 +92,7 @@ message DeleteRequest {
 }
 message DeleteResponse {}
 
-service UserService {
+service ActorUserService {
     // Create new user and assign identity to it.
     rpc Create(CreateRequest) returns (CreateResponse);
     // Get user by its unique identifier

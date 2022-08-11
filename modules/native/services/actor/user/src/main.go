@@ -85,7 +85,7 @@ func main() {
 	)
 
 	actorUserServer, err := services.NewActorUserServer(ctx, dbClient, SYSTEM_DB_PREFIX, cacheClient, nativeIAmIdentityClient)
-	native_actor_user_grpc.RegisterUserServiceServer(grpcServer, actorUserServer)
+	native_actor_user_grpc.RegisterActorUserServiceServer(grpcServer, actorUserServer)
 
 	fmt.Println("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")

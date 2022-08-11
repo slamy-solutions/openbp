@@ -1,17 +1,53 @@
 package main
 
 import (
-	"net/http"
+	"context"
+	"fmt"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+
+	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
+
+	"github.com/slamy-solutions/open-erp/modules/native/services/api/src/routes"
+	"github.com/slamy-solutions/open-erp/modules/native/services/api/src/tools"
 )
 
+const (
+	VERSION = "1.0.0"
+)
+
+func getConfigEnv(key string, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func main() {
+	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
+
+	// Setting up Telemetry
+	ctx := context.Background()
+	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "api", VERSION, "1")
+	if err != nil {
+		panic(err)
+	}
+	defer telemetryProvider.Shutdown(ctx)
+	fmt.Println("Initialized telemetry")
+
+	tools, err := tools.NewConnectorTools()
+	if err != nil {
+		panic(err)
+	}
+	defer tools.Close()
+
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	r.Use(otelgin.Middleware("native_api"))
+
+	authGroup := r.Group("/api/bff/native/auth")
+	routes.RegisterAuthRoutes(authGroup, tools.IAmAuth, tools.ActorUser, tools.IAmAuthenticationPassword)
+
+	r.Run("0.0.0.0:80")
 }
