@@ -11,3 +11,4 @@ Therefore, we can say that this module is a collection of `meta-services` that a
 To summarize, what attributes service must have to be in the `native` module:
 - **Abstract**. Doesnt depend on the final solution. Applyable to everything.
 - **Internal**. Entire code is located in this repository.
+- **Dependency-less**. The noly dependency is `system` module.
