@@ -8,7 +8,7 @@ Therefore, we can say that this module is a collection of `meta-services` that a
 
 !> There is big difference between `system` and `native` modules. Services of `native` module arent external solutions (entire code is inside this repository).
 
-To summarize, what attributes service must have to be in the `native` module:
+To summarize, those attributes service must have to be in the `native` module:
 - **Abstract**. Doesnt depend on the final solution. Applyable to everything.
 - **Internal**. Entire code is located in this repository.
 - **Dependency-less**. The only dependency is `system` module.
