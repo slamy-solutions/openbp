@@ -17,7 +17,6 @@ Here's what OpenBP offers out of the box:
 - Hight-availability option to ensure **99.9% uptime**.
 - Dynamic workflow managing, resource sharing, and workload redistribution (provided by k3s)
 - Industrial grade secured environment (provided by Vault)
-- **GDPR** complied storage system and data flow
 - **Developer-friendly version-controlled** environment (with [GIT](https://git-scm.com/)) to create custom configurations.
 - **CI/CD** pipelines for easy deployments and support
 - Advanced **SaaS** tools for managing customers and their deployments.
@@ -31,7 +30,7 @@ Thats not all ;). Please, check [Architectual vision](./docs/architecture/archit
 ## Sponsors
 <div align="center">
   <a href="https://modulsoft.pl/">
-    <img src="./docs/sponsors/modulsoft.svg" width="10%" />
+    <img src="./docs/sponsors/modulsoft.svg" width="20%" />
   </a>
 </div>
 
