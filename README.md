@@ -46,7 +46,7 @@ Thats not all ;). Please, check [Architectual vision](./docs/architecture/archit
 ## Sponsors
 <div align="center">
   <a href="https://modulsoft.pl/">
-    <img src="./docs/sponsors/modulsoft.svg" width="20%" />
+    <img src="./site/content/assets/images/sponsors/modulsoft.svg" width="20%" />
   </a>
 </div>
 
