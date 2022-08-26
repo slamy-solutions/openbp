@@ -193,7 +193,7 @@ func (s *IAmTokenServer) Authorize(ctx context.Context, in *nativeIAmTokenGRPC.A
 	// Trying to fast get data from cache if cache enabled
 	var cacheKey string
 	if in.UseCache {
-		cacheKey = makeTokenCacheKey(jwtData.Namespace, jwtData.Namespace)
+		cacheKey = makeTokenCacheKey(jwtData.Namespace, jwtData.UUID)
 		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
 		if err == nil {
 			var tokenData nativeIAmTokenGRPC.TokenData
