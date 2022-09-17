@@ -6,7 +6,7 @@ import { client as cacheClient, connect as connectToCache, close as closeCache }
 import { configClient as iamConfigGRPC, connect as connectToNativeIAMConfig, close as closeNativeIAMConfig } from '../../../tools/iam/grpc'
 import { client as nativeKeyValueStorageClient, connect as connectToNativeKeyValueStorage, close as closeNativeKeyValueStorage } from '../../../tools/keyvaluestorage/grpc'
 
-const GLOBAL_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}global`
+const GLOBAL_DB_NAME = `openbp_global`
 
 beforeAll(async ()=>{
     await connectToMongo()

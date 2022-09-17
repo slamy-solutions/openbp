@@ -7,11 +7,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 	grpccodes "google.golang.org/grpc/codes"
 
-	iamGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/grpc/native_iam_configuration"
-	keyValueStorageGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
+	iamGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_iam_configuration"
+	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
 )
 
 type IAMConfigServer struct {

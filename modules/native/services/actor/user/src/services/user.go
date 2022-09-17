@@ -14,10 +14,10 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	nativeActorUserGRPC "github.com/slamy-solutions/open-erp/modules/native/services/actor/user/src/grpc/native_actor_user"
-	nativeIAmIdentityGRPC "github.com/slamy-solutions/open-erp/modules/native/services/actor/user/src/grpc/native_iam_identity"
+	nativeActorUserGRPC "github.com/slamy-solutions/openbp/modules/native/services/actor/user/src/grpc/native_actor_user"
+	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/services/actor/user/src/grpc/native_iam_identity"
 )
 
 type ActorUserServer struct {
@@ -70,8 +70,8 @@ func (u *userInMongo) ToProtoUser() *nativeActorUserGRPC.User {
 	}
 }
 
-func NewActorUserServer(ctx context.Context, mongoClient *mongo.Client, mongoPrefix string, cacheClient cache.Cache, nativeIAmIdentityClient nativeIAmIdentityGRPC.IAMIdentityServiceClient) (*ActorUserServer, error) {
-	collection := mongoClient.Database(mongoPrefix + "global").Collection("native_actor_user")
+func NewActorUserServer(ctx context.Context, mongoClient *mongo.Client, cacheClient cache.Cache, nativeIAmIdentityClient nativeIAmIdentityGRPC.IAMIdentityServiceClient) (*ActorUserServer, error) {
+	collection := mongoClient.Database("openbp_global").Collection("native_actor_user")
 
 	// Ensure indexes on the collection
 	_, err := collection.Indexes().CreateMany(ctx, []mongo.IndexModel{

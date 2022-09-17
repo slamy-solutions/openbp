@@ -9,7 +9,7 @@ import { managerClient as lambdaManagerGrpc, connect as connectToNativeLambda, c
 
 
 const TEST_NAMESPACE_NAME = "lambdanamespace"
-const BUNDLE_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}global`
+const BUNDLE_DB_NAME = `openbp_global`
 
 beforeAll(async ()=>{
     await connectToMongo()

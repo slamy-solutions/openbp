@@ -11,16 +11,15 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	keyValueStorageGRPC "github.com/slamy-solutions/open-erp/modules/native/services/keyvaluestorage/src/grpc/native_keyvaluestorage"
-	namespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/keyvaluestorage/src/grpc/native_namespace"
+	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/services/keyvaluestorage/src/grpc/native_keyvaluestorage"
+	namespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/keyvaluestorage/src/grpc/native_namespace"
 )
 
 type KeyValueStorageServer struct {
 	keyValueStorageGRPC.UnimplementedKeyValueStorageServiceServer
 
-	dbPrefix        string
 	mongoClient     *mongo.Client
 	cacheClient     cache.Cache
 	namespaceClient namespaceGRPC.NamespaceServiceClient
@@ -43,16 +42,15 @@ func makeCacheKey(namespace string, key string) string {
 func getCollectionByNamespace(server *KeyValueStorageServer, namespace string) *mongo.Collection {
 	var db *mongo.Database
 	if namespace == "" {
-		db = server.mongoClient.Database(fmt.Sprintf("%sglobal", server.dbPrefix))
+		db = server.mongoClient.Database("openbp_global")
 	} else {
-		db = server.mongoClient.Database(fmt.Sprintf("%snamespace_%s", server.dbPrefix, namespace))
+		db = server.mongoClient.Database(fmt.Sprintf("openbp_namespace_%s", namespace))
 	}
 	return db.Collection("native_keyvaluestorage")
 }
 
-func NewKeyValueStorageServer(dbPrefix string, mongoClient *mongo.Client, cacheClient cache.Cache, namespaceClient namespaceGRPC.NamespaceServiceClient) *KeyValueStorageServer {
+func NewKeyValueStorageServer(mongoClient *mongo.Client, cacheClient cache.Cache, namespaceClient namespaceGRPC.NamespaceServiceClient) *KeyValueStorageServer {
 	return &KeyValueStorageServer{
-		dbPrefix:        dbPrefix,
 		mongoClient:     mongoClient,
 		cacheClient:     cacheClient,
 		namespaceClient: namespaceClient,

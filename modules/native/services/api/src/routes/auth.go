@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	actorUserGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_actor_user"
-	iamAuthGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_iam_auth"
-	iamAuthenticationPasswordGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_iam_authentication_password"
+	actorUserGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_actor_user"
+	iamAuthGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_iam_auth"
+	iamAuthenticationPasswordGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_iam_authentication_password"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

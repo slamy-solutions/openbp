@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/native/services/keyvaluestorage
+module github.com/slamy-solutions/openbp/modules/native/services/keyvaluestorage
 
 go 1.18
 

@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/system/libs/go/mongodb
+module github.com/slamy-solutions/openbp/modules/system/libs/go/mongodb
 
 go 1.18
 

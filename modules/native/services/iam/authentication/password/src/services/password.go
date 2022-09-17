@@ -14,39 +14,37 @@ import (
 
 	grpccodes "google.golang.org/grpc/codes"
 
-	grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/authentication/password/src/grpc/native_iam_authentication_password"
-	nativeNamespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/authentication/password/src/grpc/native_namespace"
+	grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_iam_authentication_password"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_namespace"
 )
 
 type PasswordIdentificationService struct {
 	grpc.UnimplementedIAMAuthenticationPasswordServiceServer
 
 	mongoClient           *mongo.Client
-	mongoPrefix           string
 	globalMongoCollection *mongo.Collection
 
 	nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient
 }
 
 type passwordInMongo struct {
-	Identity string
-	Password []byte
+	Identity string `bson:"identity"`
+	Password []byte `bson:"password"`
 }
 
 func collectionByNamespace(s *PasswordIdentificationService, namespace string) *mongo.Collection {
 	if namespace == "" {
 		return s.globalMongoCollection
 	} else {
-		dbName := fmt.Sprintf("%snamespace_%s", s.mongoPrefix, namespace)
+		dbName := fmt.Sprintf("openbp_namespace_%s", namespace)
 		return s.mongoClient.Database(dbName).Collection("native_iam_auth_authentication_password")
 	}
 }
 
-func NewPasswordIdentificationService(mongoClient *mongo.Client, mongoPrefix string, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *PasswordIdentificationService {
+func NewPasswordIdentificationService(mongoClient *mongo.Client, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *PasswordIdentificationService {
 	return &PasswordIdentificationService{
 		mongoClient:           mongoClient,
-		mongoPrefix:           mongoPrefix,
-		globalMongoCollection: mongoClient.Database(fmt.Sprintf("%sglobal", mongoPrefix)).Collection("native_iam_auth_authentication_password"),
+		globalMongoCollection: mongoClient.Database("openbp_global").Collection("native_iam_auth_authentication_password"),
 		nativeNamespaceClient: nativeNamespaceClient,
 	}
 }
@@ -80,12 +78,14 @@ func (s *PasswordIdentificationService) Authenticate(ctx context.Context, in *gr
 
 func (s *PasswordIdentificationService) CreateOrUpdate(ctx context.Context, in *grpc.CreateOrUpdateRequest) (*grpc.CreateOrUpdateResponse, error) {
 	// Check if namespace exists
-	namespaceExistResponse, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
-	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to check if namespace exist "+err.Error())
-	}
-	if !namespaceExistResponse.Exist {
-		return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+	if in.Namespace != "" {
+		namespaceExistResponse, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Failed to check if namespace exist "+err.Error())
+		}
+		if !namespaceExistResponse.Exist {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+		}
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), 10)
@@ -93,12 +93,8 @@ func (s *PasswordIdentificationService) CreateOrUpdate(ctx context.Context, in *
 		return nil, status.Error(grpccodes.Internal, "Failed to hash password: "+err.Error())
 	}
 
-	entry := &passwordInMongo{
-		Identity: in.Identity,
-		Password: passwordHash,
-	}
 	collection := collectionByNamespace(s, in.Namespace)
-	_, err = collection.UpdateOne(ctx, bson.M{"identity": in.Identity}, bson.M{"$set": entry, "$setOnInsert": entry}, options.Update().SetUpsert(true))
+	_, err = collection.UpdateOne(ctx, bson.M{"identity": in.Identity}, bson.M{"$set": bson.M{"password": passwordHash}, "$setOnInsert": bson.M{"identity": in.Identity}}, options.Update().SetUpsert(true))
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, "Error on updating password in database: "+err.Error())
 	}

@@ -12,9 +12,9 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	amqpTools "github.com/slamy-solutions/open-erp/modules/system/libs/go/rabbitmq"
+	amqpTools "github.com/slamy-solutions/openbp/modules/system/libs/go/rabbitmq"
 
-	lambdaGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda/entrypoint/src/grpc/native_lambda"
+	lambdaGRPC "github.com/slamy-solutions/openbp/modules/native/services/lambda/entrypoint/src/grpc/native_lambda"
 )
 
 type LambdaEntrypointServer struct {

@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry
+module github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry
 
 go 1.18
 

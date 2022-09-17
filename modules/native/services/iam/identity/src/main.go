@@ -10,14 +10,14 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/mongodb"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/mongodb"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
 
-	native_iam_identity_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_iam_identity"
-	native_iam_policy_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_iam_policy"
-	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_namespace"
-	"github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/services"
+	native_iam_identity_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_identity"
+	native_iam_policy_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_policy"
+	native_namespace_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_namespace"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/services"
 )
 
 const (
@@ -33,7 +33,6 @@ func getConfigEnv(key string, fallback string) string {
 
 func main() {
 	SYSTEM_DB_URL := getConfigEnv("SYSTEM_DB_URL", "mongodb://root:example@system_db/admin")
-	SYSTEM_DB_PREFIX := getConfigEnv("SYSTEM_DB_PREFIX", "openerp_")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
 
@@ -100,7 +99,7 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	iamIdentityServer := services.NewIAmIdentityServer(dbClient, SYSTEM_DB_PREFIX, cacheClient, nativeNamespaceClient, nativeIAmPolicyClient)
+	iamIdentityServer := services.NewIAmIdentityServer(dbClient, cacheClient, nativeNamespaceClient, nativeIAmPolicyClient)
 	native_iam_identity_grpc.RegisterIAMIdentityServiceServer(grpcServer, iamIdentityServer)
 
 	fmt.Println("Start listening for gRPC connections")

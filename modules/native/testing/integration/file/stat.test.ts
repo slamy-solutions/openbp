@@ -12,7 +12,7 @@ import { observable, Observable } from 'rxjs'
 import { FileCreateRequest } from '../../tools/file/proto/file'
 
 const TEST_NAMESPACE_NAME = "filetestnamespace"
-const DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}namespace_${TEST_NAMESPACE_NAME}`
+const DB_NAME = `openbp_namespace_${TEST_NAMESPACE_NAME}`
 
 beforeAll(async ()=>{
     await connectToMongo()

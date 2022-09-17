@@ -17,15 +17,14 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	grpc "github.com/slamy-solutions/open-erp/modules/native/services/namespace/src/grpc/native_namespace"
+	grpc "github.com/slamy-solutions/openbp/modules/native/services/namespace/src/grpc/native_namespace"
 )
 
 type NamespaceServer struct {
 	grpc.UnimplementedNamespaceServiceServer
 
-	dbPrefix            string
 	namespaceCollection *mongo.Collection
 	mongoClient         *mongo.Client
 	cache               cache.Cache
@@ -33,7 +32,7 @@ type NamespaceServer struct {
 }
 
 const (
-	DATABASE_NAME                = "openerp_global"
+	DATABASE_NAME                = "openbp_global"
 	COLLECTION_NAME              = "native_namespace"
 	NAMESPACE_LIST_CACHE_KEY     = "native_namespace_list"
 	NAMESPACE_DATA_CACHE_TIMEOUT = time.Second * 60
@@ -42,13 +41,12 @@ const (
 
 var /* const */ nameValidator = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 
-func New(mongoClient *mongo.Client, cache cache.Cache, dbPrefix string) *NamespaceServer {
+func New(mongoClient *mongo.Client, cache cache.Cache) *NamespaceServer {
 	return &NamespaceServer{
-		dbPrefix:            dbPrefix,
-		namespaceCollection: mongoClient.Database(dbPrefix + "global").Collection("namespace"),
+		namespaceCollection: mongoClient.Database(DATABASE_NAME).Collection("namespace"),
 		mongoClient:         mongoClient,
 		cache:               cache,
-		tracer:              otel.Tracer("github.com/slamy-solutions/open-erp/modules/native/services/namespace"),
+		tracer:              otel.Tracer("github.com/slamy-solutions/openbp/modules/native/services/namespace"),
 	}
 }
 
@@ -113,7 +111,7 @@ func (s *NamespaceServer) Delete(ctx context.Context, in *grpc.DeleteNamespaceRe
 
 	s.cache.Remove(ctx, NAMESPACE_LIST_CACHE_KEY, makeNamespaceDataCacheKey(in.Name))
 
-	err = s.mongoClient.Database(s.dbPrefix + "namespace_" + in.Name).Drop(ctx)
+	err = s.mongoClient.Database("openbp_namespace_" + in.Name).Drop(ctx)
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, err.Error())
 	}

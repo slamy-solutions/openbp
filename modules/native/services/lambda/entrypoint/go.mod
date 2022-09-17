@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/native/services/lambda/entrypoint
+module github.com/slamy-solutions/openbp/modules/native/services/lambda/entrypoint
 
 go 1.18
 

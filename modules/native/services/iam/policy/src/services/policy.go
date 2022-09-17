@@ -12,18 +12,17 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 	grpccodes "google.golang.org/grpc/codes"
 
-	nativeIAmPolicyGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/policy/src/grpc/native_iam_policy"
-	nativeNamespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/policy/src/grpc/native_namespace"
+	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/policy/src/grpc/native_iam_policy"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/policy/src/grpc/native_namespace"
 )
 
 type IAMPolicyServer struct {
 	nativeIAmPolicyGRPC.UnimplementedIAMPolicyServiceServer
 
 	mongoClient           *mongo.Client
-	mongoDbPrefix         string
 	mongoGlobalCollection *mongo.Collection
 	cacheClient           cache.Cache
 	nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient
@@ -44,7 +43,7 @@ func collectionByNamespace(s *IAMPolicyServer, namespace string) *mongo.Collecti
 	if namespace == "" {
 		return s.mongoGlobalCollection
 	} else {
-		db := s.mongoClient.Database(fmt.Sprintf("%snamespace_%s", s.mongoDbPrefix, namespace))
+		db := s.mongoClient.Database(fmt.Sprintf("openbp_namespace_%s", namespace))
 		return db.Collection("native_iam_policy")
 	}
 }
@@ -53,11 +52,10 @@ func makePolicyCacheKey(namespace string, uuid string) string {
 	return fmt.Sprintf("native_iam_policy_data_%s_%s", namespace, uuid)
 }
 
-func NewIAMPolicyServer(mongoClient *mongo.Client, mongoDbPrefix string, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *IAMPolicyServer {
-	mongoGlobalCollection := mongoClient.Database(fmt.Sprintf("%sglobal", mongoDbPrefix)).Collection("native_iam_policy")
+func NewIAMPolicyServer(mongoClient *mongo.Client, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *IAMPolicyServer {
+	mongoGlobalCollection := mongoClient.Database("openbp_global").Collection("native_iam_policy")
 	return &IAMPolicyServer{
 		mongoClient:           mongoClient,
-		mongoDbPrefix:         mongoDbPrefix,
 		mongoGlobalCollection: mongoGlobalCollection,
 		cacheClient:           cacheClient,
 		nativeNamespaceClient: nativeNamespaceClient,

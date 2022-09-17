@@ -4,7 +4,7 @@ import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grp
 import { client as grpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
 import { GetAllNamespacesResponse } from '../../tools/namespace/proto/namespace'
 
-const GLOBAL_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}global`
+const GLOBAL_DB_NAME = 'openbp_global'
 
 beforeAll(async ()=>{
     await connectToMongo()

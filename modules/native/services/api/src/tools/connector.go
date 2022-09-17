@@ -7,13 +7,13 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	actorUserGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_actor_user"
-	iamAuthGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_iam_auth"
-	iamAuthenticationPasswordGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_iam_authentication_password"
-	keyValueStorageGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_keyvaluestorage"
-	namespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/api/src/grpc/native_namespace"
+	actorUserGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_actor_user"
+	iamAuthGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_iam_auth"
+	iamAuthenticationPasswordGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_iam_authentication_password"
+	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_keyvaluestorage"
+	namespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/api/src/grpc/native_namespace"
 )
 
 type ConnectorTools struct {

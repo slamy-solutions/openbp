@@ -8,9 +8,9 @@ import { client as cacheClient, connect as connectToCache, close as closeCache }
 import { client as nativeNamespaceGRPC, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../../../tools/namespace/grpc'
 import { authenticationPasswordClient as nativeIAmAuthenticationPasswordGRPC, connect as connectToNativeIAM, close as closeNativeIAM } from '../../../../tools/iam/grpc'
 
-const GLOBAL_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}global`
+const GLOBAL_DB_NAME = `openbp_global`
 const TEST_NAMESPACE_NAME = "authpasswordtestnamespace"
-const NAMESPACE_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}namespace_${TEST_NAMESPACE_NAME}`
+const NAMESPACE_DB_NAME = `openbp_namespace_${TEST_NAMESPACE_NAME}`
 
 
 beforeAll(async ()=>{

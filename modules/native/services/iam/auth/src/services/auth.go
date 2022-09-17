@@ -8,21 +8,20 @@ import (
 
 	grpccodes "google.golang.org/grpc/codes"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	nativeIAmAuthGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/auth/src/grpc/native_iam_auth"
-	nativeIAmAuthenticationPasswordGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/auth/src/grpc/native_iam_authentication_password"
-	nativeIAmIdentityGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/auth/src/grpc/native_iam_identity"
-	nativeIAmPolicyGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/auth/src/grpc/native_iam_policy"
-	nativeIAmTokenGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/auth/src/grpc/native_iam_token"
-	nativeNamespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/auth/src/grpc/native_namespace"
+	nativeIAmAuthGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/auth/src/grpc/native_iam_auth"
+	nativeIAmAuthenticationPasswordGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/auth/src/grpc/native_iam_authentication_password"
+	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/auth/src/grpc/native_iam_identity"
+	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/auth/src/grpc/native_iam_policy"
+	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/auth/src/grpc/native_iam_token"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/auth/src/grpc/native_namespace"
 )
 
 type IAmAuthServer struct {
 	nativeIAmAuthGRPC.UnimplementedIAMAuthServiceServer
 
 	mongoClient                           *mongo.Client
-	mongoDbPrefix                         string
 	cacheClient                           cache.Cache
 	nativeNamespaceClient                 nativeNamespaceGRPC.NamespaceServiceClient
 	nativeIAmPolicyClient                 nativeIAmPolicyGRPC.IAMPolicyServiceClient

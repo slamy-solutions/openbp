@@ -14,8 +14,8 @@ import { Lambda, AMQPLambdaTaskRequest, AMQPLambdaTaskResponse, ExecuteLambdaRes
 
 
 const TEST_NAMESPACE_NAME = "lambdanamespace"
-const BUNDLE_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}global`
-const INFO_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}namespace_${TEST_NAMESPACE_NAME}`
+const BUNDLE_DB_NAME = `openbp_global`
+const INFO_DB_NAME = `openbp_namespace_${TEST_NAMESPACE_NAME}`
 
 const RESPONSE_EXCHANGE = "native_lambda_entrypoint_output"
 

@@ -14,17 +14,16 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	nativeIAmTokenGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/token/src/grpc/native_iam_token"
-	nativeNamespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/token/src/grpc/native_namespace"
+	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/token/src/grpc/native_iam_token"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/token/src/grpc/native_namespace"
 )
 
 type IAmTokenServer struct {
 	nativeIAmTokenGRPC.UnimplementedIAMTokenServiceServer
 
 	mongoClient           *mongo.Client
-	mongoDbPrefix         string
 	mongoGlobalCollection *mongo.Collection
 	cacheClient           cache.Cache
 	nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient
@@ -98,7 +97,7 @@ func collectionByNamespace(s *IAmTokenServer, namespace string) *mongo.Collectio
 	if namespace == "" {
 		return s.mongoGlobalCollection
 	} else {
-		db := s.mongoClient.Database(fmt.Sprintf("%snamespace_%s", s.mongoDbPrefix, namespace))
+		db := s.mongoClient.Database(fmt.Sprintf("openbp_namespace_%s", namespace))
 		return db.Collection("native_iam_token")
 	}
 }
@@ -107,11 +106,10 @@ func makeTokenCacheKey(namespace string, uuid string) string {
 	return fmt.Sprintf("native_iam_token_data_%s_%s", namespace, uuid)
 }
 
-func NewIAmTokenServer(mongoClient *mongo.Client, mongoDbPrefix string, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *IAmTokenServer {
+func NewIAmTokenServer(mongoClient *mongo.Client, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *IAmTokenServer {
 	return &IAmTokenServer{
 		mongoClient:           mongoClient,
-		mongoDbPrefix:         mongoDbPrefix,
-		mongoGlobalCollection: mongoClient.Database(fmt.Sprintf("%sglobal", mongoDbPrefix)).Collection("native_iam_token"),
+		mongoGlobalCollection: mongoClient.Database("openbp_global").Collection("native_iam_token"),
 		cacheClient:           cacheClient,
 		nativeNamespaceClient: nativeNamespaceClient,
 	}

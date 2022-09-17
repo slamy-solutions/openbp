@@ -10,12 +10,12 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
 
-	native_iam_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/grpc/native_iam_configuration"
-	native_keyvaluestorage_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
-	"github.com/slamy-solutions/open-erp/modules/native/services/iam/config/src/services"
+	native_iam_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_iam_configuration"
+	native_keyvaluestorage_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/services"
 )
 
 const (

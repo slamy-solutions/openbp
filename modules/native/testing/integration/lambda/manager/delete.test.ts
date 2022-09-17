@@ -12,8 +12,8 @@ import { Lambda } from '../../../tools/lambda/proto/lambda'
 
 
 const TEST_NAMESPACE_NAME = "lambdanamespace"
-const BUNDLE_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}global`
-const INFO_DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}namespace_${TEST_NAMESPACE_NAME}`
+const BUNDLE_DB_NAME = `openbp_global`
+const INFO_DB_NAME = `openbp_namespace_${TEST_NAMESPACE_NAME}`
 
 beforeAll(async ()=>{
     await connectToMongo()

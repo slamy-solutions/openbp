@@ -11,17 +11,16 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	lambdaGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda/manager/src/grpc/native_lambda"
-	namespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/lambda/manager/src/grpc/native_namespace"
+	lambdaGRPC "github.com/slamy-solutions/openbp/modules/native/services/lambda/manager/src/grpc/native_lambda"
+	namespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/lambda/manager/src/grpc/native_namespace"
 )
 
 type LambdaManagerServer struct {
 	lambdaGRPC.UnimplementedLambdaManagerServiceServer
 
 	mongoClient           *mongo.Client
-	mongoDbPrefix         string
 	mongoBundleCollection *mongo.Collection
 	cacheClient           cache.Cache
 	bigCacheClient        cache.Cache
@@ -41,12 +40,11 @@ type lambdaBundleInMongo struct {
 	References int    `bson:"references,omitempty"`
 }
 
-func New(ctx context.Context, mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, bigCacheClient cache.Cache, namespaceClient namespaceGRPC.NamespaceServiceClient) (*LambdaManagerServer, error) {
-	dbName := fmt.Sprintf("%sglobal", dbPrefix)
+func New(ctx context.Context, mongoClient *mongo.Client, cacheClient cache.Cache, bigCacheClient cache.Cache, namespaceClient namespaceGRPC.NamespaceServiceClient) (*LambdaManagerServer, error) {
+	dbName := fmt.Sprintf("openbp_global")
 	db := mongoClient.Database(dbName)
 	server := &LambdaManagerServer{
 		mongoClient:           mongoClient,
-		mongoDbPrefix:         dbPrefix,
 		mongoBundleCollection: db.Collection("native_lambda_manager_bundle"),
 		cacheClient:           cacheClient,
 		bigCacheClient:        bigCacheClient,
@@ -72,7 +70,7 @@ func createIndexes(ctx context.Context, s *LambdaManagerServer) error {
 }
 
 func (s *LambdaManagerServer) getInfoDatabase(namespace string) *mongo.Database {
-	return s.mongoClient.Database(fmt.Sprintf("%snamespace_%s", s.mongoDbPrefix, namespace))
+	return s.mongoClient.Database(fmt.Sprintf("openbp_namespace_%s", namespace))
 }
 
 func (s *LambdaManagerServer) getInfoCollection(namespace string) *mongo.Collection {

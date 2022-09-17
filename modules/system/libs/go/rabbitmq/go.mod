@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/system/libs/go/rabbitmq
+module github.com/slamy-solutions/openbp/modules/system/libs/go/rabbitmq
 
 go 1.18
 

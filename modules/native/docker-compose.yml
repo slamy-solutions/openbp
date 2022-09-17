@@ -109,19 +109,19 @@ services:
       - native_iam_policy
 
   native_iam_token:
-    container_name: native_iam_token
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/iam/token/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_token"
-    depends_on:
-      - system_db
-      - system_cache
-      - system_telemetry
-      - native_namespace
+   container_name: native_iam_token
+   restart: always
+   build:
+     context: .
+     dockerfile: modules/native/services/iam/token/Dockerfile
+   environment:
+     OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+     OTEL_SERVICE_NAME: "native_iam_token"
+   depends_on:
+     - system_db
+     - system_cache
+     - system_telemetry
+     - native_namespace
 
   native_actor_user:
     container_name: native_actor_user
@@ -139,18 +139,18 @@ services:
       - native_iam_identity
 
   native_iam_authentication_password:
-    container_name: native_iam_authentication_password
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/iam/authentication/password/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_authentication_password"
-    depends_on:
-      - system_db
-      - system_telemetry
-      - native_namespace
+   container_name: native_iam_authentication_password
+   restart: always
+   build:
+     context: .
+     dockerfile: modules/native/services/iam/authentication/password/Dockerfile
+   environment:
+     OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+     OTEL_SERVICE_NAME: "native_iam_authentication_password"
+   depends_on:
+     - system_db
+     - system_telemetry
+     - native_namespace
 
   native_file:
     container_name: native_file
@@ -191,6 +191,6 @@ services:
       - native_iam_config
       - native_iam_policy
       - native_iam_identity
-      - native_iam_token
+    #  - native_iam_token
       - native_actor_user
-      - native_iam_authentication_password
+    #  - native_iam_authentication_password

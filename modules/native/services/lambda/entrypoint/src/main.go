@@ -12,10 +12,10 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	"github.com/olebedev/emitter"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
 
-	native_lambda_grpc "github.com/slamy-solutions/open-erp/modules/native/services/lambda/entrypoint/src/grpc/native_lambda"
-	"github.com/slamy-solutions/open-erp/modules/native/services/lambda/entrypoint/src/services"
+	native_lambda_grpc "github.com/slamy-solutions/openbp/modules/native/services/lambda/entrypoint/src/grpc/native_lambda"
+	"github.com/slamy-solutions/openbp/modules/native/services/lambda/entrypoint/src/services"
 )
 
 const (

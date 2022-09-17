@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/native/services/namespace
+module github.com/slamy-solutions/openbp/modules/native/services/namespace
 
 go 1.18
 

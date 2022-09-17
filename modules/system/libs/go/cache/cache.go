@@ -48,7 +48,7 @@ func New(url string) (Cache, error) {
 		return nil, err
 	}
 	rdb := redis.NewClient(options)
-	tracer := otel.GetTracerProvider().Tracer("github.com/slamy-solutions/open-erp/modules/system/libs/go/cache")
+	tracer := otel.GetTracerProvider().Tracer("github.com/slamy-solutions/openbp/modules/system/libs/go/cache")
 	return &cache{rdb: rdb, tracer: tracer}, nil
 }
 

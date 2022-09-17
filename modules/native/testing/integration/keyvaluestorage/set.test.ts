@@ -10,8 +10,8 @@ import { observable, Observable } from 'rxjs'
 import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
 
 const TEST_NAMESPACE_NAME = "keyvaluestoragetestnamespace"
-const GLOBAL_DB = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}global`
-const DB_NAME = `${process.env.SYSTEM_DB_PREFIX || "openerp_"}namespace_${TEST_NAMESPACE_NAME}`
+const GLOBAL_DB = 'openbp_global'
+const DB_NAME = `openbp_namespace_${TEST_NAMESPACE_NAME}`
 
 beforeAll(async ()=>{
     await connectToMongo()

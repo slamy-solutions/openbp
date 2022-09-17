@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/native/services/actor/user
+module github.com/slamy-solutions/openbp/modules/native/services/actor/user
 
 go 1.18
 

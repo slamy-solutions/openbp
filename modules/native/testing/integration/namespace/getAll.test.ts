@@ -5,8 +5,7 @@ import { client as cacheClient, connect as connectToCache, close as closeCache }
 import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
 import { client as grpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
 
-const DB_PREFIX = process.env.SYSTEM_DB_PREFIX || "openerp_"
-const GLOBAL_DB_NAME = `${DB_PREFIX}global`
+const GLOBAL_DB_NAME = 'openbp_global'
 
 beforeAll(async ()=>{
     await connectToMongo()

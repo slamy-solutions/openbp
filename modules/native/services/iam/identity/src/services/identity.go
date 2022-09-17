@@ -15,18 +15,17 @@ import (
 	"github.com/golang/protobuf/proto"
 	grpccodes "google.golang.org/grpc/codes"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	nativeIAmIdentityGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_iam_identity"
-	nativeIAmPolicyGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_iam_policy"
-	nativeNamespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/iam/identity/src/grpc/native_namespace"
+	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_identity"
+	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_policy"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_namespace"
 )
 
 type IAmIdentityServer struct {
 	nativeIAmIdentityGRPC.UnimplementedIAMIdentityServiceServer
 
 	mongoClient           *mongo.Client
-	mongoDbPrefix         string
 	mongoGlobalCollection *mongo.Collection
 	cacheClient           cache.Cache
 	nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient
@@ -44,11 +43,10 @@ const (
 	IDENTITY_CACHE_TIMEOUT = time.Second * 30
 )
 
-func NewIAmIdentityServer(mongoClient *mongo.Client, mongoDbPrefix string, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient, nativeIAmPolicyClient nativeIAmPolicyGRPC.IAMPolicyServiceClient) *IAmIdentityServer {
-	mongoGlobalCollection := mongoClient.Database(fmt.Sprintf("%sglobal", mongoDbPrefix)).Collection("native_iam_identity")
+func NewIAmIdentityServer(mongoClient *mongo.Client, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient, nativeIAmPolicyClient nativeIAmPolicyGRPC.IAMPolicyServiceClient) *IAmIdentityServer {
+	mongoGlobalCollection := mongoClient.Database("openbp_global").Collection("native_iam_identity")
 	return &IAmIdentityServer{
 		mongoClient:           mongoClient,
-		mongoDbPrefix:         mongoDbPrefix,
 		mongoGlobalCollection: mongoGlobalCollection,
 		cacheClient:           cacheClient,
 		nativeNamespaceClient: nativeNamespaceClient,
@@ -64,7 +62,7 @@ func collectionByNamespace(s *IAmIdentityServer, namespace string) *mongo.Collec
 	if namespace == "" {
 		return s.mongoGlobalCollection
 	} else {
-		db := s.mongoClient.Database(fmt.Sprintf("%snamespace_%s", s.mongoDbPrefix, namespace))
+		db := s.mongoClient.Database(fmt.Sprintf("openbp_namespace_%s", namespace))
 		return db.Collection("native_iam_identity")
 	}
 }

@@ -17,16 +17,15 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 
-	fileGRPC "github.com/slamy-solutions/open-erp/modules/native/services/file/src/grpc/native_file"
-	namespaceGRPC "github.com/slamy-solutions/open-erp/modules/native/services/file/src/grpc/native_namespace"
+	fileGRPC "github.com/slamy-solutions/openbp/modules/native/services/file/src/grpc/native_file"
+	namespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/file/src/grpc/native_namespace"
 )
 
 type FileServer struct {
 	fileGRPC.UnimplementedFileServiceServer
 
-	dbPrefix        string
 	mongoClient     *mongo.Client
 	cacheClient     cache.Cache
 	namespaceClient namespaceGRPC.NamespaceServiceClient
@@ -67,17 +66,16 @@ func (f *fileInMongo) ToProtoFile(namespace string) *fileGRPC.File {
 	}
 }
 
-func New(mongoClient *mongo.Client, dbPrefix string, cacheClient cache.Cache, namespaceClient namespaceGRPC.NamespaceServiceClient) *FileServer {
+func New(mongoClient *mongo.Client, cacheClient cache.Cache, namespaceClient namespaceGRPC.NamespaceServiceClient) *FileServer {
 	return &FileServer{
 		mongoClient:     mongoClient,
-		dbPrefix:        dbPrefix,
 		cacheClient:     cacheClient,
 		namespaceClient: namespaceClient,
 	}
 }
 
 func (s *FileServer) getDB(namespace string) *mongo.Database {
-	return s.mongoClient.Database(fmt.Sprintf("%snamespace_%s", s.dbPrefix, namespace))
+	return s.mongoClient.Database(fmt.Sprintf("openbp_namespace_%s", namespace))
 }
 
 func (s *FileServer) getFileCollection(namespace string) *mongo.Collection {

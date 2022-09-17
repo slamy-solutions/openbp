@@ -1,4 +1,4 @@
-module github.com/slamy-solutions/open-erp/modules/system/libs/go/cache
+module github.com/slamy-solutions/openbp/modules/system/libs/go/cache
 
 go 1.18
 

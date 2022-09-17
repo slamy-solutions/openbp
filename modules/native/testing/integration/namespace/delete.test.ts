@@ -5,8 +5,7 @@ import { client as cacheClient, connect as connectToCache, close as closeCache }
 import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
 import { client as grpc, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../tools/namespace/grpc'
 
-const DB_PREFIX = process.env.SYSTEM_DB_PREFIX || "openerp_"
-const GLOBAL_DB_NAME = `${DB_PREFIX}global`
+const GLOBAL_DB_NAME = 'openbp_global'
 
 beforeAll(async ()=>{
     await connectToMongo()
@@ -78,13 +77,13 @@ describe("Whitebox", () => {
         await grpc.Ensure({ name })
 
         const collectionName = "testingcollection"
-        await mongoClient.db(`${DB_PREFIX}namespace_${name}`).collection<{ name: string }>(collectionName).insertOne({ name: "testinsert" })
+        await mongoClient.db(`openbp_namespace_${name}`).collection<{ name: string }>(collectionName).insertOne({ name: "testinsert" })
 
         await grpc.Delete({ name })
 
         await new Promise<void>((resolve) => setTimeout(resolve, 4000))
 
-        await mongoClient.db(`${DB_PREFIX}namespace_${name}`).listCollections({ name: collectionName }).forEach((c) => {
+        await mongoClient.db(`openbp_namespace_${name}`).listCollections({ name: collectionName }).forEach((c) => {
             fail()
         })
     })

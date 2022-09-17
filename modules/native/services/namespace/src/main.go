@@ -10,12 +10,12 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/cache"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/mongodb"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/mongodb"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
 
-	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/namespace/src/grpc/native_namespace"
-	"github.com/slamy-solutions/open-erp/modules/native/services/namespace/src/services"
+	native_namespace_grpc "github.com/slamy-solutions/openbp/modules/native/services/namespace/src/grpc/native_namespace"
+	"github.com/slamy-solutions/openbp/modules/native/services/namespace/src/services"
 )
 
 const (
@@ -31,7 +31,6 @@ func getConfigEnv(key string, fallback string) string {
 
 func main() {
 	SYSTEM_DB_URL := getConfigEnv("SYSTEM_DB_URL", "mongodb://root:example@system_db/admin")
-	SYSTEM_DB_PREFIX := getConfigEnv("SYSTEM_DB_PREFIX", "openerp_")
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
 	// SYSTEM_RABBITMQ_URL := getConfigEnv("SYSTEM_RABBITMQ_URL", "amqp://system_rabbitmq:5672")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
@@ -84,7 +83,7 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	namespaceServer := services.New(dbClient, cacheClient, SYSTEM_DB_PREFIX)
+	namespaceServer := services.New(dbClient, cacheClient)
 	native_namespace_grpc.RegisterNamespaceServiceServer(grpcServer, namespaceServer)
 
 	fmt.Println("Start listening for gRPC connections")

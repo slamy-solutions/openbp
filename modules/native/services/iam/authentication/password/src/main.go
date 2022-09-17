@@ -10,12 +10,12 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/mongodb"
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/mongodb"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
 
-	native_iam_authentication_password_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/authentication/password/src/grpc/native_iam_authentication_password"
-	native_namespace_grpc "github.com/slamy-solutions/open-erp/modules/native/services/iam/authentication/password/src/grpc/native_namespace"
-	"github.com/slamy-solutions/open-erp/modules/native/services/iam/authentication/password/src/services"
+	native_iam_authentication_password_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_iam_authentication_password"
+	native_namespace_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_namespace"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/services"
 )
 
 const (
@@ -31,7 +31,6 @@ func getConfigEnv(key string, fallback string) string {
 
 func main() {
 	SYSTEM_DB_URL := getConfigEnv("SYSTEM_DB_URL", "mongodb://root:example@system_db/admin")
-	SYSTEM_DB_PREFIX := getConfigEnv("SYSTEM_DB_PREFIX", "openerp_")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
 
 	NATIVE_NAMESPACE_URL := getConfigEnv("NATIVE_NAMESPACE_URL", "native_namespace:80")
@@ -74,7 +73,7 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	iamAuthenticationPasswordServer := services.NewPasswordIdentificationService(dbClient, SYSTEM_DB_PREFIX, nativeNamespaceClient)
+	iamAuthenticationPasswordServer := services.NewPasswordIdentificationService(dbClient, nativeNamespaceClient)
 	native_iam_authentication_password_grpc.RegisterIAMAuthenticationPasswordServiceServer(grpcServer, iamAuthenticationPasswordServer)
 
 	fmt.Println("Start listening for gRPC connections")

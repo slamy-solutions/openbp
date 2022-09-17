@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
-	"github.com/slamy-solutions/open-erp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
 
-	"github.com/slamy-solutions/open-erp/modules/native/services/api/src/routes"
-	"github.com/slamy-solutions/open-erp/modules/native/services/api/src/tools"
+	"github.com/slamy-solutions/openbp/modules/native/services/api/src/routes"
+	"github.com/slamy-solutions/openbp/modules/native/services/api/src/tools"
 )
 
 const (

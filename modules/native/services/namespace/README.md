@@ -17,7 +17,6 @@ This service is controled by environment variables.
 
 | env                                | default                                | description                                                                                                        |
 |------------------------------------|----------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| GLOBAL_PREFIX                      | openerp_                               | Prefix that will be applied to all created databases and amqp queues                                               |
 | SYSTEM_DB_URL                      | mongodb://root:example@system_db/admin | [Mongo DB URL](https://www.mongodb.com/docs/manual/reference/connection-string/#standard-connection-string-format) |
 | SYSTEM_CACHE_URL                   | redis://system_cache                   | System_cache redis connection URL                                                                                  |
 | SYSTEM_TELEMETRY_EXPORTER_ENDPOINT | system_telemetry:55680                 | [OTEL connector](https://opentelemetry.io/docs/collector/) endpoint                                                |
