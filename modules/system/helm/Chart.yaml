@@ -1,0 +1,25 @@
+annotations:
+  category: Infrastructure
+apiVersion: v2
+appVersion: 1.0.0
+dependencies:
+  - name: rabbitmq
+    repository: https://charts.bitnami.com/bitnami
+    version: 10.3.5
+  - name: mongodb
+    repository: https://charts.bitnami.com/bitnami
+    version: 13.1.3
+  - name: redis
+    repository: https://charts.bitnami.com/bitnami
+    version: 17.1.5
+    alias: redis-cache
+name: openbp-system
+description: OpenBP system module defines base components and infastructure for platform.
+keywords:
+  - OpenBP
+maintainers:
+  - name: Slamy
+    url: https://github.com/slamy-solutions/openbp
+sources:
+  - https://github.com/slamy-solutions/openbp/modules/system
+version: 1.0.0

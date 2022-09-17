@@ -1,0 +1,10 @@
+tags:
+  - openbp-module-system: true
+
+redis-cache:
+  master:
+    persistence:
+      enabled: false
+  replica:
+    persistence:
+      enabled: false
