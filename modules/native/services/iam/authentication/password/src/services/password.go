@@ -37,14 +37,14 @@ func collectionByNamespace(s *PasswordIdentificationService, namespace string) *
 		return s.globalMongoCollection
 	} else {
 		dbName := fmt.Sprintf("openbp_namespace_%s", namespace)
-		return s.mongoClient.Database(dbName).Collection("native_iam_auth_authentication_password")
+		return s.mongoClient.Database(dbName).Collection("native_iam_authentication_password")
 	}
 }
 
 func NewPasswordIdentificationService(mongoClient *mongo.Client, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *PasswordIdentificationService {
 	return &PasswordIdentificationService{
 		mongoClient:           mongoClient,
-		globalMongoCollection: mongoClient.Database("openbp_global").Collection("native_iam_auth_authentication_password"),
+		globalMongoCollection: mongoClient.Database("openbp_global").Collection("native_iam_authentication_password"),
 		nativeNamespaceClient: nativeNamespaceClient,
 	}
 }

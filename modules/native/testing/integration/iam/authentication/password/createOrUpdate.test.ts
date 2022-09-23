@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { ObjectId } from 'mongodb'
+import { Binary, ObjectId } from 'mongodb'
 import { Status } from '@grpc/grpc-js/build/src/constants'
 
 import { RequestError as GRPCRequestError } from '../../../../../../system/libs/ts/grpc'
@@ -36,10 +36,10 @@ afterEach(async ()=>{
 
 afterAll(async ()=>{
     await closeMongo()
+    await cacheClient.flushall()
     await closeCache()
     await closeNativeIAM()
     await closeNativeNamespace()
-    await cacheClient.flushall()
 })
 
 /**
@@ -57,11 +57,11 @@ describe("Whitebox", () => {
             password
         })
 
-        const entry = await mongoClient.db(GLOBAL_DB_NAME).collection("native_iam_authentication_password").findOne<{ password: string }>({ identity })
+        const entry = await mongoClient.db(GLOBAL_DB_NAME).collection("native_iam_authentication_password").findOne<{ password: Binary }>({ identity })
         expect(entry).not.toBeNull()
         expect(entry?.password).not.toBeNull()
         expect(entry?.password).not.toBeUndefined()
-        expect(entry?.password.length).toBeGreaterThan(0)
+        expect(entry?.password.length()).toBeGreaterThan(0)
         expect(entry?.password).not.toBe(password)
     })
     test("Creates entry in global DB on creation", async () => {

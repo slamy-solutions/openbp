@@ -181,5 +181,5 @@ func (c cache) Has(ctx context.Context, key string) (bool, error) {
 }
 
 func (c cache) Shutdown(ctx context.Context) error {
-	return c.rdb.Shutdown(ctx).Err()
+	return c.rdb.Close()
 }

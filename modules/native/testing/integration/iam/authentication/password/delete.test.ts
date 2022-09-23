@@ -36,10 +36,10 @@ afterEach(async ()=>{
 
 afterAll(async ()=>{
     await closeMongo()
+    await cacheClient.flushall()
     await closeCache()
     await closeNativeIAM()
     await closeNativeNamespace()
-    await cacheClient.flushall()
 })
 
 /**
