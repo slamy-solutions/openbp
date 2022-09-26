@@ -53,12 +53,12 @@ func JWTDataFromString(input string) (*JWTData, error) {
 		return jwtkey, nil
 	})
 	if err != nil {
-		if err, ok := err.(jwt.ValidationError); ok {
+		if err, ok := err.(*jwt.ValidationError); ok {
 			if err.Errors&jwt.ValidationErrorExpired != 0 {
 				return nil, ErrTokenExpired
 			}
-			return nil, ErrInvalidToken
 		}
+		return nil, ErrInvalidToken
 	}
 
 	return data, nil

@@ -56,7 +56,7 @@ export interface CreateResponse {
   tokenData: TokenData | undefined;
 }
 
-export interface GetByUUIDRequest {
+export interface GetRequest {
   /** Namespace of the token. Empty for global token. */
   namespace: string;
   /** Unique identifier of the token inside namespace */
@@ -65,10 +65,19 @@ export interface GetByUUIDRequest {
   useCache: boolean;
 }
 
-export interface GetByUUIDResponse {
+export interface GetResponse {
   /** Actual token data */
   tokenData: TokenData | undefined;
 }
+
+export interface DeleteRequest {
+  /** Namespace of the token. Empty for global token. */
+  namespace: string;
+  /** Unique identifier of the token inside namespace */
+  uuid: string;
+}
+
+export interface DeleteResponse {}
 
 export interface DisableByUUIDRequest {
   /** Namespace of the token. Empty for global token. */
@@ -79,20 +88,20 @@ export interface DisableByUUIDRequest {
 
 export interface DisableByUUIDResponse {}
 
-export interface AuthorizeRequest {
-  /** Token to authorize */
+export interface ValidateRequest {
+  /** Token to validate */
   token: string;
   /** Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default) */
   useCache: boolean;
 }
 
-export interface AuthorizeResponse {
-  status: AuthorizeResponse_Status;
+export interface ValidateResponse {
+  status: ValidateResponse_Status;
   /** Token data. Null if status is not OK */
   tokenData: TokenData | undefined;
 }
 
-export enum AuthorizeResponse_Status {
+export enum ValidateResponse_Status {
   /** OK - Token is valid */
   OK = 0,
   /** INVALID - Token has bad format or invalid signature */
@@ -106,47 +115,47 @@ export enum AuthorizeResponse_Status {
   UNRECOGNIZED = -1,
 }
 
-export function authorizeResponse_StatusFromJSON(
+export function validateResponse_StatusFromJSON(
   object: any
-): AuthorizeResponse_Status {
+): ValidateResponse_Status {
   switch (object) {
     case 0:
     case "OK":
-      return AuthorizeResponse_Status.OK;
+      return ValidateResponse_Status.OK;
     case 1:
     case "INVALID":
-      return AuthorizeResponse_Status.INVALID;
+      return ValidateResponse_Status.INVALID;
     case 2:
     case "NOT_FOUND":
-      return AuthorizeResponse_Status.NOT_FOUND;
+      return ValidateResponse_Status.NOT_FOUND;
     case 3:
     case "DISABLED":
-      return AuthorizeResponse_Status.DISABLED;
+      return ValidateResponse_Status.DISABLED;
     case 4:
     case "EXPIRED":
-      return AuthorizeResponse_Status.EXPIRED;
+      return ValidateResponse_Status.EXPIRED;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return AuthorizeResponse_Status.UNRECOGNIZED;
+      return ValidateResponse_Status.UNRECOGNIZED;
   }
 }
 
-export function authorizeResponse_StatusToJSON(
-  object: AuthorizeResponse_Status
+export function validateResponse_StatusToJSON(
+  object: ValidateResponse_Status
 ): string {
   switch (object) {
-    case AuthorizeResponse_Status.OK:
+    case ValidateResponse_Status.OK:
       return "OK";
-    case AuthorizeResponse_Status.INVALID:
+    case ValidateResponse_Status.INVALID:
       return "INVALID";
-    case AuthorizeResponse_Status.NOT_FOUND:
+    case ValidateResponse_Status.NOT_FOUND:
       return "NOT_FOUND";
-    case AuthorizeResponse_Status.DISABLED:
+    case ValidateResponse_Status.DISABLED:
       return "DISABLED";
-    case AuthorizeResponse_Status.EXPIRED:
+    case ValidateResponse_Status.EXPIRED:
       return "EXPIRED";
-    case AuthorizeResponse_Status.UNRECOGNIZED:
+    case ValidateResponse_Status.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
@@ -232,20 +241,20 @@ export function refreshResponse_StatusToJSON(
   }
 }
 
-export interface TokensForIdentityRequest {
+export interface GetTokensForIdentityRequest {
   /** Namespace where token is located. Empty for global token */
   namespace: string;
   /** Identity unique identifier inside namespace */
   identity: string;
   /** Perform results filtering on "active" property of the token */
-  activeFilter: TokensForIdentityRequest_ActiveFilter;
+  activeFilter: GetTokensForIdentityRequest_ActiveFilter;
   /** Skip number of results before returning actual tokens. Set to 0 in order not to skip */
   skip: number;
   /** Limit number of returned results. Set to 0 in order to remove limit and return all possible results up to the end. */
   limit: number;
 }
 
-export enum TokensForIdentityRequest_ActiveFilter {
+export enum GetTokensForIdentityRequest_ActiveFilter {
   /** ALL - Get all token */
   ALL = 0,
   /** ONLY_ACTIVE - Only get tokens that wasnt disabled and not expired */
@@ -255,43 +264,43 @@ export enum TokensForIdentityRequest_ActiveFilter {
   UNRECOGNIZED = -1,
 }
 
-export function tokensForIdentityRequest_ActiveFilterFromJSON(
+export function getTokensForIdentityRequest_ActiveFilterFromJSON(
   object: any
-): TokensForIdentityRequest_ActiveFilter {
+): GetTokensForIdentityRequest_ActiveFilter {
   switch (object) {
     case 0:
     case "ALL":
-      return TokensForIdentityRequest_ActiveFilter.ALL;
+      return GetTokensForIdentityRequest_ActiveFilter.ALL;
     case 1:
     case "ONLY_ACTIVE":
-      return TokensForIdentityRequest_ActiveFilter.ONLY_ACTIVE;
+      return GetTokensForIdentityRequest_ActiveFilter.ONLY_ACTIVE;
     case 2:
     case "ONLY_NOT_ACTIVE":
-      return TokensForIdentityRequest_ActiveFilter.ONLY_NOT_ACTIVE;
+      return GetTokensForIdentityRequest_ActiveFilter.ONLY_NOT_ACTIVE;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return TokensForIdentityRequest_ActiveFilter.UNRECOGNIZED;
+      return GetTokensForIdentityRequest_ActiveFilter.UNRECOGNIZED;
   }
 }
 
-export function tokensForIdentityRequest_ActiveFilterToJSON(
-  object: TokensForIdentityRequest_ActiveFilter
+export function getTokensForIdentityRequest_ActiveFilterToJSON(
+  object: GetTokensForIdentityRequest_ActiveFilter
 ): string {
   switch (object) {
-    case TokensForIdentityRequest_ActiveFilter.ALL:
+    case GetTokensForIdentityRequest_ActiveFilter.ALL:
       return "ALL";
-    case TokensForIdentityRequest_ActiveFilter.ONLY_ACTIVE:
+    case GetTokensForIdentityRequest_ActiveFilter.ONLY_ACTIVE:
       return "ONLY_ACTIVE";
-    case TokensForIdentityRequest_ActiveFilter.ONLY_NOT_ACTIVE:
+    case GetTokensForIdentityRequest_ActiveFilter.ONLY_NOT_ACTIVE:
       return "ONLY_NOT_ACTIVE";
-    case TokensForIdentityRequest_ActiveFilter.UNRECOGNIZED:
+    case GetTokensForIdentityRequest_ActiveFilter.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
 }
 
-export interface TokensForIdentityResponse {
+export interface GetTokensForIdentityResponse {
   /** Actual token data */
   tokenData: TokenData | undefined;
 }
@@ -696,13 +705,13 @@ export const CreateResponse = {
   },
 };
 
-function createBaseGetByUUIDRequest(): GetByUUIDRequest {
+function createBaseGetRequest(): GetRequest {
   return { namespace: "", uuid: "", useCache: false };
 }
 
-export const GetByUUIDRequest = {
+export const GetRequest = {
   encode(
-    message: GetByUUIDRequest,
+    message: GetRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.namespace !== "") {
@@ -717,10 +726,10 @@ export const GetByUUIDRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetByUUIDRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetByUUIDRequest();
+    const message = createBaseGetRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -741,7 +750,7 @@ export const GetByUUIDRequest = {
     return message;
   },
 
-  fromJSON(object: any): GetByUUIDRequest {
+  fromJSON(object: any): GetRequest {
     return {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
@@ -749,7 +758,7 @@ export const GetByUUIDRequest = {
     };
   },
 
-  toJSON(message: GetByUUIDRequest): unknown {
+  toJSON(message: GetRequest): unknown {
     const obj: any = {};
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
@@ -757,10 +766,10 @@ export const GetByUUIDRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetByUUIDRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<GetRequest>, I>>(
     object: I
-  ): GetByUUIDRequest {
-    const message = createBaseGetByUUIDRequest();
+  ): GetRequest {
+    const message = createBaseGetRequest();
     message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     message.useCache = object.useCache ?? false;
@@ -768,13 +777,13 @@ export const GetByUUIDRequest = {
   },
 };
 
-function createBaseGetByUUIDResponse(): GetByUUIDResponse {
+function createBaseGetResponse(): GetResponse {
   return { tokenData: undefined };
 }
 
-export const GetByUUIDResponse = {
+export const GetResponse = {
   encode(
-    message: GetByUUIDResponse,
+    message: GetResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.tokenData !== undefined) {
@@ -783,10 +792,10 @@ export const GetByUUIDResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetByUUIDResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetByUUIDResponse();
+    const message = createBaseGetResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -801,7 +810,7 @@ export const GetByUUIDResponse = {
     return message;
   },
 
-  fromJSON(object: any): GetByUUIDResponse {
+  fromJSON(object: any): GetResponse {
     return {
       tokenData: isSet(object.tokenData)
         ? TokenData.fromJSON(object.tokenData)
@@ -809,7 +818,7 @@ export const GetByUUIDResponse = {
     };
   },
 
-  toJSON(message: GetByUUIDResponse): unknown {
+  toJSON(message: GetResponse): unknown {
     const obj: any = {};
     message.tokenData !== undefined &&
       (obj.tokenData = message.tokenData
@@ -818,14 +827,121 @@ export const GetByUUIDResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetByUUIDResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<GetResponse>, I>>(
     object: I
-  ): GetByUUIDResponse {
-    const message = createBaseGetByUUIDResponse();
+  ): GetResponse {
+    const message = createBaseGetResponse();
     message.tokenData =
       object.tokenData !== undefined && object.tokenData !== null
         ? TokenData.fromPartial(object.tokenData)
         : undefined;
+    return message;
+  },
+};
+
+function createBaseDeleteRequest(): DeleteRequest {
+  return { namespace: "", uuid: "" };
+}
+
+export const DeleteRequest = {
+  encode(
+    message: DeleteRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
+    if (message.uuid !== "") {
+      writer.uint32(18).string(message.uuid);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
+          message.uuid = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteRequest {
+    return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
+      uuid: isSet(object.uuid) ? String(object.uuid) : "",
+    };
+  },
+
+  toJSON(message: DeleteRequest): unknown {
+    const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
+    message.uuid !== undefined && (obj.uuid = message.uuid);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<DeleteRequest>, I>>(
+    object: I
+  ): DeleteRequest {
+    const message = createBaseDeleteRequest();
+    message.namespace = object.namespace ?? "";
+    message.uuid = object.uuid ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteResponse(): DeleteResponse {
+  return {};
+}
+
+export const DeleteResponse = {
+  encode(
+    _: DeleteResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): DeleteResponse {
+    return {};
+  },
+
+  toJSON(_: DeleteResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<DeleteResponse>, I>>(
+    _: I
+  ): DeleteResponse {
+    const message = createBaseDeleteResponse();
     return message;
   },
 };
@@ -943,13 +1059,13 @@ export const DisableByUUIDResponse = {
   },
 };
 
-function createBaseAuthorizeRequest(): AuthorizeRequest {
+function createBaseValidateRequest(): ValidateRequest {
   return { token: "", useCache: false };
 }
 
-export const AuthorizeRequest = {
+export const ValidateRequest = {
   encode(
-    message: AuthorizeRequest,
+    message: ValidateRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.token !== "") {
@@ -961,10 +1077,10 @@ export const AuthorizeRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): AuthorizeRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): ValidateRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAuthorizeRequest();
+    const message = createBaseValidateRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -982,37 +1098,37 @@ export const AuthorizeRequest = {
     return message;
   },
 
-  fromJSON(object: any): AuthorizeRequest {
+  fromJSON(object: any): ValidateRequest {
     return {
       token: isSet(object.token) ? String(object.token) : "",
       useCache: isSet(object.useCache) ? Boolean(object.useCache) : false,
     };
   },
 
-  toJSON(message: AuthorizeRequest): unknown {
+  toJSON(message: ValidateRequest): unknown {
     const obj: any = {};
     message.token !== undefined && (obj.token = message.token);
     message.useCache !== undefined && (obj.useCache = message.useCache);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AuthorizeRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<ValidateRequest>, I>>(
     object: I
-  ): AuthorizeRequest {
-    const message = createBaseAuthorizeRequest();
+  ): ValidateRequest {
+    const message = createBaseValidateRequest();
     message.token = object.token ?? "";
     message.useCache = object.useCache ?? false;
     return message;
   },
 };
 
-function createBaseAuthorizeResponse(): AuthorizeResponse {
+function createBaseValidateResponse(): ValidateResponse {
   return { status: 0, tokenData: undefined };
 }
 
-export const AuthorizeResponse = {
+export const ValidateResponse = {
   encode(
-    message: AuthorizeResponse,
+    message: ValidateResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.status !== 0) {
@@ -1024,10 +1140,10 @@ export const AuthorizeResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): AuthorizeResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): ValidateResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAuthorizeResponse();
+    const message = createBaseValidateResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1045,10 +1161,10 @@ export const AuthorizeResponse = {
     return message;
   },
 
-  fromJSON(object: any): AuthorizeResponse {
+  fromJSON(object: any): ValidateResponse {
     return {
       status: isSet(object.status)
-        ? authorizeResponse_StatusFromJSON(object.status)
+        ? validateResponse_StatusFromJSON(object.status)
         : 0,
       tokenData: isSet(object.tokenData)
         ? TokenData.fromJSON(object.tokenData)
@@ -1056,10 +1172,10 @@ export const AuthorizeResponse = {
     };
   },
 
-  toJSON(message: AuthorizeResponse): unknown {
+  toJSON(message: ValidateResponse): unknown {
     const obj: any = {};
     message.status !== undefined &&
-      (obj.status = authorizeResponse_StatusToJSON(message.status));
+      (obj.status = validateResponse_StatusToJSON(message.status));
     message.tokenData !== undefined &&
       (obj.tokenData = message.tokenData
         ? TokenData.toJSON(message.tokenData)
@@ -1067,10 +1183,10 @@ export const AuthorizeResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AuthorizeResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<ValidateResponse>, I>>(
     object: I
-  ): AuthorizeResponse {
-    const message = createBaseAuthorizeResponse();
+  ): ValidateResponse {
+    const message = createBaseValidateResponse();
     message.status = object.status ?? 0;
     message.tokenData =
       object.tokenData !== undefined && object.tokenData !== null
@@ -1220,13 +1336,13 @@ export const RefreshResponse = {
   },
 };
 
-function createBaseTokensForIdentityRequest(): TokensForIdentityRequest {
+function createBaseGetTokensForIdentityRequest(): GetTokensForIdentityRequest {
   return { namespace: "", identity: "", activeFilter: 0, skip: 0, limit: 0 };
 }
 
-export const TokensForIdentityRequest = {
+export const GetTokensForIdentityRequest = {
   encode(
-    message: TokensForIdentityRequest,
+    message: GetTokensForIdentityRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.namespace !== "") {
@@ -1250,10 +1366,10 @@ export const TokensForIdentityRequest = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): TokensForIdentityRequest {
+  ): GetTokensForIdentityRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseTokensForIdentityRequest();
+    const message = createBaseGetTokensForIdentityRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1280,24 +1396,24 @@ export const TokensForIdentityRequest = {
     return message;
   },
 
-  fromJSON(object: any): TokensForIdentityRequest {
+  fromJSON(object: any): GetTokensForIdentityRequest {
     return {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       identity: isSet(object.identity) ? String(object.identity) : "",
       activeFilter: isSet(object.activeFilter)
-        ? tokensForIdentityRequest_ActiveFilterFromJSON(object.activeFilter)
+        ? getTokensForIdentityRequest_ActiveFilterFromJSON(object.activeFilter)
         : 0,
       skip: isSet(object.skip) ? Number(object.skip) : 0,
       limit: isSet(object.limit) ? Number(object.limit) : 0,
     };
   },
 
-  toJSON(message: TokensForIdentityRequest): unknown {
+  toJSON(message: GetTokensForIdentityRequest): unknown {
     const obj: any = {};
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.identity !== undefined && (obj.identity = message.identity);
     message.activeFilter !== undefined &&
-      (obj.activeFilter = tokensForIdentityRequest_ActiveFilterToJSON(
+      (obj.activeFilter = getTokensForIdentityRequest_ActiveFilterToJSON(
         message.activeFilter
       ));
     message.skip !== undefined && (obj.skip = Math.round(message.skip));
@@ -1305,10 +1421,10 @@ export const TokensForIdentityRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<TokensForIdentityRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<GetTokensForIdentityRequest>, I>>(
     object: I
-  ): TokensForIdentityRequest {
-    const message = createBaseTokensForIdentityRequest();
+  ): GetTokensForIdentityRequest {
+    const message = createBaseGetTokensForIdentityRequest();
     message.namespace = object.namespace ?? "";
     message.identity = object.identity ?? "";
     message.activeFilter = object.activeFilter ?? 0;
@@ -1318,13 +1434,13 @@ export const TokensForIdentityRequest = {
   },
 };
 
-function createBaseTokensForIdentityResponse(): TokensForIdentityResponse {
+function createBaseGetTokensForIdentityResponse(): GetTokensForIdentityResponse {
   return { tokenData: undefined };
 }
 
-export const TokensForIdentityResponse = {
+export const GetTokensForIdentityResponse = {
   encode(
-    message: TokensForIdentityResponse,
+    message: GetTokensForIdentityResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.tokenData !== undefined) {
@@ -1336,10 +1452,10 @@ export const TokensForIdentityResponse = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): TokensForIdentityResponse {
+  ): GetTokensForIdentityResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseTokensForIdentityResponse();
+    const message = createBaseGetTokensForIdentityResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1354,7 +1470,7 @@ export const TokensForIdentityResponse = {
     return message;
   },
 
-  fromJSON(object: any): TokensForIdentityResponse {
+  fromJSON(object: any): GetTokensForIdentityResponse {
     return {
       tokenData: isSet(object.tokenData)
         ? TokenData.fromJSON(object.tokenData)
@@ -1362,7 +1478,7 @@ export const TokensForIdentityResponse = {
     };
   },
 
-  toJSON(message: TokensForIdentityResponse): unknown {
+  toJSON(message: GetTokensForIdentityResponse): unknown {
     const obj: any = {};
     message.tokenData !== undefined &&
       (obj.tokenData = message.tokenData
@@ -1371,10 +1487,10 @@ export const TokensForIdentityResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<TokensForIdentityResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<GetTokensForIdentityResponse>, I>>(
     object: I
-  ): TokensForIdentityResponse {
-    const message = createBaseTokensForIdentityResponse();
+  ): GetTokensForIdentityResponse {
+    const message = createBaseGetTokensForIdentityResponse();
     message.tokenData =
       object.tokenData !== undefined && object.tokenData !== null
         ? TokenData.fromPartial(object.tokenData)
@@ -1388,17 +1504,19 @@ export interface IAMTokenService {
   /** Create new token */
   Create(request: CreateRequest): Promise<CreateResponse>;
   /** Get token data using token UUID (unique identifier) */
-  GetByUUID(request: GetByUUIDRequest): Promise<GetByUUIDResponse>;
+  Get(request: GetRequest): Promise<GetResponse>;
+  /** Delete token using token UUID (unique identifier) */
+  Delete(request: DeleteRequest): Promise<DeleteResponse>;
   /** Disable token using its unique identifier */
   DisableByUUID(request: DisableByUUIDRequest): Promise<DisableByUUIDResponse>;
-  /** Validates token and gets its scopes */
-  Authorize(request: AuthorizeRequest): Promise<AuthorizeResponse>;
+  /** Validates token and gets its data */
+  Validate(request: ValidateRequest): Promise<ValidateResponse>;
   /** Validates refresh token and create new token based on it. New token will have same scopes */
   Refresh(request: RefreshRequest): Promise<RefreshResponse>;
   /** Returns list of tokens for specified identity */
-  TokensForIdentity(
-    request: TokensForIdentityRequest
-  ): Observable<TokensForIdentityResponse>;
+  GetTokensForIdentity(
+    request: GetTokensForIdentityRequest
+  ): Observable<GetTokensForIdentityResponse>;
 }
 
 export class IAMTokenServiceClientImpl implements IAMTokenService {
@@ -1406,11 +1524,12 @@ export class IAMTokenServiceClientImpl implements IAMTokenService {
   constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.Create = this.Create.bind(this);
-    this.GetByUUID = this.GetByUUID.bind(this);
+    this.Get = this.Get.bind(this);
+    this.Delete = this.Delete.bind(this);
     this.DisableByUUID = this.DisableByUUID.bind(this);
-    this.Authorize = this.Authorize.bind(this);
+    this.Validate = this.Validate.bind(this);
     this.Refresh = this.Refresh.bind(this);
-    this.TokensForIdentity = this.TokensForIdentity.bind(this);
+    this.GetTokensForIdentity = this.GetTokensForIdentity.bind(this);
   }
   Create(request: CreateRequest): Promise<CreateResponse> {
     const data = CreateRequest.encode(request).finish();
@@ -1422,16 +1541,24 @@ export class IAMTokenServiceClientImpl implements IAMTokenService {
     return promise.then((data) => CreateResponse.decode(new _m0.Reader(data)));
   }
 
-  GetByUUID(request: GetByUUIDRequest): Promise<GetByUUIDResponse> {
-    const data = GetByUUIDRequest.encode(request).finish();
+  Get(request: GetRequest): Promise<GetResponse> {
+    const data = GetRequest.encode(request).finish();
     const promise = this.rpc.request(
       "native_iam_token.IAMTokenService",
-      "GetByUUID",
+      "Get",
       data
     );
-    return promise.then((data) =>
-      GetByUUIDResponse.decode(new _m0.Reader(data))
+    return promise.then((data) => GetResponse.decode(new _m0.Reader(data)));
+  }
+
+  Delete(request: DeleteRequest): Promise<DeleteResponse> {
+    const data = DeleteRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "native_iam_token.IAMTokenService",
+      "Delete",
+      data
     );
+    return promise.then((data) => DeleteResponse.decode(new _m0.Reader(data)));
   }
 
   DisableByUUID(request: DisableByUUIDRequest): Promise<DisableByUUIDResponse> {
@@ -1446,15 +1573,15 @@ export class IAMTokenServiceClientImpl implements IAMTokenService {
     );
   }
 
-  Authorize(request: AuthorizeRequest): Promise<AuthorizeResponse> {
-    const data = AuthorizeRequest.encode(request).finish();
+  Validate(request: ValidateRequest): Promise<ValidateResponse> {
+    const data = ValidateRequest.encode(request).finish();
     const promise = this.rpc.request(
       "native_iam_token.IAMTokenService",
-      "Authorize",
+      "Validate",
       data
     );
     return promise.then((data) =>
-      AuthorizeResponse.decode(new _m0.Reader(data))
+      ValidateResponse.decode(new _m0.Reader(data))
     );
   }
 
@@ -1468,17 +1595,17 @@ export class IAMTokenServiceClientImpl implements IAMTokenService {
     return promise.then((data) => RefreshResponse.decode(new _m0.Reader(data)));
   }
 
-  TokensForIdentity(
-    request: TokensForIdentityRequest
-  ): Observable<TokensForIdentityResponse> {
-    const data = TokensForIdentityRequest.encode(request).finish();
+  GetTokensForIdentity(
+    request: GetTokensForIdentityRequest
+  ): Observable<GetTokensForIdentityResponse> {
+    const data = GetTokensForIdentityRequest.encode(request).finish();
     const result = this.rpc.serverStreamingRequest(
       "native_iam_token.IAMTokenService",
-      "TokensForIdentity",
+      "GetTokensForIdentity",
       data
     );
     return result.pipe(
-      map((data) => TokensForIdentityResponse.decode(new _m0.Reader(data)))
+      map((data) => GetTokensForIdentityResponse.decode(new _m0.Reader(data)))
     );
   }
 }

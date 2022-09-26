@@ -54,7 +54,7 @@ message CreateResponse {
     TokenData tokenData = 3;
 }
 
-message GetByUUIDRequest {
+message GetRequest {
     // Namespace of the token. Empty for global token.
     string namespace = 1;
     // Unique identifier of the token inside namespace
@@ -62,10 +62,18 @@ message GetByUUIDRequest {
     // Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default)
     bool useCache = 3;
 }
-message GetByUUIDResponse {
+message GetResponse {
     // Actual token data
     TokenData tokenData = 1;
 }
+
+message DeleteRequest {
+    // Namespace of the token. Empty for global token.
+    string namespace = 1;
+    // Unique identifier of the token inside namespace
+    string uuid = 2;
+}
+message DeleteResponse {}
 
 message DisableByUUIDRequest {
     // Namespace of the token. Empty for global token.
@@ -76,13 +84,13 @@ message DisableByUUIDRequest {
 message DisableByUUIDResponse {}
 
 
-message AuthorizeRequest {
-    // Token to authorize
+message ValidateRequest {
+    // Token to validate
     string token = 1;
     // Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default)
     bool useCache = 2;
 }
-message AuthorizeResponse {
+message ValidateResponse {
     enum Status {
         // Token is valid
         OK = 0;
@@ -126,7 +134,7 @@ message RefreshResponse {
     TokenData tokenData = 3;
 }
 
-message TokensForIdentityRequest {
+message GetTokensForIdentityRequest {
     enum ActiveFilter {
         // Get all token
         ALL = 0;
@@ -147,7 +155,7 @@ message TokensForIdentityRequest {
     uint32 limit = 5;
 }
 
-message TokensForIdentityResponse {
+message GetTokensForIdentityResponse {
     // Actual token data
     TokenData tokenData = 1;
 }
@@ -157,13 +165,15 @@ service IAMTokenService {
     // Create new token
     rpc Create(CreateRequest) returns (CreateResponse);
     // Get token data using token UUID (unique identifier)
-    rpc GetByUUID(GetByUUIDRequest) returns (GetByUUIDResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    // Delete token using token UUID (unique identifier)
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
     // Disable token using its unique identifier
     rpc DisableByUUID(DisableByUUIDRequest) returns (DisableByUUIDResponse);
-    // Validates token and gets its scopes
-    rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse);
+    // Validates token and gets its data
+    rpc Validate(ValidateRequest) returns (ValidateResponse);
     // Validates refresh token and create new token based on it. New token will have same scopes 
     rpc Refresh(RefreshRequest) returns (RefreshResponse);
     // Returns list of tokens for specified identity
-    rpc TokensForIdentity(TokensForIdentityRequest) returns (stream TokensForIdentityResponse);
+    rpc GetTokensForIdentity(GetTokensForIdentityRequest) returns (stream GetTokensForIdentityResponse);
 }

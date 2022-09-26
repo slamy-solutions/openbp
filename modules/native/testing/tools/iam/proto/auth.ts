@@ -11,6 +11,8 @@ export interface CreateTokenWithPasswordRequest {
   identity: string;
   /** Identity password */
   password: string;
+  /** Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested. */
+  metadata: string;
 }
 
 export interface CreateTokenWithPasswordResponse {
@@ -100,6 +102,8 @@ export interface InvalidateTokenResponse {}
 export interface VerifyTokenAccessRequest {
   /** Token to verify */
   accessToken: string;
+  /** Namespace where to access resources */
+  namespace: string;
   /** What resources to theck */
   resources: string[];
   /** What actions token must be able to perform for resources */
@@ -111,7 +115,7 @@ export interface VerifyTokenAccessResponse {
 }
 
 function createBaseCreateTokenWithPasswordRequest(): CreateTokenWithPasswordRequest {
-  return { namespace: "", identity: "", password: "" };
+  return { namespace: "", identity: "", password: "", metadata: "" };
 }
 
 export const CreateTokenWithPasswordRequest = {
@@ -127,6 +131,9 @@ export const CreateTokenWithPasswordRequest = {
     }
     if (message.password !== "") {
       writer.uint32(26).string(message.password);
+    }
+    if (message.metadata !== "") {
+      writer.uint32(34).string(message.metadata);
     }
     return writer;
   },
@@ -150,6 +157,9 @@ export const CreateTokenWithPasswordRequest = {
         case 3:
           message.password = reader.string();
           break;
+        case 4:
+          message.metadata = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -163,6 +173,7 @@ export const CreateTokenWithPasswordRequest = {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       identity: isSet(object.identity) ? String(object.identity) : "",
       password: isSet(object.password) ? String(object.password) : "",
+      metadata: isSet(object.metadata) ? String(object.metadata) : "",
     };
   },
 
@@ -171,6 +182,7 @@ export const CreateTokenWithPasswordRequest = {
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.identity !== undefined && (obj.identity = message.identity);
     message.password !== undefined && (obj.password = message.password);
+    message.metadata !== undefined && (obj.metadata = message.metadata);
     return obj;
   },
 
@@ -181,6 +193,7 @@ export const CreateTokenWithPasswordRequest = {
     message.namespace = object.namespace ?? "";
     message.identity = object.identity ?? "";
     message.password = object.password ?? "";
+    message.metadata = object.metadata ?? "";
     return message;
   },
 };
@@ -634,7 +647,7 @@ export const InvalidateTokenResponse = {
 };
 
 function createBaseVerifyTokenAccessRequest(): VerifyTokenAccessRequest {
-  return { accessToken: "", resources: [], actions: [] };
+  return { accessToken: "", namespace: "", resources: [], actions: [] };
 }
 
 export const VerifyTokenAccessRequest = {
@@ -645,11 +658,14 @@ export const VerifyTokenAccessRequest = {
     if (message.accessToken !== "") {
       writer.uint32(10).string(message.accessToken);
     }
+    if (message.namespace !== "") {
+      writer.uint32(18).string(message.namespace);
+    }
     for (const v of message.resources) {
-      writer.uint32(18).string(v!);
+      writer.uint32(26).string(v!);
     }
     for (const v of message.actions) {
-      writer.uint32(26).string(v!);
+      writer.uint32(34).string(v!);
     }
     return writer;
   },
@@ -668,9 +684,12 @@ export const VerifyTokenAccessRequest = {
           message.accessToken = reader.string();
           break;
         case 2:
-          message.resources.push(reader.string());
+          message.namespace = reader.string();
           break;
         case 3:
+          message.resources.push(reader.string());
+          break;
+        case 4:
           message.actions.push(reader.string());
           break;
         default:
@@ -684,6 +703,7 @@ export const VerifyTokenAccessRequest = {
   fromJSON(object: any): VerifyTokenAccessRequest {
     return {
       accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
       resources: Array.isArray(object?.resources)
         ? object.resources.map((e: any) => String(e))
         : [],
@@ -697,6 +717,7 @@ export const VerifyTokenAccessRequest = {
     const obj: any = {};
     message.accessToken !== undefined &&
       (obj.accessToken = message.accessToken);
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     if (message.resources) {
       obj.resources = message.resources.map((e) => e);
     } else {
@@ -715,6 +736,7 @@ export const VerifyTokenAccessRequest = {
   ): VerifyTokenAccessRequest {
     const message = createBaseVerifyTokenAccessRequest();
     message.accessToken = object.accessToken ?? "";
+    message.namespace = object.namespace ?? "";
     message.resources = object.resources?.map((e) => e) || [];
     message.actions = object.actions?.map((e) => e) || [];
     return message;

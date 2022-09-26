@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -117,12 +118,14 @@ func NewIAmTokenServer(mongoClient *mongo.Client, cacheClient cache.Cache, nativ
 
 func (s *IAmTokenServer) Create(ctx context.Context, in *nativeIAmTokenGRPC.CreateRequest) (*nativeIAmTokenGRPC.CreateResponse, error) {
 	// Validating if namespace for new token exist
-	namespaceExistResponse, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
-	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to check if namespace exist: "+err.Error())
-	}
-	if !namespaceExistResponse.Exist {
-		return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+	if in.Namespace != "" {
+		namespaceExistResponse, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Failed to check if namespace exist: "+err.Error())
+		}
+		if !namespaceExistResponse.Exist {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+		}
 	}
 
 	// Converting token to the DB format (bson)
@@ -169,83 +172,175 @@ func (s *IAmTokenServer) Create(ctx context.Context, in *nativeIAmTokenGRPC.Crea
 	}, status.Error(grpccodes.OK, "")
 }
 
-func (s *IAmTokenServer) GetByUUID(ctx context.Context, in *nativeIAmTokenGRPC.GetByUUIDRequest) (*nativeIAmTokenGRPC.GetByUUIDResponse, error) {
-	return nil, status.Errorf(grpccodes.Unimplemented, "method GetByUUID not implemented")
+func (s *IAmTokenServer) Get(ctx context.Context, in *nativeIAmTokenGRPC.GetRequest) (*nativeIAmTokenGRPC.GetResponse, error) {
+	// Trying to fast get data from cache if cache enabled
+	var cacheKey string
+	if in.UseCache {
+		cacheKey = makeTokenCacheKey(in.Namespace, in.Uuid)
+		cacheBytes, _ := s.cacheClient.Get(ctx, cacheKey)
+		if cacheBytes != nil {
+			var tokenData nativeIAmTokenGRPC.TokenData
+			err := proto.Unmarshal(cacheBytes, &tokenData)
+			if err != nil {
+				return nil, status.Error(grpccodes.Internal, "Error while unmarshaling token from cache. "+err.Error())
+			}
+			return &nativeIAmTokenGRPC.GetResponse{TokenData: &tokenData}, status.Error(grpccodes.OK, "")
+		}
+	}
+
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Token UUID has bad format")
+	}
+	collection := collectionByNamespace(s, in.Namespace)
+	var mongoToken tokenInMongo
+	err = collection.FindOne(ctx, bson.M{"_id": id}).Decode(&mongoToken)
+	if err != nil {
+		if err, ok := err.(mongo.ServerError); ok {
+			if err.HasErrorCode(73) { // InvalidNamespace
+				return nil, status.Error(grpccodes.NotFound, "Token not found. Probably namespace doesnt exist.")
+			}
+		}
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(grpccodes.NotFound, "Token with specified UUID not found.")
+		}
+		return nil, status.Error(grpccodes.Internal, "Failed to get token: "+err.Error())
+	}
+	tokenData := mongoToken.ToProtoTokenData(in.Namespace)
+
+	if in.UseCache {
+		tokenDataBytes, err := proto.Marshal(tokenData)
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Error while marshaling token to cache. "+err.Error())
+		}
+		s.cacheClient.Set(ctx, cacheKey, tokenDataBytes, TOKEN_CACHE_EXPIRATION_TIME)
+	}
+
+	return &nativeIAmTokenGRPC.GetResponse{TokenData: tokenData}, status.Error(grpccodes.OK, "")
+}
+func (s *IAmTokenServer) Delete(ctx context.Context, in *nativeIAmTokenGRPC.DeleteRequest) (*nativeIAmTokenGRPC.DeleteResponse, error) {
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Token UUID has bad format")
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		if err, ok := err.(mongo.ServerError); ok {
+			if err.HasErrorCode(73) { // InvalidNamespace
+				return &nativeIAmTokenGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
+			}
+		}
+		return nil, status.Error(grpccodes.Internal, "Failed to delete token: "+err.Error())
+	}
+
+	if result.DeletedCount != 0 {
+		s.cacheClient.Remove(ctx, makeTokenCacheKey(in.Namespace, in.Uuid))
+	}
+
+	return &nativeIAmTokenGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
 }
 func (s *IAmTokenServer) DisableByUUID(ctx context.Context, in *nativeIAmTokenGRPC.DisableByUUIDRequest) (*nativeIAmTokenGRPC.DisableByUUIDResponse, error) {
-	return nil, status.Errorf(grpccodes.Unimplemented, "method DisableByUUID not implemented")
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Token UUID has bad format")
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	result, err := collection.UpdateByID(ctx, id, bson.M{"$set": bson.M{"disabled": true}})
+	if err != nil {
+		if err, ok := err.(mongo.ServerError); ok {
+			if err.HasErrorCode(73) { // InvalidNamespace
+				return nil, status.Error(grpccodes.NotFound, "Cant find token with specified UUID. Probably namespace doesnt exist.")
+			}
+		}
+		return nil, status.Error(grpccodes.Internal, "failed to update token in database: "+err.Error())
+	}
+
+	if result.MatchedCount == 0 {
+		return nil, status.Error(grpccodes.NotFound, "Cant find token with specified UUID.")
+	}
+
+	if result.ModifiedCount != 0 {
+		s.cacheClient.Remove(ctx, makeTokenCacheKey(in.Namespace, in.Uuid))
+	}
+
+	return &nativeIAmTokenGRPC.DisableByUUIDResponse{}, status.Error(grpccodes.OK, "")
 }
-func (s *IAmTokenServer) Authorize(ctx context.Context, in *nativeIAmTokenGRPC.AuthorizeRequest) (*nativeIAmTokenGRPC.AuthorizeResponse, error) {
+
+func (s *IAmTokenServer) Validate(ctx context.Context, in *nativeIAmTokenGRPC.ValidateRequest) (*nativeIAmTokenGRPC.ValidateResponse, error) {
 	// Decoding JWT
 	jwtData, err := JWTDataFromString(in.Token)
 	if err != nil {
 		if err == ErrInvalidToken {
-			return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_INVALID, TokenData: nil}, status.Error(grpccodes.OK, "")
+			return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_INVALID, TokenData: nil}, status.Error(grpccodes.OK, "")
 		}
 		if err == ErrTokenExpired {
-			return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_EXPIRED, TokenData: nil}, status.Error(grpccodes.OK, "")
+			return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_EXPIRED, TokenData: nil}, status.Error(grpccodes.OK, "JWT token expired")
 		}
 		return nil, status.Error(grpccodes.Internal, "Failed to verify token. "+err.Error())
 	}
 
 	// Trying to fast get data from cache if cache enabled
 	var cacheKey string
+	var tokenData nativeIAmTokenGRPC.TokenData
+	loadedFromCache := false
 	if in.UseCache {
 		cacheKey = makeTokenCacheKey(jwtData.Namespace, jwtData.UUID)
 		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
-		if err == nil {
-			var tokenData nativeIAmTokenGRPC.TokenData
+		if cacheBytes != nil {
 			err = proto.Unmarshal(cacheBytes, &tokenData)
 			if err != nil {
 				return nil, status.Error(grpccodes.Internal, "Error while unmarshaling token from cache. "+err.Error())
 			}
-			return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_OK, TokenData: &tokenData}, status.Error(grpccodes.OK, "")
+			loadedFromCache = true
 		}
 	}
 
-	id, err := primitive.ObjectIDFromHex(jwtData.UUID)
-	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Token UUID from JWT has bad format")
-	}
-
-	collection := collectionByNamespace(s, jwtData.Namespace)
-	var data tokenInMongo
-	err = collection.FindOne(ctx, bson.M{"_id": id}).Decode(&data)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_NOT_FOUND, TokenData: nil}, status.Error(grpccodes.OK, "")
+	// If cache missed - check database
+	if !loadedFromCache {
+		id, err := primitive.ObjectIDFromHex(jwtData.UUID)
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Token UUID from JWT has bad format")
 		}
-		// Handle error in case if namespaces is not valid (not exist)
-		if err, ok := err.(mongo.WriteException); ok {
-			if err.HasErrorLabel("InvalidNamespace") {
-				return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_NOT_FOUND, TokenData: nil}, status.Error(grpccodes.OK, "")
+
+		collection := collectionByNamespace(s, jwtData.Namespace)
+		var data tokenInMongo
+		err = collection.FindOne(ctx, bson.M{"_id": id}).Decode(&data)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_NOT_FOUND, TokenData: nil}, status.Error(grpccodes.OK, "")
 			}
+			// Handle error in case if namespaces is not valid (not exist)
+			if err, ok := err.(mongo.ServerError); ok {
+				if err.HasErrorCode(73) { // InvalidNamespace
+					return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_NOT_FOUND, TokenData: nil}, status.Error(grpccodes.OK, "")
+				}
+			}
+			return nil, status.Error(grpccodes.Internal, "Failed to get token from database. "+err.Error())
 		}
-		return nil, status.Error(grpccodes.Internal, "Failed to get token from database. "+err.Error())
+
+		tokenData = *data.ToProtoTokenData(jwtData.Namespace)
 	}
 
-	if data.Disabled {
-		return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_DISABLED, TokenData: nil}, status.Error(grpccodes.OK, "")
+	if tokenData.Disabled {
+		return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_DISABLED, TokenData: nil}, status.Error(grpccodes.OK, "")
 	}
 	currentTime := time.Now().UTC()
-	if data.ExpireAt.Before(currentTime) {
-		return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_EXPIRED, TokenData: nil}, status.Error(grpccodes.OK, "")
+	if tokenData.ExpiresAt.AsTime().Before(currentTime) {
+		return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_EXPIRED, TokenData: nil}, status.Error(grpccodes.OK, "Token expired in DB")
 	}
 
-	tokenData := data.ToProtoTokenData(jwtData.Namespace)
-	if in.UseCache {
-		tokenDataBytes, err := proto.Marshal(tokenData)
+	if in.UseCache && !loadedFromCache {
+		tokenDataBytes, err := proto.Marshal(&tokenData)
 		if err != nil {
 			return nil, status.Error(grpccodes.Internal, "Error while marshaling token to cache. "+err.Error())
 		}
-		timeToExpire := data.ExpireAt.Sub(currentTime)
-		if timeToExpire > TOKEN_CACHE_EXPIRATION_TIME {
-			timeToExpire = TOKEN_CACHE_EXPIRATION_TIME
-		}
-		s.cacheClient.Set(ctx, cacheKey, tokenDataBytes, timeToExpire)
+		s.cacheClient.Set(ctx, cacheKey, tokenDataBytes, TOKEN_CACHE_EXPIRATION_TIME)
 	}
 
-	return &nativeIAmTokenGRPC.AuthorizeResponse{Status: nativeIAmTokenGRPC.AuthorizeResponse_OK, TokenData: tokenData}, status.Error(grpccodes.OK, "")
+	return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_OK, TokenData: &tokenData}, status.Error(grpccodes.OK, "")
 }
 func (s *IAmTokenServer) Refresh(ctx context.Context, in *nativeIAmTokenGRPC.RefreshRequest) (*nativeIAmTokenGRPC.RefreshResponse, error) {
 	// Decoding JWT
@@ -277,7 +372,7 @@ func (s *IAmTokenServer) Refresh(ctx context.Context, in *nativeIAmTokenGRPC.Ref
 		}
 		// Handle error in case if namespaces is not valid (not exist)
 		if err, ok := err.(mongo.WriteException); ok {
-			if err.HasErrorLabel("InvalidNamespace") {
+			if err.HasErrorCode(73) { // InvalidNamespace
 				return &nativeIAmTokenGRPC.RefreshResponse{Status: nativeIAmTokenGRPC.RefreshResponse_NOT_FOUND}, status.Error(grpccodes.OK, "")
 			}
 		}
@@ -302,6 +397,48 @@ func (s *IAmTokenServer) Refresh(ctx context.Context, in *nativeIAmTokenGRPC.Ref
 		TokenData: data.ToProtoTokenData(jwtData.Namespace),
 	}, status.Error(grpccodes.OK, "")
 }
-func (s *IAmTokenServer) TokensForIdentity(in *nativeIAmTokenGRPC.TokensForIdentityRequest, out nativeIAmTokenGRPC.IAMTokenService_TokensForIdentityServer) error {
-	return status.Errorf(grpccodes.Unimplemented, "method TokensForIdentity not implemented")
+
+func (s *IAmTokenServer) GetTokensForIdentity(in *nativeIAmTokenGRPC.GetTokensForIdentityRequest, out nativeIAmTokenGRPC.IAMTokenService_GetTokensForIdentityServer) error {
+	// TODO: add indexes to the "identity" and "disabled + expiresat" + createdAt(for sorting) fields
+
+	ctx := out.Context()
+
+	collection := collectionByNamespace(s, in.Namespace)
+	filter := bson.M{"identity": in.Identity}
+	switch in.ActiveFilter {
+	case nativeIAmTokenGRPC.GetTokensForIdentityRequest_ONLY_ACTIVE:
+		filter["$and"] = bson.A{
+			bson.M{"disabled": false},
+			bson.M{"expireAt": bson.M{"$gt": time.Now().UTC()}},
+		}
+		break
+	case nativeIAmTokenGRPC.GetTokensForIdentityRequest_ONLY_NOT_ACTIVE:
+		filter["$or"] = bson.A{
+			bson.M{"disabled": true},
+			bson.M{"expireAt": bson.M{"$lt": time.Now().UTC()}},
+		}
+		break
+	}
+
+	findOptions := options.Find().SetSkip(int64(in.Skip)).SetLimit(int64(in.Limit)).SetSort(bson.D{{Key: "createdAt", Value: -1}})
+	cursor, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return status.Error(grpccodes.Internal, "Failed to fetch data from the database: "+err.Error())
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var tokenData tokenInMongo
+		if err := cursor.Decode(&tokenData); err != nil {
+			return status.Error(grpccodes.Internal, "Failed to fetch token from the database: "+err.Error())
+		}
+		if err := out.Send(&nativeIAmTokenGRPC.GetTokensForIdentityResponse{TokenData: tokenData.ToProtoTokenData(in.Namespace)}); err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return status.Error(grpccodes.Internal, "Failed to fetch token from database: "+err.Error())
+	}
+
+	return status.Error(grpccodes.OK, "")
 }
