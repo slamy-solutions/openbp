@@ -137,7 +137,7 @@ describe("Blackbox", () => {
             scopes: []
         })
 
-        await nativeIAmTokenGRPC.DisableByUUID({
+        await nativeIAmTokenGRPC.Disable({
             namespace: "",
             uuid: createResponse.tokenData?.uuid as string
         })

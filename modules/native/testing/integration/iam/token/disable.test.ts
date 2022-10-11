@@ -44,7 +44,7 @@ afterAll(async ()=>{
 })
 
 /**
- * @group native/iam/token/disableByUUID/whitebox
+ * @group native/iam/token/disable/whitebox
  * @group whitebox
  */
 describe("Whitebox", () => {
@@ -65,7 +65,7 @@ describe("Whitebox", () => {
 
         expect(await cacheClient.exists(`native_iam_token_data__${uuid}`)).toBe(1)
 
-        await nativeIAmTokenGRPC.DisableByUUID({
+        await nativeIAmTokenGRPC.Disable({
             namespace: "",
             uuid
         })
@@ -90,7 +90,7 @@ describe("Whitebox", () => {
 
         expect(await cacheClient.exists(`native_iam_token_data_${TEST_NAMESPACE_NAME}_${uuid}`)).toBe(1)
 
-        await nativeIAmTokenGRPC.DisableByUUID({
+        await nativeIAmTokenGRPC.Disable({
             namespace: TEST_NAMESPACE_NAME,
             uuid
         })
@@ -111,7 +111,7 @@ describe("Whitebox", () => {
         const responseBeforeDisable = await mongoClient.db(NAMESPACE_DB_NAME).collection("native_iam_token").findOne<{ disabled: boolean }>({"_id": id})
         expect(responseBeforeDisable?.disabled).toBeFalsy()
         
-        await nativeIAmTokenGRPC.DisableByUUID({
+        await nativeIAmTokenGRPC.Disable({
             namespace: TEST_NAMESPACE_NAME,
             uuid
         })
@@ -122,7 +122,7 @@ describe("Whitebox", () => {
 })
 
 /**
- * @group native/iam/token/disableByUUID/blackbox
+ * @group native/iam/token/disable/blackbox
  * @group blackbox
  */
 describe("Blackbox", () => {
@@ -134,7 +134,7 @@ describe("Blackbox", () => {
             scopes: []
         })
         const uuid = createResponse.tokenData?.uuid as string
-        await nativeIAmTokenGRPC.DisableByUUID({
+        await nativeIAmTokenGRPC.Disable({
             namespace: "",
             uuid
         })
@@ -154,7 +154,7 @@ describe("Blackbox", () => {
         })
         const uuid = createResponse.tokenData?.uuid as string
         for (let i = 0; i < 5; i++) {
-            await nativeIAmTokenGRPC.DisableByUUID({
+            await nativeIAmTokenGRPC.Disable({
                 namespace: "",
                 uuid
             })
@@ -168,7 +168,7 @@ describe("Blackbox", () => {
     })
     test("Failes with INVALID_ARGUMENT if UUID has bad format", async () => {
         try {
-            await nativeIAmTokenGRPC.DisableByUUID({
+            await nativeIAmTokenGRPC.Disable({
                 namespace: "",
                 uuid: "invalid"
             })
@@ -186,7 +186,7 @@ describe("Blackbox", () => {
                 scopes: []
             })
 
-            await nativeIAmTokenGRPC.DisableByUUID({
+            await nativeIAmTokenGRPC.Disable({
                 namespace: "",
                 uuid: new ObjectId().toHexString()
             })
@@ -197,7 +197,7 @@ describe("Blackbox", () => {
     })
     test("Failes with NOT_FOUND if token namespace doesnt exist", async () => {
         try {
-            await nativeIAmTokenGRPC.DisableByUUID({
+            await nativeIAmTokenGRPC.Disable({
                 namespace: randomBytes(32).toString("hex"),
                 uuid: new ObjectId().toHexString()
             })

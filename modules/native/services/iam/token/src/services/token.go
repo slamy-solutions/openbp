@@ -218,6 +218,39 @@ func (s *IAmTokenServer) Get(ctx context.Context, in *nativeIAmTokenGRPC.GetRequ
 
 	return &nativeIAmTokenGRPC.GetResponse{TokenData: tokenData}, status.Error(grpccodes.OK, "")
 }
+
+func (s *IAmTokenServer) RawGet(ctx context.Context, in *nativeIAmTokenGRPC.RawGetRequest) (*nativeIAmTokenGRPC.RawGetResponse, error) {
+	// Decoding JWT
+	jwtData, err := JWTDataFromString(in.Token)
+	if err != nil {
+		if err == ErrInvalidToken {
+			return nil, status.Error(grpccodes.InvalidArgument, "Token invalid. Bad token format or signature.")
+		}
+		if err == ErrTokenExpired {
+			return nil, status.Error(grpccodes.InvalidArgument, "Token expired and must not be used.")
+		}
+		return nil, status.Error(grpccodes.Internal, "Failed to verify token. "+err.Error())
+	}
+
+	getResponse, err := s.Get(ctx, &nativeIAmTokenGRPC.GetRequest{
+		Namespace: jwtData.Namespace,
+		Uuid:      jwtData.UUID,
+		UseCache:  in.UseCache,
+	})
+
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() != grpccodes.OK {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+
+	return &nativeIAmTokenGRPC.RawGetResponse{TokenData: getResponse.TokenData}, status.Error(grpccodes.OK, "")
+}
+
 func (s *IAmTokenServer) Delete(ctx context.Context, in *nativeIAmTokenGRPC.DeleteRequest) (*nativeIAmTokenGRPC.DeleteResponse, error) {
 	id, err := primitive.ObjectIDFromHex(in.Uuid)
 	if err != nil {
@@ -241,7 +274,7 @@ func (s *IAmTokenServer) Delete(ctx context.Context, in *nativeIAmTokenGRPC.Dele
 
 	return &nativeIAmTokenGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
 }
-func (s *IAmTokenServer) DisableByUUID(ctx context.Context, in *nativeIAmTokenGRPC.DisableByUUIDRequest) (*nativeIAmTokenGRPC.DisableByUUIDResponse, error) {
+func (s *IAmTokenServer) Disable(ctx context.Context, in *nativeIAmTokenGRPC.DisableRequest) (*nativeIAmTokenGRPC.DisableResponse, error) {
 	id, err := primitive.ObjectIDFromHex(in.Uuid)
 	if err != nil {
 		return nil, status.Error(grpccodes.InvalidArgument, "Token UUID has bad format")
@@ -266,7 +299,7 @@ func (s *IAmTokenServer) DisableByUUID(ctx context.Context, in *nativeIAmTokenGR
 		s.cacheClient.Remove(ctx, makeTokenCacheKey(in.Namespace, in.Uuid))
 	}
 
-	return &nativeIAmTokenGRPC.DisableByUUIDResponse{}, status.Error(grpccodes.OK, "")
+	return &nativeIAmTokenGRPC.DisableResponse{}, status.Error(grpccodes.OK, "")
 }
 
 func (s *IAmTokenServer) Validate(ctx context.Context, in *nativeIAmTokenGRPC.ValidateRequest) (*nativeIAmTokenGRPC.ValidateResponse, error) {

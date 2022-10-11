@@ -2,7 +2,17 @@
 import Long from "long";
 import * as _m0 from "protobufjs/minimal";
 
-export const protobufPackage = "native_iam_auth";
+export const protobufPackage = "native_iam_oauth";
+
+/** Scope of the requested access. Check native_iam_policy for more information. */
+export interface Scope {
+  /** Namespace where this scope applies */
+  namespace: string;
+  /** Resources that can be accessed using token */
+  resources: string[];
+  /** Actions that can be done on the resources */
+  actions: string[];
+}
 
 export interface CreateTokenWithPasswordRequest {
   /** Namespace where identity located. May be empty for global identity */
@@ -13,6 +23,8 @@ export interface CreateTokenWithPasswordRequest {
   password: string;
   /** Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested. */
   metadata: string;
+  /** Scopes of the created token. Empty for creating token with all posible scopes for identity. */
+  scopes: Scope[];
 }
 
 export interface CreateTokenWithPasswordResponse {
@@ -25,9 +37,14 @@ export interface CreateTokenWithPasswordResponse {
 }
 
 export enum CreateTokenWithPasswordResponse_Status {
+  /** OK - Everything is ok. Access and refresh tokens were successfully created */
   OK = 0,
-  UNAUTHENTICATED = 401,
-  UNAUTHORIZED = 403,
+  /** CREDENTIALS_INVALID - Login or password is not valid */
+  CREDENTIALS_INVALID = 1,
+  /** IDENTITY_NOT_ACTIVE - Identity was manually disabled */
+  IDENTITY_NOT_ACTIVE = 2,
+  /** UNAUTHORIZED - Not enough privileges to create token with specified scopes */
+  UNAUTHORIZED = 3,
   UNRECOGNIZED = -1,
 }
 
@@ -38,10 +55,13 @@ export function createTokenWithPasswordResponse_StatusFromJSON(
     case 0:
     case "OK":
       return CreateTokenWithPasswordResponse_Status.OK;
-    case 401:
-    case "UNAUTHENTICATED":
-      return CreateTokenWithPasswordResponse_Status.UNAUTHENTICATED;
-    case 403:
+    case 1:
+    case "CREDENTIALS_INVALID":
+      return CreateTokenWithPasswordResponse_Status.CREDENTIALS_INVALID;
+    case 2:
+    case "IDENTITY_NOT_ACTIVE":
+      return CreateTokenWithPasswordResponse_Status.IDENTITY_NOT_ACTIVE;
+    case 3:
     case "UNAUTHORIZED":
       return CreateTokenWithPasswordResponse_Status.UNAUTHORIZED;
     case -1:
@@ -57,8 +77,10 @@ export function createTokenWithPasswordResponse_StatusToJSON(
   switch (object) {
     case CreateTokenWithPasswordResponse_Status.OK:
       return "OK";
-    case CreateTokenWithPasswordResponse_Status.UNAUTHENTICATED:
-      return "UNAUTHENTICATED";
+    case CreateTokenWithPasswordResponse_Status.CREDENTIALS_INVALID:
+      return "CREDENTIALS_INVALID";
+    case CreateTokenWithPasswordResponse_Status.IDENTITY_NOT_ACTIVE:
+      return "IDENTITY_NOT_ACTIVE";
     case CreateTokenWithPasswordResponse_Status.UNAUTHORIZED:
       return "UNAUTHORIZED";
     case CreateTokenWithPasswordResponse_Status.UNRECOGNIZED:
@@ -88,34 +110,268 @@ export interface RefreshTokenRequest {
 }
 
 export interface RefreshTokenResponse {
+  /** Status of the refresh */
+  status: RefreshTokenResponse_Status;
   /** New access token */
   accessToken: string;
 }
 
-export interface InvalidateTokenRequest {
-  /** Refresh or access token to invalidate. Both tokens will be invalidated */
-  token: string;
+export enum RefreshTokenResponse_Status {
+  /** OK - Everything is ok. New access token was successfully created */
+  OK = 0,
+  /** TOKEN_INVALID - Received token has bad format or its signature doesnt match */
+  TOKEN_INVALID = 1,
+  /** TOKEN_NOT_FOUND - Most probably token was deleted after its creation */
+  TOKEN_NOT_FOUND = 2,
+  /** TOKEN_DISABLED - Token was manually disabled */
+  TOKEN_DISABLED = 3,
+  /** TOKEN_EXPIRED - Token expired */
+  TOKEN_EXPIRED = 4,
+  /** TOKEN_IS_NOT_REFRESH_TOKEN - Provided token was recognized but most probably it is normal access token (not refresh one) */
+  TOKEN_IS_NOT_REFRESH_TOKEN = 5,
+  /** IDENTITY_NOT_FOUND - Identity wasnt founded. Most probably it was deleted after token creation */
+  IDENTITY_NOT_FOUND = 6,
+  /** IDENTITY_NOT_ACTIVE - Identity was manually disabled. */
+  IDENTITY_NOT_ACTIVE = 7,
+  /** IDENTITY_UNAUTHENTICATED - Most probably indentity policies changed and now its not possible to create token with same scopes */
+  IDENTITY_UNAUTHENTICATED = 8,
+  UNRECOGNIZED = -1,
 }
 
-export interface InvalidateTokenResponse {}
+export function refreshTokenResponse_StatusFromJSON(
+  object: any
+): RefreshTokenResponse_Status {
+  switch (object) {
+    case 0:
+    case "OK":
+      return RefreshTokenResponse_Status.OK;
+    case 1:
+    case "TOKEN_INVALID":
+      return RefreshTokenResponse_Status.TOKEN_INVALID;
+    case 2:
+    case "TOKEN_NOT_FOUND":
+      return RefreshTokenResponse_Status.TOKEN_NOT_FOUND;
+    case 3:
+    case "TOKEN_DISABLED":
+      return RefreshTokenResponse_Status.TOKEN_DISABLED;
+    case 4:
+    case "TOKEN_EXPIRED":
+      return RefreshTokenResponse_Status.TOKEN_EXPIRED;
+    case 5:
+    case "TOKEN_IS_NOT_REFRESH_TOKEN":
+      return RefreshTokenResponse_Status.TOKEN_IS_NOT_REFRESH_TOKEN;
+    case 6:
+    case "IDENTITY_NOT_FOUND":
+      return RefreshTokenResponse_Status.IDENTITY_NOT_FOUND;
+    case 7:
+    case "IDENTITY_NOT_ACTIVE":
+      return RefreshTokenResponse_Status.IDENTITY_NOT_ACTIVE;
+    case 8:
+    case "IDENTITY_UNAUTHENTICATED":
+      return RefreshTokenResponse_Status.IDENTITY_UNAUTHENTICATED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return RefreshTokenResponse_Status.UNRECOGNIZED;
+  }
+}
 
-export interface VerifyTokenAccessRequest {
+export function refreshTokenResponse_StatusToJSON(
+  object: RefreshTokenResponse_Status
+): string {
+  switch (object) {
+    case RefreshTokenResponse_Status.OK:
+      return "OK";
+    case RefreshTokenResponse_Status.TOKEN_INVALID:
+      return "TOKEN_INVALID";
+    case RefreshTokenResponse_Status.TOKEN_NOT_FOUND:
+      return "TOKEN_NOT_FOUND";
+    case RefreshTokenResponse_Status.TOKEN_DISABLED:
+      return "TOKEN_DISABLED";
+    case RefreshTokenResponse_Status.TOKEN_EXPIRED:
+      return "TOKEN_EXPIRED";
+    case RefreshTokenResponse_Status.TOKEN_IS_NOT_REFRESH_TOKEN:
+      return "TOKEN_IS_NOT_REFRESH_TOKEN";
+    case RefreshTokenResponse_Status.IDENTITY_NOT_FOUND:
+      return "IDENTITY_NOT_FOUND";
+    case RefreshTokenResponse_Status.IDENTITY_NOT_ACTIVE:
+      return "IDENTITY_NOT_ACTIVE";
+    case RefreshTokenResponse_Status.IDENTITY_UNAUTHENTICATED:
+      return "IDENTITY_UNAUTHENTICATED";
+    case RefreshTokenResponse_Status.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export interface CheckAccessRequest {
   /** Token to verify */
   accessToken: string;
-  /** Namespace where to access resources */
-  namespace: string;
-  /** What resources to theck */
-  resources: string[];
-  /** What actions token must be able to perform for resources */
-  actions: string[];
+  /** Scopes for with to validate access */
+  scopes: Scope[];
 }
 
-export interface VerifyTokenAccessResponse {
-  hasAccess: boolean;
+export interface CheckAccessResponse {
+  /** Status of the verification */
+  status: CheckAccessResponse_Status;
+  /** Details of the status, that can be safelly returned and displayed to the user */
+  message: string;
 }
+
+export enum CheckAccessResponse_Status {
+  /** OK - Provided token allows to access scopes */
+  OK = 0,
+  /** TOKEN_INVALID - Received token has bad format or its signature doesnt match */
+  TOKEN_INVALID = 1,
+  /** TOKEN_NOT_FOUND - Most probably token was deleted after its creation */
+  TOKEN_NOT_FOUND = 2,
+  /** TOKEN_DISABLED - Token was manually disabled */
+  TOKEN_DISABLED = 3,
+  /** TOKEN_EXPIRED - Token expired */
+  TOKEN_EXPIRED = 4,
+  /** UNAUTHORIZED - Token has not enought privileges to access specified scopes */
+  UNAUTHORIZED = 5,
+  UNRECOGNIZED = -1,
+}
+
+export function checkAccessResponse_StatusFromJSON(
+  object: any
+): CheckAccessResponse_Status {
+  switch (object) {
+    case 0:
+    case "OK":
+      return CheckAccessResponse_Status.OK;
+    case 1:
+    case "TOKEN_INVALID":
+      return CheckAccessResponse_Status.TOKEN_INVALID;
+    case 2:
+    case "TOKEN_NOT_FOUND":
+      return CheckAccessResponse_Status.TOKEN_NOT_FOUND;
+    case 3:
+    case "TOKEN_DISABLED":
+      return CheckAccessResponse_Status.TOKEN_DISABLED;
+    case 4:
+    case "TOKEN_EXPIRED":
+      return CheckAccessResponse_Status.TOKEN_EXPIRED;
+    case 5:
+    case "UNAUTHORIZED":
+      return CheckAccessResponse_Status.UNAUTHORIZED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return CheckAccessResponse_Status.UNRECOGNIZED;
+  }
+}
+
+export function checkAccessResponse_StatusToJSON(
+  object: CheckAccessResponse_Status
+): string {
+  switch (object) {
+    case CheckAccessResponse_Status.OK:
+      return "OK";
+    case CheckAccessResponse_Status.TOKEN_INVALID:
+      return "TOKEN_INVALID";
+    case CheckAccessResponse_Status.TOKEN_NOT_FOUND:
+      return "TOKEN_NOT_FOUND";
+    case CheckAccessResponse_Status.TOKEN_DISABLED:
+      return "TOKEN_DISABLED";
+    case CheckAccessResponse_Status.TOKEN_EXPIRED:
+      return "TOKEN_EXPIRED";
+    case CheckAccessResponse_Status.UNAUTHORIZED:
+      return "UNAUTHORIZED";
+    case CheckAccessResponse_Status.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+function createBaseScope(): Scope {
+  return { namespace: "", resources: [], actions: [] };
+}
+
+export const Scope = {
+  encode(message: Scope, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.namespace !== "") {
+      writer.uint32(10).string(message.namespace);
+    }
+    for (const v of message.resources) {
+      writer.uint32(18).string(v!);
+    }
+    for (const v of message.actions) {
+      writer.uint32(26).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Scope {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseScope();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespace = reader.string();
+          break;
+        case 2:
+          message.resources.push(reader.string());
+          break;
+        case 3:
+          message.actions.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Scope {
+    return {
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
+      resources: Array.isArray(object?.resources)
+        ? object.resources.map((e: any) => String(e))
+        : [],
+      actions: Array.isArray(object?.actions)
+        ? object.actions.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: Scope): unknown {
+    const obj: any = {};
+    message.namespace !== undefined && (obj.namespace = message.namespace);
+    if (message.resources) {
+      obj.resources = message.resources.map((e) => e);
+    } else {
+      obj.resources = [];
+    }
+    if (message.actions) {
+      obj.actions = message.actions.map((e) => e);
+    } else {
+      obj.actions = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Scope>, I>>(object: I): Scope {
+    const message = createBaseScope();
+    message.namespace = object.namespace ?? "";
+    message.resources = object.resources?.map((e) => e) || [];
+    message.actions = object.actions?.map((e) => e) || [];
+    return message;
+  },
+};
 
 function createBaseCreateTokenWithPasswordRequest(): CreateTokenWithPasswordRequest {
-  return { namespace: "", identity: "", password: "", metadata: "" };
+  return {
+    namespace: "",
+    identity: "",
+    password: "",
+    metadata: "",
+    scopes: [],
+  };
 }
 
 export const CreateTokenWithPasswordRequest = {
@@ -134,6 +390,9 @@ export const CreateTokenWithPasswordRequest = {
     }
     if (message.metadata !== "") {
       writer.uint32(34).string(message.metadata);
+    }
+    for (const v of message.scopes) {
+      Scope.encode(v!, writer.uint32(42).fork()).ldelim();
     }
     return writer;
   },
@@ -160,6 +419,9 @@ export const CreateTokenWithPasswordRequest = {
         case 4:
           message.metadata = reader.string();
           break;
+        case 5:
+          message.scopes.push(Scope.decode(reader, reader.uint32()));
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -174,6 +436,9 @@ export const CreateTokenWithPasswordRequest = {
       identity: isSet(object.identity) ? String(object.identity) : "",
       password: isSet(object.password) ? String(object.password) : "",
       metadata: isSet(object.metadata) ? String(object.metadata) : "",
+      scopes: Array.isArray(object?.scopes)
+        ? object.scopes.map((e: any) => Scope.fromJSON(e))
+        : [],
     };
   },
 
@@ -183,6 +448,11 @@ export const CreateTokenWithPasswordRequest = {
     message.identity !== undefined && (obj.identity = message.identity);
     message.password !== undefined && (obj.password = message.password);
     message.metadata !== undefined && (obj.metadata = message.metadata);
+    if (message.scopes) {
+      obj.scopes = message.scopes.map((e) => (e ? Scope.toJSON(e) : undefined));
+    } else {
+      obj.scopes = [];
+    }
     return obj;
   },
 
@@ -194,6 +464,7 @@ export const CreateTokenWithPasswordRequest = {
     message.identity = object.identity ?? "";
     message.password = object.password ?? "";
     message.metadata = object.metadata ?? "";
+    message.scopes = object.scopes?.map((e) => Scope.fromPartial(e)) || [];
     return message;
   },
 };
@@ -485,7 +756,7 @@ export const RefreshTokenRequest = {
 };
 
 function createBaseRefreshTokenResponse(): RefreshTokenResponse {
-  return { accessToken: "" };
+  return { status: 0, accessToken: "" };
 }
 
 export const RefreshTokenResponse = {
@@ -493,8 +764,11 @@ export const RefreshTokenResponse = {
     message: RefreshTokenResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.status !== 0) {
+      writer.uint32(8).int32(message.status);
+    }
     if (message.accessToken !== "") {
-      writer.uint32(10).string(message.accessToken);
+      writer.uint32(18).string(message.accessToken);
     }
     return writer;
   },
@@ -510,6 +784,9 @@ export const RefreshTokenResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.status = reader.int32() as any;
+          break;
+        case 2:
           message.accessToken = reader.string();
           break;
         default:
@@ -522,12 +799,17 @@ export const RefreshTokenResponse = {
 
   fromJSON(object: any): RefreshTokenResponse {
     return {
+      status: isSet(object.status)
+        ? refreshTokenResponse_StatusFromJSON(object.status)
+        : 0,
       accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
     };
   },
 
   toJSON(message: RefreshTokenResponse): unknown {
     const obj: any = {};
+    message.status !== undefined &&
+      (obj.status = refreshTokenResponse_StatusToJSON(message.status));
     message.accessToken !== undefined &&
       (obj.accessToken = message.accessToken);
     return obj;
@@ -537,146 +819,34 @@ export const RefreshTokenResponse = {
     object: I
   ): RefreshTokenResponse {
     const message = createBaseRefreshTokenResponse();
+    message.status = object.status ?? 0;
     message.accessToken = object.accessToken ?? "";
     return message;
   },
 };
 
-function createBaseInvalidateTokenRequest(): InvalidateTokenRequest {
-  return { token: "" };
+function createBaseCheckAccessRequest(): CheckAccessRequest {
+  return { accessToken: "", scopes: [] };
 }
 
-export const InvalidateTokenRequest = {
+export const CheckAccessRequest = {
   encode(
-    message: InvalidateTokenRequest,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.token !== "") {
-      writer.uint32(10).string(message.token);
-    }
-    return writer;
-  },
-
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): InvalidateTokenRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseInvalidateTokenRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.token = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): InvalidateTokenRequest {
-    return {
-      token: isSet(object.token) ? String(object.token) : "",
-    };
-  },
-
-  toJSON(message: InvalidateTokenRequest): unknown {
-    const obj: any = {};
-    message.token !== undefined && (obj.token = message.token);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<InvalidateTokenRequest>, I>>(
-    object: I
-  ): InvalidateTokenRequest {
-    const message = createBaseInvalidateTokenRequest();
-    message.token = object.token ?? "";
-    return message;
-  },
-};
-
-function createBaseInvalidateTokenResponse(): InvalidateTokenResponse {
-  return {};
-}
-
-export const InvalidateTokenResponse = {
-  encode(
-    _: InvalidateTokenResponse,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    return writer;
-  },
-
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): InvalidateTokenResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseInvalidateTokenResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(_: any): InvalidateTokenResponse {
-    return {};
-  },
-
-  toJSON(_: InvalidateTokenResponse): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<InvalidateTokenResponse>, I>>(
-    _: I
-  ): InvalidateTokenResponse {
-    const message = createBaseInvalidateTokenResponse();
-    return message;
-  },
-};
-
-function createBaseVerifyTokenAccessRequest(): VerifyTokenAccessRequest {
-  return { accessToken: "", namespace: "", resources: [], actions: [] };
-}
-
-export const VerifyTokenAccessRequest = {
-  encode(
-    message: VerifyTokenAccessRequest,
+    message: CheckAccessRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.accessToken !== "") {
       writer.uint32(10).string(message.accessToken);
     }
-    if (message.namespace !== "") {
-      writer.uint32(18).string(message.namespace);
-    }
-    for (const v of message.resources) {
-      writer.uint32(26).string(v!);
-    }
-    for (const v of message.actions) {
-      writer.uint32(34).string(v!);
+    for (const v of message.scopes) {
+      Scope.encode(v!, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): VerifyTokenAccessRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): CheckAccessRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseVerifyTokenAccessRequest();
+    const message = createBaseCheckAccessRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -684,13 +854,7 @@ export const VerifyTokenAccessRequest = {
           message.accessToken = reader.string();
           break;
         case 2:
-          message.namespace = reader.string();
-          break;
-        case 3:
-          message.resources.push(reader.string());
-          break;
-        case 4:
-          message.actions.push(reader.string());
+          message.scopes.push(Scope.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -700,76 +864,67 @@ export const VerifyTokenAccessRequest = {
     return message;
   },
 
-  fromJSON(object: any): VerifyTokenAccessRequest {
+  fromJSON(object: any): CheckAccessRequest {
     return {
       accessToken: isSet(object.accessToken) ? String(object.accessToken) : "",
-      namespace: isSet(object.namespace) ? String(object.namespace) : "",
-      resources: Array.isArray(object?.resources)
-        ? object.resources.map((e: any) => String(e))
-        : [],
-      actions: Array.isArray(object?.actions)
-        ? object.actions.map((e: any) => String(e))
+      scopes: Array.isArray(object?.scopes)
+        ? object.scopes.map((e: any) => Scope.fromJSON(e))
         : [],
     };
   },
 
-  toJSON(message: VerifyTokenAccessRequest): unknown {
+  toJSON(message: CheckAccessRequest): unknown {
     const obj: any = {};
     message.accessToken !== undefined &&
       (obj.accessToken = message.accessToken);
-    message.namespace !== undefined && (obj.namespace = message.namespace);
-    if (message.resources) {
-      obj.resources = message.resources.map((e) => e);
+    if (message.scopes) {
+      obj.scopes = message.scopes.map((e) => (e ? Scope.toJSON(e) : undefined));
     } else {
-      obj.resources = [];
-    }
-    if (message.actions) {
-      obj.actions = message.actions.map((e) => e);
-    } else {
-      obj.actions = [];
+      obj.scopes = [];
     }
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<VerifyTokenAccessRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<CheckAccessRequest>, I>>(
     object: I
-  ): VerifyTokenAccessRequest {
-    const message = createBaseVerifyTokenAccessRequest();
+  ): CheckAccessRequest {
+    const message = createBaseCheckAccessRequest();
     message.accessToken = object.accessToken ?? "";
-    message.namespace = object.namespace ?? "";
-    message.resources = object.resources?.map((e) => e) || [];
-    message.actions = object.actions?.map((e) => e) || [];
+    message.scopes = object.scopes?.map((e) => Scope.fromPartial(e)) || [];
     return message;
   },
 };
 
-function createBaseVerifyTokenAccessResponse(): VerifyTokenAccessResponse {
-  return { hasAccess: false };
+function createBaseCheckAccessResponse(): CheckAccessResponse {
+  return { status: 0, message: "" };
 }
 
-export const VerifyTokenAccessResponse = {
+export const CheckAccessResponse = {
   encode(
-    message: VerifyTokenAccessResponse,
+    message: CheckAccessResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.hasAccess === true) {
-      writer.uint32(8).bool(message.hasAccess);
+    if (message.status !== 0) {
+      writer.uint32(8).int32(message.status);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
     }
     return writer;
   },
 
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): VerifyTokenAccessResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): CheckAccessResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseVerifyTokenAccessResponse();
+    const message = createBaseCheckAccessResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.hasAccess = reader.bool();
+          message.status = reader.int32() as any;
+          break;
+        case 2:
+          message.message = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -779,60 +934,62 @@ export const VerifyTokenAccessResponse = {
     return message;
   },
 
-  fromJSON(object: any): VerifyTokenAccessResponse {
+  fromJSON(object: any): CheckAccessResponse {
     return {
-      hasAccess: isSet(object.hasAccess) ? Boolean(object.hasAccess) : false,
+      status: isSet(object.status)
+        ? checkAccessResponse_StatusFromJSON(object.status)
+        : 0,
+      message: isSet(object.message) ? String(object.message) : "",
     };
   },
 
-  toJSON(message: VerifyTokenAccessResponse): unknown {
+  toJSON(message: CheckAccessResponse): unknown {
     const obj: any = {};
-    message.hasAccess !== undefined && (obj.hasAccess = message.hasAccess);
+    message.status !== undefined &&
+      (obj.status = checkAccessResponse_StatusToJSON(message.status));
+    message.message !== undefined && (obj.message = message.message);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<VerifyTokenAccessResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<CheckAccessResponse>, I>>(
     object: I
-  ): VerifyTokenAccessResponse {
-    const message = createBaseVerifyTokenAccessResponse();
-    message.hasAccess = object.hasAccess ?? false;
+  ): CheckAccessResponse {
+    const message = createBaseCheckAccessResponse();
+    message.status = object.status ?? 0;
+    message.message = object.message ?? "";
     return message;
   },
 };
 
-/** Provides API to verify identity and determine access rights of the identity */
-export interface IAMAuthService {
-  /** Create access token and refresh token using password. Creates identity if not exist */
+/** Provides API for OAuth ("Open Authorization") style access control */
+export interface IAMOAuthService {
+  /** Create access token and refresh token using password */
   CreateTokenWithPassword(
     request: CreateTokenWithPasswordRequest
   ): Promise<CreateTokenWithPasswordResponse>;
-  /** Creates new access token using refresh token */
+  /** Creates new access token using refresh tokenna */
   RefreshToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse>;
-  /** Invalidates pare of access token and refresh tokens */
-  InvalidateToken(
-    request: InvalidateTokenRequest
-  ): Promise<InvalidateTokenResponse>;
-  /** Verifies if token can perform actions on the resources */
-  VerifyTokenAccess(
-    request: VerifyTokenAccessRequest
-  ): Promise<VerifyTokenAccessResponse>;
+  /**
+   * rpc VerifyResoureAccess(VerifyResourceAccessRequest) returns (VerifyResourceAccessResponse);
+   * Checks if token is allowed to perform actions from the specified scopes
+   */
+  CheckAccess(request: CheckAccessRequest): Promise<CheckAccessResponse>;
 }
 
-export class IAMAuthServiceClientImpl implements IAMAuthService {
+export class IAMOAuthServiceClientImpl implements IAMOAuthService {
   private readonly rpc: Rpc;
   constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.CreateTokenWithPassword = this.CreateTokenWithPassword.bind(this);
     this.RefreshToken = this.RefreshToken.bind(this);
-    this.InvalidateToken = this.InvalidateToken.bind(this);
-    this.VerifyTokenAccess = this.VerifyTokenAccess.bind(this);
+    this.CheckAccess = this.CheckAccess.bind(this);
   }
   CreateTokenWithPassword(
     request: CreateTokenWithPasswordRequest
   ): Promise<CreateTokenWithPasswordResponse> {
     const data = CreateTokenWithPasswordRequest.encode(request).finish();
     const promise = this.rpc.request(
-      "native_iam_auth.IAMAuthService",
+      "native_iam_oauth.IAMOAuthService",
       "CreateTokenWithPassword",
       data
     );
@@ -844,7 +1001,7 @@ export class IAMAuthServiceClientImpl implements IAMAuthService {
   RefreshToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse> {
     const data = RefreshTokenRequest.encode(request).finish();
     const promise = this.rpc.request(
-      "native_iam_auth.IAMAuthService",
+      "native_iam_oauth.IAMOAuthService",
       "RefreshToken",
       data
     );
@@ -853,31 +1010,15 @@ export class IAMAuthServiceClientImpl implements IAMAuthService {
     );
   }
 
-  InvalidateToken(
-    request: InvalidateTokenRequest
-  ): Promise<InvalidateTokenResponse> {
-    const data = InvalidateTokenRequest.encode(request).finish();
+  CheckAccess(request: CheckAccessRequest): Promise<CheckAccessResponse> {
+    const data = CheckAccessRequest.encode(request).finish();
     const promise = this.rpc.request(
-      "native_iam_auth.IAMAuthService",
-      "InvalidateToken",
+      "native_iam_oauth.IAMOAuthService",
+      "CheckAccess",
       data
     );
     return promise.then((data) =>
-      InvalidateTokenResponse.decode(new _m0.Reader(data))
-    );
-  }
-
-  VerifyTokenAccess(
-    request: VerifyTokenAccessRequest
-  ): Promise<VerifyTokenAccessResponse> {
-    const data = VerifyTokenAccessRequest.encode(request).finish();
-    const promise = this.rpc.request(
-      "native_iam_auth.IAMAuthService",
-      "VerifyTokenAccess",
-      data
-    );
-    return promise.then((data) =>
-      VerifyTokenAccessResponse.decode(new _m0.Reader(data))
+      CheckAccessResponse.decode(new _m0.Reader(data))
     );
   }
 }

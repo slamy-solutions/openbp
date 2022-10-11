@@ -70,6 +70,18 @@ export interface GetResponse {
   tokenData: TokenData | undefined;
 }
 
+export interface RawGetRequest {
+  /** Refresh or access token */
+  token: string;
+  /** Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default) */
+  useCache: boolean;
+}
+
+export interface RawGetResponse {
+  /** Actual token data */
+  tokenData: TokenData | undefined;
+}
+
 export interface DeleteRequest {
   /** Namespace of the token. Empty for global token. */
   namespace: string;
@@ -79,14 +91,14 @@ export interface DeleteRequest {
 
 export interface DeleteResponse {}
 
-export interface DisableByUUIDRequest {
+export interface DisableRequest {
   /** Namespace of the token. Empty for global token. */
   namespace: string;
   /** Unique identifier of the token inside namespace */
   uuid: string;
 }
 
-export interface DisableByUUIDResponse {}
+export interface DisableResponse {}
 
 export interface ValidateRequest {
   /** Token to validate */
@@ -839,6 +851,131 @@ export const GetResponse = {
   },
 };
 
+function createBaseRawGetRequest(): RawGetRequest {
+  return { token: "", useCache: false };
+}
+
+export const RawGetRequest = {
+  encode(
+    message: RawGetRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.token !== "") {
+      writer.uint32(10).string(message.token);
+    }
+    if (message.useCache === true) {
+      writer.uint32(16).bool(message.useCache);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RawGetRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRawGetRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.token = reader.string();
+          break;
+        case 2:
+          message.useCache = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RawGetRequest {
+    return {
+      token: isSet(object.token) ? String(object.token) : "",
+      useCache: isSet(object.useCache) ? Boolean(object.useCache) : false,
+    };
+  },
+
+  toJSON(message: RawGetRequest): unknown {
+    const obj: any = {};
+    message.token !== undefined && (obj.token = message.token);
+    message.useCache !== undefined && (obj.useCache = message.useCache);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RawGetRequest>, I>>(
+    object: I
+  ): RawGetRequest {
+    const message = createBaseRawGetRequest();
+    message.token = object.token ?? "";
+    message.useCache = object.useCache ?? false;
+    return message;
+  },
+};
+
+function createBaseRawGetResponse(): RawGetResponse {
+  return { tokenData: undefined };
+}
+
+export const RawGetResponse = {
+  encode(
+    message: RawGetResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.tokenData !== undefined) {
+      TokenData.encode(message.tokenData, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RawGetResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRawGetResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.tokenData = TokenData.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RawGetResponse {
+    return {
+      tokenData: isSet(object.tokenData)
+        ? TokenData.fromJSON(object.tokenData)
+        : undefined,
+    };
+  },
+
+  toJSON(message: RawGetResponse): unknown {
+    const obj: any = {};
+    message.tokenData !== undefined &&
+      (obj.tokenData = message.tokenData
+        ? TokenData.toJSON(message.tokenData)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RawGetResponse>, I>>(
+    object: I
+  ): RawGetResponse {
+    const message = createBaseRawGetResponse();
+    message.tokenData =
+      object.tokenData !== undefined && object.tokenData !== null
+        ? TokenData.fromPartial(object.tokenData)
+        : undefined;
+    return message;
+  },
+};
+
 function createBaseDeleteRequest(): DeleteRequest {
   return { namespace: "", uuid: "" };
 }
@@ -946,13 +1083,13 @@ export const DeleteResponse = {
   },
 };
 
-function createBaseDisableByUUIDRequest(): DisableByUUIDRequest {
+function createBaseDisableRequest(): DisableRequest {
   return { namespace: "", uuid: "" };
 }
 
-export const DisableByUUIDRequest = {
+export const DisableRequest = {
   encode(
-    message: DisableByUUIDRequest,
+    message: DisableRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.namespace !== "") {
@@ -964,13 +1101,10 @@ export const DisableByUUIDRequest = {
     return writer;
   },
 
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): DisableByUUIDRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): DisableRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDisableByUUIDRequest();
+    const message = createBaseDisableRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -988,49 +1122,46 @@ export const DisableByUUIDRequest = {
     return message;
   },
 
-  fromJSON(object: any): DisableByUUIDRequest {
+  fromJSON(object: any): DisableRequest {
     return {
       namespace: isSet(object.namespace) ? String(object.namespace) : "",
       uuid: isSet(object.uuid) ? String(object.uuid) : "",
     };
   },
 
-  toJSON(message: DisableByUUIDRequest): unknown {
+  toJSON(message: DisableRequest): unknown {
     const obj: any = {};
     message.namespace !== undefined && (obj.namespace = message.namespace);
     message.uuid !== undefined && (obj.uuid = message.uuid);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<DisableByUUIDRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<DisableRequest>, I>>(
     object: I
-  ): DisableByUUIDRequest {
-    const message = createBaseDisableByUUIDRequest();
+  ): DisableRequest {
+    const message = createBaseDisableRequest();
     message.namespace = object.namespace ?? "";
     message.uuid = object.uuid ?? "";
     return message;
   },
 };
 
-function createBaseDisableByUUIDResponse(): DisableByUUIDResponse {
+function createBaseDisableResponse(): DisableResponse {
   return {};
 }
 
-export const DisableByUUIDResponse = {
+export const DisableResponse = {
   encode(
-    _: DisableByUUIDResponse,
+    _: DisableResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     return writer;
   },
 
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): DisableByUUIDResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): DisableResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDisableByUUIDResponse();
+    const message = createBaseDisableResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1042,19 +1173,19 @@ export const DisableByUUIDResponse = {
     return message;
   },
 
-  fromJSON(_: any): DisableByUUIDResponse {
+  fromJSON(_: any): DisableResponse {
     return {};
   },
 
-  toJSON(_: DisableByUUIDResponse): unknown {
+  toJSON(_: DisableResponse): unknown {
     const obj: any = {};
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<DisableByUUIDResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<DisableResponse>, I>>(
     _: I
-  ): DisableByUUIDResponse {
-    const message = createBaseDisableByUUIDResponse();
+  ): DisableResponse {
+    const message = createBaseDisableResponse();
     return message;
   },
 };
@@ -1505,10 +1636,12 @@ export interface IAMTokenService {
   Create(request: CreateRequest): Promise<CreateResponse>;
   /** Get token data using token UUID (unique identifier) */
   Get(request: GetRequest): Promise<GetResponse>;
+  /** Get token data using raw access/refresh token. Validates if token still exists in the system. */
+  RawGet(request: RawGetRequest): Promise<RawGetResponse>;
   /** Delete token using token UUID (unique identifier) */
   Delete(request: DeleteRequest): Promise<DeleteResponse>;
   /** Disable token using its unique identifier */
-  DisableByUUID(request: DisableByUUIDRequest): Promise<DisableByUUIDResponse>;
+  Disable(request: DisableRequest): Promise<DisableResponse>;
   /** Validates token and gets its data */
   Validate(request: ValidateRequest): Promise<ValidateResponse>;
   /** Validates refresh token and create new token based on it. New token will have same scopes */
@@ -1525,8 +1658,9 @@ export class IAMTokenServiceClientImpl implements IAMTokenService {
     this.rpc = rpc;
     this.Create = this.Create.bind(this);
     this.Get = this.Get.bind(this);
+    this.RawGet = this.RawGet.bind(this);
     this.Delete = this.Delete.bind(this);
-    this.DisableByUUID = this.DisableByUUID.bind(this);
+    this.Disable = this.Disable.bind(this);
     this.Validate = this.Validate.bind(this);
     this.Refresh = this.Refresh.bind(this);
     this.GetTokensForIdentity = this.GetTokensForIdentity.bind(this);
@@ -1551,6 +1685,16 @@ export class IAMTokenServiceClientImpl implements IAMTokenService {
     return promise.then((data) => GetResponse.decode(new _m0.Reader(data)));
   }
 
+  RawGet(request: RawGetRequest): Promise<RawGetResponse> {
+    const data = RawGetRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "native_iam_token.IAMTokenService",
+      "RawGet",
+      data
+    );
+    return promise.then((data) => RawGetResponse.decode(new _m0.Reader(data)));
+  }
+
   Delete(request: DeleteRequest): Promise<DeleteResponse> {
     const data = DeleteRequest.encode(request).finish();
     const promise = this.rpc.request(
@@ -1561,16 +1705,14 @@ export class IAMTokenServiceClientImpl implements IAMTokenService {
     return promise.then((data) => DeleteResponse.decode(new _m0.Reader(data)));
   }
 
-  DisableByUUID(request: DisableByUUIDRequest): Promise<DisableByUUIDResponse> {
-    const data = DisableByUUIDRequest.encode(request).finish();
+  Disable(request: DisableRequest): Promise<DisableResponse> {
+    const data = DisableRequest.encode(request).finish();
     const promise = this.rpc.request(
       "native_iam_token.IAMTokenService",
-      "DisableByUUID",
+      "Disable",
       data
     );
-    return promise.then((data) =>
-      DisableByUUIDResponse.decode(new _m0.Reader(data))
-    );
+    return promise.then((data) => DisableResponse.decode(new _m0.Reader(data)));
   }
 
   Validate(request: ValidateRequest): Promise<ValidateResponse> {

@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package native_iam_oauth;
+
+option go_package = "slamy/openCRM/native/iam/oauth;native_iam_oauth_grpc";
+
+// Scope of the requested access. Check native_iam_policy for more information.
+message Scope {
+    // Namespace where this scope applies
+    string namespace = 1;
+    // Resources that can be accessed using token
+    repeated string resources = 2;
+    // Actions that can be done on the resources
+    repeated string actions = 3;
+}
+
+message CreateTokenWithPasswordRequest {
+    // Namespace where identity located. May be empty for global identity
+    string namespace = 1;
+    // Identity UUID
+    string identity = 2;
+    // Identity password
+    string password = 3;
+    // Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested.
+    string metadata = 4;
+    // Scopes of the created token. Empty for creating token with all posible scopes for identity.
+    repeated Scope scopes = 5;
+}
+message CreateTokenWithPasswordResponse {
+    enum Status {
+        // Everything is ok. Access and refresh tokens were successfully created
+        OK = 0;
+        // Login or password is not valid
+        CREDENTIALS_INVALID = 1;
+        // Identity was manually disabled
+        IDENTITY_NOT_ACTIVE = 2;
+        // Not enough privileges to create token with specified scopes
+        UNAUTHORIZED = 3;
+    }
+    // Status of the token creation
+    Status status = 1;
+    // Token used for authentication and authorization. If status is not OK - empty string
+    string accessToken = 2;
+    // Token used for refreshing accessToken. If status is not OK - empty string
+    string refreshToken = 3;
+}
+
+message CreateTokenWithOAuth2Request {
+    // OAuth2 provider
+    string provider = 1;
+    // Token issued by OAuth2 provider``
+    string token = 2;
+}
+message CreateTokenWithOAuth2Response {
+    // Token used for authentication and authorization
+    string accessToken = 1;
+    // Token used for refreshing accessToken
+    string refreshToken = 2;
+    // Identity UUID
+    string identity = 3;
+}
+
+message RefreshTokenRequest {
+    string refreshToken = 1;
+}
+message RefreshTokenResponse {
+    enum Status {
+        // Everything is ok. New access token was successfully created
+        OK = 0;
+
+        // Received token has bad format or its signature doesnt match
+        TOKEN_INVALID = 1;
+        // Most probably token was deleted after its creation
+        TOKEN_NOT_FOUND = 2;
+        // Token was manually disabled
+        TOKEN_DISABLED = 3;
+        // Token expired
+        TOKEN_EXPIRED = 4;
+        // Provided token was recognized but most probably it is normal access token (not refresh one)
+        TOKEN_IS_NOT_REFRESH_TOKEN = 5;
+
+        // Identity wasnt founded. Most probably it was deleted after token creation
+        IDENTITY_NOT_FOUND = 6;
+        // Identity was manually disabled.
+        IDENTITY_NOT_ACTIVE = 7;
+        // Most probably indentity policies changed and now its not possible to create token with same scopes
+        IDENTITY_UNAUTHENTICATED = 8;
+    }
+    // Status of the refresh
+    Status status = 1;
+    // New access token
+    string accessToken = 2;
+}
+
+/*message InvalidateTokenRequest {
+    // Refresh or access token to invalidate. Both tokens will be invalidated
+    string token = 1;
+}
+message InvalidateTokenResponse {}*/
+
+/*message VerifyResourceAccessRequest {
+    string accessToken = 1;
+}
+message VerifyResourceAccessResponse {
+    bool hasAccess = 1;
+}*/
+
+message CheckAccessRequest {
+    // Token to verify
+    string accessToken = 1;
+    // Scopes for with to validate access
+    repeated Scope scopes = 2;
+}
+message CheckAccessResponse {
+    enum Status {
+        // Provided token allows to access scopes
+        OK = 0;
+
+        // Received token has bad format or its signature doesnt match
+        TOKEN_INVALID = 1;
+        // Most probably token was deleted after its creation
+        TOKEN_NOT_FOUND = 2;
+        // Token was manually disabled
+        TOKEN_DISABLED = 3;
+        // Token expired
+        TOKEN_EXPIRED = 4;
+
+        // Token has not enought privileges to access specified scopes
+        UNAUTHORIZED = 5;
+    }
+
+    // Status of the verification
+    Status status = 1;
+    // Details of the status, that can be safelly returned and displayed to the user
+    string message = 2;
+}
+
+// Provides API for OAuth ("Open Authorization") style access control
+service IAMOAuthService {
+    // Create access token and refresh token using password
+    rpc CreateTokenWithPassword(CreateTokenWithPasswordRequest) returns (CreateTokenWithPasswordResponse);
+    // Create access token and refresh token using thrid party OAuth2 provider
+    // rpc CreateTokenWithOAuth2(CreateTokenWithOAuth2Request) returns (CreateTokenWithOAuth2Response);
+    // Create access token and refresh token using SSO (Single Sign On) 
+    // rpc CreateTokenWithSSO() returns ();
+
+    // Completes started two factor TOTP (Time-based one-time password) authetication and returns actual access asn refresh tokens
+    // rpc ExtendTokenWithTOTP(CompleteTwoFactorTOTPRequest) returns (CompleteTwoFactorTOTPResponse);
+    
+    // Creates new access token using refresh tokenna
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+    // Invalidates pare of access token and refresh tokens
+    //rpc InvalidateToken(InvalidateTokenRequest) returns (InvalidateTokenResponse);
+
+    // rpc VerifyResoureAccess(VerifyResourceAccessRequest) returns (VerifyResourceAccessResponse);
+    // Checks if token is allowed to perform actions from the specified scopes
+    rpc CheckAccess(CheckAccessRequest) returns (CheckAccessResponse);
+}

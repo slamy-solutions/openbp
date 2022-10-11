@@ -26,10 +26,12 @@ type IAMTokenServiceClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	// Get token data using token UUID (unique identifier)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	// Get token data using raw access/refresh token. Validates if token still exists in the system.
+	RawGet(ctx context.Context, in *RawGetRequest, opts ...grpc.CallOption) (*RawGetResponse, error)
 	// Delete token using token UUID (unique identifier)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// Disable token using its unique identifier
-	DisableByUUID(ctx context.Context, in *DisableByUUIDRequest, opts ...grpc.CallOption) (*DisableByUUIDResponse, error)
+	Disable(ctx context.Context, in *DisableRequest, opts ...grpc.CallOption) (*DisableResponse, error)
 	// Validates token and gets its data
 	Validate(ctx context.Context, in *ValidateRequest, opts ...grpc.CallOption) (*ValidateResponse, error)
 	// Validates refresh token and create new token based on it. New token will have same scopes
@@ -64,6 +66,15 @@ func (c *iAMTokenServiceClient) Get(ctx context.Context, in *GetRequest, opts ..
 	return out, nil
 }
 
+func (c *iAMTokenServiceClient) RawGet(ctx context.Context, in *RawGetRequest, opts ...grpc.CallOption) (*RawGetResponse, error) {
+	out := new(RawGetResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_token.IAMTokenService/RawGet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMTokenServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_token.IAMTokenService/Delete", in, out, opts...)
@@ -73,9 +84,9 @@ func (c *iAMTokenServiceClient) Delete(ctx context.Context, in *DeleteRequest, o
 	return out, nil
 }
 
-func (c *iAMTokenServiceClient) DisableByUUID(ctx context.Context, in *DisableByUUIDRequest, opts ...grpc.CallOption) (*DisableByUUIDResponse, error) {
-	out := new(DisableByUUIDResponse)
-	err := c.cc.Invoke(ctx, "/native_iam_token.IAMTokenService/DisableByUUID", in, out, opts...)
+func (c *iAMTokenServiceClient) Disable(ctx context.Context, in *DisableRequest, opts ...grpc.CallOption) (*DisableResponse, error) {
+	out := new(DisableResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_token.IAMTokenService/Disable", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -140,10 +151,12 @@ type IAMTokenServiceServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	// Get token data using token UUID (unique identifier)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	// Get token data using raw access/refresh token. Validates if token still exists in the system.
+	RawGet(context.Context, *RawGetRequest) (*RawGetResponse, error)
 	// Delete token using token UUID (unique identifier)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// Disable token using its unique identifier
-	DisableByUUID(context.Context, *DisableByUUIDRequest) (*DisableByUUIDResponse, error)
+	Disable(context.Context, *DisableRequest) (*DisableResponse, error)
 	// Validates token and gets its data
 	Validate(context.Context, *ValidateRequest) (*ValidateResponse, error)
 	// Validates refresh token and create new token based on it. New token will have same scopes
@@ -163,11 +176,14 @@ func (UnimplementedIAMTokenServiceServer) Create(context.Context, *CreateRequest
 func (UnimplementedIAMTokenServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
+func (UnimplementedIAMTokenServiceServer) RawGet(context.Context, *RawGetRequest) (*RawGetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RawGet not implemented")
+}
 func (UnimplementedIAMTokenServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedIAMTokenServiceServer) DisableByUUID(context.Context, *DisableByUUIDRequest) (*DisableByUUIDResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DisableByUUID not implemented")
+func (UnimplementedIAMTokenServiceServer) Disable(context.Context, *DisableRequest) (*DisableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Disable not implemented")
 }
 func (UnimplementedIAMTokenServiceServer) Validate(context.Context, *ValidateRequest) (*ValidateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
@@ -227,6 +243,24 @@ func _IAMTokenService_Get_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IAMTokenService_RawGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RawGetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMTokenServiceServer).RawGet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_token.IAMTokenService/RawGet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMTokenServiceServer).RawGet(ctx, req.(*RawGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IAMTokenService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
@@ -245,20 +279,20 @@ func _IAMTokenService_Delete_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IAMTokenService_DisableByUUID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DisableByUUIDRequest)
+func _IAMTokenService_Disable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisableRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IAMTokenServiceServer).DisableByUUID(ctx, in)
+		return srv.(IAMTokenServiceServer).Disable(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_iam_token.IAMTokenService/DisableByUUID",
+		FullMethod: "/native_iam_token.IAMTokenService/Disable",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IAMTokenServiceServer).DisableByUUID(ctx, req.(*DisableByUUIDRequest))
+		return srv.(IAMTokenServiceServer).Disable(ctx, req.(*DisableRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -336,12 +370,16 @@ var IAMTokenService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IAMTokenService_Get_Handler,
 		},
 		{
+			MethodName: "RawGet",
+			Handler:    _IAMTokenService_RawGet_Handler,
+		},
+		{
 			MethodName: "Delete",
 			Handler:    _IAMTokenService_Delete_Handler,
 		},
 		{
-			MethodName: "DisableByUUID",
-			Handler:    _IAMTokenService_DisableByUUID_Handler,
+			MethodName: "Disable",
+			Handler:    _IAMTokenService_Disable_Handler,
 		},
 		{
 			MethodName: "Validate",

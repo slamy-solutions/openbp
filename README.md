@@ -1,9 +1,9 @@
 # OpenBP - Open Business platform
 
 ## Motivation
-Have you ever created or integrated something to SAP / Comarch ERP / 1C / Odoo / …. ? Have you noticed how many years these platforms are behind? Some of them were created even before virtual machines appeared, I'm not even talking about Docker or Kubernetes :) The use of old patterns, dependencies, and very strong corporatization leads to the fact that they will not change.
+Have you ever created or integrated something to SAP / Comarch ERP / 1C / Odoo / …. ? Have you noticed how many years these platforms are behind? Some of them were created even before virtual machines appeared, and I'm not even talking about Docker or Kubernetes :) The use of old patterns, dependencies, and very strong corporatization leads to the fact that they will not change.
 
-Many new large enterprises are looking for which platforms to switch to and simply cannot find alternatives. The business cannot find developers to support the systems, simply because the person who works with these platforms is simply not called a developer. Most of them even have proprietary programming languages ​​for which there are no libraries anywhere on the internet. Seriously, why use ABAP when you can use Typescript?
+Many new large enterprises are looking for which platforms to switch to and cannot find alternatives. The business cannot find developers to support the systems simply because the person who works with these platforms is not called a developer. Most even have proprietary programming languages ​​for which there are no libraries on the internet. Seriously, why use ABAP when you can use Typescript?
 
 These platforms do not use what has long been considered the norm for developers, for example, containerization, GIT for version control, popular programming languages, IaC, CI/CD, and SPA as frontend on React/Vue/Angular, …. . They implement modern patterns only through dirty hacks. Such simple tasks as creating an API, opening a WebSocket, adding a module, setting up a high-availability cluster, and performing an update on the go - for these systems often turn into a nightmare.
 
@@ -37,11 +37,11 @@ Here's what OpenBP offers out of the box for developers, implementation companie
 - **On-the-fly updates** that will not stop your critical workflows.
 - Industrial grade security environment complied with **ISO/IEC 27001** requirements.
 - **GDPR** complied storage system and data flow.
-- Hightly flexible and extendable.
+- Highly flexible and extendable.
 - Integrated with edge computing and device management.
-- Includes set of the solutions: ERP, CRM, Edge computing, ....
+- Includes set of the solutions: ERP, CRM, Edge computing, etc.
 
-Thats not all ;). Please, check [Architectual vision](./docs/architecture/architecture_vision.md) if you want to know more.
+That's not all ;). Please, check [Architectural vision](./docs/architecture/architecture_vision.md) if you want to know more.
 
 ## Sponsors
 <div align="center">
@@ -52,5 +52,6 @@ Thats not all ;). Please, check [Architectual vision](./docs/architecture/archit
 
 
 ## License
-OBP is free and the source is available.
-Software released under [Server Side Public License (SSPL) v1](LICENSE.md) license. This is GNU GPL v3 with small modifications provided by [MongoDB](https://www.mongodb.com/licensing/server-side-public-license/faq).
+OBP is free and open source. It is distributed under Apache 2.0 license.
+
+Also, check the `system` module - it has external dependencies ([Redis](https://redis.io/), [RabbitMQ](https://www.rabbitmq.com/), etc.). Those dependencies have different licenses. OpenBP doesn't distribute nor modify code. Please check their open source licenses before usage.

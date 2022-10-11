@@ -9,7 +9,6 @@ import { client as cacheClient, connect as connectToCache, close as closeCache }
 import { client as nativeNamespaceGRPC, connect as connectToNativeNamespace, close as closeNativeNamespace } from '../../../tools/namespace/grpc'
 import { tokenClient as nativeIAmTokenGRPC, connect as connectToNativeIAM, close as closeNativeIAM } from '../../../tools/iam/grpc'
 import { GetTokensForIdentityRequest_ActiveFilter, RefreshResponse_Status, TokenData, ValidateResponse, ValidateResponse_Status } from '../../../tools/iam/proto/token'
-import { RefreshTokenRequest } from '../../../tools/iam/proto/auth'
 
 const GLOBAL_DB_NAME = `openbp_global`
 const TEST_NAMESPACE_NAME = "iamtokentestnamespace"
@@ -213,7 +212,7 @@ describe("Blackbox", () => {
             })
             const uuid = response.tokenData?.uuid as string
             if (i%2 == 0) {
-                await nativeIAmTokenGRPC.DisableByUUID({
+                await nativeIAmTokenGRPC.Disable({
                     namespace: TEST_NAMESPACE_NAME,
                     uuid
                 })
@@ -249,7 +248,7 @@ describe("Blackbox", () => {
             })
             const uuid = response.tokenData?.uuid as string
             if (i%2 == 0) {
-                await nativeIAmTokenGRPC.DisableByUUID({ 
+                await nativeIAmTokenGRPC.Disable({ 
                     namespace: TEST_NAMESPACE_NAME,
                     uuid
                 })

@@ -249,7 +249,7 @@ describe("Blackbox", () => {
         })
         expect(repsponseBeforeDisable.status).toBe(ValidateResponse_Status.OK)
 
-        await nativeIAmTokenGRPC.DisableByUUID({
+        await nativeIAmTokenGRPC.Disable({
             namespace: "",
             uuid: createResponse.tokenData?.uuid as string
         })

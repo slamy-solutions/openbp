@@ -38,6 +38,9 @@ nav:
         - What is the native module?: docs/modules/native/overview.en.md
         - Namespace: docs/modules/native/namespace.en.md
         - KeyValueStorage: docs/modules/native/keyvaluestorage.en.md
+        - IAM:
+          - What is IAM?: docs/modules/native/iam/iam.en.md
+          - OAuth: docs/modules/native/iam/oauth.en.md
 
   - Community:
       - Get Involved: community/get-involved.en.md
@@ -62,7 +65,8 @@ markdown_extensions:
   - meta
   - pymdownx.details
   - pymdownx.superfences
-  - pymdownx.tabbed
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
@@ -76,8 +80,8 @@ plugins:
         redirect_maps:
             'docs/installing.md': 'docs/getting-started/install.en.md'
             'docs/getting-started.md': 'docs/getting-started/first-app-tutorial.en.md'
-    - i18n:
-        default_language: en
-        languages:
-          en: english
-        material_alternate: false
+    #- i18n:
+    #    default_language: en
+    #    languages:
+    #      en: english
+    #    material_alternate: false

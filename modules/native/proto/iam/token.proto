@@ -67,6 +67,17 @@ message GetResponse {
     TokenData tokenData = 1;
 }
 
+message RawGetRequest {
+    // Refresh or access token
+    string token = 1;
+    // Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default)
+    bool useCache = 2;
+}
+message RawGetResponse {
+    // Actual token data
+    TokenData tokenData = 1;
+}
+
 message DeleteRequest {
     // Namespace of the token. Empty for global token.
     string namespace = 1;
@@ -75,13 +86,13 @@ message DeleteRequest {
 }
 message DeleteResponse {}
 
-message DisableByUUIDRequest {
+message DisableRequest {
     // Namespace of the token. Empty for global token.
     string namespace = 1;
     // Unique identifier of the token inside namespace
     string uuid = 2;
 }
-message DisableByUUIDResponse {}
+message DisableResponse {}
 
 
 message ValidateRequest {
@@ -166,10 +177,12 @@ service IAMTokenService {
     rpc Create(CreateRequest) returns (CreateResponse);
     // Get token data using token UUID (unique identifier)
     rpc Get(GetRequest) returns (GetResponse);
+    // Get token data using raw access/refresh token. Validates if token still exists in the system.
+    rpc RawGet(RawGetRequest) returns (RawGetResponse);
     // Delete token using token UUID (unique identifier)
     rpc Delete(DeleteRequest) returns (DeleteResponse);
     // Disable token using its unique identifier
-    rpc DisableByUUID(DisableByUUIDRequest) returns (DisableByUUIDResponse);
+    rpc Disable(DisableRequest) returns (DisableResponse);
     // Validates token and gets its data
     rpc Validate(ValidateRequest) returns (ValidateResponse);
     // Validates refresh token and create new token based on it. New token will have same scopes 

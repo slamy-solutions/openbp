@@ -123,6 +123,25 @@ services:
      - system_telemetry
      - native_namespace
 
+  native_iam_oauth:
+   container_name: native_iam_oauth
+   restart: always
+   build:
+     context: .
+     dockerfile: modules/native/services/iam/oauth/Dockerfile
+   environment:
+     OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+     OTEL_SERVICE_NAME: "native_iam_oauth"
+   depends_on:
+     - system_db
+     - system_cache
+     - system_telemetry
+     - native_namespace
+     - native_iam_policy
+     - native_iam_identity
+     - native_iam_token
+     - native_iam_authentication_password
+
   native_actor_user:
     container_name: native_actor_user
     restart: always
@@ -170,27 +189,27 @@ services:
       - system_rabbitmq
       - native_namespace
 
-  native_api:
-    container_name: native_api
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/api/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_api"
-    ports:
-      - 8055:80
-    depends_on:
-      - system_db
-      - system_cache
-      - system_telemetry
-      - system_rabbitmq
-      - native_namespace
-      - native_keyvaluestorage
-      - native_iam_config
-      - native_iam_policy
-      - native_iam_identity
-    #  - native_iam_token
-      - native_actor_user
-    #  - native_iam_authentication_password
+  #native_api:
+  #  container_name: native_api
+  #  restart: always
+  #  build:
+    #   context: .
+    #   dockerfile: modules/native/services/api/Dockerfile
+    # environment:
+    #   OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+    #   OTEL_SERVICE_NAME: "native_api"
+    # ports:
+    #   - 8055:80
+    # depends_on:
+    #   - system_db
+    #   - system_cache
+    #   - system_telemetry
+    #   - system_rabbitmq
+    #   - native_namespace
+    #   - native_keyvaluestorage
+    #   - native_iam_config
+    #   - native_iam_policy
+    #   - native_iam_identity
+    # #  - native_iam_token
+    #   - native_actor_user
+    # #  - native_iam_authentication_password

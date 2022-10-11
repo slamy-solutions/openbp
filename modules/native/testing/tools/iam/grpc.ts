@@ -1,6 +1,6 @@
 import { Client } from '../../../../system/libs/ts/grpc'
 
-import { IAMAuthServiceClientImpl } from './proto/auth'
+import { IAMOAuthServiceClientImpl } from './proto/oauth'
 import { IAMConfigServiceClientImpl } from './proto/configuration'
 import { IAMIdentityServiceClientImpl } from './proto/identity'
 import { IAMPolicyServiceClientImpl } from './proto/policy'
@@ -8,8 +8,8 @@ import { IAMTokenServiceClientImpl } from './proto/token'
 
 import { IAMAuthenticationPasswordServiceClientImpl } from './proto/authentication/password'
 
-const grpcAuthClient = new Client("native_iam_auth:80")
-export const authClient = new IAMAuthServiceClientImpl(grpcAuthClient)
+const grpcOAuthClient = new Client("native_iam_oauth:80")
+export const oauthClient = new IAMOAuthServiceClientImpl(grpcOAuthClient)
 
 const grpcConfigClient = new Client("native_iam_config:80")
 export const configClient = new IAMConfigServiceClientImpl(grpcConfigClient)
@@ -28,7 +28,7 @@ const grpcAuthenticationPasswordClient = new Client("native_iam_authentication_p
 export const authenticationPasswordClient = new IAMAuthenticationPasswordServiceClientImpl(grpcAuthenticationPasswordClient)
 
 export async function connect() {
-    // await grpcAuthClient.connect()
+    await grpcOAuthClient.connect()
     await grpcConfigClient.connect()
     await grpcIdentityClient.connect()
     await grpcPolicyClient.connect()
@@ -38,7 +38,7 @@ export async function connect() {
 }
 
 export async function close() {
-    // grpcAuthClient.close()
+    grpcOAuthClient.close()
     grpcConfigClient.close()
     grpcIdentityClient.close()
     grpcPolicyClient.close()
