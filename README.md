@@ -55,3 +55,5 @@ That's not all ;). Please, check [Architectural vision](./docs/architecture/arch
 OBP is free and open source. It is distributed under Apache 2.0 license.
 
 Also, check the `system` module - it has external dependencies ([Redis](https://redis.io/), [RabbitMQ](https://www.rabbitmq.com/), etc.). Those dependencies have different licenses. OpenBP doesn't distribute nor modify code. Please check their open source licenses before usage.
+
+If you need a special license - contact us.

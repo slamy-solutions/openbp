@@ -1,7 +1,7 @@
-import { connect, close, authClient, configClient, identityClient, policyClient, authenticationPasswordClient } from './grpc'
+import { connect, close, oauthClient, configClient, identityClient, policyClient, authenticationPasswordClient } from './grpc'
 
 export const authenticationPasswordGRPC = authenticationPasswordClient
-export const authGRPC = authClient
+export const oauthGRPC = oauthClient
 export const clientGRPC = configClient
 export const identityGRPC = identityClient
 export const policyGRPC = policyClient

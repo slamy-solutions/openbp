@@ -140,7 +140,7 @@ func (s *ActorUserServer) Get(ctx context.Context, in *nativeActorUserGRPC.GetRe
 	if in.UseCache {
 		cacheKey = UUID_CACHE_KEY_PREFIX + in.Uuid
 		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
-		if err == nil {
+		if cacheBytes != nil {
 			var user nativeActorUserGRPC.User
 			err = proto.Unmarshal(cacheBytes, &user)
 			if err != nil {
@@ -183,7 +183,7 @@ func (s *ActorUserServer) GetByLogin(ctx context.Context, in *nativeActorUserGRP
 	if in.UseCache {
 		cacheKey = LOGIN_CACHE_KEY_PREFIX + in.Login
 		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
-		if err == nil {
+		if cacheBytes != nil {
 			var user nativeActorUserGRPC.User
 			err = proto.Unmarshal(cacheBytes, &user)
 			if err != nil {
@@ -221,7 +221,7 @@ func (s *ActorUserServer) GetByIdentity(ctx context.Context, in *nativeActorUser
 	if in.UseCache {
 		cacheKey = IDENITY_CACHE_KEY_PREFIX + in.Identity
 		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
-		if err == nil {
+		if cacheBytes != nil {
 			var user nativeActorUserGRPC.User
 			err = proto.Unmarshal(cacheBytes, &user)
 			if err != nil {
@@ -261,12 +261,12 @@ func (s *ActorUserServer) Update(ctx context.Context, in *nativeActorUserGRPC.Up
 	}
 
 	var user userInMongo
-	err = s.mongoCollection.FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{
+	err = s.mongoCollection.FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{"$set": bson.M{
 		"login":    in.Login,
 		"avatar":   in.Avatar,
 		"fullName": in.FullName,
 		"email":    in.Email,
-	}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&user)
+	}}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return nil, status.Error(grpccodes.AlreadyExists, "Login already exists")
