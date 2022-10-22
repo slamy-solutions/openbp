@@ -40,6 +40,9 @@ nav:
         - KeyValueStorage: docs/modules/native/keyvaluestorage.en.md
         - IAM:
           - What is IAM?: docs/modules/native/iam/iam.en.md
+          - Policy: docs/modules/native/iam/policy.en.md
+          - Identity: docs/modules/native/iam/identity.en.md
+          - Token: docs/modules/native/iam/token.en.md
           - OAuth: docs/modules/native/iam/oauth.en.md
 
   - Community:
@@ -61,6 +64,7 @@ theme:
     - navigation.tabs
 
 markdown_extensions:
+  - def_list
   - admonition
   - meta
   - pymdownx.details

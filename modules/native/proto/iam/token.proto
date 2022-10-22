@@ -98,7 +98,7 @@ message DisableResponse {}
 message ValidateRequest {
     // Token to validate
     string token = 1;
-    // Use cache for faster authorization. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default)
+    // Use cache for faster validation. Cache has a very low chance to not be valid. If cache is not valid it will be deleted after short period of time (30 seconds by default)
     bool useCache = 2;
 }
 message ValidateResponse {

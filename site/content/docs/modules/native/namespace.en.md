@@ -1,6 +1,6 @@
 # Namespace service
 The `native_namespace` is a service for managing namespaces in the entire platform ecosystem. Namespace provides logical separation of the data for modules and services. They can be used, for example, to distinguish customers in the application.
-After the creation of the namespace, the `native_namespace` service creates new `namespace_<name` database so that every new namespace data can be placed in a separate database. On `namespace` deletion, the service will delete its database, and all the data will be lost.
+After the creation of the namespace, the `native_namespace` service creates a new `namespace_<name>` database so that every new namespace data can be placed in a separate database. On `namespace` deletion, the service will delete its database, and all the data will be lost.
 
 ## API
 Communication with the system is possible using the gRPC interface. Definitions of the interface (proto file) are provided by the `native` module.

@@ -15,17 +15,17 @@ This service is controled by build-in constant config with several environment v
 Cache access is shared between all the services so its very important to have unique cache keys withing entire system.
 
 Please use `external_<developer>_<whatever + namespace>` format, where:
-    - developer is unique name of the deveporer. Developer name should not have "_" character. In that way modules installed by different developers will not have collisions
-    - whatever is your custom path. Dont forget, that cache service is also shared between namespaces. Add namespace name somewhere in the key.
+- developer is unique name of the deveporer. Developer name should not have "_" character. In that way modules installed by different developers will not have collisions
+- whatever is your custom path. Dont forget, that cache service is also shared between namespaces. Add namespace name somewhere in the key.
 Examples:
-    - external_scribesystems_rcp_integrator_devices_list_customnamespace
-    - external_scribesystems_rcp_integrator_devices_data_customnamespace_84529
-    - external_litesolutions_workload_participant_customnamespace_381204
+- external_scribesystems_rcp_integrator_devices_list_customnamespace
+- external_scribesystems_rcp_integrator_devices_data_customnamespace_84529
+- external_litesolutions_workload_participant_customnamespace_381204
 
 Native modules names differ from the external. They start with prefix "native". Examples:
-    - native_namespace_list_customnamespace
-    - native_namespace_data_customnamespace_testing
-    - native_cognito_users_list_customnamespace
+ - native_namespace_list_customnamespace
+ - native_namespace_data_customnamespace_testing
+ - native_cognito_users_list_customnamespace
 
 ### Values
 DONT store big values in this cache. This service is optimized for small values. When you are storing big files here, it can evict hundreds of thousands of entries. If you have binary file/image/uncompressable data/something big (like more than 100 kilobytes compressed) - use system_redis_bigCache service for this. Remember, the smaller is expected value - the better.
