@@ -23,7 +23,7 @@ nav:
   - Documentation:
     - Overview: docs/overview.en.md
     - Getting Started:
-      - Install Copilot: docs/getting-started/install.en.md
+      - Install OpenBP: docs/getting-started/install.en.md
       - (Optional) Verify the installation: docs/getting-started/verify.en.md
       - Deploy your first application: docs/getting-started/first-app-tutorial.en.md
     - Modules:
@@ -31,9 +31,8 @@ nav:
       - System:
         - What is the system module?: docs/modules/system/overview.en.md
         - MongoDB: docs/modules/system/mongodb.en.md
-        - Rabbitmq: docs/modules/system/rabbitmq.en.md
+        - AMQP: docs/modules/system/amqp.en.md
         - Redis Cache: docs/modules/system/redis_cache.en.md
-        - Redis Big Cache: docs/modules/system/redis_big_cache.en.md
       - Native:
         - What is the native module?: docs/modules/native/overview.en.md
         - Namespace: docs/modules/native/namespace.en.md
@@ -44,19 +43,32 @@ nav:
           - Identity: docs/modules/native/iam/identity.en.md
           - Token: docs/modules/native/iam/token.en.md
           - OAuth: docs/modules/native/iam/oauth.en.md
+          - Authentication:
+            - Password: docs/modules/native/iam/authentication/password.en.md
+          - Actor:
+            - User: docs/modules/native/iam/actor/user.en.md
 
   - Community:
       - Get Involved: community/get-involved.en.md
       - Guides and Resources: community/guides.en.md
+
+  - License:
+    - License information: license/license.en.md
+    - FAQ: license/faq.en.md
+    - Acknowledgements: license/acknowledgements.en.md
+
+  
 theme:
   name: material
   custom_dir: site/overrides
   palette:
     primary: white
-  font: false
+  font:
+    text: Red Hat Display
+    code: Roboto Mono
   icon:
-    logo: octicons/terminal-16
-  favicon: assets/images/cli.png
+    logo: logo
+  favicon: assets/images/favicon.png
   language: en
   features:
     - tabs
