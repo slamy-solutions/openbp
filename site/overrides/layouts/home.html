@@ -310,7 +310,7 @@
           <h1>Open Business Platform</h1>
           <!-- Your platform for creating business solutions -->
           <p>An open source set of services and tools that makes it easy to <span class="em">build</span>, 
-            <span class="em">release</span>, and <span class="em">operate</span> production ready business solutions.
+            <span class="em">release</span>, and <span class="em">operate</span> production ready <span class="em">Industry 4.0+</span> business solutions.
           </p>
           <a
             href="docs/overview/"
@@ -343,17 +343,17 @@
           <div class="first-column">
             <h3>Made by developers for developers</h3>
             <p>
-              Run a <span class="em">single command</span> to quickly get started with a platform
-              using best practices on k3s.
+              Run a <span class="em">single command</span> to quickly get started with a platform on k3s.
             </p>
             <p>
-              Instead of modeling individual resources, Copilot provides common cloud architectures:
-              <a href="docs/concepts/services/#request-driven-web-service">Request-Driven Web Service</a>,
-              <a href="docs/concepts/services/#load-balanced-web-service">Load Balanced Web Service</a>,
-              <a href="docs/concepts/services/#backend-service">Backend Service</a>,
-              <a href="docs/concepts/services/#worker-service">Worker Service</a>, <a href="docs/concepts/jobs/">Scheduled Job</a>.
-              The necessary infrastructure is generated from the chosen pattern.
-              Focus your time on writing business logic instead of connecting AWS resources.
+              OpenBP provides common cloud modules and services:
+              <a href="/docs/modules/native/iam/iam.en/">Identification and access management</a>,
+              <a href="/docs/modules/system/mongodb.en/">Scalable DB</a>,
+              <a href="/docs/modules/native/namespace.en/">Tenant separation</a>,
+              <a href="/docs/modules/system/amqp.en.md/">Event queue</a>, <a href="/docs/modules/system/redis_cache.en/">Caching</a>,
+              and <a href="/docs/modules/overview.en/">MORE</a>.
+              Everything is seamlessly tided together and works from the box.
+              Focus your time on writing business logic instead of required infastructure resources.
             </p>
           </div>
           <div class="second-column">
@@ -371,7 +371,7 @@
 
           <!-- Arch as code -->
           <div class="responsive-grid">
-            <a class="card-wrapper" href="docs/manifest/overview">
+            <a class="card-wrapper" href="/docs/concepts/IaC.en">
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
@@ -381,35 +381,35 @@
                 <div class="card-content">
                   <h5>IaC</h5>
                   <p>
-                    Describe your services with architecture-as-code.
+                    Describe your resources with infastructure-as-code.
                   </p>
                 </div>
               </div>
             </a>
 
-            <!-- Networking -->
-            <a class="card-wrapper" href="docs/developing/service-discovery">
+            <!-- GIT & CI/CD -->
+            <a class="card-wrapper" href="/docs/concepts/cicd.en">
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/fontawesome/solid/network-wired.svg" %}
+                    {% include ".icons/octicons/git-compare-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
-                  <h5>Networking</h5>
+                  <h5>GIT workflow with CI/CD</h5>
                   <p>
-                    Service discovery is setup by default for your services to connect to each other.
+                    GIT environment and CI/CD pipelines are setup by default for your services to build, update and release.
                   </p>
                 </div>
               </div>
             </a>
 
             <!-- Customize -->
-            <a class="card-wrapper" href="docs/modules/additional-aws-resources/">
+            <a class="card-wrapper" href="/docs/modules/overview.en/">
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/fontawesome/solid/puzzle-piece.svg" %}
+                    {% include ".icons/octicons/package-dependencies-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
@@ -430,10 +430,9 @@
           <div class="first-column">
             <h3>Tools for integration companies</h3>
             <p>
-              No need to worry about gluing Copilot commands in a script to create an automated release process.
-              Copilot provides commands to create multiple deployment <a href="docs/concepts/environments/">environments</a> in separate AWS accounts and regions,
-              as well as creating an AWS CodePipeline <a href="docs/concepts/pipelines/">pipeline</a> to build your container images, deploy your services, and 
-              run automated tests.
+              Modeling, provisioning, and deploying solutions are only part of the application lifecycle for the developer. 
+              OpenBP also supports workflows around troubleshooting and debugging to help when things go wrong.
+              It provides big set of GUI and CLI tools to help integration companies to create and maintain solutions for business clients.
             </p>
           </div>
           <div class="second-column">
@@ -455,13 +454,13 @@
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/octicons/square-24.svg" %}
+                    {% include ".icons/octicons/people-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
-                  <h5>Environments</h5>
+                  <h5>Multitenancy</h5>
                   <p>
-                    Deploy to multiple AWS accounts and regions.
+                    Run and maintain one infastructure for multiple clients and regions.
                   </p>
                 </div>
               </div>
@@ -472,13 +471,13 @@
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/octicons/pencil-24.svg" %}
+                    {% include ".icons/octicons/browser-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
-                  <h5>Override per environment</h5>
+                  <h5>Realtime dashboars</h5>
                   <p>
-                    Adjust your service settings per environments in the manifest.
+                    Check system status, resource usage, backups from the comfort of GUI.
                   </p>
                 </div>
               </div>
@@ -489,13 +488,13 @@
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/aws/codepipeline-32.svg" %}
+                    {% include ".icons/octicons/stack-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
-                  <h5>Automated releases</h5>
+                  <h5>On-demand scaling</h5>
                   <p>
-                    Create a continuous delivery pipeline with built-in commands.
+                    Configure OpenBP to automatically scale and buy resources. Pay only for what you use.
                   </p>
                 </div>
               </div>
@@ -535,13 +534,13 @@
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/aws/fargate-32.svg" %}
+                    {% include ".icons/octicons/terminal-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
-                  <h5>Run tasks</h5>
+                  <h5>No-code enabled</h5>
                   <p>
-                    Run one-off tasks for operational workloads.
+                    Use no-code capabilities for fast prototyping and short time to market. Switch to code for specialized and complex business requirements.
                   </p>
                 </div>
               </div>
@@ -551,13 +550,13 @@
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/octicons/terminal-24.svg" %}
+                    {% include ".icons/octicons/tasklist-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
-                  <h5>Exec</h5>
+                  <h5>Industry standards</h5>
                   <p>
-                    Run commands in or get a shell to a container running on AWS Fargate.
+                    Selected quality attributes, which will be implemented by the OpenERP, originate from best practices for creating IT systems.
                   </p>
                 </div>
               </div>
@@ -567,13 +566,13 @@
               <div class="card">
                 <div class="logo">
                   <span class="twemoji">
-                    {% include ".icons/aws/cloudwatch-32.svg" %}
+                    {% include ".icons/octicons/organization-24.svg" %}
                   </span>
                 </div>
                 <div class="card-content">
-                  <h5>Monitoring</h5>
+                  <h5>Running on production</h5>
                   <p>
-                    View logs or alarms from your services or tasks.
+                    Hundres of customers running platform on production.
                   </p>
                 </div>
               </div>

@@ -4,6 +4,7 @@ OpenBP copyright info: Copyright 2022 Slamy Solutions. All rights reserved. Rele
 
 OpenBP uses the following amazing open-source projects:
 
-| Project | License                                                                    |
-| ------- | -------------------------------------------------------------------------- |
-| go      | [BSD 3-Clause](https://raw.githubusercontent.com/golang/go/master/LICENSE) |
+| Project  | License                                                                    |
+| -------- | -------------------------------------------------------------------------- |
+| go       | [BSD 3-Clause](https://raw.githubusercontent.com/golang/go/master/LICENSE) |
+| octicons | [MIT](https://raw.githubusercontent.com/primer/octicons/main/LICENSE)      |

@@ -26,6 +26,9 @@ nav:
       - Install OpenBP: docs/getting-started/install.en.md
       - (Optional) Verify the installation: docs/getting-started/verify.en.md
       - Deploy your first application: docs/getting-started/first-app-tutorial.en.md
+    - Concepts:
+      - IaC: docs/concepts/IaC.en.md
+      - GIT CI/CD: docs/concepts/cicd.en.md
     - Modules:
       - What is the module?: docs/modules/overview.en.md
       - System:
