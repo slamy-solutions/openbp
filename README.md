@@ -1,3 +1,11 @@
+# ⚠️⚠️⚠️ In development ⚠️⚠️⚠️
+
+Plans:
+
+- ***December 2022*** - first dev release
+- ***February 2023*** - first stable version running on production. 
+- ***March 2023 - April 2023*** - working in production under higher workloads. Up to 1gbps ingress.
+
 # OpenBP - Open Business platform
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
