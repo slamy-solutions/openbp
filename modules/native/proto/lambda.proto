@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_lambda;
 
-option go_package = "slamy/openCRM/native/lambda;native_lambda_grpc";
+option go_package = "slamy/openBP/native/lambda;native_lambda_grpc";
 
 message Lambda {
     // Namespace where lambda was created

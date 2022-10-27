@@ -6,7 +6,7 @@ import "google/protobuf/wrappers.proto";
 
 package native_catalog;
 
-option go_package = "slamy/openCRM/native/catalog;native_catalog_grpc";
+option go_package = "slamy/openBP/native/catalog;native_catalog_grpc";
 
 message PropertySchema {
     message IntData{

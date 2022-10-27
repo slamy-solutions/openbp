@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_iam_configuration;
 
-option go_package = "slamy/openCRM/native/iam/configuration;native_iam_configuration_grpc";
+option go_package = "slamy/openBP/native/iam/configuration;native_iam_configuration_grpc";
 
 // Configuration of the IAM
 message Configuration {

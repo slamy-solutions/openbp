@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_keyvalueprstorage;
 
-option go_package = "slamy/openCRM/native/native_keyvaluestorage;native_native_keyvaluestorage_grpc";
+option go_package = "slamy/openBP/native/native_keyvaluestorage;native_native_keyvaluestorage_grpc";
 
 message SetRequest {
     // Namespace where to set key. Use empty for global key

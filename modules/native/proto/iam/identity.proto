@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_iam_identity;
 
-option go_package = "slamy/openCRM/native/iam/identity;native_iam_identity_grpc";
+option go_package = "slamy/openBP/native/iam/identity;native_iam_identity_grpc";
 
 message Identity {
     message PolicyReference {

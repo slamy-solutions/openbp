@@ -4,7 +4,7 @@ import "google/protobuf/timestamp.proto";
 
 package native_files;
 
-option go_package = "slamy/openCRM/native/catalog;native_files_grpc";
+option go_package = "slamy/openBP/native/catalog;native_files_grpc";
 
 // Represents file information (metadata) that is directly binded to the binary data
 message File {

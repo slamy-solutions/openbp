@@ -6,7 +6,7 @@ import "google/protobuf/wrappers.proto";
 
 package native_configuration;
 
-option go_package = "slamy/openCRM/native/configuration;native_configuration_grpc";
+option go_package = "slamy/openBP/native/configuration;native_configuration_grpc";
 
 message Configuration {
     // Unique name of the configuration
