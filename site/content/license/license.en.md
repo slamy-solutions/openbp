@@ -17,7 +17,7 @@ The AGPL License permits users of the licensed code to:
 - Distribute copies or modified/updated versions of the code as long as these modifications are also released under the GNU AGPL
 - Place warranty
   
-Check the [FAQ](FAQ.en.md) page, where we interpret the license and answer the most frequent questions.
+Check the [FAQ](faq.en.md) page, where we interpret the license and answer the most frequent questions.
 
 ## Enterprise license
 If you are not satisfied with AGPL license, you can request an ***Enterprise license*** by contacting us. The Enterprise license may also include additional benefits discussed individually.
