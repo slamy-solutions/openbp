@@ -10,6 +10,8 @@ Plans:
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
+![Architecture](./site/content/docs/architecture/all.png)
+
 ## Motivation
 Have you ever created or integrated something to SAP / Comarch ERP / 1C / Odoo / …. ? Have you noticed how many years these platforms are behind? Some of them were created even before virtual machines appeared, and I'm not even talking about Docker or Kubernetes :) The use of old patterns, dependencies, and very strong corporatization leads to the fact that they will not change.
 
