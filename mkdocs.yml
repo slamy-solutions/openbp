@@ -51,9 +51,9 @@ nav:
           - Actor:
             - User: docs/modules/native/iam/actor/user.en.md
 
-  - Community:
-      - Get Involved: community/get-involved.en.md
-      - Guides and Resources: community/guides.en.md
+  #- Community:
+  #    - Get Involved: community/get-involved.en.md
+  #    - Guides and Resources: community/guides.en.md
 
   - License:
     - License information: license/license.en.md

@@ -39,6 +39,7 @@
     </div>
 
     <!-- Site language selector -->
+    <!--
     {% if config.extra.alternate %}
     <div class="md-header__option"></form>
       <div class="md-select">
@@ -64,6 +65,7 @@
       </div>
     </div>
     {% endif %}
+    -->
 
     <!-- Button to open search dialogue -->
     {% if "search" in config["plugins"] %}
@@ -81,5 +83,13 @@
         {% include "partials/source.html" %}
       </div>
     {% endif %}
+
+    <div class="md-header__option">
+      <div class="md-select">
+        <a class="md-header__button md-icon" href="https://discord.gg/feV6NfNZ5b">
+          {% include ".icons/fontawesome/brands/discord.svg" %}
+        </a>
+      </div>
+    </div>
   </nav>
 </header>
