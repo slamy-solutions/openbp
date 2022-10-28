@@ -4,6 +4,12 @@
 {% if page and page.meta and page.meta.title %}
 <meta property="og:title" content="{{ page.meta.title }}" />
 {% endif %}
+{% if page and page.meta and page.meta.site_name %}
+<meta property="og:site_name" content="{{ page.meta.site_name }}" />
+{% endif %}
+{% if page and page.meta and page.meta.description %}
+<meta property="og:description" content="{{ page.meta.description }}" />
+{% endif %}
 {% if page and page.meta and page.meta.image %}
 <meta property="og:image" content="{{ page.meta.image }}" />
 <meta property="og:image:type" content="image/png" />
