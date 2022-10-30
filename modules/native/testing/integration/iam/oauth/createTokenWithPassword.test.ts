@@ -194,7 +194,7 @@ describe("Blackbox", () => {
         }
     })
 
-    test("On success returns tokens with all posible scopes if in request list of scopes was empty", async () => {
+    test("On success returns tokens with all possible scopes if in request list of scopes was empty", async () => {
         const identityResponse = await nativeIAmIdentityGRPC.Create({
             name: randomBytes(16).toString('hex'),
             initiallyActive: true,

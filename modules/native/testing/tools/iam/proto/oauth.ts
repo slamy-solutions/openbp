@@ -23,7 +23,7 @@ export interface CreateTokenWithPasswordRequest {
   password: string;
   /** Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested. */
   metadata: string;
-  /** Scopes of the created token. Empty for creating token with all posible scopes for identity. */
+  /** Scopes of the created token. Empty for creating token with all possible scopes for identity. */
   scopes: Scope[];
 }
 

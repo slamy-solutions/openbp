@@ -296,7 +296,7 @@ type CreateTokenWithPasswordRequest struct {
 	Password string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	// Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested.
 	Metadata string `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	// Scopes of the created token. Empty for creating token with all posible scopes for identity.
+	// Scopes of the created token. Empty for creating token with all possible scopes for identity.
 	Scopes []*Scope `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
 }
 

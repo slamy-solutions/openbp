@@ -23,7 +23,7 @@ message CreateTokenWithPasswordRequest {
     string password = 3;
     // Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested.
     string metadata = 4;
-    // Scopes of the created token. Empty for creating token with all posible scopes for identity.
+    // Scopes of the created token. Empty for creating token with all possible scopes for identity.
     repeated Scope scopes = 5;
 }
 message CreateTokenWithPasswordResponse {
