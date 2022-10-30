@@ -46,10 +46,13 @@ Here's what OpenBP offers out of the box for developers, implementation companie
 
 That's not all ;). Please, check [Architectural vision](./docs/architecture/architecture_vision.md) if you want to know more.
 
-## Sponsors
+## Partners
 <div align="center">
-  <a href="https://modulsoft.pl/">
-    <img src="./site/content/assets/images/sponsors/modulsoft.svg" width="20%" />
+  <a href="https://modulsoft.pl/" style="padding: 20px;">
+    <img src="./site/content/assets/images/partners/modulsoft.svg" width="20%" />
+  </a>
+  <a href="https://scribe.systems/" style="padding: 20px;">
+    <img src="./site/content/assets/images/partners/ScribeSystems.svg" width="16%" />
   </a>
 </div>
 

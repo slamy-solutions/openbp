@@ -37,8 +37,11 @@ Thats not all ;). Please, check [Architectual vision](./architecture/architectur
 ## Partners
 
 <div align="center">
-  <a href="https://modulsoft.pl/">
-    <img src="/assets/images/partners/modulsoft.svg" width="20%" />
+  <a href="https://modulsoft.pl/" style="padding: 20px;">
+    <img src="/assets/images/partners/modulsoft.svg" width="20%"  />
+  </a>
+  <a href="https://scribe.systems/"style="padding: 20px;">
+    <img src="/assets/images/partners/ScribeSystems.svg" width="16%" />
   </a>
 </div>
 
