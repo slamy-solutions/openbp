@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_namespace;
 
-option go_package = "slamy/openERP/native/namespace;native_namespace_grpc";
+option go_package = "slamy/openERP/native/namespace;namespace";
 
 message Namespace {
     // Unique name of the namespace

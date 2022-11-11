@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_actor_user;
 
-option go_package = "slamy/openERP/native/actor/user;native_actor_user_grpc";
+option go_package = "slamy/openERP/native/actor/user;user";
 
 message User {
     // Unique identifier

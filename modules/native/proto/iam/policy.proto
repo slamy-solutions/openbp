@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_iam_policy;
 
-option go_package = "slamy/openBP/native/iam/policy;native_iam_policy_grpc";
+option go_package = "slamy/openBP/native/iam/policy;policy";
 
 message Policy {
     // Namespace where policy was created. Namespace can be empty for global policy.

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package native_iam_oauth;
 
-option go_package = "slamy/openBP/native/iam/oauth;native_iam_oauth_grpc";
+option go_package = "slamy/openBP/native/iam/oauth;oauth";
 
 // Scope of the requested access. Check native_iam_policy for more information.
 message Scope {

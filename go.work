@@ -1,13 +1,14 @@
 go 1.18
 
 use (
+	./modules/native/libs/golang
 	./modules/native/services/actor/user
 	./modules/native/services/api
 	./modules/native/services/file
-	./modules/native/services/iam/oauth
 	./modules/native/services/iam/authentication/password
 	./modules/native/services/iam/config
 	./modules/native/services/iam/identity
+	./modules/native/services/iam/oauth
 	./modules/native/services/iam/policy
 	./modules/native/services/iam/token
 	./modules/native/services/keyvaluestorage

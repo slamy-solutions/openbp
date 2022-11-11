@@ -4,7 +4,7 @@ import "google/protobuf/timestamp.proto";
 
 package native_iam_token;
 
-option go_package = "slamy/openBP/native/iam/token;native_iam_token_grpc";
+option go_package = "slamy/openBP/native/iam/token;token";
 
 // Scope defines what can be accessed by token and what actions can be performed on accessible resources. Scope is bounded the namespace where resources are located.
 message Scope {
