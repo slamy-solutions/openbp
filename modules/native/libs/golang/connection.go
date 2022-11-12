@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func makeGrpcClient[T any](clientFunction func(grpc.ClientConnInterface) T, address string, opts ...grpc.DialOption) (*grpc.ClientConn, *T, error) {
+func makeGrpcClient[T interface{}](clientFunction func(grpc.ClientConnInterface) T, address string, opts ...grpc.DialOption) (*grpc.ClientConn, T, error) {
 	opts = append(
 		[]grpc.DialOption{
 			grpc.WithInsecure(),
@@ -29,49 +29,50 @@ func makeGrpcClient[T any](clientFunction func(grpc.ClientConnInterface) T, addr
 
 	dial, err := grpc.Dial(address, opts...)
 	if err != nil {
-		return nil, nil, err
+		var result T
+		return nil, result, err
 	}
 
 	client := clientFunction(dial)
-	return dial, &client, nil
+	return dial, client, nil
 }
 
 // Connect to Namespace service
-func NewNamespaceConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *namespace.NamespaceServiceClient, error) {
+func NewNamespaceConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, namespace.NamespaceServiceClient, error) {
 	return makeGrpcClient(namespace.NewNamespaceServiceClient, address, opts...)
 }
 
 // Connect to KeyValueStorage service
-func NewKeyValueStorageConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *keyvaluestorage.KeyValueStorageServiceClient, error) {
+func NewKeyValueStorageConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, keyvaluestorage.KeyValueStorageServiceClient, error) {
 	return makeGrpcClient(keyvaluestorage.NewKeyValueStorageServiceClient, address, opts...)
 }
 
 // Connect to Actor_User service
-func NewActorUserConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *actorUser.ActorUserServiceClient, error) {
+func NewActorUserConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, actorUser.ActorUserServiceClient, error) {
 	return makeGrpcClient(actorUser.NewActorUserServiceClient, address, opts...)
 }
 
 // Connect to IAM_Token service
-func NewIAMTokenConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *iamToken.IAMTokenServiceClient, error) {
+func NewIAMTokenConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamToken.IAMTokenServiceClient, error) {
 	return makeGrpcClient(iamToken.NewIAMTokenServiceClient, address, opts...)
 }
 
 // Connect to IAM_Policy service
-func NewIAMPolicyConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *iamPolicy.IAMPolicyServiceClient, error) {
+func NewIAMPolicyConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamPolicy.IAMPolicyServiceClient, error) {
 	return makeGrpcClient(iamPolicy.NewIAMPolicyServiceClient, address, opts...)
 }
 
 // Connect to IAM_OAuth service
-func NewIAMOAuthConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *iamOAuth.IAMOAuthServiceClient, error) {
+func NewIAMOAuthConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamOAuth.IAMOAuthServiceClient, error) {
 	return makeGrpcClient(iamOAuth.NewIAMOAuthServiceClient, address, opts...)
 }
 
 // Connect to IAM_Identity service
-func NewIAMIdentityConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *iamIdentity.IAMIdentityServiceClient, error) {
+func NewIAMIdentityConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamIdentity.IAMIdentityServiceClient, error) {
 	return makeGrpcClient(iamIdentity.NewIAMIdentityServiceClient, address, opts...)
 }
 
 // Connect to IAM_Authentication_Password service
-func NewIAMAuthenticationPasswordConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *iamAuthenticationPassword.IAMAuthenticationPasswordServiceClient, error) {
+func NewIAMAuthenticationPasswordConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamAuthenticationPassword.IAMAuthenticationPasswordServiceClient, error) {
 	return makeGrpcClient(iamAuthenticationPassword.NewIAMAuthenticationPasswordServiceClient, address, opts...)
 }
