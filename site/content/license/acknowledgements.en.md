@@ -8,3 +8,5 @@ OpenBP uses the following amazing open-source projects:
 | -------- | -------------------------------------------------------------------------- |
 | go       | [BSD 3-Clause](https://raw.githubusercontent.com/golang/go/master/LICENSE) |
 | octicons | [MIT](https://raw.githubusercontent.com/primer/octicons/main/LICENSE)      |
+| nats-js  | [Apache-2.0](https://github.com/nats-io/nats.js)                           |
+| nats-go  | [Apache-2.0](https://github.com/nats-io/nats.go)                           |

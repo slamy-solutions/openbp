@@ -2,8 +2,54 @@
 The `native_namespace` is a service for managing namespaces in the entire platform ecosystem. Namespace provides logical separation of the data for modules and services. They can be used, for example, to distinguish customers in the application.
 After the creation of the namespace, the `native_namespace` service creates a new `namespace_<name>` database so that every new namespace data can be placed in a separate database. On `namespace` deletion, the service will delete its database, and all the data will be lost.
 
+## Interaction examples
+Those are several examples of how you can interact with the system from other kernel systems or modules.
+
+??? example "Basic communication"
+    In this example we will create new namespace. Then we will check if created namespace exists
+
+    === "GO"
+        ```golang
+            package main
+
+            import (
+                "context"
+
+                native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+                "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
+            )
+
+            const NATIVE_NAMESPACE_URL = "native_namespace:80"
+
+            func main() {
+                // Connect to the namespace service
+                dial, client, _ := native.NewNamespaceConnection(NATIVE_NAMESPACE_URL)
+                defer dial.Close()
+
+                // Create new namespace
+                client.Ensure(context.TODO(), &namespace.EnsureNamespaceRequest{
+                    Name: "mynamespace",
+                })
+
+                // Check if namespace was created
+                response, _ := client.Exists(context.TODO(), &namespace.IsNamespaceExistRequest{
+                    Name:     "mynamespace",
+                    UseCache: true,
+                })
+
+                print(response.Exist)
+            }
+        ```
+
+??? example "Listen for events"
+    In this example we will listed for events on the namespace service
+
+!!! tip
+    You can connect to the system using other languages than those provided in this example. You will have to manually compile [protobuf](https://developers.google.com/protocol-buffers) definitions of this service in the language you want. For more information, please have a look at [Use the language you want](../../concepts/languageYouWant.en.md) concept.
+
 ## API
 Communication with the system is possible using the gRPC interface. Definitions of the interface (proto file) are provided by the `native` module.
+
 
 ??? example "rpc Ensure(EnsureNamespaceRequest) returns (EnsureNamespaceResponse) {};"
     This endpoint allows you to create new namespace if it doesn't exist. If the namespace already exists, this endpoint will do nothing.
@@ -15,7 +61,7 @@ Communication with the system is possible using the gRPC interface. Definitions 
     === "OK"
         Namespace was successfully created. Service created new `<GLOBAL_PREFIX>namespace_<name>` database.
         !!! info
-            This response will raise the event on the amqp. Check the [Events](#events) section and the specific event for the namespace creation.
+            This response will raise the event on the [`system_nats`](../system/nats.en.md). Check the [Events](#events) section and the specific event for the namespace creation or update.
     === "IVALID_ARGUMENT"
         The name has a bad format. Check it against `^[A-Za-z0-9]+$` regex and try again
 
@@ -30,7 +76,7 @@ Communication with the system is possible using the gRPC interface. Definitions 
     === "OK"
         Namespace was successfully deleted or wasn't exist. Service has removed the entry from the `<GLOBAL_PREFIX>global` database and deleted `<GLOBAL_PREFIX>namespace_<name>` database.
         !!! info
-            This response will raise an event on the amqp. Check the [Events](#events) section and specific events raised on namespace deletion.
+            This response will raise an event on the [`system_nats`](../system/nats.en.md). Check the [Events](#events) section and specific events raised on namespace deletion.
 
 ??? example "rpc Get(GetNamespaceRequest) returns (GetNamespaceResponse) {};"
     Returns namespace information by its name
@@ -79,13 +125,14 @@ Communication with the system is possible using the gRPC interface. Definitions 
         | exist          | bool | Namespace exist or not |
 
 ## Events
-!!! bug
-    This feature is ***NOT IMPLEMENTED***
 
-| system_rabbitmq exchange               | routing key | scheme               | conditions            |
-| -------------------------------------- | ----------- | -------------------- | --------------------- |
-| <GLOBAL_PREFIX>native_namespace_events | created     | Namespace (protobuf) | Namespace was created |
-| <GLOBAL_PREFIX>native_namespace_events | deteled     | Namespace (protobuf) | Namespace was deleted |
+This service raises events on the [`system_nats`](../system/nats.en.md) service.
+
+| stream                 | subject                        | scheme               | conditions            |
+| ---------------------- | ------------------------------ | -------------------- | --------------------- |
+| native.namespace.event | native.namespace.event.created | Namespace (protobuf) | Namespace was created |
+| native.namespace.event | native.namespace.event.updated | Namespace (protobuf) | Namespace was updated |
+| native.namespace.event | native.namespace.event.deleted | Namespace (protobuf) | Namespace was deleted |
 
 ## Configuration
 This service is controlled by environment variables.
