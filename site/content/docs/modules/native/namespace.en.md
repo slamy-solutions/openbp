@@ -10,41 +10,88 @@ Those are several examples of how you can interact with the system from other ke
 
     === "GO"
         ```golang
-            package main
+        package main
 
-            import (
-                "context"
+        import (
+            "context"
 
-                native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-                "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
-            )
+            native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+            "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
+        )
 
-            const NATIVE_NAMESPACE_URL = "native_namespace:80"
+        const NATIVE_NAMESPACE_URL = "native_namespace:80"
 
-            func main() {
-                // Connect to the namespace service
-                dial, client, _ := native.NewNamespaceConnection(NATIVE_NAMESPACE_URL)
-                defer dial.Close()
+        func main() {
+            // Connect to the namespace service
+            dial, client, _ := native.NewNamespaceConnection(NATIVE_NAMESPACE_URL)
+            defer dial.Close()
 
-                // Create new namespace
-                client.Ensure(context.TODO(), &namespace.EnsureNamespaceRequest{
-                    Name: "mynamespace",
-                })
+            // Create new namespace
+            client.Ensure(context.TODO(), &namespace.EnsureNamespaceRequest{
+                Name: "mynamespace",
+            })
 
-                // Check if namespace was created
-                response, _ := client.Exists(context.TODO(), &namespace.IsNamespaceExistRequest{
-                    Name:     "mynamespace",
-                    UseCache: true,
-                })
+            // Check if namespace was created
+            response, _ := client.Exists(context.TODO(), &namespace.IsNamespaceExistRequest{
+                Name:     "mynamespace",
+                UseCache: true,
+            })
 
-                print(response.Exist)
-            }
+            print(response.Exist)
+        }
         ```
 
 ??? example "Listen for events"
-    In this example we will listed for events on the namespace service
+    In this example, we will listen for events on the namespace service
 
-!!! tip
+    === "GO"
+        ```golang
+        package main
+
+        import (
+            "context"
+            "fmt"
+
+            "github.com/nats-io/nats.go"
+            native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+            "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
+
+            system_nats "github.com/slamy-solutions/openbp/modules/system/libs/golang/nats"
+        )
+
+        const SYSTEM_TELEMETRY_EXPORTER_ENDPOINT = "system_telemetry:55680"
+        const SYSTEM_NATS_URL = "nats://system_nats"
+        const NATIVE_NAMESPACE_URL = "native_namespace:80"
+
+        func main() {
+            // Connect to system_nats service to receive events
+            natsConnection, _ := system_nats.Connect(SYSTEM_NATS_URL, "mymodule")
+            defer natsConnection.Close()
+
+            // Start listen for namespace creation events
+            jet, _ := natsConnection.JetStream()
+            consumer, _ := jet.AddConsumer("native.namespace.event", &nats.ConsumerConfig{FilterSubject: "native.namespace.event.created", Name: "mymodule.myservice.namespace_consumer"})
+            sub, _ := jet.SubscribeSync("", nats.Bind(consumer.Stream, consumer.Name))
+
+            // Connect to the namespace service
+            dial, client, _ := native.NewNamespaceConnection(NATIVE_NAMESPACE_URL)
+            defer dial.Close()
+
+            // Create new namespace
+            client.Ensure(context.TODO(), &namespace.EnsureNamespaceRequest{
+                Name: "mynamespace",
+            })
+
+            // Receive event craeted namespace
+            msg, _ := sub.NextMsg(5 * time.Second)
+            var namespaceData namespace.Namespace
+            proto.Unmarshal(msg.Data, &namespaceData)
+            fmt.Printf("Created [%s] namespace\n", namespaceData.Name)
+            msg.Ack()
+        }
+        ```
+
+!!! info
     You can connect to the system using other languages than those provided in this example. You will have to manually compile [protobuf](https://developers.google.com/protocol-buffers) definitions of this service in the language you want. For more information, please have a look at [Use the language you want](../../concepts/languageYouWant.en.md) concept.
 
 ## API
