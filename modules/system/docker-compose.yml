@@ -9,14 +9,14 @@ services:
     environment:
       MAXMEMORY: 512mb
 
-  system_bigcache:
-    restart: always
-    container_name: system_bigcache
-    build:
-      context: modules/system/services/redis-bigCache
-      dockerfile: Dockerfile
-    environment:
-      MAXMEMORY: 1024mb
+#  system_bigcache:
+#    restart: always
+#    container_name: system_bigcache
+#    build:
+#      context: modules/system/services/redis-bigCache
+#      dockerfile: Dockerfile
+#    environment:
+#      MAXMEMORY: 1024mb
 
   system_db:
     restart: always
@@ -45,3 +45,7 @@ services:
     - 16686:16686
     - 14269:14269
     - 14268:14268
+
+  system_nats:
+    restart: always
+    image: nats:latest

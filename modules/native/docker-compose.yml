@@ -17,36 +17,6 @@ services:
       - system_telemetry
       - system_rabbitmq
 
-  native_lambda_manager:
-    container_name: native_lambda_manager
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/lambda/manager/Dockerfile
-    environment:
-      SYSTEM_MONGODB_URL: mongodb://root:example@system_db
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_lambda_manager"
-    depends_on:
-      - system_db
-      - system_cache
-      - system_telemetry
-      - system_rabbitmq
-
-  native_lambda_entrypoint:
-    container_name: native_lambda_entrypoint
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/lambda/entrypoint/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_lambda_entrypoint"
-    depends_on:
-      - system_telemetry
-      - system_rabbitmq
-      - native_lambda_manager
-
   native_keyvaluestorage:
     container_name: native_keyvaluestorage
     restart: always

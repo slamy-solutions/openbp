@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/nats-io/nats.go"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,9 +19,9 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 
-	grpc "github.com/slamy-solutions/openbp/modules/native/services/namespace/src/grpc/native_namespace"
+	grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
 type NamespaceServer struct {
@@ -29,6 +31,7 @@ type NamespaceServer struct {
 	mongoClient         *mongo.Client
 	cache               cache.Cache
 	tracer              trace.Tracer
+	jetstreamClient     nats.JetStreamContext
 }
 
 const (
@@ -41,13 +44,28 @@ const (
 
 var /* const */ nameValidator = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 
-func New(mongoClient *mongo.Client, cache cache.Cache) *NamespaceServer {
+func New(mongoClient *mongo.Client, cache cache.Cache, js nats.JetStreamContext) (*NamespaceServer, error) {
+
+	// Make sure there is stream for events on system_nats
+	cfg := nats.StreamConfig{
+		Name:      "native.namespace.event",
+		Retention: nats.InterestPolicy,
+		Subjects:  []string{"native.namespace.event.>"},
+		Storage:   nats.FileStorage,
+		Replicas:  3,
+	}
+	_, err := js.AddStream(&cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	return &NamespaceServer{
-		namespaceCollection: mongoClient.Database(DATABASE_NAME).Collection("namespace"),
+		namespaceCollection: mongoClient.Database(DATABASE_NAME).Collection(COLLECTION_NAME),
 		mongoClient:         mongoClient,
 		cache:               cache,
 		tracer:              otel.Tracer("github.com/slamy-solutions/openbp/modules/native/services/namespace"),
-	}
+		jetstreamClient:     js,
+	}, nil
 }
 
 func makeNamespaceDataCacheKey(namespaceName string) string {
@@ -90,22 +108,37 @@ func (s *NamespaceServer) Ensure(ctx context.Context, in *grpc.EnsureNamespaceRe
 
 	options := options.Update().SetUpsert(true)
 
-	_, err := s.namespaceCollection.UpdateOne(ctx, filterData, updateData, options)
+	updateResponse, err := s.namespaceCollection.UpdateOne(ctx, filterData, updateData, options)
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, err.Error())
 	}
 
-	s.cache.Remove(ctx, NAMESPACE_LIST_CACHE_KEY)
+	namespace := &grpc.Namespace{Name: in.Name}
+	namespaceBytes, _ := bson.Marshal(namespace)
 
-	return &grpc.EnsureNamespaceResponse{Namespace: &grpc.Namespace{Name: in.Name}}, status.Error(grpccodes.OK, "")
+	if updateResponse.UpsertedCount != 0 {
+		// Namespace was added
+		s.jetstreamClient.Publish("native.namespace.event.created", namespaceBytes)
+		s.cache.Remove(ctx, NAMESPACE_LIST_CACHE_KEY)
+	} else if updateResponse.ModifiedCount != 0 {
+		// Namespace was updated
+		s.jetstreamClient.Publish("native.namespace.event.updated", namespaceBytes)
+		s.cache.Remove(ctx, NAMESPACE_LIST_CACHE_KEY)
+	}
+
+	return &grpc.EnsureNamespaceResponse{Namespace: namespace}, status.Error(grpccodes.OK, "")
 }
 func (s *NamespaceServer) Delete(ctx context.Context, in *grpc.DeleteNamespaceRequest) (*grpc.DeleteNamespaceResponse, error) {
 	filterData := bson.M{
 		"name": in.Name,
 	}
 
-	_, err := s.namespaceCollection.DeleteOne(ctx, filterData)
+	var dataInMongo NamespaceInMongo
+	err := s.namespaceCollection.FindOneAndDelete(ctx, filterData).Decode(&dataInMongo)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return &grpc.DeleteNamespaceResponse{}, status.Error(grpccodes.OK, "")
+		}
 		return nil, status.Error(grpccodes.Internal, err.Error())
 	}
 
@@ -115,6 +148,9 @@ func (s *NamespaceServer) Delete(ctx context.Context, in *grpc.DeleteNamespaceRe
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, err.Error())
 	}
+
+	namespaceBytes, _ := bson.Marshal(dataInMongo.ToGRPCNamespace())
+	s.jetstreamClient.Publish("native.namespace.event.deleted", namespaceBytes)
 
 	return &grpc.DeleteNamespaceResponse{}, status.Error(grpccodes.OK, "")
 }

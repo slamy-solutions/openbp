@@ -1,3 +1,4 @@
+import {} from ''
 import { client as mongoClient, connect as connectToMongo, close as closeMongo } from '../../../../system/testing/tools/mongo'
 import { client as cacheClient, connect as connectToCache, close as closeCache } from '../../../../system/testing/tools/cache'
 import { RequestError as GRPCRequestError } from '../../../../system/libs/ts/grpc'
@@ -67,6 +68,22 @@ describe("Whitebox", () => {
         await grpc.Ensure({ name: "namespace2" })
         existingKeys = await cacheClient.exists("native_namespace_list")
         expect(existingKeys).toBe(0)
+    })
+
+    test("Raises native_nats event on creation with namespace data", async () => {
+        fail()
+    })
+
+    test("Doesnt raise native_nats creation event if namespace already exists", async () => {
+        fail()
+    })
+
+    test("If namespace exists, raises native_nats event on update with namespace data", async () => {
+        fail()
+    })
+
+    test("Doesnt raise native_nats update event if there is nothing to update", async () => {
+        fail()
     })
 })
 

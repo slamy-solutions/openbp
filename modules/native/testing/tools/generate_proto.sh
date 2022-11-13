@@ -17,7 +17,6 @@ function generate {
 # namespace
 generate ./namespace/proto ../../proto namespace.proto
 generate ./file/proto ../../proto namespace.proto file.proto
-generate ./lambda/proto ../../proto lambda.proto
 generate ./keyvaluestorage/proto ../../proto keyvaluestorage.proto
 generate ./iam/proto ../../proto/iam oauth.proto configuration.proto identity.proto policy.proto token.proto oauth.proto
 generate ./iam/proto/authentication ../../proto/iam/authentication password.proto

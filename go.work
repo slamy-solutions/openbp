@@ -15,6 +15,7 @@ use (
 	./modules/native/services/lambda/entrypoint
 	./modules/native/services/lambda/manager
 	./modules/native/services/namespace
+	./modules/system/libs/golang
 	./modules/system/libs/go/cache
 	./modules/system/libs/go/mongodb
 	./modules/system/libs/go/rabbitmq
