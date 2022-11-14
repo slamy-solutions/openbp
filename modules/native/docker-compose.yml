@@ -183,3 +183,7 @@ services:
     # #  - native_iam_token
     #   - native_actor_user
     # #  - native_iam_authentication_password
+
+networks:
+  default:
+    name: openbp-dev

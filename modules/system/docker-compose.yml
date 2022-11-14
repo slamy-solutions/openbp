@@ -49,3 +49,7 @@ services:
   system_nats:
     restart: always
     image: nats:latest
+
+networks:
+  default:
+    name: openbp-dev
