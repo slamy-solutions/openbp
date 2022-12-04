@@ -21,7 +21,7 @@ RUN cd /src/modules/system/libs/golang && go mod download
 RUN cd /src/modules/native/libs/golang && go mod download
 RUN cd /src/modules/native/services/namespace && go mod download
 
-# Copyt code
+# Copy code
 WORKDIR /src/modules/native/services/namespace/src
 COPY modules/native/services/namespace/src/main.go ./main.go
 COPY modules/native/services/namespace/src/services ./services/
