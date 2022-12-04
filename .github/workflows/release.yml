@@ -54,7 +54,6 @@ jobs:
         openbp/obp-native-iam-policy:${{ needs.setup.outputs.tag }}
     secrets: inherit
   publish-native-iam-token:
-    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_iam_token docker image
     uses: ./.github/workflows/publish-service.yml
