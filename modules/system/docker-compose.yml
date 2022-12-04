@@ -45,11 +45,6 @@ services:
     restart: always
     container_name: system_telemetry
     image: jaegertracing/opentelemetry-all-in-one:latest
-    ports:
-    - 55680:55680
-    - 16686:16686
-    - 14269:14269
-    - 14268:14268
 
   system_nats:
     restart: always
