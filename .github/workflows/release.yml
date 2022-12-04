@@ -8,6 +8,7 @@ on:
 jobs:
   setup:
     name: Extract tag name
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -15,6 +16,8 @@ jobs:
         shell: bash
         run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
         id: extract_tag
+    outputs:
+      tag: ${{ steps.extract_tag.outputs.tag }}
 
   tests:
     uses: ./.github/workflows/test.yml
@@ -29,8 +32,9 @@ jobs:
           dockerfile: modules/native/namespace/Dockerfile
           tags: |
             openbp/obp-native-namespace:latest
-            openbp/obp-native-namespace:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-namespace:${{ needs.setup.outputs.tag }}
   publish-native-keyvaluestorage:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_keyvaluestorage docker image
     steps:
@@ -39,8 +43,9 @@ jobs:
           dockerfile: modules/native/keyvaluestorage/Dockerfile
           tags: |
             openbp/obp-native-keyvaluestorage:latest
-            openbp/obp-native-keyvaluestorage:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-keyvaluestorage:${{ needs.setup.outputs.tag }}
   publish-native-iam-policy:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_iam_policy docker image
     steps:
@@ -49,8 +54,9 @@ jobs:
           dockerfile: modules/native/iam/policy/Dockerfile
           tags: |
             openbp/obp-native-iam-policy:latest
-            openbp/obp-native-iam-policy:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-iam-policy:${{ needs.setup.outputs.tag }}
   publish-native-iam-token:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_iam_token docker image
     steps:
@@ -59,8 +65,9 @@ jobs:
           dockerfile: modules/native/iam/token/Dockerfile
           tags: |
             openbp/obp-native-iam-token:latest
-            openbp/obp-native-iam-token:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-iam-token:${{ needs.setup.outputs.tag }}
   publish-native-iam-oauth:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_iam_oauth docker image
     steps:
@@ -69,8 +76,9 @@ jobs:
           dockerfile: modules/native/iam/oauth/Dockerfile
           tags: |
             openbp/obp-native-iam-oauth:latest
-            openbp/obp-native-iam-oauth:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-iam-oauth:${{ needs.setup.outputs.tag }}
   publish-native-iam-identity:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_iam_identity docker image
     steps:
@@ -79,8 +87,9 @@ jobs:
           dockerfile: modules/native/iam/identity/Dockerfile
           tags: |
             openbp/obp-native-iam-identity:latest
-            openbp/obp-native-iam-identity:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-iam-identity:${{ needs.setup.outputs.tag }}
   publish-native-iam-authentication-password:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_iam_authentication_password docker image
     steps:
@@ -89,8 +98,9 @@ jobs:
           dockerfile: modules/native/iam/authentication/password/Dockerfile
           tags: |
             openbp/obp-native-iam-authentication-password:latest
-            openbp/obp-native-iam-authentication-password:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-iam-authentication-password:${{ needs.setup.outputs.tag }}
   publish-native-actor-user:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_actor_user docker image
     steps:
@@ -99,7 +109,7 @@ jobs:
           dockerfile: modules/native/actor/user/Dockerfile
           tags: |
             openbp/obp-native-actor-user:latest
-            openbp/obp-native-actor-user:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+            openbp/obp-native-actor-user:${{ needs.setup.outputs.tag }}
 
   github-release:
     needs:
