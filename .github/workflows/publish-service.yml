@@ -8,7 +8,7 @@ on:
         required: false
         default: '.'
         type: string
-      dockerifle:
+      dockerfile:
         description: 'Path to the dockerfile'
         required: true
         type: string
