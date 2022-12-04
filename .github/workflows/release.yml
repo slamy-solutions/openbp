@@ -24,6 +24,7 @@ jobs:
   
   # Native
   publish-native-namespace:
+    runs-on: ubuntu-latest
     needs: [tests,setup]
     name: Publish native_namespace docker image
     steps: 
