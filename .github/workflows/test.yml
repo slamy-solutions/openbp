@@ -15,6 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build the stack
+        run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml build --parallel
+      - name: Run the stack
         run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml up -d
       - name: Run tests
         run: docker run --network openbp_internal -v $PWD:/app node:alpine3.15 sh -c "cd /app/modules/testing && yarn && npx jest -i"
