@@ -10,12 +10,12 @@ beforeAll(async ()=>{
     await connectToMongo()
     await connectToCache()
     await connectToNativeNamespace()
-    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+    await mongoClient.db(GLOBAL_DB_NAME).collection('native_namespace').deleteMany({})
     await cacheClient.flushall()
 })
 
 afterEach(async ()=>{
-    await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+    await mongoClient.db(GLOBAL_DB_NAME).collection('native_namespace').deleteMany({})
     await cacheClient.flushall()
 })
 
@@ -33,20 +33,20 @@ describe("Whitebox", () => {
     test("Creates entry in database", async () => {
         const name = "customname"
         await grpc.Ensure({ name })
-        const entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').findOne({ name })
+        const entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('native_namespace').findOne({ name })
         expect(entry).not.toBeNull()
         expect(entry?.name).toBe(name)
     })
 
     test("Doesnt duplicates in database multiple calls", async () => {
         const name = "customname"
-        let count = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').countDocuments()
+        let count = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('native_namespace').countDocuments()
         expect(count).toBe(0)
         await grpc.Ensure({ name })
-        count = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').countDocuments()
+        count = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('native_namespace').countDocuments()
         expect(count).toBe(1)
         await grpc.Ensure({ name })
-        count = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').countDocuments()
+        count = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('native_namespace').countDocuments()
         expect(count).toBe(1)
     })
 
@@ -69,7 +69,7 @@ describe("Whitebox", () => {
         expect(existingKeys).toBe(0)
     })
 
-    test("Raises native_nats event on creation with namespace data", async () => {
+    /*test("Raises native_nats event on creation with namespace data", async () => {
         fail()
     })
 
@@ -83,7 +83,7 @@ describe("Whitebox", () => {
 
     test("Doesnt raise native_nats update event if there is nothing to update", async () => {
         fail()
-    })
+    })*/
 })
 
 /**

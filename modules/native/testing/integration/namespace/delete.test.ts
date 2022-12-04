@@ -12,7 +12,7 @@ beforeAll(async ()=>{
     await connectToCache()
     await connectToNativeNamespace()
     try {
-        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+        await mongoClient.db(GLOBAL_DB_NAME).collection('native_namespace').deleteMany({})
     } catch (e) {
         if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
     }
@@ -21,7 +21,7 @@ beforeAll(async ()=>{
 
 afterEach(async ()=>{
     try {
-        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+        await mongoClient.db(GLOBAL_DB_NAME).collection('native_namespace').deleteMany({})
     } catch (e) {
         if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
     }
@@ -42,10 +42,10 @@ describe("Whitebox", () => {
     test("Value is deleted from the database", async () => {
         const name = "testname"
         await grpc.Ensure({ name })
-        let entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').findOne({ name })
+        let entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('native_namespace').findOne({ name })
         expect(entry).not.toBeNull()
         await grpc.Delete({ name })
-        entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').findOne({ name })
+        entry = await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('native_namespace').findOne({ name })
         expect(entry).toBeNull()
     })
 

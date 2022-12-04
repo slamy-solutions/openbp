@@ -52,6 +52,11 @@ services:
     networks:
       - internal
 
+  # --- Native Module
+  native_namespace:
+    image: openbp/obp-native-namespace:${OPENBP_VERSION:-latest}
+    container_name: native_namespace
+    restart: always
 
 networks:
   internal:

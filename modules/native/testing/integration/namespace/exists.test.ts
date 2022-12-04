@@ -12,7 +12,7 @@ beforeAll(async ()=>{
     await connectToCache()
     await connectToNativeNamespace()
     try {
-        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+        await mongoClient.db(GLOBAL_DB_NAME).collection('native_namespace').deleteMany({})
     } catch (e) {
         if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
     }
@@ -21,7 +21,7 @@ beforeAll(async ()=>{
 
 afterEach(async ()=>{
     try {
-        await mongoClient.db(GLOBAL_DB_NAME).collection('namespace').deleteMany({})
+        await mongoClient.db(GLOBAL_DB_NAME).collection('native_namespace').deleteMany({})
     } catch (e) {
         if ((e as GRPCRequestError)?.code !== Status.NOT_FOUND) throw e
     }
@@ -59,7 +59,7 @@ describe("Whitebox", () => {
         await grpc.Get({ name, useCache: true })
 
         // Change value in database to contain wrong data without invalidating cache
-        await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('namespace').deleteOne({ name })
+        await mongoClient.db(GLOBAL_DB_NAME).collection<{ name: string }>('native_namespace').deleteOne({ name })
 
         const cachedResponse = await grpc.Exists({ name, useCache: true })
         expect(cachedResponse.exist).toBeTruthy()
