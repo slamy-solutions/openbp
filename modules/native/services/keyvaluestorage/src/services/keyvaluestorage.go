@@ -11,10 +11,10 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 
-	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/services/keyvaluestorage/src/grpc/native_keyvaluestorage"
-	namespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/keyvaluestorage/src/grpc/native_namespace"
+	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
+	namespaceGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
 type KeyValueStorageServer struct {

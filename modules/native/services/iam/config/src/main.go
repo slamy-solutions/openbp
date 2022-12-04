@@ -10,10 +10,10 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
 
-	native_iam_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_iam_configuration"
+	native_iam_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/config"
 	native_keyvaluestorage_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/services"
 )
@@ -38,7 +38,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.config", VERSION, "1")
+	telemetryProvider, err := otel.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.config", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}

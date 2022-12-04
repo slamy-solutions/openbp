@@ -10,8 +10,8 @@ import (
 	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
 	grpccodes "google.golang.org/grpc/codes"
 
-	iamGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_iam_configuration"
-	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
+	iamGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/configuration"
+	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
 )
 
 type IAMConfigServer struct {

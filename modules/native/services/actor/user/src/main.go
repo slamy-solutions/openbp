@@ -10,12 +10,12 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/mongodb"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/db"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
 
-	native_actor_user_grpc "github.com/slamy-solutions/openbp/modules/native/services/actor/user/src/grpc/native_actor_user"
-	native_iam_identity_grpc "github.com/slamy-solutions/openbp/modules/native/services/actor/user/src/grpc/native_iam_identity"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	native_actor_user_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
 	"github.com/slamy-solutions/openbp/modules/native/services/actor/user/src/services"
 )
 
@@ -40,7 +40,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "actor.user", VERSION, "1")
+	telemetryProvider, err := otel.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "actor.user", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +48,7 @@ func main() {
 	fmt.Println("Initialized telemetry")
 
 	// Setting up DB
-	dbClient, err := mongodb.Connect(SYSTEM_DB_URL)
+	dbClient, err := db.Connect(SYSTEM_DB_URL)
 	if err != nil {
 		panic(err)
 	}
@@ -64,17 +64,11 @@ func main() {
 	fmt.Println("Initialized cache")
 
 	// Setting up native_iam_identity connection
-	nativeIAmIdentityConnection, err := grpc.Dial(
-		NATIVE_IAM_IDENTITY_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeIAmIdentityConnection, nativeIAmIdentityClient, err := native.NewIAMIdentityConnection(NATIVE_IAM_IDENTITY_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeIAmIdentityConnection.Close()
-	nativeIAmIdentityClient := native_iam_identity_grpc.NewIAMIdentityServiceClient(nativeIAmIdentityConnection)
 	fmt.Println("Initialized native_iam_identity connection")
 
 	// Creating grpc server

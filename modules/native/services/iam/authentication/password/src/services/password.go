@@ -14,8 +14,8 @@ import (
 
 	grpccodes "google.golang.org/grpc/codes"
 
-	grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_iam_authentication_password"
-	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_namespace"
+	grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
 type PasswordIdentificationService struct {

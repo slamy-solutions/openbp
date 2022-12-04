@@ -11,10 +11,6 @@ use (
 	./modules/native/services/iam/token
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/namespace
-	./modules/system/libs/go/cache
-	./modules/system/libs/go/mongodb
-	./modules/system/libs/go/rabbitmq
-	./modules/system/libs/go/telemetry
 	./modules/system/libs/golang
 	./modules/tools/services/rest
 )

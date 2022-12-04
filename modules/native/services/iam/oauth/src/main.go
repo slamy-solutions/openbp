@@ -10,13 +10,10 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
 
-	native_iam_authentication_password_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_authentication_password"
-	native_iam_identity_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_identity"
-	native_iam_oauth_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_oauth"
-	native_iam_policy_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_policy"
-	native_iam_token_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_token"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	native_iam_oauth_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/services"
 )
 
@@ -42,7 +39,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.oauth", VERSION, "1")
+	telemetryProvider, err := otel.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.oauth", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}
@@ -50,59 +47,35 @@ func main() {
 	fmt.Println("Initialized telemetry")
 
 	// Setting up native_iam_policy connection
-	nativeIAmPolicyConnection, err := grpc.Dial(
-		NATIVE_IAM_POLICY_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeIAmPolicyConnection, nativeIAmPolicyClient, err := native.NewIAMPolicyConnection(NATIVE_IAM_POLICY_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeIAmPolicyConnection.Close()
-	nativeIAmPolicyClient := native_iam_policy_grpc.NewIAMPolicyServiceClient(nativeIAmPolicyConnection)
 	fmt.Println("Initialized native_iam_policy connection")
 
 	// Setting up native_iam_token connection
-	nativeIAmTokenConnection, err := grpc.Dial(
-		NATIVE_IAM_TOKEN_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeIAmTokenConnection, nativeIAmTokenClient, err := native.NewIAMTokenConnection(NATIVE_IAM_TOKEN_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeIAmTokenConnection.Close()
-	nativeIAmTokenClient := native_iam_token_grpc.NewIAMTokenServiceClient(nativeIAmTokenConnection)
 	fmt.Println("Initialized native_iam_token connection")
 
 	// Setting up native_iam_authentication_password connection
-	nativeIAmAuthenticationPasswordConnection, err := grpc.Dial(
-		NATIVE_IAM_AUTHENTICATION_PASSWORD_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeIAmAuthenticationPasswordConnection, nativeIAmAuthenticationPasswordClient, err := native.NewIAMAuthenticationPasswordConnection(NATIVE_IAM_AUTHENTICATION_PASSWORD_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeIAmAuthenticationPasswordConnection.Close()
-	nativeIAmAuthenticationPasswordClient := native_iam_authentication_password_grpc.NewIAMAuthenticationPasswordServiceClient(nativeIAmAuthenticationPasswordConnection)
 	fmt.Println("Initialized native_iam_authentication_password connection")
 
 	// Setting up native_iam_identity connection
-	nativeIAmIdentityConnection, err := grpc.Dial(
-		NATIVE_IAM_IDENTITY_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeIAmIdentityConnection, nativeIAmIdentityClient, err := native.NewIAMIdentityConnection(NATIVE_IAM_IDENTITY_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeIAmIdentityConnection.Close()
-	nativeIAmIdentityClient := native_iam_identity_grpc.NewIAMIdentityServiceClient(nativeIAmIdentityConnection)
 	fmt.Println("Initialized native_iam_identity connection")
 
 	// Creating grpc server

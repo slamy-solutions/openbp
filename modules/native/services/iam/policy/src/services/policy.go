@@ -12,11 +12,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 	grpccodes "google.golang.org/grpc/codes"
 
-	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/policy/src/grpc/native_iam_policy"
-	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/policy/src/grpc/native_namespace"
+	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
 type IAMPolicyServer struct {

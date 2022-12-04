@@ -3,7 +3,54 @@
 version: '3.8'
 
 services:
-  # System Module
+  # --- System Module
+  
+  system_proxy:
+    image: traefik:2.5.4
+    container_name: system_proxy
+    restart: always
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - internal
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  system_db:
+    image: mongo:5.0.5-focal
+    container_name: system_db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - ./data/system/db:/data/db
+    networks:
+      - internal
+
+  system_cache:
+    image: redis:7.0-alpine
+    container_name: system_cache
+    restart: always
+    command: redis-server --databases 1 --save "" --appendonly no --timeout 300 --tcp-keepalive 60 --maxmemory 64mb --maxmemory-policy allkeys-lru --maxmemory-samples 5 --logfile "" --protected-mode no
+    networks:
+      - internal
+
+  system_nats:
+    image: nats:2.9-scratch
+    container_name: system_nats
+    restart: always
+    command: --js --sd /data
+    volumes:
+      - ./data/system/nats:/data
+    networks:
+      - internal
 
 
 networks:

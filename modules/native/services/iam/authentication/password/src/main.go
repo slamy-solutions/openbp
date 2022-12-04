@@ -10,11 +10,11 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/mongodb"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/db"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
 
-	native_iam_authentication_password_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_iam_authentication_password"
-	native_namespace_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/grpc/native_namespace"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	native_iam_authentication_password_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/password/src/services"
 )
 
@@ -38,7 +38,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.authentication.password", VERSION, "1")
+	telemetryProvider, err := otel.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.authentication.password", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +46,7 @@ func main() {
 	fmt.Println("Initialized telemetry")
 
 	// Setting up DB
-	dbClient, err := mongodb.Connect(SYSTEM_DB_URL)
+	dbClient, err := db.Connect(SYSTEM_DB_URL)
 	if err != nil {
 		panic(err)
 	}
@@ -54,17 +54,11 @@ func main() {
 	fmt.Println("Initialized DB")
 
 	// Setting up native_namespace connection
-	nativeNamespaceConnection, err := grpc.Dial(
-		NATIVE_NAMESPACE_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeNamespaceConnection, nativeNamespaceClient, err := native.NewNamespaceConnection(NATIVE_NAMESPACE_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeNamespaceConnection.Close()
-	nativeNamespaceClient := native_namespace_grpc.NewNamespaceServiceClient(nativeNamespaceConnection)
 	fmt.Println("Initialized native_namespace connection")
 
 	// Creating grpc server

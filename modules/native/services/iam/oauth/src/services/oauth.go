@@ -7,11 +7,11 @@ import (
 
 	grpccodes "google.golang.org/grpc/codes"
 
-	nativeIAmAuthenticationPasswordGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_authentication_password"
-	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_identity"
-	nativeIAmOAuthGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_oauth"
-	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_policy"
-	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_token"
+	nativeIAmAuthenticationPasswordGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
+	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
+	nativeIAmOAuthGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
+	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
+	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 )
 
 type IAmAuthServer struct {

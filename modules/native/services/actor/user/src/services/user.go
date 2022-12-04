@@ -14,10 +14,10 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 
-	nativeActorUserGRPC "github.com/slamy-solutions/openbp/modules/native/services/actor/user/src/grpc/native_actor_user"
-	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/services/actor/user/src/grpc/native_iam_identity"
+	nativeActorUserGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 )
 
 type ActorUserServer struct {

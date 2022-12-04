@@ -15,11 +15,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	grpccodes "google.golang.org/grpc/codes"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 
-	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_identity"
-	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_policy"
-	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_namespace"
+	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
+	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
 type IAmIdentityServer struct {

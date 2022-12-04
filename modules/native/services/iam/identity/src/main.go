@@ -10,13 +10,12 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/mongodb"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/telemetry"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/db"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
 
-	native_iam_identity_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_identity"
-	native_iam_policy_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_iam_policy"
-	native_namespace_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/grpc/native_namespace"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	native_iam_identity_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/identity/src/services"
 )
 
@@ -42,7 +41,7 @@ func main() {
 	ctx := context.Background()
 
 	// Setting up Telemetry
-	telemetryProvider, err := telemetry.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.identity", VERSION, "1")
+	telemetryProvider, err := otel.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "iam.identity", VERSION, "1")
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +49,7 @@ func main() {
 	fmt.Println("Initialized telemetry")
 
 	// Setting up DB
-	dbClient, err := mongodb.Connect(SYSTEM_DB_URL)
+	dbClient, err := db.Connect(SYSTEM_DB_URL)
 	if err != nil {
 		panic(err)
 	}
@@ -66,31 +65,19 @@ func main() {
 	fmt.Println("Initialized cache")
 
 	// Setting up native_namespace connection
-	nativeNamespaceConnection, err := grpc.Dial(
-		NATIVE_NAMESPACE_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeNamespaceConnection, nativeNamespaceClient, err := native.NewNamespaceConnection(NATIVE_NAMESPACE_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeNamespaceConnection.Close()
-	nativeNamespaceClient := native_namespace_grpc.NewNamespaceServiceClient(nativeNamespaceConnection)
 	fmt.Println("Initialized native_namespace connection")
 
 	// Setting up native_iam_policy connection
-	nativeIAmPolicyConnection, err := grpc.Dial(
-		NATIVE_IAM_POLICY_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeIAmPolicyConnection, nativeIAmPolicyClient, err := native.NewIAMPolicyConnection(NATIVE_IAM_POLICY_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeIAmPolicyConnection.Close()
-	nativeIAmPolicyClient := native_iam_policy_grpc.NewIAMPolicyServiceClient(nativeIAmPolicyConnection)
 	fmt.Println("Initialized native_iam_policy connection")
 
 	// Creating grpc server

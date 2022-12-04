@@ -3,9 +3,9 @@ package services
 import (
 	"strings"
 
-	nativeIAmOAuthGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_oauth"
-	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_policy"
-	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/oauth/src/grpc/native_iam_token"
+	nativeIAmOAuthGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
+	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
+	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 )
 
 /*type Policy nativeIAmPolicyGRPC.Policy

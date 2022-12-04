@@ -15,10 +15,10 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 
-	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/token/src/grpc/native_iam_token"
-	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/services/iam/token/src/grpc/native_namespace"
+	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
+	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
 type IAmTokenServer struct {
