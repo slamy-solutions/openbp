@@ -1,0 +1,47 @@
+name: "Release new version"
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  setup:
+    name: Extract tag name
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Extract tag name
+        shell: bash
+        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
+        id: extract_tag
+
+  tests:
+    uses: ./.github/workflows/test.yml
+  
+  publish-native-namespace:
+    needs: [tests,setup]
+    name: Publish native_namespace docker image
+    steps: 
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/namespace/Dockerfile
+          tags: |
+            openbp/obp-native-namespace:latest
+            openbp/obp-native-namespace:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+  
+  github-release:
+    needs: [publish-native-namespace]
+    name: Create github release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
