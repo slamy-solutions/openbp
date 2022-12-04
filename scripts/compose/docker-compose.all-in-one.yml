@@ -57,6 +57,101 @@ services:
     image: openbp/obp-native-namespace:${OPENBP_VERSION:-latest}
     container_name: native_namespace
     restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+    networks:
+      - internal
+
+  native_keyvaluestorage:
+    image: openbp/obp-native-keyvaluestorage:${OPENBP_VERSION:-latest}
+    container_name: native_keyvaluestorage
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+
+  native_iam_policy:
+    image: openbp/obp-native-iam-policy:${OPENBP_VERSION:-latest}
+    container_name: native_iam_policy
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+
+  native_iam_identity:
+    image: openbp/obp-native-iam-identity:${OPENBP_VERSION:-latest}
+    container_name: native_iam_identity
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+      - native_iam_policy
+    networks:
+      - internal
+
+  native_iam_token:
+    image: openbp/obp-native-iam-token:${OPENBP_VERSION:-latest}
+    container_name: native_iam_token
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+
+  native_iam_oauth:
+    image: openbp/obp-native-iam-oauth:${OPENBP_VERSION:-latest}
+    container_name: native_iam_oauth
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+      - native_iam_policy
+      - native_iam_identity
+      - native_iam_token
+      - native_iam_authentication_password
+    networks:
+      - internal
+
+  native_iam_authentication_password:
+    image: openbp/obp-native-iam-authentication-password:${OPENBP_VERSION:-latest}
+    container_name: native_iam_authentication_password
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+
+  native_actor_user:
+    image: openbp/obp-native-actor-user:${OPENBP_VERSION:-latest}
+    container_name: native_actor_user
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_iam_identity
+    networks:
+      - internal
 
 networks:
   internal:
