@@ -30,7 +30,7 @@ jobs:
     steps: 
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/namespace/Dockerfile
           tags: |
@@ -43,7 +43,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/keyvaluestorage/Dockerfile
           tags: |
@@ -56,7 +56,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/iam/policy/Dockerfile
           tags: |
@@ -69,7 +69,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/iam/token/Dockerfile
           tags: |
@@ -82,7 +82,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/iam/oauth/Dockerfile
           tags: |
@@ -95,7 +95,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/iam/identity/Dockerfile
           tags: |
@@ -108,7 +108,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/iam/authentication/password/Dockerfile
           tags: |
@@ -121,7 +121,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: ./.github/actions/publish-docker-image.yml
+      - uses: ./.github/actions/publish-service.yml
         with:
           dockerfile: modules/native/actor/user/Dockerfile
           tags: |
