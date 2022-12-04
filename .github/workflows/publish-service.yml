@@ -7,13 +7,15 @@ on:
         description: 'Context of the dockerfile'
         required: false
         default: '.'
+        type: string
       dockerifle:
         description: 'Path to the dockerfile'
         required: true
-        default: 'Dockerfile'
+        type: string
       tags:
         description: 'List of tags for the image'
         required: true
+        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: true
