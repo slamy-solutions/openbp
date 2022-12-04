@@ -13,7 +13,7 @@ jobs:
     name: "Test native module using developers docker-compose files"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build the stack
         run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml build --parallel
       - name: Run the stack

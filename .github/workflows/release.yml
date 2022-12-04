@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Extract tag name
         shell: bash
         run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
@@ -28,6 +28,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_namespace docker image
     steps: 
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/namespace/Dockerfile
@@ -39,6 +41,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_keyvaluestorage docker image
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/keyvaluestorage/Dockerfile
@@ -50,6 +54,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_iam_policy docker image
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/iam/policy/Dockerfile
@@ -61,6 +67,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_iam_token docker image
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/iam/token/Dockerfile
@@ -72,6 +80,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_iam_oauth docker image
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/iam/oauth/Dockerfile
@@ -83,6 +93,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_iam_identity docker image
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/iam/identity/Dockerfile
@@ -94,6 +106,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_iam_authentication_password docker image
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/iam/authentication/password/Dockerfile
@@ -105,6 +119,8 @@ jobs:
     needs: [tests,setup]
     name: Publish native_actor_user docker image
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - uses: ./.github/actions/publish-docker-image.yml
         with:
           dockerfile: modules/native/actor/user/Dockerfile
@@ -126,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
