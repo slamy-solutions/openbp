@@ -1,5 +1,16 @@
 version: "3.4"
 services:
+
+  system_proxy:
+    restart: always
+    image: traefik:2.5.4
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+
   system_cache:
     restart: always
     container_name: system_cache
@@ -28,14 +39,6 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
 
-  system_rabbitmq:
-    restart: always
-    container_name: system_rabbitmq
-    hostname: rabbitmq
-    build:
-      context: modules/system/services/rabbitmq
-      dockerfile: Dockerfile
-
   system_telemetry:
     restart: always
     container_name: system_telemetry
@@ -49,7 +52,3 @@ services:
   system_nats:
     restart: always
     image: nats:latest
-
-networks:
-  default:
-    name: openbp-dev

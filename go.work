@@ -3,8 +3,6 @@ go 1.18
 use (
 	./modules/native/libs/golang
 	./modules/native/services/actor/user
-	./modules/native/services/api
-	./modules/native/services/file
 	./modules/native/services/iam/authentication/password
 	./modules/native/services/iam/config
 	./modules/native/services/iam/identity
@@ -12,12 +10,11 @@ use (
 	./modules/native/services/iam/policy
 	./modules/native/services/iam/token
 	./modules/native/services/keyvaluestorage
-	./modules/native/services/lambda/entrypoint
-	./modules/native/services/lambda/manager
 	./modules/native/services/namespace
-	./modules/system/libs/golang
 	./modules/system/libs/go/cache
 	./modules/system/libs/go/mongodb
 	./modules/system/libs/go/rabbitmq
 	./modules/system/libs/go/telemetry
+	./modules/system/libs/golang
+	./modules/tools/services/rest
 )

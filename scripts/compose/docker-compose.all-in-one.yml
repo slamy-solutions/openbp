@@ -1,0 +1,11 @@
+# This docker-compose file contains all the services in one file and can be used to startup OpenBP prod environment
+
+version: '3.8'
+
+services:
+  # System Module
+
+
+networks:
+  internal:
+    name: openbp_internal

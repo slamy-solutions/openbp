@@ -3,9 +3,9 @@ annotations:
 apiVersion: v2
 appVersion: 1.0.0
 dependencies:
-  - name: rabbitmq
-    repository: https://charts.bitnami.com/bitnami
-    version: 10.3.5
+  - name: nats
+    repository: https://nats-io.github.io/k8s/helm/charts/
+    version: 0.18.2
   - name: mongodb
     repository: https://charts.bitnami.com/bitnami
     version: 13.1.3

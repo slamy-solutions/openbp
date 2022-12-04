@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine as build
+FROM --platform=$BUILDPLATFORM golang:1.18-alpine as build
 RUN apk add --no-cache git
 
 COPY modules/system/libs/go /src/modules/system/libs/go
@@ -25,7 +25,7 @@ COPY modules/native/services/namespace/src/main.go ./main.go
 COPY modules/native/services/namespace/src/services ./services/
 COPY modules/native/services/namespace/src/grpc ./grpc/
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -a -o app ./main.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -a -o app ./main.go
 RUN chmod +x app
 
 FROM scratch

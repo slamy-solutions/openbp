@@ -35,7 +35,6 @@ func main() {
 	SYSTEM_DB_URL := getConfigEnv("SYSTEM_DB_URL", "mongodb://root:example@system_db/admin")
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
 	SYSTEM_NATS_URL := getConfigEnv("SYSTEM_NATS_URL", "nats://system_nats")
-	// SYSTEM_RABBITMQ_URL := getConfigEnv("SYSTEM_RABBITMQ_URL", "amqp://system_rabbitmq:5672")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
 
 	ctx := context.Background()
@@ -75,22 +74,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	// Setting up AMQP
-	/*amqpConenction, err := amqp.Dial(SYSTEM_RABBITMQ_URL)
-	if err != nil {
-		panic(err)
-	}
-	defer amqpConenction.Close()
-	channel, err := amqpConenction.Channel()
-	if err != nil {
-		panic(err)
-	}
-	err = channel.ExchangeDeclare(fmt.Sprintf("%snative_namespace_events", SYSTEM_DB_PREFIX), "direct", true, false, false, false, amqp.Table{})
-	if err != nil {
-		panic(err)
-	}*/
-	//rabbitmqPublisher.Publish(d, ["ds"], rabbitmq.WithPublishOptionsHeaders())
 
 	// Creating grpc server
 	grpcServer := grpc.NewServer(

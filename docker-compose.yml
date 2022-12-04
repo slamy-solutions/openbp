@@ -23,3 +23,7 @@ version: "3.4"
   #    - system_cache
   #    - system_jaeger
   #    - system_db
+
+networks:
+  default:
+    name: openbp_internal
