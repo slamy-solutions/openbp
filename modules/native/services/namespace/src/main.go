@@ -34,7 +34,7 @@ func getConfigEnv(key string, fallback string) string {
 func main() {
 	SYSTEM_DB_URL := getConfigEnv("SYSTEM_DB_URL", "mongodb://root:example@system_db/admin")
 	SYSTEM_CACHE_URL := getConfigEnv("SYSTEM_CACHE_URL", "redis://system_cache")
-	SYSTEM_NATS_URL := getConfigEnv("SYSTEM_NATS_URL", "nats://system_nats")
+	SYSTEM_NATS_URL := getConfigEnv("SYSTEM_NATS_URL", "nats://system_nats:4222")
 	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
 
 	ctx := context.Background()

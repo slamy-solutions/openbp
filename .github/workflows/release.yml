@@ -19,6 +19,7 @@ jobs:
   tests:
     uses: ./.github/workflows/test.yml
   
+  # Native
   publish-native-namespace:
     needs: [tests,setup]
     name: Publish native_namespace docker image
@@ -29,9 +30,87 @@ jobs:
           tags: |
             openbp/obp-native-namespace:latest
             openbp/obp-native-namespace:${{ jobs.setup.steps.extract_tag.outputs.tag }}
-  
+  publish-native-keyvaluestorage:
+    needs: [tests,setup]
+    name: Publish native_keyvaluestorage docker image
+    steps:
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/keyvaluestorage/Dockerfile
+          tags: |
+            openbp/obp-native-keyvaluestorage:latest
+            openbp/obp-native-keyvaluestorage:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+  publish-native-iam-policy:
+    needs: [tests,setup]
+    name: Publish native_iam_policy docker image
+    steps:
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/iam/policy/Dockerfile
+          tags: |
+            openbp/obp-native-iam-policy:latest
+            openbp/obp-native-iam-policy:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+  publish-native-iam-token:
+    needs: [tests,setup]
+    name: Publish native_iam_token docker image
+    steps:
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/iam/token/Dockerfile
+          tags: |
+            openbp/obp-native-iam-token:latest
+            openbp/obp-native-iam-token:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+  publish-native-iam-oauth:
+    needs: [tests,setup]
+    name: Publish native_iam_oauth docker image
+    steps:
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/iam/oauth/Dockerfile
+          tags: |
+            openbp/obp-native-iam-oauth:latest
+            openbp/obp-native-iam-oauth:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+  publish-native-iam-identity:
+    needs: [tests,setup]
+    name: Publish native_iam_identity docker image
+    steps:
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/iam/identity/Dockerfile
+          tags: |
+            openbp/obp-native-iam-identity:latest
+            openbp/obp-native-iam-identity:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+  publish-native-iam-authentication-password:
+    needs: [tests,setup]
+    name: Publish native_iam_authentication_password docker image
+    steps:
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/iam/authentication/password/Dockerfile
+          tags: |
+            openbp/obp-native-iam-authentication-password:latest
+            openbp/obp-native-iam-authentication-password:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+  publish-native-actor-user:
+    needs: [tests,setup]
+    name: Publish native_actor_user docker image
+    steps:
+      - uses: ./.github/actions/publish-docker-image.yml
+        with:
+          dockerfile: modules/native/actor/user/Dockerfile
+          tags: |
+            openbp/obp-native-actor-user:latest
+            openbp/obp-native-actor-user:${{ jobs.setup.steps.extract_tag.outputs.tag }}
+
   github-release:
-    needs: [publish-native-namespace]
+    needs:
+      - publish-native-namespace
+      - publish-native-keyvaluestorage
+      - publish-native-iam-policy
+      - publish-native-iam-token
+      - publish-native-iam-oauth
+      - publish-native-iam-identity
+      - publish-native-iam-authentication-password
+      - publish-native-actor-user
     name: Create github release
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +120,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}

@@ -13,8 +13,8 @@ import (
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
 
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	native_iam_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/config"
-	native_keyvaluestorage_grpc "github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/grpc/native_keyvaluestorage"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/config/src/services"
 )
 
@@ -54,17 +54,11 @@ func main() {
 	fmt.Println("Initialized cache")
 
 	// Setting up native_keyvaluestorage connection
-	nativeKeyValueStorageConnection, err := grpc.Dial(
-		NATIVE_KEYVALUESTORAGE_URL,
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
+	nativeKeyValueStorageConnection, nativeKeyValueStorageClient, err := native.NewKeyValueStorageConnection(NATIVE_KEYVALUESTORAGE_URL)
 	if err != nil {
 		panic(err)
 	}
 	defer nativeKeyValueStorageConnection.Close()
-	nativeKeyValueStorageClient := native_keyvaluestorage_grpc.NewKeyValueStorageServiceClient(nativeKeyValueStorageConnection)
 	fmt.Println("Initialized native_keyvaluestorage connection")
 
 	// Creating grpc server

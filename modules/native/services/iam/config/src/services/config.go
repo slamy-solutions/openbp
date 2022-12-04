@@ -7,10 +7,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/openbp/modules/system/libs/go/cache"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 	grpccodes "google.golang.org/grpc/codes"
 
-	iamGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/configuration"
+	iamGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/config"
 	keyValueStorageGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
 )
 

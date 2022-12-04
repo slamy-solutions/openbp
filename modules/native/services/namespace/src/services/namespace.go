@@ -48,11 +48,11 @@ func New(mongoClient *mongo.Client, cache cache.Cache, js nats.JetStreamContext)
 
 	// Make sure there is stream for events on system_nats
 	cfg := nats.StreamConfig{
-		Name:      "native.namespace.event",
+		Name:      "native_namespace_event",
 		Retention: nats.InterestPolicy,
-		Subjects:  []string{"native.namespace.event.>"},
+		Subjects:  []string{"native.namespace.event.created", "native.namespace.event.updated", "native.namespace.event.deleted"},
 		Storage:   nats.FileStorage,
-		Replicas:  3,
+		Replicas:  1, // TODO: use envirnment variable to enable HA
 	}
 	_, err := js.AddStream(&cfg)
 	if err != nil {
