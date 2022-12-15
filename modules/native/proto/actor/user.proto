@@ -92,6 +92,32 @@ message DeleteRequest {
 }
 message DeleteResponse {}
 
+/*
+message ListRequest {
+    // Regex to match login, fullName, email. Leave empty to ignore.
+    string match = 1;
+    // Maximum number of results to return. Set to 0 if yo want get all the users up to the end.
+    uint64 limit = 2;
+    // A user UUID. Only return users that signed after this user. This is usefull for paging the result. Set to empty string to ignore this parameter. 
+    string since = 3;
+}
+message ListResponse {
+    // Total number of users founded
+    uint64 totalCount = 1;
+    // User data
+    User user = 2;
+}
+*/
+
+message SearchRequest {
+    string match = 1; 
+    uint64 limit = 2;
+}
+message SearchResponse {
+    // User data
+    User user = 1;
+}
+
 service ActorUserService {
     // Create new user and assign identity to it.
     rpc Create(CreateRequest) returns (CreateResponse);
@@ -105,4 +131,10 @@ service ActorUserService {
     rpc Update(UpdateRequest) returns (UpdateResponse);
     // Delete user
     rpc Delete(DeleteRequest) returns (DeleteResponse);
+    // Lists all users in the order that they signed up.
+    //rpc Find(ListRequest) returns (ListResponse);
+
+    // Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
+    // Matches may be not ideal and its not possible to predict how much users matched provided string.
+    rpc Search(SearchRequest) returns (stream SearchResponse);
 }

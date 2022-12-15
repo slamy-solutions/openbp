@@ -34,6 +34,9 @@ type ActorUserServiceClient interface {
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	// Delete user
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	// Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
+	// Matches may be not ideal and its not possible to predict how much users matched provided string.
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (ActorUserService_SearchClient, error)
 }
 
 type actorUserServiceClient struct {
@@ -98,6 +101,38 @@ func (c *actorUserServiceClient) Delete(ctx context.Context, in *DeleteRequest, 
 	return out, nil
 }
 
+func (c *actorUserServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (ActorUserService_SearchClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[0], "/native_actor_user.ActorUserService/Search", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &actorUserServiceSearchClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ActorUserService_SearchClient interface {
+	Recv() (*SearchResponse, error)
+	grpc.ClientStream
+}
+
+type actorUserServiceSearchClient struct {
+	grpc.ClientStream
+}
+
+func (x *actorUserServiceSearchClient) Recv() (*SearchResponse, error) {
+	m := new(SearchResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ActorUserServiceServer is the server API for ActorUserService service.
 // All implementations must embed UnimplementedActorUserServiceServer
 // for forward compatibility
@@ -114,6 +149,9 @@ type ActorUserServiceServer interface {
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	// Delete user
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	// Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
+	// Matches may be not ideal and its not possible to predict how much users matched provided string.
+	Search(*SearchRequest, ActorUserService_SearchServer) error
 	mustEmbedUnimplementedActorUserServiceServer()
 }
 
@@ -138,6 +176,9 @@ func (UnimplementedActorUserServiceServer) Update(context.Context, *UpdateReques
 }
 func (UnimplementedActorUserServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedActorUserServiceServer) Search(*SearchRequest, ActorUserService_SearchServer) error {
+	return status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedActorUserServiceServer) mustEmbedUnimplementedActorUserServiceServer() {}
 
@@ -260,6 +301,27 @@ func _ActorUserService_Delete_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ActorUserService_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SearchRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ActorUserServiceServer).Search(m, &actorUserServiceSearchServer{stream})
+}
+
+type ActorUserService_SearchServer interface {
+	Send(*SearchResponse) error
+	grpc.ServerStream
+}
+
+type actorUserServiceSearchServer struct {
+	grpc.ServerStream
+}
+
+func (x *actorUserServiceSearchServer) Send(m *SearchResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // ActorUserService_ServiceDesc is the grpc.ServiceDesc for ActorUserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -292,6 +354,12 @@ var ActorUserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ActorUserService_Delete_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Search",
+			Handler:       _ActorUserService_Search_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "user.proto",
 }

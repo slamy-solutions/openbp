@@ -81,12 +81,13 @@ If you just want to install all the modules and use all features, use `docker-co
 
 Table with specifications for every file you can find below:
 
-| File                          | Description                             | Dependencies                                  |
-| ----------------------------- | --------------------------------------- | --------------------------------------------- |
-| docker-compose.all-in-one.yml | Run all the modules and features        | -                                             |
-| docker-compose.yml            | Create internal network and data volume | -                                             |
-| docker-compose.system.yml     | Run only `system` module                | docker-compose.yml                            |
-| docker-compose.native.yml     | Run only `native` module                | docker-compose.yml, docker-compose.system.yml |
+| File                          | Description                             | Dependencies                                                             |
+| ----------------------------- | --------------------------------------- | ------------------------------------------------------------------------ |
+| docker-compose.all-in-one.yml | Run all the modules and features        | -                                                                        |
+| docker-compose.yml            | Create internal network and data volume | -                                                                        |
+| docker-compose.system.yml     | Run only `system` module                | docker-compose.yml                                                       |
+| docker-compose.native.yml     | Run only `native` module                | docker-compose.yml, docker-compose.system.yml                            |
+| docker-compose.tools.yml      | Run only `tools` module                 | docker-compose.yml, docker-compose.system.yml, docker-compose.native.yml |
 
 ## Backup
 All the data of the application is located in the `data` folder (near the `docker-compose.*.yml` files). You can back up data by doing a copy of the folder.

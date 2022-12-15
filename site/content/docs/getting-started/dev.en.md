@@ -7,3 +7,4 @@ This deployment will be extremely useful for you if you want to develop core mod
 ## Prepare the environment
    1. Install [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/).
    2. Clone project using  ```git clone https://github.com/slamy-solutions/openbp.git```
+   3. 

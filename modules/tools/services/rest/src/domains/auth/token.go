@@ -29,7 +29,7 @@ func (r *TokenRouter) Refresh(ctx *gin.Context) {
 		return
 	}
 
-	refreshResponse, err := r.servicesHandler.Native.IAMOAuth.RefreshToken(ctx, &oauth.RefreshTokenRequest{
+	refreshResponse, err := r.servicesHandler.Native.IAMOAuth.RefreshToken(ctx.Request.Context(), &oauth.RefreshTokenRequest{
 		RefreshToken: requestData.RefreshToken,
 	})
 	if err != nil {
@@ -75,6 +75,8 @@ type validateTokenRequest struct {
 }
 type validateTokenResponse struct {
 	Valid bool `json:"valid"`
+
+	Message string `json:"message"`
 }
 
 func (r *TokenRouter) Validate(ctx *gin.Context) {
@@ -84,7 +86,7 @@ func (r *TokenRouter) Validate(ctx *gin.Context) {
 		return
 	}
 
-	checkResponse, err := r.servicesHandler.Native.IAMOAuth.CheckAccess(ctx, &oauth.CheckAccessRequest{
+	checkResponse, err := r.servicesHandler.Native.IAMOAuth.CheckAccess(ctx.Request.Context(), &oauth.CheckAccessRequest{
 		AccessToken: requestData.AccessToken,
 		Scopes:      []*oauth.Scope{},
 	})
@@ -95,5 +97,5 @@ func (r *TokenRouter) Validate(ctx *gin.Context) {
 
 	valid := checkResponse.Status == oauth.CheckAccessResponse_OK
 
-	ctx.JSON(http.StatusOK, validateTokenResponse{Valid: valid})
+	ctx.JSON(http.StatusOK, validateTokenResponse{Valid: valid, Message: checkResponse.Message})
 }

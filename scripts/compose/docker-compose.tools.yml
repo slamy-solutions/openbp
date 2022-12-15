@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  tools_rest:
+    image: openbp/obp-tools-rest:${OPENBP_VERSION:-latest}
+    container_name: tools_rest
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tools_rest.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.tools_rest.entrypoints=web"
+    environment:
+      ALLOW_ROOT_USER_INIT: true
+    depends_on:
+      - native_namespace
+      - native_actor_user
+      - native_iam_oauth
+      - native_iam_policy
+      - native_iam_identity
+      - native_iam_authentication_password
+      - native_keyvaluestorage
+      - system_telemetry
+
+  tools_gui:
+    image: openbp/obp-tools-gui:${OPENBP_VERSION:-latest}
+    container_name: tools_gui
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tools_gui.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.tools_gui.entrypoints=web"
+    depends_on:
+      - tools_rest
+      - system_proxy

@@ -308,3 +308,33 @@ func (s *ActorUserServer) Delete(ctx context.Context, in *nativeActorUserGRPC.De
 
 	return &nativeActorUserGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
 }
+
+func (s *ActorUserServer) Search(in *nativeActorUserGRPC.SearchRequest, out nativeActorUserGRPC.ActorUserService_SearchServer) error {
+	ctx := out.Context()
+
+	opts := options.Find()
+	if in.Limit != 0 {
+		opts = opts.SetLimit(int64(in.Limit))
+	}
+
+	cursor, err := s.mongoCollection.Find(ctx, bson.M{"$text": bson.M{"$search": in.Match}}, opts)
+	if err != nil {
+		return status.Error(grpccodes.Internal, "Failed to get users from the database. "+err.Error())
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var user userInMongo
+		if err := cursor.Decode(&user); err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
+		if err := out.Send(&nativeActorUserGRPC.SearchResponse{User: user.ToProtoUser()}); err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return status.Error(grpccodes.Internal, "Unexpected cursor error on fetching data from database. "+err.Error())
+	}
+
+	return nil
+}

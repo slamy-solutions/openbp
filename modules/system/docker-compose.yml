@@ -8,8 +8,15 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
+      - "--api.insecure=true"
+      - "--tracing=true"
+      - "--tracing.serviceName=traefik"
+      - "--tracing.jaeger=true"
+      - "--tracing.jaeger.samplingServerURL=http://system_telemetry:5778/sampling"
+      - "--tracing.jaeger.localAgentHostPort=system_telemetry:6831"
     ports:
       - "80:80"
+      - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
@@ -45,6 +52,8 @@ services:
     restart: always
     container_name: system_telemetry
     image: jaegertracing/opentelemetry-all-in-one:latest
+    ports:
+      - "16686:16686"
 
   system_nats:
     restart: always

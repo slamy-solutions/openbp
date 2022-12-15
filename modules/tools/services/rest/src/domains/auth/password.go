@@ -35,7 +35,7 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	// Try to find user with this login
-	userGetResponse, err := r.servicesHandler.Native.ActorUser.GetByLogin(ctx, &user.GetByLoginRequest{
+	userGetResponse, err := r.servicesHandler.Native.ActorUser.GetByLogin(ctx.Request.Context(), &user.GetByLoginRequest{
 		Login:    requestData.Login,
 		UseCache: false,
 	})
@@ -51,7 +51,7 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	// Try to verify password and create authorization token for user
-	tokenCreationResponse, err := r.servicesHandler.Native.IAMOAuth.CreateTokenWithPassword(ctx, &oauth.CreateTokenWithPasswordRequest{
+	tokenCreationResponse, err := r.servicesHandler.Native.IAMOAuth.CreateTokenWithPassword(ctx.Request.Context(), &oauth.CreateTokenWithPasswordRequest{
 		Namespace: "",
 		Identity:  userGetResponse.User.Identity,
 		Password:  requestData.Password,
@@ -79,4 +79,43 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	default:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordUnauthorizedUnknown))
 	}
+}
+
+type passwordRestRequest struct {
+	Login string `json:"login" binding:"required"`
+}
+type passwordResetResponse struct{}
+
+func (r *PasswordRouter) Reset(ctx *gin.Context) {
+	var requestData passwordLoginRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Try to find user with this login
+	userGetResponse, err := r.servicesHandler.Native.ActorUser.GetByLogin(ctx.Request.Context(), &user.GetByLoginRequest{
+		Login:    requestData.Login,
+		UseCache: true,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			// User not found. Silently returning success
+			if st.Code() == codes.NotFound {
+				ctx.JSON(http.StatusOK, gin.H{})
+				return
+			}
+		}
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// TODO:
+	// If user email is not set or it is not verified - silently return success.
+	if userGetResponse.User.Email == "" {
+		ctx.JSON(http.StatusOK, gin.H{})
+		return
+	}
+
+	ctx.AbortWithError(http.StatusNotImplemented, err)
 }

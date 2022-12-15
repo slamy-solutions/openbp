@@ -5,6 +5,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 
+	"go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
@@ -64,6 +65,7 @@ func Register(ctx context.Context, endpoint string, serviceModule string, servic
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{},
 			propagation.Baggage{},
+			jaeger.Jaeger{},
 		),
 	)
 

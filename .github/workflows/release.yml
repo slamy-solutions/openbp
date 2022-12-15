@@ -88,6 +88,24 @@ jobs:
       tags: openbp/obp-native-actor-user:latest,openbp/obp-native-actor-user:${{ needs.setup.outputs.tag }}
     secrets: inherit
 
+  # Tools
+  publish-tools-rest:
+    needs: [tests,setup]
+    name: Publish tools_rest docker image
+    uses: ./.github/workflows/publish-service.yml
+    with:
+      dockerfile: modules/tools/services/rest/Dockerfile
+      tags: openbp/obp-tools-rest:latest,openbp/obp-tools-rest:${{ needs.setup.outputs.tag }}
+    secrets: inherit
+  publish-tools-gui:
+    needs: [tests,setup]
+    name: Publish tools_gui docker image
+    uses: ./.github/workflows/publish-service.yml
+    with:
+      dockerfile: modules/tools/services/gui/Dockerfile
+      tags: openbp/obp-tools-gui:latest,openbp/obp-tools-gui:${{ needs.setup.outputs.tag }}
+    secrets: inherit
+
   github-release:
     needs:
       - publish-native-namespace
@@ -98,6 +116,8 @@ jobs:
       - publish-native-iam-identity
       - publish-native-iam-authentication-password
       - publish-native-actor-user
+      - publish-tools-rest
+      - publish-tools-gui
     name: Create github release
     runs-on: ubuntu-latest
     steps:

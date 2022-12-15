@@ -11,6 +11,7 @@ use (
 	./modules/native/services/iam/token
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/namespace
+	./modules/native/testing
 	./modules/system/libs/golang
 	./modules/tools/services/rest
 )

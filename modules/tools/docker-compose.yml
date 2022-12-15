@@ -1,0 +1,44 @@
+version: "3.4"
+services:
+  tools_rest:
+    container_name: tools_rest
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/tools/services/rest/Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tools_rest.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.tools_rest.entrypoints=web"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_iam_token"
+      ALLOW_ROOT_USER_INIT: true
+      DEFAULT_ROOT_USER_LOGIN: ""
+      DEFAULT_ROOT_USER_PASSWORD: ""
+    depends_on:
+      - native_namespace
+      - native_actor_user
+      - native_iam_oauth
+      - native_iam_policy
+      - native_iam_identity
+      - native_iam_authentication_password
+      - native_keyvaluestorage
+      - system_telemetry
+
+  tools_gui:
+    container_name: tools_gui
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/tools/services/gui/Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tools_gui.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.tools_gui.entrypoints=web"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_iam_token"
+    depends_on:
+      - tools_rest
+      - system_proxy
