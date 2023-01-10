@@ -1,0 +1,28 @@
+apiVersion: v2
+name: openbp-system
+description: OpenBP system module defines base components and infastructure for platform.
+keywords:
+  - OpenBP
+annotations:
+  category: Infrastructure
+type: application
+appVersion: 0.0.3
+dependencies:
+  - name: nats
+    repository: https://nats-io.github.io/k8s/helm/charts/
+    version: 0.18.2
+    alias: system-nats
+  - name: mongodb
+    repository: https://charts.bitnami.com/bitnami
+    version: 13.1.3
+    alias: system-mongodb
+  - name: redis
+    repository: https://charts.bitnami.com/bitnami
+    version: 17.1.5
+    alias: system-redis-cache
+maintainers:
+  - name: Slamy
+    url: https://github.com/slamy-solutions/openbp
+sources:
+  - https://github.com/slamy-solutions/openbp/modules/system
+version: 0.0.3

@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "tools.fullname" . }}-gui"
+  namespace: {{ print .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: "{{ include "tools.fullname" . }}-gui"
+    {{- include "tools.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.gui.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ include "tools.fullname" . }}-gui"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ include "tools.fullname" . }}-gui"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+    spec:
+      containers:
+      - name: gui
+        image: "{{ .Values.gui.image.repository }}:{{ .Chart.AppVersion }}"
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 20Mi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: "{{ include "tools.fullname" . }}-gui"
+  namespace: {{ print .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: "{{ include "tools.fullname" . }}-gui"
+    {{- include "tools.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: "{{ include "tools.fullname" . }}-gui"
+  minReplicas: {{ .Values.gui.minReplicas }}
+  maxReplicas: {{ .Values.gui.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: AverageValue
+        averageValue: 500m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "tools.fullname" . }}-gui"
+  namespace: {{ print .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: "{{ include "tools.fullname" . }}-gui"
+    {{- include "tools.labels" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: "{{ include "tools.fullname" . }}-gui"
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

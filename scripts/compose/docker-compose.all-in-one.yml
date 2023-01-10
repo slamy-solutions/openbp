@@ -52,6 +52,13 @@ services:
     networks:
       - internal
 
+  system_telemetry:
+    restart: always
+    container_name: system_telemetry
+    image: jaegertracing/opentelemetry-all-in-one:latest
+    ports:
+      - "16686:16686"
+
   # --- Native Module
   native_namespace:
     image: openbp/obp-native-namespace:${OPENBP_VERSION:-latest}
@@ -163,7 +170,7 @@ services:
       - "traefik.http.routers.tools_rest.rule=PathPrefix(`/api`)"
       - "traefik.http.routers.tools_rest.entrypoints=web"
     environment:
-      ALLOW_ROOT_USER_INIT: true
+      ALLOW_ROOT_USER_INIT: "true"
     depends_on:
       - native_namespace
       - native_actor_user

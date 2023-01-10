@@ -1,0 +1,53 @@
+namespace:
+  image:
+    repository: openbp/obp-native-namespace
+  minReplicas: 1
+  maxReplicas: 10
+  replicas: 1
+keyvaluestorage:
+  image:
+    repository: openbp/obp-native-keyvaluestorage
+  minReplicas: 1
+  maxReplicas: 10
+  replicas: 1
+actor:
+  user:
+    image:
+      repository: openbp/obp-native-actor-user
+    minReplicas: 1
+    maxReplicas: 10
+    replicas: 1
+iam:
+  policy:
+    image:
+      repository: openbp/obp-native-iam-policy
+    minReplicas: 1
+    maxReplicas: 10
+    replicas: 1
+  identity:
+    image:
+      repository: openbp/obp-native-iam-identity
+    minReplicas: 1
+    maxReplicas: 10
+    replicas: 1
+  token:
+    image:
+      repository: openbp/obp-native-iam-token
+    minReplicas: 1
+    maxReplicas: 10
+    replicas: 1
+  oauth:
+    image:
+      repository: openbp/obp-native-iam-oauth
+    minReplicas: 1
+    maxReplicas: 10
+    replicas: 1
+  authentication:
+    password:
+      image:
+        repository: openbp/obp-native-iam-authentication-password
+      minReplicas: 1
+      maxReplicas: 10
+      replicas: 1
+
+  

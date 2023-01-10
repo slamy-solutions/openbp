@@ -1,0 +1,16 @@
+apiVersion: v2
+name: all
+description: All-in-one helm chart for the OpenBP. It installs all the modules
+type: application
+dependencies:
+- name: system
+  version: 0.0.3
+  repository: file://../system
+- name: native
+  version: 0.0.3
+  repository: file://../native
+- name: tools
+  version: 0.0.3
+  repository: file://../tools
+version: 0.0.3
+appVersion: "v0.0.3"

@@ -1,0 +1,12 @@
+rest:
+  image:
+    repository: openbp/obp-tools-rest
+  minReplicas: 1
+  maxReplicas: 10
+  replicas: 1
+gui:
+  image:
+    repository: openbp/obp-tools-gui
+  minReplicas: 1
+  maxReplicas: 10
+  replicas: 1

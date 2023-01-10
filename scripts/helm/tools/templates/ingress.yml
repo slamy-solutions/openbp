@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ include "tools.fullname" . }}-ingress"
+  namespace: {{ print .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: "{{ include "tools.fullname" . }}-ingress"
+    {{- include "tools.labels" . | nindent 4 }}
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: "{{ include "tools.fullname" . }}-gui"
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: "{{ include "tools.fullname" . }}-rest"
+            port:
+              number: 80
+

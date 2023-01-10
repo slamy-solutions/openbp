@@ -1,0 +1,27 @@
+tags:
+  global:
+    openbp-system: false
+
+system-redis-cache:
+  #nameOverride: "system-cache"
+  master:
+    persistence:
+      enabled: false
+  replica:
+    persistence:
+      enabled: false
+system-mongodb:
+  architecture: "replicaset"
+  #nameOverride: "system-db"
+  auth:
+    rootUser: "root"
+    rootPassword: "example"
+system-nats:
+  nats:
+    jetstream:
+      enabled: true
+    fileStorage:
+      enabled: true
+  cluster:
+    enabled: true
+    replicas: 3

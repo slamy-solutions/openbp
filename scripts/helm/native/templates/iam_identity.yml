@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "native.fullname" . }}-iam-identity"
+  namespace: {{ print .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-identity"
+    {{- include "native.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.iam.identity.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-identity"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-identity"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+    spec:
+      containers:
+      - name: iam-identity
+        image: "{{ .Values.iam.identity.image.repository }}:{{ .Chart.AppVersion }}"
+        ports:
+        - containerPort: 80
+        env:
+        - name: SYSTEM_DB_URL
+          value: "mongodb://root:example@{{ .Release.Name }}-system-mongodb-headless/admin"
+        - name: SYSTEM_CACHE_URL
+          value: "redis://{{ .Release.Name }}-system-redis-cache-headless"
+        - name: SYSTEM_NATS_URL
+          value: "nats://{{ .Release.Name }}-system-nats:4222"
+        - name: NATIVE_NAMESPACE_URL
+          value: "{{ .Release.Name }}-native-namespace:80"
+        - name: NATIVE_IAM_POLICY_URL
+          value: "{{ .Release.Name }}-native-iam-policy:80"
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 20Mi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: "{{ include "native.fullname" . }}-iam-identity"
+  namespace: {{ print .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-identity"
+    {{- include "native.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: "{{ include "native.fullname" . }}-iam-identity"
+  minReplicas: {{ .Values.iam.identity.minReplicas }}
+  maxReplicas: {{ .Values.iam.identity.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: AverageValue
+        averageValue: 500m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "native.fullname" . }}-iam-identity"
+  namespace: {{ print .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-identity"
+    {{- include "native.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-identity"
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

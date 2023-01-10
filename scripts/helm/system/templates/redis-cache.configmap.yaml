@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-openbp-system-redis-cache-configmap" .Release.Name }}
+  namespace: {{ .Release.Namespace | quote }}
+data:
+  redis-config: |
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 5
+    appendonly no
+    save ""
