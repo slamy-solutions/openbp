@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
@@ -65,6 +67,9 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionAge: time.Minute * 5,
+		}),
 	)
 
 	iamAuthenticationPasswordServer := services.NewPasswordIdentificationService(dbClient, nativeNamespaceClient)

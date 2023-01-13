@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
@@ -78,6 +80,9 @@ func main() {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 		grpc.MaxRecvMsgSize(1024*1024*16), // 16 megabytes
 		grpc.MaxSendMsgSize(1024*1024*16), // 16 megabytes
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionAge: time.Minute * 5,
+		}),
 	)
 
 	storageServer := services.NewKeyValueStorageServer(dbClient, cacheClient, nativeNamespaceClient)
