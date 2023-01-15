@@ -1,0 +1,27 @@
+{
+  "name": "@openbp/native",
+  "version": "0.0.2",
+  "description": "Library for inter-service communication with OpenBP native module.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [
+    "openbp"
+  ],
+  "author": "Slamy Solutions",
+  "license": "GNU AGPL",
+  "homepage": "https://openbp.io",
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.8.4",
+    "rxjs": "^7.8.0"
+  },
+  "files": [
+    "lib/**/*"
+  ]
+}
