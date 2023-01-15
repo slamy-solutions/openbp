@@ -6,7 +6,6 @@ This will not work if you want to communicate with OpenBP from external applicat
 
 ## Basic usage
 ```ts
-import { Injectable, OnModuleInit, OnApplicationShutdown } from '@nestjs/common';
 import { NativeStub, Service } from '@openbp/native'
 
 // Creating services communication "proxy". This will only connect to the selected services
