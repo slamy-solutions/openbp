@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package native_namespace;
 
 option go_package = "slamy/openERP/native/namespace;namespace";
@@ -7,13 +9,58 @@ option go_package = "slamy/openERP/native/namespace;namespace";
 message Namespace {
     // Unique name of the namespace
     string name = 1;
+
+    // User-friendly public name of the namespace.
+    string fullName = 2;
+    // Arbitrary description
+    string description = 3;
+
+    // When the namespace was created
+    google.protobuf.Timestamp created = 4;
+    // Last time when the namespace information was updated.
+    google.protobuf.Timestamp updated = 5;
+    // Counter that increases after every update of the namespace
+    uint32 version = 6;
 }
 
 message EnsureNamespaceRequest {
-    // Unique name of the namespace. Name must match the regex "[A-Za-z0-9]+$"
+    // Unique name of the namespace. Name must match the regex "[A-Za-z0-9]+$". Max length is 32 symbols.
     string name = 1;
+    // User-friendly public name of the namespace. Can be changed in the future. Max length is 128 symbols.
+    string fullName = 2;
+    // Arbitrary description. Can be changed in the future. Max length is 512 symbols.
+    string description = 3;
 }
 message EnsureNamespaceResponse {
+    // Created namespace
+    Namespace namespace = 1;
+    // If true - new namespace was created
+    bool created = 2;
+}
+
+message CreateNamespaceRequest {
+    // Unique name of the namespace. Name must match the regex "[A-Za-z0-9]+$". Max length is 32 symbols.
+    string name = 1;
+    // User-friendly public name of the namespace. Can be changed in the future. Max length is 128 symbols.
+    string fullName = 2;
+    // Arbitrary description. Can be changed in the future. Max length is 512 symbols.
+    string description = 3;
+}
+message CreateNamespaceResponse {
+    // Created namespace
+    Namespace namespace = 1;
+}
+
+message UpdateNamespaceRequest {
+    // Unique name of the namespace.
+    string name = 1;
+
+    // User-friendly public name of the namespace. May be changed in the future.
+    string fullName = 2;
+    // Arbitrary description. May be changed in the future.
+    string description = 3;
+}
+message UpdateNamespaceResponse {
     // Created namespace
     Namespace namespace = 1;
 }
@@ -22,7 +69,10 @@ message DeleteNamespaceRequest {
     // Name of the namespace to delete
     string name = 1;
 }
-message DeleteNamespaceResponse {}
+message DeleteNamespaceResponse {
+    // Indicates if namespace existed before this operation
+    bool existed = 1;
+}
 
 message GetNamespaceRequest {
     // Name of the namespace to get
@@ -53,56 +103,36 @@ message IsNamespaceExistResponse {
     bool exist = 1;
 }
 
-/*
-message NamespaceStatsRequest {
-    // Name of the namespace to get statistics
+message GetNamespaceStatisticsRequest {
+    // Name of the namespace to get statistics. Required.
     string name = 1;
+    
+    /*
+        Cached data will be returned faster but may not be realtime.
+    */
+    bool useCache = 2;
 }
-message NamespaceStatsResponse {
-    // Number of the collections
-    int64 collections = 1;
-    // Number of the virtual collections
-    int64 views = 2;
-    // Number of the unique documents
-    int64 documents = 3;
-    // Number of the defined indexes
-    int64 indexes = 4;
+message GetNamespaceStatisticsResponse {
+    message Db {
+        // Number ob objects stored in the database
+        uint64 objects = 1;
+        // Total size of the raw data stored (without pre-alocated allocated space and indexes)
+        uint64 dataSize = 2;
+        // Total memory usage of the namespace
+        uint64 totalSize = 3;
+    }
 
-    // Total, uncompressed size (in bytes) of the data stored in the namespace
-    int64 totalSize = 5;
-    // Total, uncompressed space (in bytes) used for storing documents in the namespace
-    int64 dataSize = 6;
-    // Total, uncompressed space (in bytes) used for indexes on the collection of documents
-    int64 indexesSize = 7;
+    // Statistics from the database related to the namespace
+    Db db = 1;
 }
-
-message NamespaceDumpRequest {
-    // Name of the namespace to dump
-    string name = 1;
-}
-message NamespaceDumpResponse {
-    // Chunk of the data
-    bytes data = 1;
-
-    // The ammount of work to do in order to reach 100%
-    int64 totalProgress = 2;
-    // The ammount of work completed
-    int64 currentProgress = 3;
-}
-
-message NamespaceRestoreRequest {
-    // Name of the namespace
-    string name = 1;
-
-    // Chunk of the data
-    bytes data = 2;
-}
-message NamespaceRestoreResponse {}
-*/
 
 service NamespaceService {
-    // Create new namespace if it doesnt exist
+    // Create new namespace if it doesnt exist. If namespace exist, its data will not be updated.
     rpc Ensure(EnsureNamespaceRequest) returns (EnsureNamespaceResponse) {};
+    // Creates new namespace. If namespace already exist, will return error.
+    rpc Create(CreateNamespaceRequest) returns (CreateNamespaceResponse);
+    // Updates namespace information. If namespace doesnt exist, will return error.
+    rpc Update(UpdateNamespaceRequest) returns (UpdateNamespaceResponse);
     // Deletes namespace and all its data
     rpc Delete(DeleteNamespaceRequest) returns (DeleteNamespaceResponse) {};
     // Returns namespace information by its name
@@ -111,11 +141,6 @@ service NamespaceService {
     rpc GetAll(GetAllNamespacesRequest) returns (stream GetAllNamespacesResponse) {};
     // Checks if namespace exists
     rpc Exists(IsNamespaceExistRequest) returns (IsNamespaceExistResponse) {};
-
-    // Returns namespace statistics
-    // rpc Stats(NamespaceStatsRequest) returns (NamespaceStatsResponse) {};
-    // Dumps entire namespace data
-    // rpc Dump(NamespaceDumpRequest) returns (stream NamespaceDumpResponse) {};
-    // Restores data from the dump
-    // rpc Restore(stream NamespaceRestoreRequest) returns (NamespaceRestoreResponse) {};
+    // Gets namespace statistics. If namespace doesnt exist, will return error.
+    rpc Stat(GetNamespaceStatisticsRequest) returns (GetNamespaceStatisticsResponse);
 }

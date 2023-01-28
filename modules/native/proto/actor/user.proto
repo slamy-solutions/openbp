@@ -117,6 +117,55 @@ message SearchResponse {
     // User data
     User user = 1;
 }
+/*
+message GetUsersForNamespaceRequest {
+    // Namespace where to get users
+    string namespace = 1;
+    // User UUID from which to start return response. Use it for response paging together with limit parameter
+    string startFrom = 2;
+    // Maximum number of user to return. Use 0 to ignore limit.
+    uint32 limit = 3;
+}
+message GetUsersForNamespaceResponse {
+    // User data
+    User user = 1;
+}
+
+message AddUserToNamespaceRequest {
+    // User UUID to add
+    string user = 1;
+    // Namespace where to add user
+    string namespace = 2;
+}
+message AddUserToNamespaceResponse {}
+
+message RemoveUserFromNamespaceRequest {
+    // User UUID to remove
+    string user = 1;
+    // Namespace where to remove user
+    string namespace = 2;
+}
+message RemoveUserFromNamespaceResponse {}
+
+message GetNamespacesForUserRequest {
+    // User UUID for which to get namespaces
+    string user = 1;
+}
+message GetNamespacesForUserResponse {
+    // User namespace
+    string namespace = 1;
+}
+
+message IsUserInTheNamespaceRequest {
+    // User UUID to check
+    string user = 1;
+    // Namespace to check
+    string namespace = 2;
+}
+message IsUserInTheNamespaceResponse {
+    // True is user is in the namespace. Otherwise false
+    bool isInNamespace = 1;
+}*/
 
 service ActorUserService {
     // Create new user and assign identity to it.
@@ -138,3 +187,20 @@ service ActorUserService {
     // Matches may be not ideal and its not possible to predict how much users matched provided string.
     rpc Search(SearchRequest) returns (stream SearchResponse);
 }
+/*
+service ActorUserNamespaceService {
+    // Get list of users inside namespace
+    rpc GetUsersForNamespace(GetUsersForNamespaceRequest) returns (stream GetUsersForNamespaceResponse);
+    // Add user to the namespace. User can have multiple namespaces
+    rpc AddUserToNamespace(AddUserToNamespaceRequest) returns (AddUserToNamespaceResponse);
+    // Remove user from the namespace. If there where no user inside namespaces - does nothing
+    rpc RemoveUserFromNamespace(RemoveUserFromNamespaceRequest) returns (RemoveUserFromNamespaceResponse);
+    // Get all the namespaces for the user
+    rpc GetNamespacesForUser(GetNamespacesForUserRequest) returns (GetNamespacesForUserResponse);
+    // Check if user is inside namespace or not
+    rpc IsUserInTheNamespace(IsUserInTheNamespaceRequest) returns (IsUserInTheNamespaceResponse);
+
+    //rpc GetNamespacesByLogin() returns ();
+    //rpc GetNamespacesByIdentity() returns ();
+}
+*/

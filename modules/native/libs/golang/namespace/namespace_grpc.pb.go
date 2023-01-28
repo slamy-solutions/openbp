@@ -22,8 +22,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NamespaceServiceClient interface {
-	// Create new namespace if it doesnt exist
+	// Create new namespace if it doesnt exist. If namespace exist, its data will not be updated.
 	Ensure(ctx context.Context, in *EnsureNamespaceRequest, opts ...grpc.CallOption) (*EnsureNamespaceResponse, error)
+	// Creates new namespace. If namespace already exist, will return error.
+	Create(ctx context.Context, in *CreateNamespaceRequest, opts ...grpc.CallOption) (*CreateNamespaceResponse, error)
+	// Updates namespace information. If namespace doesnt exist, will return error.
+	Update(ctx context.Context, in *UpdateNamespaceRequest, opts ...grpc.CallOption) (*UpdateNamespaceResponse, error)
 	// Deletes namespace and all its data
 	Delete(ctx context.Context, in *DeleteNamespaceRequest, opts ...grpc.CallOption) (*DeleteNamespaceResponse, error)
 	// Returns namespace information by its name
@@ -32,6 +36,8 @@ type NamespaceServiceClient interface {
 	GetAll(ctx context.Context, in *GetAllNamespacesRequest, opts ...grpc.CallOption) (NamespaceService_GetAllClient, error)
 	// Checks if namespace exists
 	Exists(ctx context.Context, in *IsNamespaceExistRequest, opts ...grpc.CallOption) (*IsNamespaceExistResponse, error)
+	// Gets namespace statistics. If namespace doesnt exist, will return error.
+	Stat(ctx context.Context, in *GetNamespaceStatisticsRequest, opts ...grpc.CallOption) (*GetNamespaceStatisticsResponse, error)
 }
 
 type namespaceServiceClient struct {
@@ -45,6 +51,24 @@ func NewNamespaceServiceClient(cc grpc.ClientConnInterface) NamespaceServiceClie
 func (c *namespaceServiceClient) Ensure(ctx context.Context, in *EnsureNamespaceRequest, opts ...grpc.CallOption) (*EnsureNamespaceResponse, error) {
 	out := new(EnsureNamespaceResponse)
 	err := c.cc.Invoke(ctx, "/native_namespace.NamespaceService/Ensure", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *namespaceServiceClient) Create(ctx context.Context, in *CreateNamespaceRequest, opts ...grpc.CallOption) (*CreateNamespaceResponse, error) {
+	out := new(CreateNamespaceResponse)
+	err := c.cc.Invoke(ctx, "/native_namespace.NamespaceService/Create", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *namespaceServiceClient) Update(ctx context.Context, in *UpdateNamespaceRequest, opts ...grpc.CallOption) (*UpdateNamespaceResponse, error) {
+	out := new(UpdateNamespaceResponse)
+	err := c.cc.Invoke(ctx, "/native_namespace.NamespaceService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,12 +134,25 @@ func (c *namespaceServiceClient) Exists(ctx context.Context, in *IsNamespaceExis
 	return out, nil
 }
 
+func (c *namespaceServiceClient) Stat(ctx context.Context, in *GetNamespaceStatisticsRequest, opts ...grpc.CallOption) (*GetNamespaceStatisticsResponse, error) {
+	out := new(GetNamespaceStatisticsResponse)
+	err := c.cc.Invoke(ctx, "/native_namespace.NamespaceService/Stat", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NamespaceServiceServer is the server API for NamespaceService service.
 // All implementations must embed UnimplementedNamespaceServiceServer
 // for forward compatibility
 type NamespaceServiceServer interface {
-	// Create new namespace if it doesnt exist
+	// Create new namespace if it doesnt exist. If namespace exist, its data will not be updated.
 	Ensure(context.Context, *EnsureNamespaceRequest) (*EnsureNamespaceResponse, error)
+	// Creates new namespace. If namespace already exist, will return error.
+	Create(context.Context, *CreateNamespaceRequest) (*CreateNamespaceResponse, error)
+	// Updates namespace information. If namespace doesnt exist, will return error.
+	Update(context.Context, *UpdateNamespaceRequest) (*UpdateNamespaceResponse, error)
 	// Deletes namespace and all its data
 	Delete(context.Context, *DeleteNamespaceRequest) (*DeleteNamespaceResponse, error)
 	// Returns namespace information by its name
@@ -124,6 +161,8 @@ type NamespaceServiceServer interface {
 	GetAll(*GetAllNamespacesRequest, NamespaceService_GetAllServer) error
 	// Checks if namespace exists
 	Exists(context.Context, *IsNamespaceExistRequest) (*IsNamespaceExistResponse, error)
+	// Gets namespace statistics. If namespace doesnt exist, will return error.
+	Stat(context.Context, *GetNamespaceStatisticsRequest) (*GetNamespaceStatisticsResponse, error)
 	mustEmbedUnimplementedNamespaceServiceServer()
 }
 
@@ -133,6 +172,12 @@ type UnimplementedNamespaceServiceServer struct {
 
 func (UnimplementedNamespaceServiceServer) Ensure(context.Context, *EnsureNamespaceRequest) (*EnsureNamespaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ensure not implemented")
+}
+func (UnimplementedNamespaceServiceServer) Create(context.Context, *CreateNamespaceRequest) (*CreateNamespaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedNamespaceServiceServer) Update(context.Context, *UpdateNamespaceRequest) (*UpdateNamespaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedNamespaceServiceServer) Delete(context.Context, *DeleteNamespaceRequest) (*DeleteNamespaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -145,6 +190,9 @@ func (UnimplementedNamespaceServiceServer) GetAll(*GetAllNamespacesRequest, Name
 }
 func (UnimplementedNamespaceServiceServer) Exists(context.Context, *IsNamespaceExistRequest) (*IsNamespaceExistResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Exists not implemented")
+}
+func (UnimplementedNamespaceServiceServer) Stat(context.Context, *GetNamespaceStatisticsRequest) (*GetNamespaceStatisticsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Stat not implemented")
 }
 func (UnimplementedNamespaceServiceServer) mustEmbedUnimplementedNamespaceServiceServer() {}
 
@@ -173,6 +221,42 @@ func _NamespaceService_Ensure_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NamespaceServiceServer).Ensure(ctx, req.(*EnsureNamespaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NamespaceService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateNamespaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NamespaceServiceServer).Create(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_namespace.NamespaceService/Create",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NamespaceServiceServer).Create(ctx, req.(*CreateNamespaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NamespaceService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateNamespaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NamespaceServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_namespace.NamespaceService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NamespaceServiceServer).Update(ctx, req.(*UpdateNamespaceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -252,6 +336,24 @@ func _NamespaceService_Exists_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NamespaceService_Stat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNamespaceStatisticsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NamespaceServiceServer).Stat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_namespace.NamespaceService/Stat",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NamespaceServiceServer).Stat(ctx, req.(*GetNamespaceStatisticsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NamespaceService_ServiceDesc is the grpc.ServiceDesc for NamespaceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -264,6 +366,14 @@ var NamespaceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NamespaceService_Ensure_Handler,
 		},
 		{
+			MethodName: "Create",
+			Handler:    _NamespaceService_Create_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _NamespaceService_Update_Handler,
+		},
+		{
 			MethodName: "Delete",
 			Handler:    _NamespaceService_Delete_Handler,
 		},
@@ -274,6 +384,10 @@ var NamespaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Exists",
 			Handler:    _NamespaceService_Exists_Handler,
+		},
+		{
+			MethodName: "Stat",
+			Handler:    _NamespaceService_Stat_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

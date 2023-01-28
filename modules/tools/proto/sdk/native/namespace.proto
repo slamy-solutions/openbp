@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package tools_sdk_native_namespace;
+
+option go_package = "slamy/openBP/tools/sdk/native/namespace;tools_sdk_native_namespace_grpc";
+
+// Representation of the namespace information
+message Namespace {
+    // Unique name of the namespace
+    string name = 1;
+
+    // User-friendly public name of the namespace.
+    string fullName = 2;
+    // Arbitrary description
+    string description = 3;
+
+    // When the namespace was created
+    google.protobuf.Timestamp created = 4;
+    // Last time when the namespace information was updated.
+    google.protobuf.Timestamp updated = 5;
+    // Counter that increases after every update of the namespace
+    uint32 version = 6;
+}
+
+// Parameters for the "Ensure" request
+message EnsureNamespaceRequest {
+    // Unique name of the namespace. May not be changed in the future. Name must match the regex "[A-Za-z0-9]+$". Required.
+    string name = 1;
+
+    // User-friendly public name of the namespace. May be changed in the future. Optional (name will be used by default).
+    string fullName = 2;
+    // Arbitrary description. May be changed in the future. Optional (empty string by default).
+    string description = 3;
+}
+// Response data for the "Ensure" request 
+message EnsureNamespaceResponse {
+    // Created namespace
+    Namespace namespace = 1;
+}
+
+// Parameters for the "Create" request
+message CreateNamespaceRequest {
+    // Unique name of the namespace. Name must match the regex "[A-Za-z0-9]+$". Required.
+    string name = 1;
+}
+// Response data for the "Create" request 
+message CreateNamespaceResponse {
+    // Created namespace
+    Namespace namespace = 1;
+}
+
+// Parameters for the "Update" request
+message UpdateNamespaceRequest {
+    // Unique name of the namespace. Required.
+    string name = 1;
+
+    // User-friendly public name of the namespace. May be changed in the future. Optional.
+    string fullName = 2;
+    // Arbitrary description. May be changed in the future. Optional.
+    string description = 3;
+}
+// Response data for the "Update" request 
+message UpdateNamespaceResponse {
+    // Created namespace
+    Namespace namespace = 1;
+}
+
+// Parameters for the "Get" request
+message GetNamespaceRequest {
+    // Name of the namespace to get. Required.
+    string name = 1;
+    
+    /*
+        Use cache or not. Optional (true by default).
+
+        Cache have very small chance to be inconsisten on frequent read/writes operations to same namespace.
+        Concurrent reads are safe. Inconsistent cache will be deleted after some period of time.
+    */
+    bool useCache = 2;
+}
+// Response data for the "Get" request 
+message GetNamespaceResponse {
+    Namespace namespace = 1;
+}
+
+// Parameters for the "GetAll" request
+message GetAllNamespacesRequest {
+    /*
+        Use cache or not. Optional (true by default).
+
+        Cache have very small chance to be inconsisten on frequent read/writes operations to any namespace.
+        Concurrent reads are safe. Inconsistent cache will be deleted after some period of time.
+    */
+    bool useCache = 1;
+}
+// Response data for the "GetAll" request 
+message GetAllNamespacesResponse {
+    // One of the founded namespaces
+    Namespace namespace = 1;
+}
+
+// Parameters for the "Delete" request
+message DeleteNamespaceRequest {
+    // Name of the namespace to delete
+    string name = 1;
+}
+// Response data for the "Delete" request 
+message DeleteNamespaceResponse {
+    // Indicates if namespace existed when request was made.
+    bool existed = 1;
+}
+
+// Parameters for the "Exists" request
+message IsNamespaceExistRequest {
+    // Name of the namespace to get
+    string name = 1;
+    /*
+        Use cache or not. Optional (true by default).
+
+        Cache have very small chance to be inconsisten on frequent read/writes operations to same namespace.
+        Concurrent reads are safe. Inconsistent cache will be deleted after some period of time.
+    */
+    bool useCache = 2;
+}
+// Response data for the "Exists" request 
+message IsNamespaceExistResponse {
+    // True if namespace exist, else - False
+    bool exist = 1;
+}
+
+
+// Parameters for the "Stat" request
+message GetNamespaceStatisticsRequest {
+    // Name of the namespace to get statistics. Required.
+    string name = 1;
+    
+    /*
+        Use cache or not. Optional (true by default).
+
+        Cached data will be returned faster but may not be realtime.
+    */
+    bool useCache = 2;
+}
+// Response data for the "Stats" request 
+message GetNamespaceStatisticsResponse {
+    message Db {
+        uint64 diskUsage = 1;
+        uint64 objects = 2;
+    }
+
+    // Statistics from the database related to the namespace
+    Db db = 1;
+}
+
+/*
+Provides API to manage namespaces
+*/
+service NativeNamespaceService {
+    // Creates namespace if it doesnt exist. If namespace exist does nothing.
+    // Requires "native.namespace.create" action on "native.namespace" resource for global namespace to be presented in the actor policies.
+    rpc Ensure(EnsureNamespaceRequest) returns (EnsureNamespaceResponse);
+
+    // Creates new namespace. If namespace already exist, will return error.
+    // Requires "native.namespace.create" action on "native.namespace" resource for global namespace to be presented in the actor policies.
+    rpc Create(CreateNamespaceRequest) returns (CreateNamespaceResponse);
+
+    // Updates namespace information. If namespace doesnt exist, will return error.
+    // Requires "native.namespace.update" action on "native.namespace" resource for requested namespace to be presented in the actor policies.
+    rpc Update(UpdateNamespaceRequest) returns (UpdateNamespaceResponse);
+
+    // Gets namespace information. If namespace doesnt exist, will return error.
+    // Requires "native.namespace.get" action on "native.namespace" resource for requested namespace to be presented in the actor policies.
+    rpc Get(GetNamespaceRequest) returns (GetNamespaceResponse);
+
+    // Gets all the namespaces.
+    // Requires "native.namespace.list" action on "native.namespace" resource for global namespace to be presented in the actor policies.
+    rpc GetAll(GetAllNamespacesRequest) returns (stream GetAllNamespacesResponse);
+
+    // Deletes namespace. If namespace doesnt exists sets "existed" flag in the response to "false"
+    // Requires "native.namespace.delete" action on "native.namespace" resource for global namespace to be presented in the actor policies.
+    rpc Delete(DeleteNamespaceRequest) returns (DeleteNamespaceResponse);
+
+    // Checks if namespace exists or not.
+    // Requires "native.namespace.get" action on "native.namespace" resource for global namespace to be presented in the actor policies.
+    rpc Exists(IsNamespaceExistRequest) returns (IsNamespaceExistResponse);
+
+    // Gets namespace statistics. If namespace doesnt exist, will return error.
+    // Requires "native.namespace.stats" action on "native.namespace" resource for requested namespace to be presented in the actor policies.
+    rpc Stat(GetNamespaceStatisticsRequest) returns (GetNamespaceStatisticsResponse);
+}

@@ -24,7 +24,7 @@ Before starting, please make sure your system has minimal requirements:
 1. Install [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/)
 2. Get the `docker-compose.all-in-one.yml` file from the [repository](https://github.com/slamy-solutions/openbp/blob/master/scripts/compose/docker-compose.all-in-one.yml)
 3. Start OpenBP using `docker-compose -f docker-compose.all-in-one.yml up -d` command.
-4. Open [http://localhost:80](http://localhost:80). System will ask you several questions to initialize (like root user login and password). You can ommit this step by initializing system through the env variables in docker-compose ( see [Configuring](#configuring) ).
+4. Open [http://localhost:80](http://localhost:80). The system will ask you several questions to initialize (like root user login and password). You can omit this step by initializing the system through the env variables in docker-compose ( see [Configuring](#configuring) ).
 
 ??? example "All-in-one script for Linux"
     ```sh

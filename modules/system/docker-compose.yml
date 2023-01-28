@@ -26,6 +26,8 @@ services:
     build:
       context: modules/system/services/redis-cache
       dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:28201:6379" # For testing
     environment:
       MAXMEMORY: 512mb
 
@@ -41,9 +43,9 @@ services:
   system_db:
     restart: always
     container_name: system_db
-    build:
-      context: modules/system/services/mongodb
-      dockerfile: Dockerfile
+    image: mongo:5.0.5-focal
+    ports:
+      - "127.0.0.1:28200:27017" # For testing
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
@@ -53,10 +55,13 @@ services:
     container_name: system_telemetry
     image: jaegertracing/opentelemetry-all-in-one:latest
     ports:
-      - "16686:16686"
+      - "127.0.0.1:16686:16686"
+      - "127.0.0.1:28203:55680"
 
   system_nats:
     restart: always
     container_name: system_nats
     image: nats:latest
     command: --js --sd /data
+    ports:
+      - "127.0.0.1:28202:4222" # For testing

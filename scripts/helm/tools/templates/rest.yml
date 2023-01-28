@@ -50,7 +50,7 @@ spec:
             memory: 100Mi
           requests:
             cpu: 50m
-            memory: 20Mi
+            memory: 50Mi
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

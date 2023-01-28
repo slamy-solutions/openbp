@@ -27,10 +27,36 @@ message GetResponse {
     bytes value = 1;
 }
 
+message RemoveRequest {
+    // Namespace where to remove key
+    string namespace = 1;
+    // Key to remove
+    string key = 2;
+}
+message RemoveResponse {
+    // Indicates if actually removed key (or it wasnt exist in before the request)
+    bool removed = 1;
+}
+
+message ExistRequest {
+    // Namespace where to search for key
+    string namespace = 1;
+    // Key to search
+    string key = 2;
+}
+message ExistResponse {
+    // Indicates if namespace and key exists or not. 
+    bool exist = 1;
+}
+
 // Provides API for persistent key-value storage. Unlike system redis service it guaratees, that data will not be lost. Uses system_db to store data. Value+key size is limited to 15mb. 
 service KeyValueStorageService {
     // Sets value under the key in specified namespace.
     rpc Set(SetRequest) returns (SetResponse);
     // Gets value for specified key.
     rpc Get(GetRequest) returns (GetResponse);
+    // Remove key in specified namespace
+    rpc Remove(RemoveRequest) returns (RemoveResponse);
+    // Checks if key exists in specified namespace
+    rpc Exist(ExistRequest) returns (ExistResponse);
 }

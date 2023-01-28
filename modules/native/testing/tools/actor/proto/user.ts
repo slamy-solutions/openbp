@@ -1,6 +1,8 @@
 /* eslint-disable */
 import Long from "long";
 import * as _m0 from "protobufjs/minimal";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 export const protobufPackage = "native_actor_user";
 
@@ -95,6 +97,16 @@ export interface DeleteRequest {
 }
 
 export interface DeleteResponse {}
+
+export interface SearchRequest {
+  match: string;
+  limit: number;
+}
+
+export interface SearchResponse {
+  /** User data */
+  user: User | undefined;
+}
 
 function createBaseUser(): User {
   return {
@@ -951,6 +963,127 @@ export const DeleteResponse = {
   },
 };
 
+function createBaseSearchRequest(): SearchRequest {
+  return { match: "", limit: 0 };
+}
+
+export const SearchRequest = {
+  encode(
+    message: SearchRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.match !== "") {
+      writer.uint32(10).string(message.match);
+    }
+    if (message.limit !== 0) {
+      writer.uint32(16).uint64(message.limit);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SearchRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSearchRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.match = reader.string();
+          break;
+        case 2:
+          message.limit = longToNumber(reader.uint64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SearchRequest {
+    return {
+      match: isSet(object.match) ? String(object.match) : "",
+      limit: isSet(object.limit) ? Number(object.limit) : 0,
+    };
+  },
+
+  toJSON(message: SearchRequest): unknown {
+    const obj: any = {};
+    message.match !== undefined && (obj.match = message.match);
+    message.limit !== undefined && (obj.limit = Math.round(message.limit));
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SearchRequest>, I>>(
+    object: I
+  ): SearchRequest {
+    const message = createBaseSearchRequest();
+    message.match = object.match ?? "";
+    message.limit = object.limit ?? 0;
+    return message;
+  },
+};
+
+function createBaseSearchResponse(): SearchResponse {
+  return { user: undefined };
+}
+
+export const SearchResponse = {
+  encode(
+    message: SearchResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SearchResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSearchResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.user = User.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SearchResponse {
+    return {
+      user: isSet(object.user) ? User.fromJSON(object.user) : undefined,
+    };
+  },
+
+  toJSON(message: SearchResponse): unknown {
+    const obj: any = {};
+    message.user !== undefined &&
+      (obj.user = message.user ? User.toJSON(message.user) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SearchResponse>, I>>(
+    object: I
+  ): SearchResponse {
+    const message = createBaseSearchResponse();
+    message.user =
+      object.user !== undefined && object.user !== null
+        ? User.fromPartial(object.user)
+        : undefined;
+    return message;
+  },
+};
+
 export interface ActorUserService {
   /** Create new user and assign identity to it. */
   Create(request: CreateRequest): Promise<CreateResponse>;
@@ -964,6 +1097,11 @@ export interface ActorUserService {
   Update(request: UpdateRequest): Promise<UpdateResponse>;
   /** Delete user */
   Delete(request: DeleteRequest): Promise<DeleteResponse>;
+  /**
+   * Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
+   * Matches may be not ideal and its not possible to predict how much users matched provided string.
+   */
+  Search(request: SearchRequest): Observable<SearchResponse>;
 }
 
 export class ActorUserServiceClientImpl implements ActorUserService {
@@ -976,6 +1114,7 @@ export class ActorUserServiceClientImpl implements ActorUserService {
     this.GetByIdentity = this.GetByIdentity.bind(this);
     this.Update = this.Update.bind(this);
     this.Delete = this.Delete.bind(this);
+    this.Search = this.Search.bind(this);
   }
   Create(request: CreateRequest): Promise<CreateResponse> {
     const data = CreateRequest.encode(request).finish();
@@ -1040,6 +1179,18 @@ export class ActorUserServiceClientImpl implements ActorUserService {
     );
     return promise.then((data) => DeleteResponse.decode(new _m0.Reader(data)));
   }
+
+  Search(request: SearchRequest): Observable<SearchResponse> {
+    const data = SearchRequest.encode(request).finish();
+    const result = this.rpc.serverStreamingRequest(
+      "native_actor_user.ActorUserService",
+      "Search",
+      data
+    );
+    return result.pipe(
+      map((data) => SearchResponse.decode(new _m0.Reader(data)))
+    );
+  }
 }
 
 interface Rpc {
@@ -1048,7 +1199,33 @@ interface Rpc {
     method: string,
     data: Uint8Array
   ): Promise<Uint8Array>;
+  clientStreamingRequest(
+    service: string,
+    method: string,
+    data: Observable<Uint8Array>
+  ): Promise<Uint8Array>;
+  serverStreamingRequest(
+    service: string,
+    method: string,
+    data: Uint8Array
+  ): Observable<Uint8Array>;
+  bidirectionalStreamingRequest(
+    service: string,
+    method: string,
+    data: Observable<Uint8Array>
+  ): Observable<Uint8Array>;
 }
+
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var globalThis: any = (() => {
+  if (typeof globalThis !== "undefined") return globalThis;
+  if (typeof self !== "undefined") return self;
+  if (typeof window !== "undefined") return window;
+  if (typeof global !== "undefined") return global;
+  throw "Unable to locate global object";
+})();
 
 type Builtin =
   | Date
@@ -1076,6 +1253,13 @@ export type Exact<P, I extends P> = P extends Builtin
         Exclude<keyof I, KeysOfUnion<P>>,
         never
       >;
+
+function longToNumber(long: Long): number {
+  if (long.gt(Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

@@ -8,9 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"google.golang.org/grpc/status"
-
-	grpccodes "google.golang.org/grpc/codes"
 
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 
@@ -18,7 +15,7 @@ import (
 )
 
 type ActorUserNamespaceServer struct {
-	nativeActorUserGRPC.UnimplementedActorUserNamespaceServiceServer
+	nativeActorUserGRPC.UnimplementedActorUserServiceServer
 
 	mongoClient                  *mongo.Client
 	mongoUserCollection          *mongo.Collection
@@ -63,6 +60,7 @@ func NewActorUserNamespaceServer(ctx context.Context, mongoClient *mongo.Client,
 	}, nil
 }
 
+/*
 func (s *ActorUserNamespaceServer) GetUsersForNamespace(in *nativeActorUserGRPC.GetUsersForNamespaceRequest, out nativeActorUserGRPC.ActorUserNamespaceService_GetUsersForNamespaceServer) error {
 	ctx := out.Context()
 
@@ -102,8 +100,8 @@ func (s *ActorUserNamespaceServer) GetUsersForNamespace(in *nativeActorUserGRPC.
 		},
 	})
 
-	
-	
+
+
 	if err != nil {
 		return status.Error(grpccodes.Internal, "Failed to get users for namespace from the database. "+err.Error())
 	}
@@ -138,3 +136,4 @@ func (s *ActorUserNamespaceServer) GetNamespacesForUser(ctx context.Context, in 
 func (s *ActorUserNamespaceServer) IsUserInTheNamespace(ctx context.Context, in *nativeActorUserGRPC.IsUserInTheNamespaceRequest) (*nativeActorUserGRPC.IsUserInTheNamespaceResponse, error) {
 	return nil, status.Errorf(grpccodes.Unimplemented, "method IsUserInTheNamespace not implemented")
 }
+*/

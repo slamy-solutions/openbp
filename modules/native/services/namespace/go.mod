@@ -3,7 +3,6 @@ module github.com/slamy-solutions/openbp/modules/native/services/namespace
 go 1.18
 
 replace github.com/slamy-solutions/openbp/modules/system/libs/golang => ../../../system/libs/golang
-
 replace github.com/slamy-solutions/openbp/modules/native/libs/golang => ../../libs/golang
 
 require (

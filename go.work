@@ -13,5 +13,8 @@ use (
 	./modules/native/services/namespace
 	./modules/native/testing
 	./modules/system/libs/golang
+	./modules/tools/libs/sdk/golang
 	./modules/tools/services/rest
+	./modules/tools/services/sdk
+	./modules/tools/testing
 )
