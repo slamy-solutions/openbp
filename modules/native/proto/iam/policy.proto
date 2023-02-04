@@ -1,31 +1,135 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package native_iam_policy;
 
 option go_package = "slamy/openBP/native/iam/policy;policy";
+
+// Empty information to indicate that management for this role is not defined.
+message NotManagedData {}
+
+enum BuiltInPolicyType {
+    // Policy with full access to everything
+    GLOBAL_ROOT = 0;
+    // Policy with full access to the namespace
+    NAMESPACE_ROOT = 1;
+    // Empty policy that gives nothing. Use it if you want to correlate something with namespace but dont want to give any permisions.
+    EMPTY = 2;
+}
+
+// Information about built in policy
+message BuiltInManagedData {
+    // Type of the builtin policy
+    BuiltInPolicyType type = 1;
+}
+
+// Information about identity that manages this policy
+message IdentityManagedData {
+    // Namespace where identity is located
+    string identityNamespace = 1;
+    // Identity UUID inside this namespace
+    string identityUUID = 2;
+}
+
+// Handles information about the service that manages this policy
+message ServiceManagedData {
+    // Name of the service
+    string service = 1;
+    // Reason why this service created this policy
+    string reason = 2;
+    // This is an ID that can be defined by managed service to find this policy. Set to empty string if you dont need this. If this is not empty Service+ID combination is unique.
+    string managementId = 3;
+}
 
 message Policy {
     // Namespace where policy was created. Namespace can be empty for global policy.
     string namespace = 1;
     // Unique identifier of the policy in the namespace
     string uuid = 2;
+    
     // Public name
     string name = 3;
+    // Arbitrary description
+    string description = 4;
+
+    /* 
+        Indicates if this policy is managed by someone else. 
+
+        This is only a flag to inform everyone that it is managed by third party actor and
+        manual interaction with this policy may result in big problems. In order to interact with the policy,
+        you should ask someone who manages this policy to do something for you.
+    
+        There are several possible managements:
+        *NotManaged* - there is no clear actor responsible for this policy
+        *BuiltIn* - this is predefined policy that doesn't belong to any service. The list is predefined. For example "GLOBAL_ROOT" policy. It is not possible to delete builtin policy.
+        *Identity* - this policy was created by identity. This identity is responsible for it
+        *Service* - this policy was create by one of the services. This services now manages this policy.
+    */
+    oneof managed {
+        // Policy is not managed
+        NotManagedData no = 20;
+        // Policy is builtIn and predifined
+        BuiltInManagedData builtIn = 21;
+        // Policy is managed by identity
+        IdentityManagedData identity = 22;
+        // Policy is managed by service
+        ServiceManagedData service = 23;
+    }
+
+    // Indicates if this policy works in all namespaces or only in the namespace where it is defined
+    bool namespaceIndependent = 5;
     // List of resource for wich actions will be performed
-    repeated string resources = 4;
+    repeated string resources = 6;
     // List of actions that can be performed
-    repeated string actions = 5;
+    repeated string actions = 7;
+
+    // List of tags associated with this policy
+    repeated string tags = 8;
+
+    // When the policy was created
+    google.protobuf.Timestamp created = 9;
+    // Last time when the policy information was updated.
+    google.protobuf.Timestamp updated = 10;
+    // Counter that increases after every update of the policy
+    uint64 version = 11;
 }
 
 message CreatePolicyRequest {
     // Namespace where policy will be created. Namespace can be empty for global policy.
     string namespace = 1;
     // Public name. May not be unique.
-    string name = 3;
+    string name = 2;
+    // Arbitrary description
+    string description = 3;
+
+    /* 
+        Indicates if this policy is managed by someone else. 
+
+        This is only a flag to inform everyone that it is managed by third party actor and
+        manual interaction with this policy may result in big problems. In order to interact with the policy,
+        you should ask someone who manages this policy to do something for you.
+    
+        There are several possible managements:
+        *NotManaged* - there is no clear actor responsible for this policy
+        *Identity* - this policy was created by identity. This identity is responsible for it
+        *Service* - this policy was create by one of the services. This services now manages this policy.
+    */
+    oneof managed {
+        // Policy is not managed
+        NotManagedData no = 20;
+        // Policy is managed by identity
+        IdentityManagedData identity = 21;
+        // Policy is managed by service
+        ServiceManagedData service = 22;
+    }
+
+    // Indicates if this policy works in all namespaces or only in the namespace where it is defined
+    bool namespaceIndependent = 4;
     // List of resource for wich actions will be performed
-    repeated string resources = 4;
+    repeated string resources = 5;
     // List of actions that can be performed with this policy
-    repeated string actions = 5;
+    repeated string actions = 6;
 }
 message CreatePolicyResponse {
     Policy policy = 1;
@@ -40,6 +144,23 @@ message GetPolicyRequest {
     bool useCache = 3;
 }
 message GetPolicyResponse {
+    Policy policy = 1;
+}
+
+message GetMultiplePoliciesRequest {
+    // Hold information on where to find the policy
+    message RequestedPolicy {
+        // Namespace where to search for policy. Leave empty for global policy.
+        string namespace = 1;
+        // Unique identifier of the policy inside searched namespace
+        string uuid = 2;
+    }
+
+    // List of policies to get
+    repeated RequestedPolicy policies = 1;
+}
+message GetMultiplePoliciesResponse {
+    // Founded policy. The ordering is random.
     Policy policy = 1;
 }
 
@@ -63,10 +184,14 @@ message UpdatePolicyRequest {
     string uuid = 2;
     // Public name
     string name = 3;
+    // Arbitrary description
+    string description = 4;
+    // Indicates if this policy works in all namespaces or only in the namespace where it is defined
+    bool namespaceIndependent = 5;
     // List of resource for wich actions will be performed
-    repeated string resources = 4;
+    repeated string resources = 6;
     // List of actions that can be performed
-    repeated string actions = 5;
+    repeated string actions = 7;
 }
 message UpdatePolicyResponse {
     // Updated policy
@@ -79,7 +204,10 @@ message DeletePolicyRequest {
     // Unique identifier of the policy in the namespace
     string uuid = 2;
 }
-message DeletePolicyResponse {}
+message DeletePolicyResponse {
+    // Indicates if policy existed before this request
+    bool existed = 1;
+}
 
 message ListPoliciesRequest {
     // Namespace from where to list policies
@@ -93,12 +221,39 @@ message ListPoliciesResponse {
     Policy policy = 1;
 }
 
+message GetServiceManagedPolicyRequest {
+    // Namespace where to search for policy
+    string namespace = 1;
+    // Service which manages this policy
+    string service = 2;
+    // Special ID for this policy defined by this service
+    string managedId = 3;
+    // Use cache or not. Cached policy data may not be actual under very rare conditions. Invalid cache data is automatically clear after short period of time.
+    bool useCache = 4;
+}
+message GetServiceManagedPolicyResponse {
+    // Founded policy
+    Policy policy = 1;
+}
+
+message GetBuiltInPolicyRequest {
+    // Namespace where to get builtin policy.
+    string namespace = 1;
+    // Type of the policy to search
+    BuiltInPolicyType type = 2;
+}
+message GetBuiltInPolicyResponse {
+    Policy policy = 1;
+}
+
 // Provides API to manage policies
 service IAMPolicyService {
     // Create new policy
     rpc Create(CreatePolicyRequest) returns (CreatePolicyResponse);
     // Get existing policy by uuid
     rpc Get(GetPolicyRequest) returns (GetPolicyResponse);
+    // Get multiple policies.
+    rpc GetMultiple(GetMultiplePoliciesRequest) returns (stream GetMultiplePoliciesResponse);
     // Check if policy exist or not
     rpc Exist(ExistPolicyRequest) returns (ExistPolicyResponse);
     // Update policy
@@ -107,4 +262,9 @@ service IAMPolicyService {
     rpc Delete(DeletePolicyRequest) returns (DeletePolicyResponse);
     // List policies in namespace
     rpc List(ListPoliciesRequest) returns (stream ListPoliciesResponse);
+
+    // Get policy that is managed by service
+    rpc GetServiceManagedPolicy(GetServiceManagedPolicyRequest) returns (GetServiceManagedPolicyResponse);
+    // Get one of the builtin policies
+    rpc GetBuiltInPolicy(GetBuiltInPolicyRequest) returns (GetBuiltInPolicyResponse);
 }

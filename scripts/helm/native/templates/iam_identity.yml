@@ -34,6 +34,8 @@ spec:
           value: "{{ .Release.Name }}-native-namespace:80"
         - name: NATIVE_IAM_POLICY_URL
           value: "{{ .Release.Name }}-native-iam-policy:80"
+        - name: NATIVE_IAM_ROLE_URL
+          value: "{{ .Release.Name }}-native-iam-role:80"
         resources:
           limits:
             cpu: 1000m

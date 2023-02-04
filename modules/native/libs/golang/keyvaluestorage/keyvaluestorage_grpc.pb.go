@@ -24,8 +24,14 @@ const _ = grpc.SupportPackageIsVersion7
 type KeyValueStorageServiceClient interface {
 	// Sets value under the key in specified namespace.
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
+	// Sets value under the key in specified namespace only if it is not set.
+	SetIfNotExist(ctx context.Context, in *SetIfNotExistRequest, opts ...grpc.CallOption) (*SetIfNotExistResponse, error)
 	// Gets value for specified key.
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	// Remove key in specified namespace
+	Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error)
+	// Checks if key exists in specified namespace
+	Exist(ctx context.Context, in *ExistRequest, opts ...grpc.CallOption) (*ExistResponse, error)
 }
 
 type keyValueStorageServiceClient struct {
@@ -45,9 +51,36 @@ func (c *keyValueStorageServiceClient) Set(ctx context.Context, in *SetRequest, 
 	return out, nil
 }
 
+func (c *keyValueStorageServiceClient) SetIfNotExist(ctx context.Context, in *SetIfNotExistRequest, opts ...grpc.CallOption) (*SetIfNotExistResponse, error) {
+	out := new(SetIfNotExistResponse)
+	err := c.cc.Invoke(ctx, "/native_keyvalueprstorage.KeyValueStorageService/SetIfNotExist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *keyValueStorageServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/native_keyvalueprstorage.KeyValueStorageService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *keyValueStorageServiceClient) Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error) {
+	out := new(RemoveResponse)
+	err := c.cc.Invoke(ctx, "/native_keyvalueprstorage.KeyValueStorageService/Remove", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *keyValueStorageServiceClient) Exist(ctx context.Context, in *ExistRequest, opts ...grpc.CallOption) (*ExistResponse, error) {
+	out := new(ExistResponse)
+	err := c.cc.Invoke(ctx, "/native_keyvalueprstorage.KeyValueStorageService/Exist", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +93,14 @@ func (c *keyValueStorageServiceClient) Get(ctx context.Context, in *GetRequest, 
 type KeyValueStorageServiceServer interface {
 	// Sets value under the key in specified namespace.
 	Set(context.Context, *SetRequest) (*SetResponse, error)
+	// Sets value under the key in specified namespace only if it is not set.
+	SetIfNotExist(context.Context, *SetIfNotExistRequest) (*SetIfNotExistResponse, error)
 	// Gets value for specified key.
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	// Remove key in specified namespace
+	Remove(context.Context, *RemoveRequest) (*RemoveResponse, error)
+	// Checks if key exists in specified namespace
+	Exist(context.Context, *ExistRequest) (*ExistResponse, error)
 	mustEmbedUnimplementedKeyValueStorageServiceServer()
 }
 
@@ -72,8 +111,17 @@ type UnimplementedKeyValueStorageServiceServer struct {
 func (UnimplementedKeyValueStorageServiceServer) Set(context.Context, *SetRequest) (*SetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
 }
+func (UnimplementedKeyValueStorageServiceServer) SetIfNotExist(context.Context, *SetIfNotExistRequest) (*SetIfNotExistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetIfNotExist not implemented")
+}
 func (UnimplementedKeyValueStorageServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedKeyValueStorageServiceServer) Remove(context.Context, *RemoveRequest) (*RemoveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
+}
+func (UnimplementedKeyValueStorageServiceServer) Exist(context.Context, *ExistRequest) (*ExistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Exist not implemented")
 }
 func (UnimplementedKeyValueStorageServiceServer) mustEmbedUnimplementedKeyValueStorageServiceServer() {
 }
@@ -107,6 +155,24 @@ func _KeyValueStorageService_Set_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KeyValueStorageService_SetIfNotExist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetIfNotExistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeyValueStorageServiceServer).SetIfNotExist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_keyvalueprstorage.KeyValueStorageService/SetIfNotExist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeyValueStorageServiceServer).SetIfNotExist(ctx, req.(*SetIfNotExistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _KeyValueStorageService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRequest)
 	if err := dec(in); err != nil {
@@ -125,6 +191,42 @@ func _KeyValueStorageService_Get_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KeyValueStorageService_Remove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeyValueStorageServiceServer).Remove(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_keyvalueprstorage.KeyValueStorageService/Remove",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeyValueStorageServiceServer).Remove(ctx, req.(*RemoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KeyValueStorageService_Exist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeyValueStorageServiceServer).Exist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_keyvalueprstorage.KeyValueStorageService/Exist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeyValueStorageServiceServer).Exist(ctx, req.(*ExistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KeyValueStorageService_ServiceDesc is the grpc.ServiceDesc for KeyValueStorageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -137,8 +239,20 @@ var KeyValueStorageService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _KeyValueStorageService_Set_Handler,
 		},
 		{
+			MethodName: "SetIfNotExist",
+			Handler:    _KeyValueStorageService_SetIfNotExist_Handler,
+		},
+		{
 			MethodName: "Get",
 			Handler:    _KeyValueStorageService_Get_Handler,
+		},
+		{
+			MethodName: "Remove",
+			Handler:    _KeyValueStorageService_Remove_Handler,
+		},
+		{
+			MethodName: "Exist",
+			Handler:    _KeyValueStorageService_Exist_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

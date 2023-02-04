@@ -5,17 +5,21 @@ import (
 	"errors"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	grpccodes "google.golang.org/grpc/codes"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	nativeActorUserGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
 	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 )
@@ -23,10 +27,8 @@ import (
 type ActorUserServer struct {
 	nativeActorUserGRPC.UnimplementedActorUserServiceServer
 
-	mongoClient             *mongo.Client
-	mongoCollection         *mongo.Collection
-	cacheClient             cache.Cache
-	nativeIAmIdentityClient nativeIAmIdentityGRPC.IAMIdentityServiceClient
+	systemStub *system.SystemStub
+	nativeStub *native.NativeStub
 }
 
 type userInMongo struct {
@@ -37,75 +39,94 @@ type userInMongo struct {
 	FullName string `bson:"fullName"`
 	Avatar   string `bson:"avatar"`
 	Email    string `bson:"email"`
+
+	Created time.Time `bson:"created"`
+	Updated time.Time `bson:"updated"`
+	Version uint64    `bson:"version"`
 }
 
 const (
-	UUID_CACHE_KEY_PREFIX    = "native_actor_user_data_uuid_"
-	UUID_CACHE_TIMEOUT       = time.Second * 60
-	IDENITY_CACHE_KEY_PREFIX = "native_actor_user_data_identity_"
-	IDENTITY_CACHE_TIMEOUT   = time.Second * 60
-	LOGIN_CACHE_KEY_PREFIX   = "native_actor_user_data_login_"
-	LOGIN_CACHE_TIMEOUT      = time.Second * 60
-	LOGIN_INDEX_NAME         = "unique_login"
-	IDENTITY_INDEX_NAME      = "search_identity"
+	UUID_CACHE_TIMEOUT     = time.Second * 60
+	IDENTITY_CACHE_TIMEOUT = time.Second * 60
+	LOGIN_CACHE_TIMEOUT    = time.Second * 60
 )
 
-func clearUserCache(ctx context.Context, s *ActorUserServer, user *userInMongo) error {
-	return s.cacheClient.Remove(
+func makeUserCacheKey(namespace string, userUUID string) string {
+	return "native_actor_user_data_uuid_" + namespace + "_" + userUUID
+}
+func makeIdentityCacheKey(namespace string, identityUUID string) string {
+	return "native_actor_user_data_identity_" + namespace + "_" + identityUUID
+}
+func makeLoginCacheKey(namespace string, login string) string {
+	return "native_actor_user_data_login_" + namespace + "_" + login
+}
+
+func clearUserCache(ctx context.Context, s *ActorUserServer, namespace string, user *userInMongo) error {
+	return s.systemStub.Cache.Remove(
 		ctx,
-		UUID_CACHE_KEY_PREFIX+user.ID.Hex(),
-		IDENITY_CACHE_KEY_PREFIX+user.Identity,
-		LOGIN_CACHE_KEY_PREFIX+user.Login,
+		makeUserCacheKey(namespace, user.ID.Hex()),
+		makeIdentityCacheKey(namespace, user.Identity),
+		makeLoginCacheKey(namespace, user.Login),
 	)
 }
 
-func (u *userInMongo) ToProtoUser() *nativeActorUserGRPC.User {
+func (u *userInMongo) ToGRPCUser(namespace string) *nativeActorUserGRPC.User {
 	return &nativeActorUserGRPC.User{
-		Uuid:     u.ID.Hex(),
-		Login:    u.Login,
-		Identity: u.Identity,
-		FullName: u.FullName,
-		Avatar:   u.Avatar,
-		Email:    u.Email,
+		Namespace: namespace,
+		Uuid:      u.ID.Hex(),
+		Login:     u.Login,
+		Identity:  u.Identity,
+		FullName:  u.FullName,
+		Avatar:    u.Avatar,
+		Email:     u.Email,
+		Created:   timestamppb.New(u.Created),
+		Updated:   timestamppb.New(u.Updated),
+		Version:   u.Version,
 	}
 }
 
-func NewActorUserServer(ctx context.Context, mongoClient *mongo.Client, cacheClient cache.Cache, nativeIAmIdentityClient nativeIAmIdentityGRPC.IAMIdentityServiceClient) (*ActorUserServer, error) {
-	collection := mongoClient.Database("openbp_global").Collection("native_actor_user")
-
+func NewActorUserServer(ctx context.Context, systemStub *system.SystemStub, nativeStub *native.NativeStub) (*ActorUserServer, error) {
 	// Ensure indexes on the collection
-	_, err := collection.Indexes().CreateMany(ctx, []mongo.IndexModel{
-		{
-			Options: options.Index().SetName(LOGIN_INDEX_NAME).SetUnique(true),
-			Keys:    bson.D{bson.E{Key: "login", Value: 1}},
-		},
-		{
-			Options: options.Index().SetName(IDENTITY_INDEX_NAME),
-			Keys:    bson.D{bson.E{Key: "identity", Value: "hashed"}},
-		},
-	})
+	err := ensureIndexesForNamespace(ctx, "", systemStub)
 	if err != nil {
-		return nil, errors.New("Failed to create indexes. " + err.Error())
+		return nil, errors.New("Failed to ensure indexes. " + err.Error())
 	}
 
 	return &ActorUserServer{
-		mongoClient:             mongoClient,
-		mongoCollection:         collection,
-		cacheClient:             cacheClient,
-		nativeIAmIdentityClient: nativeIAmIdentityClient,
+		systemStub: systemStub,
+		nativeStub: nativeStub,
 	}, nil
+}
+
+func (s *ActorUserServer) collectionByNamespace(namespace string) *mongo.Collection {
+	collection := s.systemStub.DB.Database("openbp_global").Collection("native_actor_user")
+	if namespace != "" {
+		collection = s.systemStub.DB.Database("openbp_namespace_" + namespace).Collection("native_actor_user")
+	}
+	return collection
 }
 
 func (s *ActorUserServer) Create(ctx context.Context, in *nativeActorUserGRPC.CreateRequest) (*nativeActorUserGRPC.CreateResponse, error) {
 	// Create identity for user
-	identityResponse, err := s.nativeIAmIdentityClient.Create(ctx, &nativeIAmIdentityGRPC.CreateIdentityRequest{
-		Namespace:       "",
-		Name:            "",
+	identityResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &nativeIAmIdentityGRPC.CreateIdentityRequest{
+		Namespace: in.Namespace,
+		Name:      "",
+		Managed: &nativeIAmIdentityGRPC.CreateIdentityRequest_Service{
+			Service: &nativeIAmIdentityGRPC.ServiceManagedData{
+				Service:      "native_actor_user",
+				Reason:       "Manage identity for user",
+				ManagementId: "",
+			},
+		},
 		InitiallyActive: true,
 	})
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, "Failed to create identity for user. "+err.Error())
 	}
+
+	createdTime := time.Now().UTC()
+
+	collection := s.collectionByNamespace(in.Namespace)
 
 	user := &userInMongo{
 		Login:    in.Login,
@@ -113,11 +134,14 @@ func (s *ActorUserServer) Create(ctx context.Context, in *nativeActorUserGRPC.Cr
 		FullName: in.FullName,
 		Avatar:   in.Avatar,
 		Email:    in.Email,
+		Created:  createdTime,
+		Updated:  createdTime,
+		Version:  0,
 	}
-	insertResult, err := s.mongoCollection.InsertOne(ctx, user)
+	insertResult, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		// Delete identity on error. Dont care about errors, because even it will occure it is harmless. Chance of error is ridicously low so there is no reason to do something with it.
-		s.nativeIAmIdentityClient.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
+		s.nativeStub.Services.IamIdentity.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
 			Namespace: "",
 			Uuid:      identityResponse.Identity.Uuid,
 		})
@@ -130,19 +154,21 @@ func (s *ActorUserServer) Create(ctx context.Context, in *nativeActorUserGRPC.Cr
 	}
 	user.ID = insertResult.InsertedID.(primitive.ObjectID)
 
+	log.Info("Created user with UUID [" + user.ID.Hex() + "] in namespace [" + in.Namespace + "]")
+
 	return &nativeActorUserGRPC.CreateResponse{
-		User: user.ToProtoUser(),
+		User: user.ToGRPCUser(in.Namespace),
 	}, status.Error(grpccodes.OK, "")
 }
 
 func (s *ActorUserServer) Get(ctx context.Context, in *nativeActorUserGRPC.GetRequest) (*nativeActorUserGRPC.GetResponse, error) {
 	var cacheKey string
 	if in.UseCache {
-		cacheKey = UUID_CACHE_KEY_PREFIX + in.Uuid
-		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
+		cacheKey = makeUserCacheKey(in.Namespace, in.Uuid)
+		cacheBytes, _ := s.systemStub.Cache.Get(ctx, cacheKey)
 		if cacheBytes != nil {
 			var user nativeActorUserGRPC.User
-			err = proto.Unmarshal(cacheBytes, &user)
+			err := proto.Unmarshal(cacheBytes, &user)
 			if err != nil {
 				return nil, status.Error(grpccodes.Internal, "Failed to unmarshall user from cache. "+err.Error())
 			}
@@ -155,37 +181,44 @@ func (s *ActorUserServer) Get(ctx context.Context, in *nativeActorUserGRPC.GetRe
 		return nil, status.Error(grpccodes.InvalidArgument, "User UUID has bad format")
 	}
 
+	collection := s.collectionByNamespace(in.Namespace)
+
 	var user userInMongo
-	err = s.mongoCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
+	err = collection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "User with this UUID not found")
 		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return nil, status.Error(grpccodes.NotFound, "User wasnt founded. Probably namespace doesnt exist")
+			}
+		}
 		return nil, status.Error(grpccodes.Internal, "Failed to get user from database. "+err.Error())
 	}
-	protoUser := user.ToProtoUser()
+	userGRPC := user.ToGRPCUser(in.Namespace)
 
 	if in.UseCache {
-		userBytes, err := proto.Marshal(protoUser)
+		userBytes, err := proto.Marshal(userGRPC)
 		if err != nil {
 			return nil, status.Error(grpccodes.Internal, "Failed to marshall user to cache. "+err.Error())
 		}
-		s.cacheClient.Set(ctx, cacheKey, userBytes, UUID_CACHE_TIMEOUT)
+		s.systemStub.Cache.Set(ctx, cacheKey, userBytes, UUID_CACHE_TIMEOUT)
 	}
 
 	return &nativeActorUserGRPC.GetResponse{
-		User: protoUser,
+		User: userGRPC,
 	}, status.Errorf(grpccodes.OK, "")
 }
 
 func (s *ActorUserServer) GetByLogin(ctx context.Context, in *nativeActorUserGRPC.GetByLoginRequest) (*nativeActorUserGRPC.GetByLoginResponse, error) {
 	var cacheKey string
 	if in.UseCache {
-		cacheKey = LOGIN_CACHE_KEY_PREFIX + in.Login
-		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
+		cacheKey = makeLoginCacheKey(in.Namespace, in.Login)
+		cacheBytes, _ := s.systemStub.Cache.Get(ctx, cacheKey)
 		if cacheBytes != nil {
 			var user nativeActorUserGRPC.User
-			err = proto.Unmarshal(cacheBytes, &user)
+			err := proto.Unmarshal(cacheBytes, &user)
 			if err != nil {
 				return nil, status.Error(grpccodes.Internal, "Failed to unmarshall user from cache. "+err.Error())
 			}
@@ -193,37 +226,44 @@ func (s *ActorUserServer) GetByLogin(ctx context.Context, in *nativeActorUserGRP
 		}
 	}
 
+	collection := s.collectionByNamespace(in.Namespace)
+
 	var user userInMongo
-	err := s.mongoCollection.FindOne(ctx, bson.M{"login": in.Login}, options.FindOne().SetHint(LOGIN_INDEX_NAME)).Decode(&user)
+	err := collection.FindOne(ctx, bson.M{"login": in.Login}, options.FindOne().SetHint(unique_login_index)).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "User with this login not found")
 		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return nil, status.Error(grpccodes.NotFound, "User wasnt founded. Probably namespace doesnt exist")
+			}
+		}
 		return nil, status.Error(grpccodes.Internal, "Failed to get user from database. "+err.Error())
 	}
-	protoUser := user.ToProtoUser()
+	userGRPC := user.ToGRPCUser(in.Namespace)
 
 	if in.UseCache {
-		userBytes, err := proto.Marshal(protoUser)
+		userBytes, err := proto.Marshal(userGRPC)
 		if err != nil {
 			return nil, status.Error(grpccodes.Internal, "Failed to marshall user to cache. "+err.Error())
 		}
-		s.cacheClient.Set(ctx, cacheKey, userBytes, LOGIN_CACHE_TIMEOUT)
+		s.systemStub.Cache.Set(ctx, cacheKey, userBytes, LOGIN_CACHE_TIMEOUT)
 	}
 
 	return &nativeActorUserGRPC.GetByLoginResponse{
-		User: protoUser,
+		User: userGRPC,
 	}, status.Errorf(grpccodes.OK, "")
 }
 
 func (s *ActorUserServer) GetByIdentity(ctx context.Context, in *nativeActorUserGRPC.GetByIdentityRequest) (*nativeActorUserGRPC.GetByIdentityResponse, error) {
 	var cacheKey string
 	if in.UseCache {
-		cacheKey = IDENITY_CACHE_KEY_PREFIX + in.Identity
-		cacheBytes, err := s.cacheClient.Get(ctx, cacheKey)
+		cacheKey = makeIdentityCacheKey(in.Namespace, in.Identity)
+		cacheBytes, _ := s.systemStub.Cache.Get(ctx, cacheKey)
 		if cacheBytes != nil {
 			var user nativeActorUserGRPC.User
-			err = proto.Unmarshal(cacheBytes, &user)
+			err := proto.Unmarshal(cacheBytes, &user)
 			if err != nil {
 				return nil, status.Error(grpccodes.Internal, "Failed to unmarshall user from cache. "+err.Error())
 			}
@@ -231,26 +271,33 @@ func (s *ActorUserServer) GetByIdentity(ctx context.Context, in *nativeActorUser
 		}
 	}
 
+	collection := s.collectionByNamespace(in.Namespace)
+
 	var user userInMongo
-	err := s.mongoCollection.FindOne(ctx, bson.M{"identity": in.Identity}, options.FindOne().SetHint(IDENTITY_INDEX_NAME)).Decode(&user)
+	err := collection.FindOne(ctx, bson.M{"identity": in.Identity}, options.FindOne().SetHint(fast_identity_search_index)).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "User with this identity not found")
 		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return nil, status.Error(grpccodes.NotFound, "User wasnt founded. Probably namespace doesnt exist")
+			}
+		}
 		return nil, status.Error(grpccodes.Internal, "Failed to get user from database. "+err.Error())
 	}
-	protoUser := user.ToProtoUser()
+	userGRPC := user.ToGRPCUser(in.Namespace)
 
 	if in.UseCache {
-		userBytes, err := proto.Marshal(protoUser)
+		userBytes, err := proto.Marshal(userGRPC)
 		if err != nil {
 			return nil, status.Error(grpccodes.Internal, "Failed to marshall user to cache. "+err.Error())
 		}
-		s.cacheClient.Set(ctx, cacheKey, userBytes, IDENTITY_CACHE_TIMEOUT)
+		s.systemStub.Cache.Set(ctx, cacheKey, userBytes, IDENTITY_CACHE_TIMEOUT)
 	}
 
 	return &nativeActorUserGRPC.GetByIdentityResponse{
-		User: protoUser,
+		User: userGRPC,
 	}, status.Errorf(grpccodes.OK, "")
 }
 
@@ -260,13 +307,19 @@ func (s *ActorUserServer) Update(ctx context.Context, in *nativeActorUserGRPC.Up
 		return nil, status.Error(grpccodes.InvalidArgument, "User UUID has bad format")
 	}
 
+	collection := s.collectionByNamespace(in.Namespace)
+
 	var user userInMongo
-	err = s.mongoCollection.FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{"$set": bson.M{
-		"login":    in.Login,
-		"avatar":   in.Avatar,
-		"fullName": in.FullName,
-		"email":    in.Email,
-	}}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&user)
+	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{
+		"$set": bson.M{
+			"login":    in.Login,
+			"avatar":   in.Avatar,
+			"fullName": in.FullName,
+			"email":    in.Email,
+		},
+		"$currentDate": bson.M{"updated": bson.M{"$type": "timestamp"}},
+		"$inc":         bson.M{"version": 1},
+	}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return nil, status.Error(grpccodes.AlreadyExists, "Login already exists")
@@ -274,13 +327,18 @@ func (s *ActorUserServer) Update(ctx context.Context, in *nativeActorUserGRPC.Up
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "User with specified UUID not found")
 		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return nil, status.Error(grpccodes.NotFound, "User wasnt founded. Probably namespace doesnt exist")
+			}
+		}
 		return nil, status.Error(grpccodes.Internal, "Failed to update user in database. "+err.Error())
 	}
 
-	clearUserCache(ctx, s, &user)
+	clearUserCache(ctx, s, in.Namespace, &user)
 
 	return &nativeActorUserGRPC.UpdateResponse{
-		User: user.ToProtoUser(),
+		User: user.ToGRPCUser(in.Namespace),
 	}, status.Error(grpccodes.OK, "")
 }
 
@@ -290,23 +348,34 @@ func (s *ActorUserServer) Delete(ctx context.Context, in *nativeActorUserGRPC.De
 		return nil, status.Error(grpccodes.InvalidArgument, "User UUID has bad format")
 	}
 
+	collection := s.collectionByNamespace(in.Namespace)
+
 	var user userInMongo
-	err = s.mongoCollection.FindOneAndDelete(ctx, bson.M{"_id": id}).Decode(&user)
+	err = collection.FindOneAndDelete(ctx, bson.M{"_id": id}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return &nativeActorUserGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
+			return &nativeActorUserGRPC.DeleteResponse{Existed: false}, status.Error(grpccodes.OK, "")
+		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return &nativeActorUserGRPC.DeleteResponse{Existed: false}, status.Error(grpccodes.OK, "Probably namespace doesnt exist")
+			}
 		}
 		return nil, status.Error(grpccodes.Internal, "Failed to delete user from the database. "+err.Error())
 	}
 
-	clearUserCache(ctx, s, &user)
+	clearUserCache(ctx, s, in.Namespace, &user)
+	log.Info("Deleted user with UUID [" + user.ID.Hex() + "] in namespace [" + in.Namespace + "]")
 
-	s.nativeIAmIdentityClient.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
-		Namespace: "",
+	_, err = s.nativeStub.Services.IamIdentity.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
+		Namespace: in.Namespace,
 		Uuid:      user.Identity,
 	})
+	if err != nil {
+		log.Error("Failed to delete identity [" + user.Identity + "] of deleted user [" + user.ID.Hex() + "] in namespace [" + in.Namespace + "]. " + err.Error())
+	}
 
-	return &nativeActorUserGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
+	return &nativeActorUserGRPC.DeleteResponse{Existed: true}, status.Error(grpccodes.OK, "")
 }
 
 func (s *ActorUserServer) Search(in *nativeActorUserGRPC.SearchRequest, out nativeActorUserGRPC.ActorUserService_SearchServer) error {
@@ -317,8 +386,15 @@ func (s *ActorUserServer) Search(in *nativeActorUserGRPC.SearchRequest, out nati
 		opts = opts.SetLimit(int64(in.Limit))
 	}
 
-	cursor, err := s.mongoCollection.Find(ctx, bson.M{"$text": bson.M{"$search": in.Match}}, opts)
+	collection := s.collectionByNamespace(in.Namespace)
+
+	cursor, err := collection.Find(ctx, bson.M{"$text": bson.M{"$search": in.Match}}, opts)
 	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				status.Error(grpccodes.OK, "Namespace doesnt exist.")
+			}
+		}
 		return status.Error(grpccodes.Internal, "Failed to get users from the database. "+err.Error())
 	}
 	defer cursor.Close(ctx)
@@ -328,7 +404,7 @@ func (s *ActorUserServer) Search(in *nativeActorUserGRPC.SearchRequest, out nati
 		if err := cursor.Decode(&user); err != nil {
 			return status.Error(grpccodes.Internal, err.Error())
 		}
-		if err := out.Send(&nativeActorUserGRPC.SearchResponse{User: user.ToProtoUser()}); err != nil {
+		if err := out.Send(&nativeActorUserGRPC.SearchResponse{User: user.ToGRPCUser(in.Namespace)}); err != nil {
 			return status.Error(grpccodes.Internal, err.Error())
 		}
 	}
@@ -336,5 +412,5 @@ func (s *ActorUserServer) Search(in *nativeActorUserGRPC.SearchRequest, out nati
 		return status.Error(grpccodes.Internal, "Unexpected cursor error on fetching data from database. "+err.Error())
 	}
 
-	return nil
+	return status.Error(grpccodes.OK, "")
 }

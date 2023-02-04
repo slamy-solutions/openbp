@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	tools "github.com/slamy-solutions/openbp/modules/tools/services/sdk/src/tools"
 )
 
@@ -56,9 +56,9 @@ func AuthorizeRPC(ctx context.Context, modulesStub *tools.ModulesStub, requiredS
 		return err
 	}
 
-	response, err := modulesStub.Native.Services.IamOAuth.CheckAccess(ctx, &oauth.CheckAccessRequest{
+	response, err := modulesStub.Native.Services.IamAuth.CheckAccessWithToken(ctx, &auth.CheckAccessWithTokenRequest{
 		AccessToken: token,
-		Scopes: []*oauth.Scope{
+		Scopes: []*auth.Scope{
 			{
 				Namespace: requiredScope.Namespace,
 				Resources: requiredScope.Resources,
@@ -72,7 +72,7 @@ func AuthorizeRPC(ctx context.Context, modulesStub *tools.ModulesStub, requiredS
 		return status.Error(codes.Internal, "")
 	}
 
-	if response.Status == oauth.CheckAccessResponse_OK {
+	if response.Status == auth.CheckAccessWithTokenResponse_OK {
 		return nil
 	} else {
 		return status.Error(codes.Unauthenticated, response.Message)

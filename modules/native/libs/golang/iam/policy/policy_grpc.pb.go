@@ -26,6 +26,8 @@ type IAMPolicyServiceClient interface {
 	Create(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
 	// Get existing policy by uuid
 	Get(ctx context.Context, in *GetPolicyRequest, opts ...grpc.CallOption) (*GetPolicyResponse, error)
+	// Get multiple policies.
+	GetMultiple(ctx context.Context, in *GetMultiplePoliciesRequest, opts ...grpc.CallOption) (IAMPolicyService_GetMultipleClient, error)
 	// Check if policy exist or not
 	Exist(ctx context.Context, in *ExistPolicyRequest, opts ...grpc.CallOption) (*ExistPolicyResponse, error)
 	// Update policy
@@ -34,6 +36,10 @@ type IAMPolicyServiceClient interface {
 	Delete(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error)
 	// List policies in namespace
 	List(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (IAMPolicyService_ListClient, error)
+	// Get policy that is managed by service
+	GetServiceManagedPolicy(ctx context.Context, in *GetServiceManagedPolicyRequest, opts ...grpc.CallOption) (*GetServiceManagedPolicyResponse, error)
+	// Get one of the builtin policies
+	GetBuiltInPolicy(ctx context.Context, in *GetBuiltInPolicyRequest, opts ...grpc.CallOption) (*GetBuiltInPolicyResponse, error)
 }
 
 type iAMPolicyServiceClient struct {
@@ -60,6 +66,38 @@ func (c *iAMPolicyServiceClient) Get(ctx context.Context, in *GetPolicyRequest, 
 		return nil, err
 	}
 	return out, nil
+}
+
+func (c *iAMPolicyServiceClient) GetMultiple(ctx context.Context, in *GetMultiplePoliciesRequest, opts ...grpc.CallOption) (IAMPolicyService_GetMultipleClient, error) {
+	stream, err := c.cc.NewStream(ctx, &IAMPolicyService_ServiceDesc.Streams[0], "/native_iam_policy.IAMPolicyService/GetMultiple", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &iAMPolicyServiceGetMultipleClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type IAMPolicyService_GetMultipleClient interface {
+	Recv() (*GetMultiplePoliciesResponse, error)
+	grpc.ClientStream
+}
+
+type iAMPolicyServiceGetMultipleClient struct {
+	grpc.ClientStream
+}
+
+func (x *iAMPolicyServiceGetMultipleClient) Recv() (*GetMultiplePoliciesResponse, error) {
+	m := new(GetMultiplePoliciesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *iAMPolicyServiceClient) Exist(ctx context.Context, in *ExistPolicyRequest, opts ...grpc.CallOption) (*ExistPolicyResponse, error) {
@@ -90,7 +128,7 @@ func (c *iAMPolicyServiceClient) Delete(ctx context.Context, in *DeletePolicyReq
 }
 
 func (c *iAMPolicyServiceClient) List(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (IAMPolicyService_ListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &IAMPolicyService_ServiceDesc.Streams[0], "/native_iam_policy.IAMPolicyService/List", opts...)
+	stream, err := c.cc.NewStream(ctx, &IAMPolicyService_ServiceDesc.Streams[1], "/native_iam_policy.IAMPolicyService/List", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +159,24 @@ func (x *iAMPolicyServiceListClient) Recv() (*ListPoliciesResponse, error) {
 	return m, nil
 }
 
+func (c *iAMPolicyServiceClient) GetServiceManagedPolicy(ctx context.Context, in *GetServiceManagedPolicyRequest, opts ...grpc.CallOption) (*GetServiceManagedPolicyResponse, error) {
+	out := new(GetServiceManagedPolicyResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_policy.IAMPolicyService/GetServiceManagedPolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMPolicyServiceClient) GetBuiltInPolicy(ctx context.Context, in *GetBuiltInPolicyRequest, opts ...grpc.CallOption) (*GetBuiltInPolicyResponse, error) {
+	out := new(GetBuiltInPolicyResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_policy.IAMPolicyService/GetBuiltInPolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IAMPolicyServiceServer is the server API for IAMPolicyService service.
 // All implementations must embed UnimplementedIAMPolicyServiceServer
 // for forward compatibility
@@ -129,6 +185,8 @@ type IAMPolicyServiceServer interface {
 	Create(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
 	// Get existing policy by uuid
 	Get(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error)
+	// Get multiple policies.
+	GetMultiple(*GetMultiplePoliciesRequest, IAMPolicyService_GetMultipleServer) error
 	// Check if policy exist or not
 	Exist(context.Context, *ExistPolicyRequest) (*ExistPolicyResponse, error)
 	// Update policy
@@ -137,6 +195,10 @@ type IAMPolicyServiceServer interface {
 	Delete(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error)
 	// List policies in namespace
 	List(*ListPoliciesRequest, IAMPolicyService_ListServer) error
+	// Get policy that is managed by service
+	GetServiceManagedPolicy(context.Context, *GetServiceManagedPolicyRequest) (*GetServiceManagedPolicyResponse, error)
+	// Get one of the builtin policies
+	GetBuiltInPolicy(context.Context, *GetBuiltInPolicyRequest) (*GetBuiltInPolicyResponse, error)
 	mustEmbedUnimplementedIAMPolicyServiceServer()
 }
 
@@ -150,6 +212,9 @@ func (UnimplementedIAMPolicyServiceServer) Create(context.Context, *CreatePolicy
 func (UnimplementedIAMPolicyServiceServer) Get(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
+func (UnimplementedIAMPolicyServiceServer) GetMultiple(*GetMultiplePoliciesRequest, IAMPolicyService_GetMultipleServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetMultiple not implemented")
+}
 func (UnimplementedIAMPolicyServiceServer) Exist(context.Context, *ExistPolicyRequest) (*ExistPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Exist not implemented")
 }
@@ -161,6 +226,12 @@ func (UnimplementedIAMPolicyServiceServer) Delete(context.Context, *DeletePolicy
 }
 func (UnimplementedIAMPolicyServiceServer) List(*ListPoliciesRequest, IAMPolicyService_ListServer) error {
 	return status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedIAMPolicyServiceServer) GetServiceManagedPolicy(context.Context, *GetServiceManagedPolicyRequest) (*GetServiceManagedPolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServiceManagedPolicy not implemented")
+}
+func (UnimplementedIAMPolicyServiceServer) GetBuiltInPolicy(context.Context, *GetBuiltInPolicyRequest) (*GetBuiltInPolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBuiltInPolicy not implemented")
 }
 func (UnimplementedIAMPolicyServiceServer) mustEmbedUnimplementedIAMPolicyServiceServer() {}
 
@@ -209,6 +280,27 @@ func _IAMPolicyService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 		return srv.(IAMPolicyServiceServer).Get(ctx, req.(*GetPolicyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMPolicyService_GetMultiple_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetMultiplePoliciesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(IAMPolicyServiceServer).GetMultiple(m, &iAMPolicyServiceGetMultipleServer{stream})
+}
+
+type IAMPolicyService_GetMultipleServer interface {
+	Send(*GetMultiplePoliciesResponse) error
+	grpc.ServerStream
+}
+
+type iAMPolicyServiceGetMultipleServer struct {
+	grpc.ServerStream
+}
+
+func (x *iAMPolicyServiceGetMultipleServer) Send(m *GetMultiplePoliciesResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _IAMPolicyService_Exist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -286,6 +378,42 @@ func (x *iAMPolicyServiceListServer) Send(m *ListPoliciesResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _IAMPolicyService_GetServiceManagedPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetServiceManagedPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMPolicyServiceServer).GetServiceManagedPolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_policy.IAMPolicyService/GetServiceManagedPolicy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMPolicyServiceServer).GetServiceManagedPolicy(ctx, req.(*GetServiceManagedPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMPolicyService_GetBuiltInPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBuiltInPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMPolicyServiceServer).GetBuiltInPolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_policy.IAMPolicyService/GetBuiltInPolicy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMPolicyServiceServer).GetBuiltInPolicy(ctx, req.(*GetBuiltInPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IAMPolicyService_ServiceDesc is the grpc.ServiceDesc for IAMPolicyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -313,8 +441,21 @@ var IAMPolicyService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Delete",
 			Handler:    _IAMPolicyService_Delete_Handler,
 		},
+		{
+			MethodName: "GetServiceManagedPolicy",
+			Handler:    _IAMPolicyService_GetServiceManagedPolicy_Handler,
+		},
+		{
+			MethodName: "GetBuiltInPolicy",
+			Handler:    _IAMPolicyService_GetBuiltInPolicy_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetMultiple",
+			Handler:       _IAMPolicyService_GetMultiple_Handler,
+			ServerStreams: true,
+		},
 		{
 			StreamName:    "List",
 			Handler:       _IAMPolicyService_List_Handler,

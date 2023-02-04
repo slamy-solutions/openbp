@@ -6,8 +6,9 @@ use (
 	./modules/native/services/iam/authentication/password
 	./modules/native/services/iam/config
 	./modules/native/services/iam/identity
-	./modules/native/services/iam/oauth
+	./modules/native/services/iam/auth
 	./modules/native/services/iam/policy
+	./modules/native/services/iam/role
 	./modules/native/services/iam/token
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/namespace

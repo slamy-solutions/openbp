@@ -101,7 +101,7 @@ type NamespaceInMongo struct {
 
 	Updated time.Time `bson:"updated"`
 	Created time.Time `bson:"created"`
-	Version uint32    `bson:"version"`
+	Version uint64    `bson:"version"`
 }
 
 func (n *NamespaceInMongo) ToGRPCNamespace() *grpc.Namespace {

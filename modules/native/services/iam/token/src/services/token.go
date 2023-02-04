@@ -272,7 +272,7 @@ func (s *IAmTokenServer) Delete(ctx context.Context, in *nativeIAmTokenGRPC.Dele
 		s.cacheClient.Remove(ctx, makeTokenCacheKey(in.Namespace, in.Uuid))
 	}
 
-	return &nativeIAmTokenGRPC.DeleteResponse{}, status.Error(grpccodes.OK, "")
+	return &nativeIAmTokenGRPC.DeleteResponse{Existed: result.DeletedCount != 0}, status.Error(grpccodes.OK, "")
 }
 func (s *IAmTokenServer) Disable(ctx context.Context, in *nativeIAmTokenGRPC.DisableRequest) (*nativeIAmTokenGRPC.DisableResponse, error) {
 	id, err := primitive.ObjectIDFromHex(in.Uuid)

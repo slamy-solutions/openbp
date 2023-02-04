@@ -34,6 +34,8 @@ type ActorUserServiceClient interface {
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	// Delete user
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	// Get all users in the namespace.
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (ActorUserService_ListClient, error)
 	// Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
 	// Matches may be not ideal and its not possible to predict how much users matched provided string.
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (ActorUserService_SearchClient, error)
@@ -101,8 +103,40 @@ func (c *actorUserServiceClient) Delete(ctx context.Context, in *DeleteRequest, 
 	return out, nil
 }
 
+func (c *actorUserServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (ActorUserService_ListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[0], "/native_actor_user.ActorUserService/List", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &actorUserServiceListClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ActorUserService_ListClient interface {
+	Recv() (*ListResponse, error)
+	grpc.ClientStream
+}
+
+type actorUserServiceListClient struct {
+	grpc.ClientStream
+}
+
+func (x *actorUserServiceListClient) Recv() (*ListResponse, error) {
+	m := new(ListResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *actorUserServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (ActorUserService_SearchClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[0], "/native_actor_user.ActorUserService/Search", opts...)
+	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[1], "/native_actor_user.ActorUserService/Search", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +183,8 @@ type ActorUserServiceServer interface {
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	// Delete user
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	// Get all users in the namespace.
+	List(*ListRequest, ActorUserService_ListServer) error
 	// Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
 	// Matches may be not ideal and its not possible to predict how much users matched provided string.
 	Search(*SearchRequest, ActorUserService_SearchServer) error
@@ -176,6 +212,9 @@ func (UnimplementedActorUserServiceServer) Update(context.Context, *UpdateReques
 }
 func (UnimplementedActorUserServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedActorUserServiceServer) List(*ListRequest, ActorUserService_ListServer) error {
+	return status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedActorUserServiceServer) Search(*SearchRequest, ActorUserService_SearchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Search not implemented")
@@ -301,6 +340,27 @@ func _ActorUserService_Delete_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ActorUserService_List_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ActorUserServiceServer).List(m, &actorUserServiceListServer{stream})
+}
+
+type ActorUserService_ListServer interface {
+	Send(*ListResponse) error
+	grpc.ServerStream
+}
+
+type actorUserServiceListServer struct {
+	grpc.ServerStream
+}
+
+func (x *actorUserServiceListServer) Send(m *ListResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 func _ActorUserService_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SearchRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -355,6 +415,11 @@ var ActorUserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "List",
+			Handler:       _ActorUserService_List_Handler,
+			ServerStreams: true,
+		},
 		{
 			StreamName:    "Search",
 			Handler:       _ActorUserService_Search_Handler,

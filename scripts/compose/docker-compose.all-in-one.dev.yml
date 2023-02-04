@@ -1,0 +1,242 @@
+# This docker-compose file contains all the services in one file and can be used to startup OpenBP prod environment
+
+version: '3.8'
+
+services:
+  # --- System Module
+  
+  system_proxy:
+    image: traefik:2.5.4
+    container_name: system_proxy
+    restart: always
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - internal
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  system_db:
+    image: mongo:5.0.5-focal
+    container_name: system_db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "127.0.0.1:28200:27017" # For testing
+    volumes:
+      - ./data/system/db:/data/db
+    networks:
+      - internal
+
+  system_cache:
+    image: redis:7.0-alpine
+    container_name: system_cache
+    restart: always
+    command: redis-server --databases 1 --save "" --appendonly no --timeout 300 --tcp-keepalive 60 --maxmemory 64mb --maxmemory-policy allkeys-lru --maxmemory-samples 5 --logfile "" --protected-mode no
+    ports:
+      - "127.0.0.1:28201:6379" # For testing
+    networks:
+      - internal
+
+  system_nats:
+    image: nats:2.9-scratch
+    container_name: system_nats
+    restart: always
+    command: --js --sd /data
+    volumes:
+      - ./data/system/nats:/data
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28202:4222" # For testing
+
+  system_telemetry:
+    restart: always
+    container_name: system_telemetry
+    image: jaegertracing/opentelemetry-all-in-one:latest
+    ports:
+      - "127.0.0.1:16686:16686"
+      - "127.0.0.1:28203:55680"
+
+  # --- Native Module
+  native_namespace:
+    image: openbp/obp-native-namespace:${OPENBP_VERSION:-latest}
+    container_name: native_namespace
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28250:80"
+
+  native_keyvaluestorage:
+    image: openbp/obp-native-keyvaluestorage:${OPENBP_VERSION:-latest}
+    container_name: native_keyvaluestorage
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28251:80"
+
+  native_iam_policy:
+    image: openbp/obp-native-iam-policy:${OPENBP_VERSION:-latest}
+    container_name: native_iam_policy
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28252:80"
+
+  native_iam_role:
+    image: openbp/obp-native-iam-role:${OPENBP_VERSION:-latest}
+    container_name: native_iam_role
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+      - native_iam_policy
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28253:80"
+
+  native_iam_identity:
+    image: openbp/obp-native-iam-identity:${OPENBP_VERSION:-latest}
+    container_name: native_iam_identity
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+      - native_iam_policy
+      - native_iam_role
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28254:80"
+
+  native_iam_token:
+    image: openbp/obp-native-iam-token:${OPENBP_VERSION:-latest}
+    container_name: native_iam_token
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28255:80"
+
+  native_iam_auth:
+    image: openbp/obp-native-iam-auth:${OPENBP_VERSION:-latest}
+    container_name: native_iam_auth
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+      - native_iam_policy
+      - native_iam_role
+      - native_iam_identity
+      - native_iam_token
+      - native_iam_authentication_password
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28256:80"
+
+  native_iam_authentication_password:
+    image: openbp/obp-native-iam-authentication-password:${OPENBP_VERSION:-latest}
+    container_name: native_iam_authentication_password
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28258:80"
+
+  native_actor_user:
+    image: openbp/obp-native-actor-user:${OPENBP_VERSION:-latest}
+    container_name: native_actor_user
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_iam_identity
+    networks:
+      - internal
+    ports:
+      - "127.0.0.1:28257:80"
+
+  # --- Tools module
+  tools_rest:
+    image: openbp/obp-tools-rest:${OPENBP_VERSION:-latest}
+    container_name: tools_rest
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tools_rest.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.tools_rest.entrypoints=web"
+    environment:
+      ALLOW_ROOT_USER_INIT: "true"
+    depends_on:
+      - native_namespace
+      - native_actor_user
+      - native_iam_auth
+      - native_iam_policy
+      - native_iam_identity
+      - native_iam_authentication_password
+      - native_keyvaluestorage
+      - system_telemetry
+    networks:
+      - internal
+
+  tools_gui:
+    image: openbp/obp-tools-gui:${OPENBP_VERSION:-latest}
+    container_name: tools_gui
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tools_gui.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.tools_gui.entrypoints=web"
+    depends_on:
+      - tools_rest
+      - system_proxy
+    networks:
+      - internal
+
+networks:
+  internal:
+    name: openbp_internal

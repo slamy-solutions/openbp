@@ -8,10 +8,11 @@ import (
 	"google.golang.org/grpc"
 
 	actorUserGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	iamAuthGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	iamAuthenticationPasswordGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	iamIdentityGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
-	iamOAuthGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
 	iamPolicyGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
+	iamRoleGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
 	iamTokenGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 	keyvaluestorageGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
 	namespaceGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
@@ -28,8 +29,9 @@ type services struct {
 	ActorUser                 actorUserGrpc.ActorUserServiceClient
 	IamAuthenticationPassword iamAuthenticationPasswordGrpc.IAMAuthenticationPasswordServiceClient
 	IamIdentity               iamIdentityGrpc.IAMIdentityServiceClient
-	IamOAuth                  iamOAuthGrpc.IAMOAuthServiceClient
+	IamAuth                   iamAuthGrpc.IAMAuthServiceClient
 	IamPolicy                 iamPolicyGrpc.IAMPolicyServiceClient
+	IamRole                   iamRoleGrpc.IAMRoleServiceClient
 	IamToken                  iamTokenGrpc.IAMTokenServiceClient
 	Keyvaluestorage           keyvaluestorageGrpc.KeyValueStorageServiceClient
 	Namespace                 namespaceGrpc.NamespaceServiceClient
@@ -49,8 +51,9 @@ type StubConfig struct {
 
 	iamAuthenticationPassword GrpcServiceConfig
 	iamIdentity               GrpcServiceConfig
-	iamOAuth                  GrpcServiceConfig
+	iamAuth                   GrpcServiceConfig
 	iamPolicy                 GrpcServiceConfig
+	iamRole                   GrpcServiceConfig
 	iamToken                  GrpcServiceConfig
 }
 
@@ -121,7 +124,7 @@ func (sc *StubConfig) WithIAMAuthenticationPasswordService(conf ...GrpcServiceCo
 	return sc
 }
 
-func (sc *StubConfig) WithIAMIdentity(conf ...GrpcServiceConfig) *StubConfig {
+func (sc *StubConfig) WithIAMIdentityService(conf ...GrpcServiceConfig) *StubConfig {
 	if len(conf) != 0 {
 		sc.iamIdentity = conf[0]
 	} else {
@@ -140,6 +143,42 @@ func (sc *StubConfig) WithIAMPolicyService(conf ...GrpcServiceConfig) *StubConfi
 		sc.iamPolicy = GrpcServiceConfig{
 			enabled: true,
 			url:     getConfigEnv("NATIVE_IAM_POLICY_URL", "native_iam_policy:80"),
+		}
+	}
+	return sc
+}
+
+func (sc *StubConfig) WithIAMRoleService(conf ...GrpcServiceConfig) *StubConfig {
+	if len(conf) != 0 {
+		sc.iamRole = conf[0]
+	} else {
+		sc.iamRole = GrpcServiceConfig{
+			enabled: true,
+			url:     getConfigEnv("NATIVE_IAM_ROLE_URL", "native_iam_role:80"),
+		}
+	}
+	return sc
+}
+
+func (sc *StubConfig) WithIAMTokenService(conf ...GrpcServiceConfig) *StubConfig {
+	if len(conf) != 0 {
+		sc.iamToken = conf[0]
+	} else {
+		sc.iamToken = GrpcServiceConfig{
+			enabled: true,
+			url:     getConfigEnv("NATIVE_IAM_TOKEN_URL", "native_iam_token:80"),
+		}
+	}
+	return sc
+}
+
+func (sc *StubConfig) WithIAMAuthService(conf ...GrpcServiceConfig) *StubConfig {
+	if len(conf) != 0 {
+		sc.iamAuth = conf[0]
+	} else {
+		sc.iamAuth = GrpcServiceConfig{
+			enabled: true,
+			url:     getConfigEnv("NATIVE_IAM_AUTH_URL", "native_iam_auth:80"),
 		}
 	}
 	return sc
@@ -245,16 +284,28 @@ func (n *NativeStub) Connect() error {
 		n.Services.IamPolicy = service
 	}
 
-	if n.config.iamOAuth.enabled {
-		conn, service, err := NewIAMOAuthConnection(n.config.iamOAuth.url)
+	if n.config.iamRole.enabled {
+		conn, service, err := NewIAMRoleConnection(n.config.iamRole.url)
 		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_oauth service: " + err.Error())
+			n.log.Error("Error while connecting to the native_iam_role service: " + err.Error())
 			n.closeConnections()
 			return err
 		}
-		n.log.Info("Successfully connected to the native_iam_oauth service")
+		n.log.Info("Successfully connected to the native_iam_role service")
 		n.dials = append(n.dials, conn)
-		n.Services.IamOAuth = service
+		n.Services.IamRole = service
+	}
+
+	if n.config.iamAuth.enabled {
+		conn, service, err := NewIAMAuthConnection(n.config.iamAuth.url)
+		if err != nil {
+			n.log.Error("Error while connecting to the native_iam_auth service: " + err.Error())
+			n.closeConnections()
+			return err
+		}
+		n.log.Info("Successfully connected to the native_iam_auth service")
+		n.dials = append(n.dials, conn)
+		n.Services.IamAuth = service
 	}
 
 	if n.config.iamToken.enabled {

@@ -22,10 +22,14 @@ protoc --go_out=./iam/token --go_opt=paths=source_relative --go-grpc_out=./iam/t
 echo "Generating proto for iam_policy service"
 mkdir -p ./iam/policy
 protoc --go_out=./iam/policy --go_opt=paths=source_relative --go-grpc_out=./iam/policy --go-grpc_opt=paths=source_relative -I ../../proto/iam policy.proto
-# iam_oauth
-echo "Generating proto for iam_oauth service"
-mkdir -p ./iam/oauth
-protoc --go_out=./iam/oauth --go_opt=paths=source_relative --go-grpc_out=./iam/oauth --go-grpc_opt=paths=source_relative -I ../../proto/iam oauth.proto
+# iam_role
+echo "Generating proto for iam_role service"
+mkdir -p ./iam/role
+protoc --go_out=./iam/role --go_opt=paths=source_relative --go-grpc_out=./iam/role --go-grpc_opt=paths=source_relative -I ../../proto/iam role.proto
+# iam_auth
+echo "Generating proto for iam_auth service"
+mkdir -p ./iam/auth
+protoc --go_out=./iam/auth --go_opt=paths=source_relative --go-grpc_out=./iam/auth --go-grpc_opt=paths=source_relative -I ../../proto/iam auth.proto
 # iam_config
 echo "Generating proto for iam_config service"
 mkdir -p ./iam/config

@@ -95,6 +95,19 @@ services:
     networks:
       - internal
 
+  native_iam_role:
+    image: openbp/obp-native-iam-role:${OPENBP_VERSION:-latest}
+    container_name: native_iam_role
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+      - native_namespace
+      - native_iam_policy
+    networks:
+      - internal
+
   native_iam_identity:
     image: openbp/obp-native-iam-identity:${OPENBP_VERSION:-latest}
     container_name: native_iam_identity
@@ -105,6 +118,7 @@ services:
       - system_nats
       - native_namespace
       - native_iam_policy
+      - native_iam_role
     networks:
       - internal
 
@@ -120,9 +134,9 @@ services:
     networks:
       - internal
 
-  native_iam_oauth:
-    image: openbp/obp-native-iam-oauth:${OPENBP_VERSION:-latest}
-    container_name: native_iam_oauth
+  native_iam_auth:
+    image: openbp/obp-native-iam-auth:${OPENBP_VERSION:-latest}
+    container_name: native_iam_auth
     restart: always
     depends_on:
       - system_db
@@ -130,6 +144,7 @@ services:
       - system_nats
       - native_namespace
       - native_iam_policy
+      - native_iam_role
       - native_iam_identity
       - native_iam_token
       - native_iam_authentication_password
@@ -174,7 +189,7 @@ services:
     depends_on:
       - native_namespace
       - native_actor_user
-      - native_iam_oauth
+      - native_iam_auth
       - native_iam_policy
       - native_iam_identity
       - native_iam_authentication_password

@@ -36,8 +36,8 @@ spec:
           value: "{{ .Release.Name }}-native-keyvaluestorage:80"
         - name: NATIVE_ACTOR_USER_URL
           value: "{{ .Release.Name }}-native-actor-user:80"
-        - name: NATIVE_IAM_OAUTH_URL
-          value: "{{ .Release.Name }}-native-iam-oauth:80"
+        - name: NATIVE_IAM_AUTH_URL
+          value: "{{ .Release.Name }}-native-iam-auth:80"
         - name: NATIVE_IAM_POLICY_URL
           value: "{{ .Release.Name }}-native-iam-policy:80"
         - name: NATIVE_IAM_IDENTITY_URL

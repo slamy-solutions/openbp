@@ -30,8 +30,12 @@ type IAMIdentityServiceClient interface {
 	Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*DeleteIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(ctx context.Context, in *AddPolicyRequest, opts ...grpc.CallOption) (*AddPolicyResponse, error)
-	// Removes policy from the identity. If policy was already removed - does nothing.
+	// Remove policy from the identity. If policy was already removed - does nothing.
 	RemovePolicy(ctx context.Context, in *RemovePolicyRequest, opts ...grpc.CallOption) (*RemovePolicyResponse, error)
+	// Add role to the identity. If role was already added = does nothing
+	AddRole(ctx context.Context, in *AddRoleRequest, opts ...grpc.CallOption) (*AddRoleResponse, error)
+	// Remove role from the identity. If role was already removed - does nothing.
+	RemoveRole(ctx context.Context, in *RemoveRoleRequest, opts ...grpc.CallOption) (*RemoveRoleResponse, error)
 	// Set identity active or not.
 	SetActive(ctx context.Context, in *SetIdentityActiveRequest, opts ...grpc.CallOption) (*SetIdentityActiveResponse, error)
 }
@@ -89,6 +93,24 @@ func (c *iAMIdentityServiceClient) RemovePolicy(ctx context.Context, in *RemoveP
 	return out, nil
 }
 
+func (c *iAMIdentityServiceClient) AddRole(ctx context.Context, in *AddRoleRequest, opts ...grpc.CallOption) (*AddRoleResponse, error) {
+	out := new(AddRoleResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/AddRole", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMIdentityServiceClient) RemoveRole(ctx context.Context, in *RemoveRoleRequest, opts ...grpc.CallOption) (*RemoveRoleResponse, error) {
+	out := new(RemoveRoleResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/RemoveRole", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMIdentityServiceClient) SetActive(ctx context.Context, in *SetIdentityActiveRequest, opts ...grpc.CallOption) (*SetIdentityActiveResponse, error) {
 	out := new(SetIdentityActiveResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/SetActive", in, out, opts...)
@@ -110,8 +132,12 @@ type IAMIdentityServiceServer interface {
 	Delete(context.Context, *DeleteIdentityRequest) (*DeleteIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error)
-	// Removes policy from the identity. If policy was already removed - does nothing.
+	// Remove policy from the identity. If policy was already removed - does nothing.
 	RemovePolicy(context.Context, *RemovePolicyRequest) (*RemovePolicyResponse, error)
+	// Add role to the identity. If role was already added = does nothing
+	AddRole(context.Context, *AddRoleRequest) (*AddRoleResponse, error)
+	// Remove role from the identity. If role was already removed - does nothing.
+	RemoveRole(context.Context, *RemoveRoleRequest) (*RemoveRoleResponse, error)
 	// Set identity active or not.
 	SetActive(context.Context, *SetIdentityActiveRequest) (*SetIdentityActiveResponse, error)
 	mustEmbedUnimplementedIAMIdentityServiceServer()
@@ -135,6 +161,12 @@ func (UnimplementedIAMIdentityServiceServer) AddPolicy(context.Context, *AddPoli
 }
 func (UnimplementedIAMIdentityServiceServer) RemovePolicy(context.Context, *RemovePolicyRequest) (*RemovePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePolicy not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) AddRole(context.Context, *AddRoleRequest) (*AddRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddRole not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) RemoveRole(context.Context, *RemoveRoleRequest) (*RemoveRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveRole not implemented")
 }
 func (UnimplementedIAMIdentityServiceServer) SetActive(context.Context, *SetIdentityActiveRequest) (*SetIdentityActiveResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetActive not implemented")
@@ -242,6 +274,42 @@ func _IAMIdentityService_RemovePolicy_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IAMIdentityService_AddRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).AddRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/AddRole",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).AddRole(ctx, req.(*AddRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMIdentityService_RemoveRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).RemoveRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/RemoveRole",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).RemoveRole(ctx, req.(*RemoveRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IAMIdentityService_SetActive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetIdentityActiveRequest)
 	if err := dec(in); err != nil {
@@ -286,6 +354,14 @@ var IAMIdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemovePolicy",
 			Handler:    _IAMIdentityService_RemovePolicy_Handler,
+		},
+		{
+			MethodName: "AddRole",
+			Handler:    _IAMIdentityService_AddRole_Handler,
+		},
+		{
+			MethodName: "RemoveRole",
+			Handler:    _IAMIdentityService_RemoveRole_Handler,
 		},
 		{
 			MethodName: "SetActive",

@@ -106,7 +106,7 @@ func (s *PasswordIdentificationService) CreateOrUpdate(ctx context.Context, in *
 
 func (s *PasswordIdentificationService) Delete(ctx context.Context, in *grpc.DeleteRequest) (*grpc.DeleteResponse, error) {
 	collection := collectionByNamespace(s, in.Namespace)
-	_, err := collection.DeleteOne(ctx, bson.M{"identity": in.Identity})
+	deleteResult, err := collection.DeleteOne(ctx, bson.M{"identity": in.Identity})
 	if err != nil {
 		if err, ok := err.(mongo.WriteException); ok {
 			if err.HasErrorLabel("InvalidNamespace") {
@@ -115,7 +115,7 @@ func (s *PasswordIdentificationService) Delete(ctx context.Context, in *grpc.Del
 		}
 		return nil, status.Error(grpccodes.Internal, "Error on deleting password in database: "+err.Error())
 	}
-	return &grpc.DeleteResponse{}, status.Error(grpccodes.OK, "")
+	return &grpc.DeleteResponse{Existed: deleteResult.DeletedCount != 0}, status.Error(grpccodes.OK, "")
 }
 
 func (s *PasswordIdentificationService) Exist(ctx context.Context, in *grpc.ExistRequest) (*grpc.ExistResponse, error) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type headersPropagator struct {
@@ -32,4 +33,9 @@ func InjectTelemetryContext(ctx context.Context, msg *nats.Msg) {
 
 func RetrieveTelemetryContext(ctx context.Context, msg *nats.Msg) context.Context {
 	return otel.GetTextMapPropagator().Extract(ctx, &headersPropagator{Msg: msg})
+}
+
+func StartTelemetrySpanFromMessage(ctx context.Context, msg *nats.Msg, spanName string) (context.Context, trace.Span) {
+	telemetryContext := RetrieveTelemetryContext(ctx, msg)
+	return otel.GetTracerProvider().Tracer("system_nats/otellib").Start(telemetryContext, spanName)
 }

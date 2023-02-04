@@ -4,11 +4,12 @@ import (
 	"time"
 
 	actorUser "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	iamAuth "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	iamAuthenticationPassword "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	iamConfig "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/config"
 	iamIdentity "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
-	iamOAuth "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
 	iamPolicy "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
+	iamRole "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
 	iamToken "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
@@ -64,9 +65,14 @@ func NewIAMPolicyConnection(address string, opts ...grpc.DialOption) (*grpc.Clie
 	return makeGrpcClient(iamPolicy.NewIAMPolicyServiceClient, address, opts...)
 }
 
-// Connect to IAM_OAuth service
-func NewIAMOAuthConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamOAuth.IAMOAuthServiceClient, error) {
-	return makeGrpcClient(iamOAuth.NewIAMOAuthServiceClient, address, opts...)
+// Connect to IAM_Role service
+func NewIAMRoleConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamRole.IAMRoleServiceClient, error) {
+	return makeGrpcClient(iamRole.NewIAMRoleServiceClient, address, opts...)
+}
+
+// Connect to IAM_Auth service
+func NewIAMAuthConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamAuth.IAMAuthServiceClient, error) {
+	return makeGrpcClient(iamAuth.NewIAMAuthServiceClient, address, opts...)
 }
 
 // Connect to IAM_Identity service

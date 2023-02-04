@@ -49,7 +49,7 @@ nav:
           - Policy: docs/modules/native/iam/policy.en.md
           - Identity: docs/modules/native/iam/identity.en.md
           - Token: docs/modules/native/iam/token.en.md
-          - OAuth: docs/modules/native/iam/oauth.en.md
+          - Auth: docs/modules/native/iam/auth.en.md
           - Authentication:
             - Password: docs/modules/native/iam/authentication/password.en.md
           - Actor:

@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "{{ include "native.fullname" . }}-iam-oauth"
+  name: "{{ include "native.fullname" . }}-iam-auth"
   namespace: {{ print .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-oauth"
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-auth"
     {{- include "native.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.iam.oauth.replicas }}
+  replicas: {{ .Values.iam.auth.replicas }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-oauth"
+      app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-auth"
       app.kubernetes.io/instance: "{{ .Release.Name }}"
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-oauth"
+        app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-auth"
         app.kubernetes.io/instance: "{{ .Release.Name }}"
     spec:
       containers:
-      - name: iam-oauth
-        image: "{{ .Values.iam.oauth.image.repository }}:{{ .Chart.AppVersion }}"
+      - name: iam-auth
+        image: "{{ .Values.iam.auth.image.repository }}:{{ .Chart.AppVersion }}"
         ports:
         - containerPort: 80
         env:
@@ -30,6 +30,8 @@ spec:
           value: "{{ .Release.Name }}-native-iam-token:80"
         - name: NATIVE_IAM_POLICY_URL
           value: "{{ .Release.Name }}-native-iam-policy:80"
+        - name: NATIVE_IAM_ROLE_URL
+          value: "{{ .Release.Name }}-native-iam-role:80"
         - name: NATIVE_IAM_IDENTITY_URL
           value: "{{ .Release.Name }}-native-iam-identity:80"
         - name: NATIVE_IAM_AUTHENTICATION_PASSWORD_URL
@@ -45,18 +47,18 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: "{{ include "native.fullname" . }}-iam-oauth"
+  name: "{{ include "native.fullname" . }}-iam-auth"
   namespace: {{ print .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-oauth"
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-auth"
     {{- include "native.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: "{{ include "native.fullname" . }}-iam-oauth"
-  minReplicas: {{ .Values.iam.oauth.minReplicas }}
-  maxReplicas: {{ .Values.iam.oauth.maxReplicas }}
+    name: "{{ include "native.fullname" . }}-iam-auth"
+  minReplicas: {{ .Values.iam.auth.minReplicas }}
+  maxReplicas: {{ .Values.iam.auth.maxReplicas }}
   metrics:
   - type: Resource
     resource:
@@ -68,15 +70,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "{{ include "native.fullname" . }}-iam-oauth"
+  name: "{{ include "native.fullname" . }}-iam-auth"
   namespace: {{ print .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-oauth"
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-auth"
     {{- include "native.labels" . | nindent 4 }}
 spec:
   clusterIP: None
   selector:
-    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-oauth"
+    app.kubernetes.io/name: "{{ include "native.fullname" . }}-iam-auth"
     app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
     - protocol: TCP

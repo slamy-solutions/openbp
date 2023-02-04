@@ -1,79 +1,42 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package native_actor_user;
 
 option go_package = "slamy/openERP/native/actor/user;user";
 
 message User {
+    // Namespace of the user. If namespace is empty, user is global.
+    string namespace = 1;
     // Unique identifier
-    string uuid = 1;
+    string uuid = 2;
     // Login unique identifies user (like UUID) but user defined and can be changed.
-    string login = 2;
-    // Nnative_iam_identity UUID
-    string identity = 3;
+    string login = 3;
+    // Native_iam_identity UUID
+    string identity = 4;
 
     // User-defined name that will be displayed instead of login
-    string fullName = 4;
+    string fullName = 5;
     // Link to the user avatar image
-    string avatar = 5;
+    string avatar = 6;
     // Email address
-    string email = 6;
+    string email = 7;
+
+    // When the policy was created
+    google.protobuf.Timestamp created = 9;
+    // Last time when the policy information was updated.
+    google.protobuf.Timestamp updated = 10;
+    // Counter that increases after every update of the policy
+    uint64 version = 11;
 }
 
 message CreateRequest {
-    // User-defined unique identifier
-    string login = 1;
-
-    // User-defined name that will be displayed instead of login
-    string fullName = 2;
-    // Link to the user avatar image
-    string avatar = 3;
-    // Email address
-    string email = 4;
-}
-message CreateResponse {
-    // Created user
-    User user = 1;
-}
-
-message GetRequest {
-    // User unique identifier to get
-    string uuid = 1;
-    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
-    bool useCache = 2;
-}
-message GetResponse {
-    // User with specified UUID
-    User user = 2;
-}
-
-message GetByLoginRequest {
-    // Search for user that has this login
-    string login = 1;
-    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
-    bool useCache = 2;
-}
-message GetByLoginResponse {
-    // User with specified login
-    User user = 1;
-}
-
-message GetByIdentityRequest {
-    // Search for user which has this identity uuid assigned to it
-    string identity = 1;
-    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
-    bool useCache = 2;
-}
-message GetByIdentityResponse {
-    // User wich has specified identity
-    User user = 1;
-}
-
-message UpdateRequest {
-    // Unique identifier of user, that will be updated
-    string uuid = 1;
+    // Namespace where to create user. Empty for global user
+    string namespace = 1;
     // User-defined unique identifier
     string login = 2;
+
     // User-defined name that will be displayed instead of login
     string fullName = 3;
     // Link to the user avatar image
@@ -81,91 +44,101 @@ message UpdateRequest {
     // Email address
     string email = 5;
 }
+message CreateResponse {
+    // Created user
+    User user = 1;
+}
+
+message GetRequest {
+    // Namespace where to search for user. Empty for global user.
+    string namespace = 1;
+    // User unique identifier inside searched namespace
+    string uuid = 2;
+    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
+    bool useCache = 3;
+}
+message GetResponse {
+    // Founded user
+    User user = 1;
+}
+
+message GetByLoginRequest {
+    // Namespace where to search for user. Empty for global user.
+    string namespace = 1;
+    // Login of the user to search
+    string login = 2;
+    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
+    bool useCache = 3;
+}
+message GetByLoginResponse {
+    // User with specified login
+    User user = 1;
+}
+
+message GetByIdentityRequest {
+    // Namespace where to search for user. Empty for global user.
+    string namespace = 1;
+    // Search for user which has this identity uuid assigned to it
+    string identity = 2;
+    // Use cache for this request or not. Cache has a very small chance to be invalid. Invalid cache deletes after small period of time (60 seconds by default)
+    bool useCache = 3;
+}
+message GetByIdentityResponse {
+    // User wich has specified identity
+    User user = 1;
+}
+
+message UpdateRequest {
+    // Namespace of the user. Empty for global user.
+    string namespace = 1;
+    // Unique identifier of user, that will be updated
+    string uuid = 2;
+    // User-defined unique identifier
+    string login = 3;
+    // User-defined name that will be displayed instead of login
+    string fullName = 4;
+    // Link to the user avatar image
+    string avatar = 5;
+    // Email address
+    string email = 6;
+}
 message UpdateResponse {
     // User after update
     User user = 1;
 }
 
 message DeleteRequest {
-    // Unique identifier of user to delete
-    string uuid = 1;
+    // Namespace of the user. Empty for global user.
+    string namespace = 1;
+    // Unique identifier of user inside namespace
+    string uuid = 2;
 }
-message DeleteResponse {}
+message DeleteResponse {
+    // Indicates if user existed before this request or it was already deleted earlier.
+    bool existed = 1;
+}
 
-/*
 message ListRequest {
-    // Regex to match login, fullName, email. Leave empty to ignore.
-    string match = 1;
-    // Maximum number of results to return. Set to 0 if yo want get all the users up to the end.
-    uint64 limit = 2;
-    // A user UUID. Only return users that signed after this user. This is usefull for paging the result. Set to empty string to ignore this parameter. 
-    string since = 3;
+    // Namespace where to search for users
+    string namespace = 1;
 }
 message ListResponse {
-    // Total number of users founded
-    uint64 totalCount = 1;
-    // User data
-    User user = 2;
+    // Founded user
+    User user = 1;
 }
-*/
 
 message SearchRequest {
-    string match = 1; 
-    uint64 limit = 2;
+    // Namespace where to search for users. Empty for global user.
+    string namespace = 1;
+    // String to search in the user information
+    string match = 2;
+    // How much values to return 
+    uint64 limit = 3;
 }
 message SearchResponse {
     // User data
     User user = 1;
 }
-/*
-message GetUsersForNamespaceRequest {
-    // Namespace where to get users
-    string namespace = 1;
-    // User UUID from which to start return response. Use it for response paging together with limit parameter
-    string startFrom = 2;
-    // Maximum number of user to return. Use 0 to ignore limit.
-    uint32 limit = 3;
-}
-message GetUsersForNamespaceResponse {
-    // User data
-    User user = 1;
-}
-
-message AddUserToNamespaceRequest {
-    // User UUID to add
-    string user = 1;
-    // Namespace where to add user
-    string namespace = 2;
-}
-message AddUserToNamespaceResponse {}
-
-message RemoveUserFromNamespaceRequest {
-    // User UUID to remove
-    string user = 1;
-    // Namespace where to remove user
-    string namespace = 2;
-}
-message RemoveUserFromNamespaceResponse {}
-
-message GetNamespacesForUserRequest {
-    // User UUID for which to get namespaces
-    string user = 1;
-}
-message GetNamespacesForUserResponse {
-    // User namespace
-    string namespace = 1;
-}
-
-message IsUserInTheNamespaceRequest {
-    // User UUID to check
-    string user = 1;
-    // Namespace to check
-    string namespace = 2;
-}
-message IsUserInTheNamespaceResponse {
-    // True is user is in the namespace. Otherwise false
-    bool isInNamespace = 1;
-}*/
 
 service ActorUserService {
     // Create new user and assign identity to it.
@@ -180,27 +153,10 @@ service ActorUserService {
     rpc Update(UpdateRequest) returns (UpdateResponse);
     // Delete user
     rpc Delete(DeleteRequest) returns (DeleteResponse);
-    // Lists all users in the order that they signed up.
-    //rpc Find(ListRequest) returns (ListResponse);
+    // Get all users in the namespace.
+    rpc List(ListRequest) returns (stream ListResponse);
 
     // Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
     // Matches may be not ideal and its not possible to predict how much users matched provided string.
     rpc Search(SearchRequest) returns (stream SearchResponse);
 }
-/*
-service ActorUserNamespaceService {
-    // Get list of users inside namespace
-    rpc GetUsersForNamespace(GetUsersForNamespaceRequest) returns (stream GetUsersForNamespaceResponse);
-    // Add user to the namespace. User can have multiple namespaces
-    rpc AddUserToNamespace(AddUserToNamespaceRequest) returns (AddUserToNamespaceResponse);
-    // Remove user from the namespace. If there where no user inside namespaces - does nothing
-    rpc RemoveUserFromNamespace(RemoveUserFromNamespaceRequest) returns (RemoveUserFromNamespaceResponse);
-    // Get all the namespaces for the user
-    rpc GetNamespacesForUser(GetNamespacesForUserRequest) returns (GetNamespacesForUserResponse);
-    // Check if user is inside namespace or not
-    rpc IsUserInTheNamespace(IsUserInTheNamespaceRequest) returns (IsUserInTheNamespaceResponse);
-
-    //rpc GetNamespacesByLogin() returns ();
-    //rpc GetNamespacesByIdentity() returns ();
-}
-*/

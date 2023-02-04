@@ -3,7 +3,7 @@ package services
 import (
 	"strings"
 
-	nativeIAmOAuthGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
+	nativeIAmAuthGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
 	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 )
@@ -56,17 +56,11 @@ func compareStringList(hasList []string, requiredList []string) bool {
 	return true
 }
 
-/*
-	nativeIAmPolicyGRPC.Policy
-	nativeIAmOAuthGRPC.Scope
-	nativeIAmTokenGRPC.Scope
-*/
-
-func arePoliciesAllowScopes(policies []*nativeIAmPolicyGRPC.Policy, scopes []*nativeIAmOAuthGRPC.Scope) bool {
+func arePoliciesAllowScopes(policies []*nativeIAmPolicyGRPC.Policy, scopes []*nativeIAmAuthGRPC.Scope) bool {
 	for _, scope := range scopes {
 		scopeIsOk := false
 		for _, policy := range policies {
-			if scope.Namespace == policy.Namespace {
+			if scope.Namespace == policy.Namespace && policy.NamespaceIndependent {
 				if compareStringList(policy.Resources, scope.Resources) && compareStringList(policy.Actions, scope.Actions) {
 					scopeIsOk = true
 					break
@@ -100,7 +94,7 @@ func areTokenScopesValidForIdentityScopes(policies []*nativeIAmPolicyGRPC.Policy
 	return true
 }
 
-func areTokenScopesAllowAccess(tokenScopes []*nativeIAmTokenGRPC.Scope, systemScopes []*nativeIAmOAuthGRPC.Scope) bool {
+func areTokenScopesAllowAccess(tokenScopes []*nativeIAmTokenGRPC.Scope, systemScopes []*nativeIAmAuthGRPC.Scope) bool {
 	for _, systemScope := range systemScopes {
 		scopeIsOk := false
 		for _, tokenScope := range tokenScopes {

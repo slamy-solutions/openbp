@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
 
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/models"
@@ -51,12 +51,12 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	// Try to verify password and create authorization token for user
-	tokenCreationResponse, err := r.servicesHandler.Native.IAMOAuth.CreateTokenWithPassword(ctx.Request.Context(), &oauth.CreateTokenWithPasswordRequest{
+	tokenCreationResponse, err := r.servicesHandler.Native.IAMAuth.CreateTokenWithPassword(ctx.Request.Context(), &auth.CreateTokenWithPasswordRequest{
 		Namespace: "",
 		Identity:  userGetResponse.User.Identity,
 		Password:  requestData.Password,
 		Metadata:  MetadataFromRequestContext(ctx).ToJSONString(),
-		Scopes:    []*oauth.Scope{},
+		Scopes:    []*auth.Scope{},
 	})
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -64,16 +64,16 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	switch tokenCreationResponse.Status {
-	case oauth.CreateTokenWithPasswordResponse_OK:
+	case auth.CreateTokenWithPasswordResponse_OK:
 		ctx.JSON(http.StatusOK, passwordLoginResponse{AccessToken: tokenCreationResponse.AccessToken, RefreshToken: tokenCreationResponse.RefreshToken})
 		break
-	case oauth.CreateTokenWithPasswordResponse_IDENTITY_NOT_ACTIVE:
+	case auth.CreateTokenWithPasswordResponse_IDENTITY_NOT_ACTIVE:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordIdentityNotActive))
 		break
-	case oauth.CreateTokenWithPasswordResponse_CREDENTIALS_INVALID:
+	case auth.CreateTokenWithPasswordResponse_CREDENTIALS_INVALID:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordCredentialsInvalid))
 		break
-	case oauth.CreateTokenWithPasswordResponse_UNAUTHORIZED:
+	case auth.CreateTokenWithPasswordResponse_UNAUTHORIZED:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordNotEnoughtPrivileges))
 		break
 	default:

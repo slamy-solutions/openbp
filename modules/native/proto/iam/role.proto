@@ -1,0 +1,269 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package native_iam_role;
+
+option go_package = "slamy/openBP/native/iam/role;role";
+
+// Respresents pointer to the assigned policy
+message AssignedPolicy {
+    // Namespace of the assigned policy
+    string namespace = 1;
+    // Unique identifier of the assigned policy inside namespace
+    string uuid = 2;
+}
+
+// Empty information to indicate that management for this role is not defined.
+message NotManagedData {}
+
+enum BuiltInRoleType {
+    // Role with full access to everything
+    GLOBAL_ROOT = 0;
+    // Role with full access to namespace
+    NAMESPACE_ROOT = 1;
+    // Empty role that gives nothing. Use it if you want to correlate something with namespace but dont want to give any permisions.
+    EMPTY = 2;
+}
+
+// Information about built in role
+message BuiltInManagedData {
+    // Type of the builtin role
+    BuiltInRoleType type = 1;
+}
+
+// Information about identity that manages this role
+message IdentityManagedData {
+    // Namespace where identity is located
+    string identityNamespace = 1;
+    // Identity UUID inside this namespace
+    string identityUUID = 2;
+}
+
+// Handles information about the service that manages this role
+message ServiceManagedData {
+    // Name of the service
+    string service = 1;
+    // Reason why this service created this role
+    string reason = 2;
+    // This is an ID that can be defined by managed service to find this role. Set to empty string if you dont need this. If this is not empty Service+ID combination is unique.
+    string managementId = 3;
+}
+
+// Role is a group of scopes
+message Role {
+    // Namespace of the role. Empty for global roles
+    string namespace = 1;
+    // Unique identifier of the role in the namespace
+    string uuid = 2;
+
+    // Short, human-readable name
+    string name = 3;
+    // Arbitrary description
+    string description = 4;
+    
+    /* 
+        Indicates if this role is managed by someone else. 
+
+        This is only a flag to inform everyone that it is managed by third party actor and
+        manual interaction with this role may result in big problems. In order to interact with the role,
+        you should ask someone who manages this role to do something for you.
+    
+        There are several possible managements:
+        *NotManaged* - there is no clear actor responsible for this role
+        *BuiltIn* - this is predefined role that doesn't belong to any service. The list is predefined. For example "GLOBAL_ROOT" role. It is not possible to delete builtin role.
+        *Identity* - this role was created by identity. This identity is responsible for it
+        *Service* - this role was create by one of the services. This services now manages this role.
+    */
+    oneof managed {
+        // Role is not managed
+        NotManagedData no = 10;
+        // Role is builtIn and predifined
+        BuiltInManagedData builtIn = 11;
+        // Role is managed by identity
+        IdentityManagedData identity = 12;
+        // Role is managed by service
+        ServiceManagedData service = 13;
+    }
+
+    // List of the policies assigned to the role
+    repeated AssignedPolicy policies = 5;
+
+    // List of tags associated with this role
+    repeated string tags = 6;
+
+    // When the role was created
+    google.protobuf.Timestamp created = 7;
+    // Last time when the role information was updated.
+    google.protobuf.Timestamp updated = 8;
+    // Counter that increases after every update of the role
+    uint64 version = 9;
+}
+
+message CreateRoleRequest {
+    // Namespace where role will be located. Leave empty for global role.
+    string namespace = 1;
+    // Short, human-readable name
+    string name = 3;
+    // Arbitrary description
+    string description = 4;
+
+    /* 
+        Indicates if this role is managed by someone else. 
+
+        This is only a flag to inform everyone that it is managed by third party actor and
+        manual interaction with this role may result in big problems. In order to interact with the role,
+        you should ask someone who manages this role to do something for you.
+    
+        There are several possible managements:
+        *NotManaged* - there is no clear actor responsible for this role
+        *BuiltIn* - this is predefined role that doesn't belong to any service. The list is predefined. For example "GLOBAL_ROOT" role. Cant be created using this request.
+        *Identity* - this role was created by identity. This identity is responsible for it
+        *Service* - this role was create by one of the services. This services now manages this role.
+    */
+    oneof managed {
+        // Role is not managed
+        NotManagedData no = 10;
+        // Role is managed by identity
+        IdentityManagedData identity = 11;
+        // Role is managed by service
+        ServiceManagedData service = 12;
+    }
+}
+message CreateRoleResponse {
+    // Created role
+    Role role = 1;
+}
+
+message GetRoleRequest {
+    // Namespace where to search for role. Leave empty for global role.
+    string namespace = 1;
+    // Unique identifier of the role inside searched namespace
+    string uuid = 2;
+    // Use cache or not. Cached role data may not be actual under very rare conditions. Invalid cache data is automatically clear after short period of time.
+    bool useCache = 3;
+}
+message GetRoleResponse {
+    // Founded role
+    Role role = 1;
+}
+
+message GetMultipleRolesRequest {
+    // Hold information on where to find the role
+    message RequestedRole {
+        // Namespace where to search for role. Leave empty for global role.
+        string namespace = 1;
+        // Unique identifier of the role inside searched namespace
+        string uuid = 2;
+    }
+
+    // List of roles to get
+    repeated RequestedRole roles = 1;
+}
+message GetMultipleRolesResponse {
+    // Founded role. The ordering is random.
+    Role role = 1;
+}
+
+message DeleteRoleRequest {
+    // Namespace where to search for role. Leave empty for global role.
+    string namespace = 1;
+    // Unique identifier of the role inside searched namespace
+    string uuid = 2;
+}
+message DeleteRoleResponse {
+    // Indicates if role existed before this request.
+    bool existed = 1;
+}
+
+message GetServiceManagedRoleRequest {
+    // Namespace where to search for role
+    string namespace = 1;
+    // Service which manages this role
+    string service = 2;
+    // Special ID for this role defined by this service
+    string managedId = 3;
+    // Use cache or not. Cached role data may not be actual under very rare conditions. Invalid cache data is automatically clear after short period of time.
+    bool useCache = 4;
+}
+message GetServiceManagedRoleResponse {
+    // Founded role
+    Role role = 1;
+}
+
+message GetBuiltInRoleRequest {
+    // Namespace where to get builtin role.
+    string namespace = 1;
+    // Type of the role to search
+    BuiltInRoleType type = 2;
+}
+message GetBuiltInRoleResponse {
+    Role role = 1;
+}
+
+message AddPolicyRequest {
+    // Namespace where role is located
+    string roleNamespace = 1;
+    // Unique identifier of the role
+    string roleUUID = 2;
+    // Namespace where policy is located
+    string policyNamespace = 3;
+    // Unique identifier of the policy
+    string policyUUID = 4;
+}
+message AddPolicyResponse {
+    // Role after this operation
+    Role role = 1;
+}
+
+message RemovePolicyRequest {
+    // Namespace where role is located
+    string roleNamespace = 1;
+    // Unique identifier of the role
+    string roleUUID = 2;
+    // Namespace where policy is located
+    string policyNamespace = 3;
+    // Unique identifier of the policy
+    string policyUUID = 4;
+}
+message RemovePolicyResponse {
+    // Role after this operation
+    Role role = 1;
+}
+
+message ExistRoleRequest {
+    // Namespace where to search for role. Leave empty for global role.
+    string namespace = 1;
+    // Unique identifier of the role inside searched namespace
+    string uuid = 2;
+    // Use cache or not. Cached role data may not be actual under very rare conditions. Invalid cache data is automatically clear after short period of time.
+    bool useCache = 3;
+}
+message ExistRoleResponse {
+    // Indicates if role exists or not
+    bool exist = 1;
+}
+
+// Provides API to manage IAM roles 
+service IAMRoleService {
+    // Create new role
+    rpc Create(CreateRoleRequest) returns (CreateRoleResponse);
+    // Get role 
+    rpc Get(GetRoleRequest) returns (GetRoleResponse);
+    // Get multiple roles in one request.
+    rpc GetMultiple(GetMultipleRolesRequest) returns (stream GetMultipleRolesResponse);
+    // Delete role
+    rpc Delete(DeleteRoleRequest) returns (DeleteRoleResponse);
+
+    // Get role that is managed by service
+    rpc GetServiceManagedRole(GetServiceManagedRoleRequest) returns (GetServiceManagedRoleResponse);
+    // Get one of the builtin roles
+    rpc GetBuiltInRole(GetBuiltInRoleRequest) returns (GetBuiltInRoleResponse);
+
+    // Add policy to the role. If policy was already added - does nothing.
+    rpc AddPolicy(AddPolicyRequest) returns (AddPolicyResponse);
+    // Removes policy from the role. If policy was already removed - does nothing.
+    rpc RemovePolicy(RemovePolicyRequest) returns (RemovePolicyResponse);
+
+    rpc Exist(ExistRoleRequest) returns (ExistRoleResponse);
+}

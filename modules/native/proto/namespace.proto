@@ -20,7 +20,7 @@ message Namespace {
     // Last time when the namespace information was updated.
     google.protobuf.Timestamp updated = 5;
     // Counter that increases after every update of the namespace
-    uint32 version = 6;
+    uint64 version = 6;
 }
 
 message EnsureNamespaceRequest {

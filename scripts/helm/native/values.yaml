@@ -24,6 +24,12 @@ iam:
     minReplicas: 1
     maxReplicas: 10
     replicas: 1
+  role:
+    image:
+      repository: openbp/obp-native-iam-role
+    minReplicas: 1
+    maxReplicas: 10
+    replicas: 1
   identity:
     image:
       repository: openbp/obp-native-iam-identity
@@ -36,9 +42,9 @@ iam:
     minReplicas: 1
     maxReplicas: 10
     replicas: 1
-  oauth:
+  auth:
     image:
-      repository: openbp/obp-native-iam-oauth
+      repository: openbp/obp-native-iam-auth
     minReplicas: 1
     maxReplicas: 10
     replicas: 1

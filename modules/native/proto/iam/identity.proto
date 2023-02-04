@@ -1,14 +1,48 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package native_iam_identity;
 
 option go_package = "slamy/openBP/native/iam/identity;identity";
 
+
+// Empty information to indicate that management for this identity is not defined.
+message NotManagedData {}
+
+// Information about other identity that manages this identity
+message IdentityManagedData {
+    // Namespace where identity is located
+    string identityNamespace = 1;
+    // Identity UUID inside this namespace
+    string identityUUID = 2;
+}
+
+// Handles information about the service that manages this identity
+message ServiceManagedData {
+    // Name of the service
+    string service = 1;
+    // Reason why this service created this identity
+    string reason = 2;
+    // This is an ID that can be defined by managed service to find this identity. Set to empty string if you dont need this. If this is not empty Service+ID combination is unique.
+    string managementId = 3;
+}
+
+
 message Identity {
+    // Holds information about specific policy assigned to the identity
     message PolicyReference {
         // Policy namespace. Empty for global policy
         string namespace = 1;
         // Policy uuid (unique identifier) inside namespace
+        string uuid = 2;
+    }
+
+    // Holds information about specific role assigned to the indentity
+    message RoleReference {
+        // Role namespace. Empty for global role
+        string namespace = 1;
+        // Role uuid
         string uuid = 2;
     }
 
@@ -21,8 +55,40 @@ message Identity {
     // If identity is not active, it will not be able to login and perform any actions.
     bool active = 4;
 
+
+    /* 
+        Indicates if this identity is managed by someone else. 
+
+        This is only a flag to inform everyone that it is managed by third party actor and
+        manual interaction with this identity may result in big problems. In order to interact with the identity,
+        you should ask someone who manages this identity to do something for you.
+    
+        There are several possible managements:
+        *NotManaged* - there is no clear actor responsible for this identity
+        *Identity* - this identity was created by other identity. This other identity is responsible for it
+        *Service* - this identity was create by one of the services. This services now manages this identity.
+    */
+    oneof managed {
+        // Identity is not managed
+        NotManagedData no = 20;
+        // Identity is managed by other identity
+        IdentityManagedData identity = 21;
+        // Identity is managed by service
+        ServiceManagedData service = 22;
+    }
+
     // Security policies assigned to the identity
     repeated PolicyReference policies = 5;
+
+    // Security roles assigned to the identity
+    repeated RoleReference roles = 6;
+
+    // When the policy was created
+    google.protobuf.Timestamp created = 9;
+    // Last time when the policy information was updated.
+    google.protobuf.Timestamp updated = 10;
+    // Counter that increases after every update of the policy
+    uint64 version = 11;
 }
 
 message CreateIdentityRequest {
@@ -32,6 +98,27 @@ message CreateIdentityRequest {
     string name = 2;
     // Should the identity be active on the start or not
     bool initiallyActive = 3;
+
+    /* 
+        Indicates if this identity is managed by someone else. 
+
+        This is only a flag to inform everyone that it is managed by third party actor and
+        manual interaction with this identity may result in big problems. In order to interact with the identity,
+        you should ask someone who manages this identity to do something for you.
+    
+        There are several possible managements:
+        *NotManaged* - there is no clear actor responsible for this identity
+        *Identity* - this identity was created by other identity. This other identity is responsible for it
+        *Service* - this identity was create by one of the services. This services now manages this identity.
+    */
+    oneof managed {
+        // Identity is not managed
+        NotManagedData no = 20;
+        // Identity is managed by other identity
+        IdentityManagedData identity = 21;
+        // Identity is managed by service
+        ServiceManagedData service = 22;
+    }
 }
 message CreateIdentityResponse {
     // Created identity
@@ -57,7 +144,10 @@ message DeleteIdentityRequest {
     // Identity unique identifier inside namespace
     string uuid = 2;
 }
-message DeleteIdentityResponse {}
+message DeleteIdentityResponse {
+    // Indicates if identity existed before request or it was already deleted earlier
+    bool existed = 1;
+}
 
 message AddPolicyRequest {
     // Identity namespace
@@ -89,6 +179,36 @@ message RemovePolicyResponse {
     Identity identity = 1;
 }
 
+message AddRoleRequest {
+    // Identity namespace
+    string identityNamespace = 1;
+    // Identity identifier inside identity namespace
+    string identityUUID = 2;
+    // Role namespace
+    string roleNamespace = 3;
+    // Role UUID inside role namespace
+    string roleUUID = 4;
+}
+message AddRoleResponse {
+    // Updated identity (after adding role)
+    Identity identity = 1;
+}
+
+message RemoveRoleRequest {
+    // Identity namespace
+    string identityNamespace = 1;
+    // Identity unique identifier inside identity namespace
+    string identityUUID = 2;
+    // Role namespace
+    string roleNamespace = 3;
+    // Role UUID inside role namespace
+    string roleUUID = 4;
+}
+message RemoveRoleResponse {
+    // Updated identity (after removing role)
+    Identity identity = 1;
+}
+
 message SetIdentityActiveRequest {
     // Namespace of the identity
     string namespace = 1;
@@ -113,8 +233,13 @@ service IAMIdentityService {
 
     // Add policy to the identity. If policy was already added - does nothing.
     rpc AddPolicy(AddPolicyRequest) returns (AddPolicyResponse);
-    // Removes policy from the identity. If policy was already removed - does nothing.
+    // Remove policy from the identity. If policy was already removed - does nothing.
     rpc RemovePolicy(RemovePolicyRequest) returns (RemovePolicyResponse);
+
+    // Add role to the identity. If role was already added = does nothing
+    rpc AddRole(AddRoleRequest) returns (AddRoleResponse);
+    // Remove role from the identity. If role was already removed - does nothing.
+    rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse);
 
     // Set identity active or not.
     rpc SetActive(SetIdentityActiveRequest) returns (SetIdentityActiveResponse);

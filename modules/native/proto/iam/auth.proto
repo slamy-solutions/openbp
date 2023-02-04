@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package native_iam_oauth;
+package native_iam_auth;
 
-option go_package = "slamy/openBP/native/iam/oauth;oauth";
+option go_package = "slamy/openBP/native/iam/auth;auth";
 
 // Scope of the requested access. Check native_iam_policy for more information.
 message Scope {
@@ -105,13 +105,13 @@ message VerifyResourceAccessResponse {
     bool hasAccess = 1;
 }*/
 
-message CheckAccessRequest {
+message CheckAccessWithTokenRequest {
     // Token to verify
     string accessToken = 1;
     // Scopes for with to validate access
     repeated Scope scopes = 2;
 }
-message CheckAccessResponse {
+message CheckAccessWithTokenResponse {
     enum Status {
         // Provided token allows to access scopes
         OK = 0;
@@ -131,13 +131,41 @@ message CheckAccessResponse {
 
     // Status of the verification
     Status status = 1;
-    // Details of the status, that can be safelly returned and displayed to the user
+    // Details of the status, that can be safelly returned and displayed to the requester
     string message = 2;
 }
 
-// Provides API for OAuth ("Open Authorization") style access control
-service IAMOAuthService {
-    // Create access token and refresh token using password
+message CheckAccessWithPasswordRequest {
+    // Namespace where identity is located
+    string namespace = 1;
+    // Identity UUID inside namespace
+    string identity = 2;
+    // Identity secret key
+    string password = 3;
+    // Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that provided this indentity and password. The exact format of metadata is not defined, but JSON is suggested.
+    string metadata = 4;
+    // Scopes to check
+    repeated Scope scopes = 5;
+}
+message CheckAccessWithPasswordResponse {
+    enum Status {
+        // Provided identity with provided password is allows to access scopes
+        OK = 0;
+        // Identity or password doesnt match
+        UNAUTHENTICATED = 1;
+        // Identity dont have enought priviliges to perform actions from provided scopes
+        UNAUTHORIZED = 5;
+    }
+
+    // Status of the check
+    Status status = 1;
+    // Details of the status, that can be safelly returned and displayed to the requester
+    string message = 2;
+}
+
+// Provides API for Basic, X509 and OAuth ("Open Authorization") style access control
+service IAMAuthService {
+    // OAuth. Create access token and refresh token using password
     rpc CreateTokenWithPassword(CreateTokenWithPasswordRequest) returns (CreateTokenWithPasswordResponse);
     // Create access token and refresh token using thrid party OAuth2 provider
     // rpc CreateTokenWithOAuth2(CreateTokenWithOAuth2Request) returns (CreateTokenWithOAuth2Response);
@@ -147,12 +175,15 @@ service IAMOAuthService {
     // Completes started two factor TOTP (Time-based one-time password) authetication and returns actual access asn refresh tokens
     // rpc ExtendTokenWithTOTP(CompleteTwoFactorTOTPRequest) returns (CompleteTwoFactorTOTPResponse);
     
-    // Creates new access token using refresh tokenna
+    // OAuth. Creates new access token using refresh tokenna
     rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
     // Invalidates pare of access token and refresh tokens
     //rpc InvalidateToken(InvalidateTokenRequest) returns (InvalidateTokenResponse);
 
     // rpc VerifyResoureAccess(VerifyResourceAccessRequest) returns (VerifyResourceAccessResponse);
-    // Checks if token is allowed to perform actions from the specified scopes
-    rpc CheckAccess(CheckAccessRequest) returns (CheckAccessResponse);
+    // OAuth. Check if token is allowed to perform actions from the specified scopes
+    rpc CheckAccessWithToken(CheckAccessWithTokenRequest) returns (CheckAccessWithTokenResponse);
+
+    // Basic Auth. Check if provided identity with proposed password is allowed to perform actions from the provided scopes
+    rpc CheckAccessWithPassword(CheckAccessWithPasswordRequest) returns (CheckAccessWithPasswordResponse);
 }

@@ -84,7 +84,10 @@ message DeleteRequest {
     // Unique identifier of the token inside namespace
     string uuid = 2;
 }
-message DeleteResponse {}
+message DeleteResponse {
+    // Indicates if token existed before request or it was already deleted.
+    bool existed = 1;
+}
 
 message DisableRequest {
     // Namespace of the token. Empty for global token.

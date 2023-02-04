@@ -5,9 +5,9 @@ import (
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/oauth"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
@@ -17,7 +17,7 @@ import (
 type NativeConnectionHandler struct {
 	Namespace namespace.NamespaceServiceClient
 
-	IAMOAuth                  oauth.IAMOAuthServiceClient
+	IAMAuth                   auth.IAMAuthServiceClient
 	IAMPolicy                 policy.IAMPolicyServiceClient
 	IAMIdentity               identity.IAMIdentityServiceClient
 	IAMAuthenticationPassword password.IAMAuthenticationPasswordServiceClient
@@ -33,7 +33,7 @@ func ConnectToNativeServices(ctx context.Context) (*NativeConnectionHandler, err
 
 	NATIVE_ACTOR_USER_URL := getConfigEnv("NATIVE_ACTOR_USER_URL", "native_actor_user:80")
 
-	NATIVE_IAM_OAUTH_URL := getConfigEnv("NATIVE_IAM_OAUTH_URL", "native_iam_oauth:80")
+	NATIVE_IAM_AUTH_URL := getConfigEnv("NATIVE_IAM_AUTH_URL", "native_iam_auth:80")
 	NATIVE_IAM_POLICY_URL := getConfigEnv("NATIVE_IAM_POLICY_URL", "native_iam_policy:80")
 	NATIVE_IAM_IDENTITY_URL := getConfigEnv("NATIVE_IAM_IDENTITY_URL", "native_iam_identity:80")
 	NATIVE_IAM_AUTHENTICATION_PASSWORD_URL := getConfigEnv("NATIVE_IAM_AUTHENTICATION_PASSWORD_URL", "native_iam_authentication_password:80")
@@ -66,12 +66,12 @@ func ConnectToNativeServices(ctx context.Context) (*NativeConnectionHandler, err
 	}
 	dials = append(dials, actorUserDial)
 
-	iamOAuthDial, iamOAuthConnection, err := native.NewIAMOAuthConnection(NATIVE_IAM_OAUTH_URL)
+	iamAuthDial, iamAuthConnection, err := native.NewIAMAuthConnection(NATIVE_IAM_AUTH_URL)
 	if err != nil {
 		clear()
 		return nil, err
 	}
-	dials = append(dials, iamOAuthDial)
+	dials = append(dials, iamAuthDial)
 
 	iamPolicyDial, iamPolicyConnection, err := native.NewIAMPolicyConnection(NATIVE_IAM_POLICY_URL)
 	if err != nil {
@@ -97,7 +97,7 @@ func ConnectToNativeServices(ctx context.Context) (*NativeConnectionHandler, err
 	return &NativeConnectionHandler{
 		Namespace:                 namespaceConnection,
 		KeyValueStorage:           keyvaluestorageConnection,
-		IAMOAuth:                  iamOAuthConnection,
+		IAMAuth:                   iamAuthConnection,
 		IAMPolicy:                 iamPolicyConnection,
 		IAMIdentity:               iamIdentityConnection,
 		IAMAuthenticationPassword: iamAuthenticationPasswordConnection,
