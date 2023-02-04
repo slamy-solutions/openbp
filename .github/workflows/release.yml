@@ -22,6 +22,8 @@ jobs:
   
   tests:
     #Tests arent working at this point.
+    name: Skipped tests
+    runs-on: ubuntu-latest
     steps:
       - name: Skip
         shell: bash
