@@ -1,4 +1,4 @@
-# This docker-compose file contains all the services in one file and can be used to startup OpenBP prod environment
+# This docker-compose file contains all the services in one file and can be used to startup OpenBP dev environment
 
 version: '3.8'
 
@@ -14,6 +14,12 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--api.insecure=true"
+      - "--tracing=true"
+      - "--tracing.serviceName=traefik"
+      - "--tracing.jaeger=true"
+      - "--tracing.jaeger.samplingServerURL=http://system_telemetry:5778/sampling"
+      - "--tracing.jaeger.localAgentHostPort=system_telemetry:6831"
     ports:
       - "80:80"
       - "443:443"
@@ -62,6 +68,8 @@ services:
     restart: always
     container_name: system_telemetry
     image: jaegertracing/opentelemetry-all-in-one:latest
+    networks:
+      - internal
     ports:
       - "127.0.0.1:16686:16686"
       - "127.0.0.1:28203:55680"

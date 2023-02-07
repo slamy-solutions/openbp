@@ -221,4 +221,10 @@ func (s *SystemStub) Close(ctx context.Context) {
 	if s.config.Db.Enabled {
 		s.DB.Disconnect(ctx)
 	}
+	if s.config.Nats.Enabled {
+		s.Nats.Close()
+	}
+	if s.config.OTel.Enabled {
+		s.OTel.Shutdown(ctx)
+	}
 }
