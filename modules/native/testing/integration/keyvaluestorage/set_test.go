@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/codes"
@@ -34,6 +35,26 @@ func (suite *SetKeyTestSuite) TearDownSuite() {
 }
 func TestSetKeyTestSuite(t *testing.T) {
 	suite.Run(t, new(SetKeyTestSuite))
+}
+
+func (s *SetKeyTestSuite) TestValidatesInputs() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	key := tools.GetRandomString(20)
+	bigValue := tools.GetRandomString(1024*1024*15 + 1)
+	_, err := s.nativeStub.Services.Keyvaluestorage.Set(ctx, &keyvaluestorage.SetRequest{
+		Namespace: "",
+		Key:       key,
+		Value:     []byte(bigValue),
+	})
+	defer s.nativeStub.Services.Keyvaluestorage.Remove(context.Background(), &keyvaluestorage.RemoveRequest{Namespace: "", Key: key})
+	require.NotNil(s.T(), err)
+	if st, ok := status.FromError(err); ok {
+		assert.Equal(s.T(), codes.InvalidArgument, st.Code())
+	} else {
+		require.Fail(s.T(), "Error expected")
+	}
 }
 
 func (s *SetKeyTestSuite) TestFailsToSetInNonExistingNamespace() {
@@ -139,4 +160,25 @@ func (s *SetKeyTestSuite) TestKeyExistAfterSetInNamespace() {
 	})
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), value, string(r.Value))
+}
+
+func (s *SetKeyTestSuite) TestFailsIfNamespaceDoesntExist() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	namespaceName := tools.GetRandomString(20)
+	key := tools.GetRandomString(20)
+	value := tools.GetRandomString(20)
+	_, err := s.nativeStub.Services.Keyvaluestorage.Set(ctx, &keyvaluestorage.SetRequest{
+		Namespace: namespaceName,
+		Key:       key,
+		Value:     []byte(value),
+	})
+	defer s.nativeStub.Services.Keyvaluestorage.Remove(context.Background(), &keyvaluestorage.RemoveRequest{Namespace: namespaceName, Key: key})
+	require.NotNil(s.T(), err)
+	if st, ok := status.FromError(err); ok {
+		assert.Equal(s.T(), codes.FailedPrecondition, st.Code())
+	} else {
+		require.Fail(s.T(), "Error expected")
+	}
 }
