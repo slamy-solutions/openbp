@@ -378,6 +378,38 @@ func (s *ActorUserServer) Delete(ctx context.Context, in *nativeActorUserGRPC.De
 	return &nativeActorUserGRPC.DeleteResponse{Existed: true}, status.Error(grpccodes.OK, "")
 }
 
+func (s *ActorUserServer) List(in *nativeActorUserGRPC.ListRequest, out nativeActorUserGRPC.ActorUserService_ListServer) error {
+	ctx := out.Context()
+
+	collection := s.collectionByNamespace(in.Namespace)
+
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				status.Error(grpccodes.OK, "Namespace doesnt exist.")
+			}
+		}
+		return status.Error(grpccodes.Internal, "Failed to get users from the database. "+err.Error())
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var user userInMongo
+		if err := cursor.Decode(&user); err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
+		if err := out.Send(&nativeActorUserGRPC.ListResponse{User: user.ToGRPCUser(in.Namespace)}); err != nil {
+			return status.Error(grpccodes.Internal, err.Error())
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return status.Error(grpccodes.Internal, "Unexpected cursor error on fetching data from database. "+err.Error())
+	}
+
+	return status.Error(grpccodes.OK, "")
+}
+
 func (s *ActorUserServer) Search(in *nativeActorUserGRPC.SearchRequest, out nativeActorUserGRPC.ActorUserService_SearchServer) error {
 	ctx := out.Context()
 

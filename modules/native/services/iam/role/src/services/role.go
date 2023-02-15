@@ -201,7 +201,7 @@ func (s *IAMRoleServer) GetMultiple(in *nativeIAmRoleGRPC.GetMultipleRolesReques
 
 			for cursor.Next(ctx) {
 				var role roleInMongo
-				if err := cursor.Decode(role); err != nil {
+				if err := cursor.Decode(&role); err != nil {
 					results <- struct {
 						err       error
 						namespace string

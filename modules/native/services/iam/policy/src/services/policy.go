@@ -252,7 +252,7 @@ func (s *IAMPolicyServer) GetMultiple(in *nativeIAmPolicyGRPC.GetMultiplePolicie
 
 			for cursor.Next(ctx) {
 				var policy policyInMongo
-				if err := cursor.Decode(policy); err != nil {
+				if err := cursor.Decode(&policy); err != nil {
 					results <- struct {
 						err       error
 						namespace string

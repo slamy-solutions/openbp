@@ -13,7 +13,7 @@ services:
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
       OTEL_SERVICE_NAME: "native_iam_token"
-      ALLOW_ROOT_USER_INIT: true
+      ALLOW_ROOT_USER_INIT: "true"
       DEFAULT_ROOT_USER_LOGIN: ""
       DEFAULT_ROOT_USER_PASSWORD: ""
     depends_on:
