@@ -60,7 +60,7 @@ func arePoliciesAllowScopes(policies []*nativeIAmPolicyGRPC.Policy, scopes []*na
 	for _, scope := range scopes {
 		scopeIsOk := false
 		for _, policy := range policies {
-			if scope.Namespace == policy.Namespace && policy.NamespaceIndependent {
+			if scope.Namespace == policy.Namespace || policy.NamespaceIndependent {
 				if compareStringList(policy.Resources, scope.Resources) && compareStringList(policy.Actions, scope.Actions) {
 					scopeIsOk = true
 					break
