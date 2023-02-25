@@ -74,17 +74,18 @@ func ManagedTypeToGRPC(roleType string) nativeIAmPolicyGRPC.BuiltInPolicyType {
 
 func (p *policyInMongo) ToGRPCPolicy(namespace string) *nativeIAmPolicyGRPC.Policy {
 	grpcPolicy := &nativeIAmPolicyGRPC.Policy{
-		Namespace:   namespace,
-		Uuid:        p.UUID.Hex(),
-		Name:        p.Name,
-		Description: p.Description,
-		Managed:     &nativeIAmPolicyGRPC.Policy_No{No: &nativeIAmPolicyGRPC.NotManagedData{}},
-		Resources:   p.Resources,
-		Actions:     p.Actions,
-		Tags:        p.Tags,
-		Created:     timestamppb.New(p.Created),
-		Updated:     timestamppb.New(p.Updated),
-		Version:     p.Version,
+		Namespace:            namespace,
+		Uuid:                 p.UUID.Hex(),
+		Name:                 p.Name,
+		Description:          p.Description,
+		Managed:              &nativeIAmPolicyGRPC.Policy_No{No: &nativeIAmPolicyGRPC.NotManagedData{}},
+		NamespaceIndependent: p.NamespaceIndependent,
+		Resources:            p.Resources,
+		Actions:              p.Actions,
+		Tags:                 p.Tags,
+		Created:              timestamppb.New(p.Created),
+		Updated:              timestamppb.New(p.Updated),
+		Version:              p.Version,
 	}
 
 	if p.Managed != nil {

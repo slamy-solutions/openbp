@@ -381,7 +381,7 @@ func (s *IAMPolicyServer) Update(ctx context.Context, in *nativeIAmPolicyGRPC.Up
 	}
 
 	var policy policyInMongo
-	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": id}, updateQuery).Decode(&policy)
+	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": id}, updateQuery, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&policy)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, status.Error(grpccodes.NotFound, "Policy with specified uuid not found")
