@@ -32,7 +32,7 @@ func getHostname() string {
 
 func main() {
 	systemStub := system.NewSystemStub(
-		system.NewSystemStubConfig().WithCache().WithDB().WithNats().WithOTel(system.NewOTelConfig("native", "iam_auth", VERSION, getHostname())),
+		system.NewSystemStubConfig().WithOTel(system.NewOTelConfig("native", "iam_auth", VERSION, getHostname())),
 	)
 	systemConnectionContext, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()

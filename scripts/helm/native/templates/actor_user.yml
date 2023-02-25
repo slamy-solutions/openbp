@@ -30,6 +30,8 @@ spec:
           value: "redis://{{ .Release.Name }}-system-redis-cache-headless"
         - name: SYSTEM_NATS_URL
           value: "nats://{{ .Release.Name }}-system-nats:4222"
+        - name: NATIVE_NAMESPACE_URL
+          value: "{{ .Release.Name }}-native-namespace:80"
         - name: NATIVE_IAM_IDENTITY_URL
           value: "{{ .Release.Name }}-native-iam-identity:80"
         resources:
