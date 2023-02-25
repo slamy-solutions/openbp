@@ -53,4 +53,7 @@ var writeParamsValidationTestCases = []struct {
 	{"OK while there are dots in action", tools.GetRandomString(20), "", []string{}, []string{"some.level.action"}, true},
 	{"OK while there are usenrscores in resource", tools.GetRandomString(20), "", []string{"some.level_resource.thing"}, []string{}, true},
 	{"OK while there are usenrscores in action", tools.GetRandomString(20), "", []string{}, []string{"some.level_action.thing"}, true},
+
+	{"Failed while resource is empty", tools.GetRandomString(20), "", []string{""}, []string{}, false},
+	{"Failed while action is empty", tools.GetRandomString(20), "", []string{}, []string{""}, false},
 }

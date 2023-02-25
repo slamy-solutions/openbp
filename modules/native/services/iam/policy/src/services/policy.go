@@ -73,6 +73,11 @@ func NewIAMPolicyServer(ctx context.Context, systemStub *system.SystemStub, nati
 }
 
 func (s *IAMPolicyServer) Create(ctx context.Context, in *nativeIAmPolicyGRPC.CreatePolicyRequest) (*nativeIAmPolicyGRPC.CreatePolicyResponse, error) {
+	err := validatePolicyData(in.Name, in.Description, in.Actions, in.Resources)
+	if err != nil {
+		return nil, err
+	}
+
 	// Check if namespace really exist
 	if in.Namespace != "" {
 		r, err := s.nativeStub.Services.Namespace.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
