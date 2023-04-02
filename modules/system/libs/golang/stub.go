@@ -10,7 +10,9 @@ import (
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/db"
 	system_nats "github.com/slamy-solutions/openbp/modules/system/libs/golang/nats"
 	otel "github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/vault"
 	"go.mongodb.org/mongo-driver/mongo"
+	"google.golang.org/grpc"
 )
 
 type CacheConfig struct {
@@ -59,11 +61,17 @@ func (c *OTelConfig) WithURL(url string) *OTelConfig {
 	return c
 }
 
+type GrpcServiceConfig struct {
+	Enabled bool
+	Url     string
+}
+
 type SystemStubConfig struct {
 	Cache CacheConfig
 	Nats  NatsConfig
 	Db    DBConfig
 	OTel  OTelConfig
+	Vault GrpcServiceConfig
 }
 
 func (s *SystemStubConfig) WithCache(config ...CacheConfig) *SystemStubConfig {
@@ -111,6 +119,20 @@ func (s *SystemStubConfig) WithOTel(config *OTelConfig) *SystemStubConfig {
 	return s
 }
 
+func (s *SystemStubConfig) WithVault(config ...GrpcServiceConfig) *SystemStubConfig {
+	cfg := &GrpcServiceConfig{
+		Enabled: true,
+		Url:     getConfigEnv("SYSTEM_VAULT_URL", "system_vault:80"),
+	}
+
+	if len(config) > 0 {
+		cfg = &config[0]
+	}
+
+	s.Vault = *cfg
+	return s
+}
+
 func NewSystemStubConfig() *SystemStubConfig {
 	return &SystemStubConfig{
 		Cache: CacheConfig{
@@ -134,6 +156,10 @@ func NewSystemStubConfig() *SystemStubConfig {
 			ServiceVersion:    "",
 			ServiceInstanceID: "",
 		},
+		Vault: GrpcServiceConfig{
+			Enabled: false,
+			Url:     "",
+		},
 	}
 }
 
@@ -142,21 +168,35 @@ type SystemStub struct {
 	DB    *mongo.Client
 	OTel  otel.Telemetry
 	Nats  *nats.Conn
+	Vault vault.VaultServiceClient
 
-	config *SystemStubConfig
+	config    *SystemStubConfig
+	grpcDials []*grpc.ClientConn
 }
 
 func NewSystemStub(config *SystemStubConfig) *SystemStub {
 	return &SystemStub{
-		config: config,
+		config:    config,
+		grpcDials: make([]*grpc.ClientConn, 0),
 	}
 }
 
 func (s *SystemStub) Connect(ctx context.Context) error {
+	if s.config.Vault.Enabled {
+		dial, client, err := NewVaultConnection(s.config.Vault.Url)
+		if err != nil {
+			return errors.New("failed to initialize connection to the vault service: " + err.Error())
+		}
+
+		s.Vault = client
+		s.grpcDials = append(s.grpcDials, dial)
+	}
+
 	if s.config.OTel.Enabled {
 		tel, err := otel.Register(ctx, s.config.OTel.URL, s.config.OTel.ServiceModule, s.config.OTel.ServiceName, s.config.OTel.ServiceVersion, s.config.OTel.ServiceInstanceID)
 		if err != nil {
-			return errors.New("Failed to initialize connection to the otel. " + err.Error())
+			s.closeGRPCConnections()
+			return errors.New("failed to initialize connection to the otel: " + err.Error())
 		}
 		s.OTel = tel
 	}
@@ -164,12 +204,14 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 	if s.config.Cache.Enabled {
 		cacheClient, err := cache.New(s.config.Cache.URL)
 		if err != nil {
+			s.closeGRPCConnections()
+
 			//Close opened connections
 			if s.config.OTel.Enabled {
 				s.OTel.Shutdown(ctx)
 			}
 
-			return errors.New("Failed to initialize connection to the cache. " + err.Error())
+			return errors.New("failed to initialize connection to the cache: " + err.Error())
 		}
 		s.Cache = cacheClient
 	}
@@ -177,6 +219,8 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 	if s.config.Db.Enabled {
 		dbClient, err := db.Connect(s.config.Db.URL)
 		if err != nil {
+			s.closeGRPCConnections()
+
 			//Close opened connections
 			if s.config.Cache.Enabled {
 				s.Cache.Shutdown(ctx)
@@ -185,7 +229,7 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 				s.OTel.Shutdown(ctx)
 			}
 
-			return errors.New("Failed to initialize connection to the DB. " + err.Error())
+			return errors.New("failed to initialize connection to the DB: " + err.Error())
 		}
 
 		s.DB = dbClient
@@ -194,6 +238,8 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 	if s.config.Nats.Enabled {
 		natsClient, err := system_nats.Connect(s.config.Nats.URL, s.config.Nats.ClientName)
 		if err != nil {
+			s.closeGRPCConnections()
+
 			//Close opened connections
 			if s.config.Db.Enabled {
 				s.DB.Disconnect(ctx)
@@ -205,7 +251,7 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 				s.OTel.Shutdown(ctx)
 			}
 
-			return errors.New("Failed to initialize connection to the Nats. " + err.Error())
+			return errors.New("failed to initialize connection to the Nats: " + err.Error())
 		}
 
 		s.Nats = natsClient
@@ -226,5 +272,12 @@ func (s *SystemStub) Close(ctx context.Context) {
 	}
 	if s.config.OTel.Enabled {
 		s.OTel.Shutdown(ctx)
+	}
+	s.closeGRPCConnections()
+}
+
+func (s *SystemStub) closeGRPCConnections() {
+	for _, dial := range s.grpcDials {
+		dial.Close()
 	}
 }
