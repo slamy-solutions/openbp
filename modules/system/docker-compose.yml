@@ -31,6 +31,18 @@ services:
     environment:
       MAXMEMORY: 512mb
 
+  system_redis:
+    restart: always
+    container_name: system_redis
+    build:
+      context: modules/system/services/redis
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:28204:6379" # For testing
+    environment:
+      MAXMEMORY: 512mb
+    
+
 #  system_bigcache:
 #    restart: always
 #    container_name: system_bigcache

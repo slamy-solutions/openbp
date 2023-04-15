@@ -52,6 +52,18 @@ services:
     networks:
       - internal
 
+  system_redis:
+    image: redis:7.0-alpine
+    container_name: system_redis
+    restart: always
+    command: redis-server --databases 1 --save "60 1" --appendonly no --timeout 300 --tcp-keepalive 60 --logfile "" --protected-mode no --dir "/redis-data"
+    ports:
+      - "127.0.0.1:28204:6379" # For testing
+    networks:
+      - internal
+    volumes:
+      - ./data/system/redis:/redis-data
+
   system_nats:
     image: nats:2.9-scratch
     container_name: system_nats

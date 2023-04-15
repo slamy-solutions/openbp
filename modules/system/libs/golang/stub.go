@@ -6,14 +6,20 @@ import (
 	"os"
 
 	"github.com/nats-io/nats.go"
+	goredis "github.com/redis/go-redis/v9"
 	cache "github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/db"
 	system_nats "github.com/slamy-solutions/openbp/modules/system/libs/golang/nats"
 	otel "github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
+	redis "github.com/slamy-solutions/openbp/modules/system/libs/golang/redis"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type CacheConfig struct {
+	Enabled bool
+	URL     string
+}
+type RedisConfig struct {
 	Enabled bool
 	URL     string
 }
@@ -60,6 +66,7 @@ func (c *OTelConfig) WithURL(url string) *OTelConfig {
 }
 
 type SystemStubConfig struct {
+	Redis RedisConfig
 	Cache CacheConfig
 	Nats  NatsConfig
 	Db    DBConfig
@@ -76,6 +83,19 @@ func (s *SystemStubConfig) WithCache(config ...CacheConfig) *SystemStubConfig {
 	}
 
 	s.Cache = *cfg
+	return s
+}
+
+func (s *SystemStubConfig) WithRedis(config ...RedisConfig) *SystemStubConfig {
+	cfg := &RedisConfig{
+		Enabled: true,
+		URL:     getConfigEnv("SYSTEM_REDIS_URL", "redis://system_redis"),
+	}
+	if len(config) > 0 {
+		cfg = &config[0]
+	}
+
+	s.Redis = *cfg
 	return s
 }
 
@@ -113,6 +133,10 @@ func (s *SystemStubConfig) WithOTel(config *OTelConfig) *SystemStubConfig {
 
 func NewSystemStubConfig() *SystemStubConfig {
 	return &SystemStubConfig{
+		Redis: RedisConfig{
+			Enabled: false,
+			URL:     "",
+		},
 		Cache: CacheConfig{
 			Enabled: false,
 			URL:     "",
@@ -138,6 +162,7 @@ func NewSystemStubConfig() *SystemStubConfig {
 }
 
 type SystemStub struct {
+	Redis *goredis.Client
 	Cache cache.Cache
 	DB    *mongo.Client
 	OTel  otel.Telemetry
@@ -156,7 +181,7 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 	if s.config.OTel.Enabled {
 		tel, err := otel.Register(ctx, s.config.OTel.URL, s.config.OTel.ServiceModule, s.config.OTel.ServiceName, s.config.OTel.ServiceVersion, s.config.OTel.ServiceInstanceID)
 		if err != nil {
-			return errors.New("Failed to initialize connection to the otel. " + err.Error())
+			return errors.New("failed to initialize connection to the otel: " + err.Error())
 		}
 		s.OTel = tel
 	}
@@ -169,13 +194,13 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 				s.OTel.Shutdown(ctx)
 			}
 
-			return errors.New("Failed to initialize connection to the cache. " + err.Error())
+			return errors.New("failed to initialize connection to the cache: " + err.Error())
 		}
 		s.Cache = cacheClient
 	}
 
-	if s.config.Db.Enabled {
-		dbClient, err := db.Connect(s.config.Db.URL)
+	if s.config.Redis.Enabled {
+		redisClient, err := redis.ConnectToRedis(s.config.Redis.URL)
 		if err != nil {
 			//Close opened connections
 			if s.config.Cache.Enabled {
@@ -185,7 +210,26 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 				s.OTel.Shutdown(ctx)
 			}
 
-			return errors.New("Failed to initialize connection to the DB. " + err.Error())
+			return errors.New("failed to initialize connection to the redis: " + err.Error())
+		}
+		s.Redis = redisClient
+	}
+
+	if s.config.Db.Enabled {
+		dbClient, err := db.Connect(s.config.Db.URL)
+		if err != nil {
+			//Close opened connections
+			if s.config.Redis.Enabled {
+				s.Redis.Close()
+			}
+			if s.config.Cache.Enabled {
+				s.Cache.Shutdown(ctx)
+			}
+			if s.config.OTel.Enabled {
+				s.OTel.Shutdown(ctx)
+			}
+
+			return errors.New("failed to initialize connection to the DB: " + err.Error())
 		}
 
 		s.DB = dbClient
@@ -198,6 +242,9 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 			if s.config.Db.Enabled {
 				s.DB.Disconnect(ctx)
 			}
+			if s.config.Redis.Enabled {
+				s.Redis.Close()
+			}
 			if s.config.Cache.Enabled {
 				s.Cache.Shutdown(ctx)
 			}
@@ -205,7 +252,7 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 				s.OTel.Shutdown(ctx)
 			}
 
-			return errors.New("Failed to initialize connection to the Nats. " + err.Error())
+			return errors.New("failed to initialize connection to the Nats: " + err.Error())
 		}
 
 		s.Nats = natsClient
@@ -215,6 +262,9 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 }
 
 func (s *SystemStub) Close(ctx context.Context) {
+	if s.config.Redis.Enabled {
+		s.Redis.Close()
+	}
 	if s.config.Cache.Enabled {
 		s.Cache.Shutdown(ctx)
 	}
