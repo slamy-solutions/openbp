@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+// import "google/protobuf/timestamp.proto";
+
+package system_vault;
+
+option go_package = "slamy/openBP/system/vault;vault";
+
+message SealRequest {}
+message SealResponse {}
+
+message UnsealRequest {
+    // Secret used for decripting the vault
+    string secret = 1;
+}
+message UnsealResponse {
+    // Indicates if vault was unsealed or not
+    bool success = 1;
+}
+
+message UpdateSealSecretRequest {
+    // New secret for the vault
+    string newSecret = 1;
+}
+message UpdateSealSecretResponse {}
+
+message GetStatusRequest {}
+message GetStatusResponse {
+    // Is vault sealed or not
+    bool sealed = 1;
+}
+
+message EnsureRSAKeyPairRequest {
+    // Unique name of the key pair
+    string keyName = 1;
+}
+message EnsureRSAKeyPairResponse {}
+
+message GetRSAPublicKeyRequest {
+    // Name of the key pair for which to get key
+    string keyName = 1;
+}
+message GetRSAPublicKeyResponse {
+    // Public key of the RSA key pair
+    bytes publicKey = 1;
+}
+
+message RSASignRequest {
+    // Name of the key pair to use
+    string keyName = 1;
+    // Data to sign
+    bytes data = 2;
+}
+message RSASignResponse {
+    // Signature of the provided data
+    bytes signature = 1;
+}
+
+message RSAValidatePublicRequest {
+    // Name of the key pair to use for validation
+    string keyName = 1;
+    // Data to validate
+    bytes data = 2;
+    // Signature to validate
+    bytes signature = 3;
+}
+message RSAValidatePublicResponse {
+    // Returns True if and only if provided data and its signature matches provided key-pair
+    bool valid = 1;
+}
+
+service VaultService {
+    // Closes and encrypts vault. After sealing, most of the operations will not be accessible.
+    rpc Seal(SealRequest) returns (SealResponse) {};
+    // Decrypts and opens vault. Must be done before most of the operations with vault secrets.
+    rpc Unseal(UnsealRequest) returns (UnsealResponse) {};
+    // Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation.
+    rpc UpdateSealSecret(UpdateSealSecretRequest) returns (UpdateSealSecretResponse) {};
+    // Returns current status of the vault
+    rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {};
+
+    // Creates RSA key pair if it doesnt exist
+    rpc EnsureRSAKeyPair(EnsureRSAKeyPairRequest) returns (EnsureRSAKeyPairResponse) {};
+    // Get public key of the RSA keypair
+    rpc GetRSAPublicKey(GetRSAPublicKeyRequest) returns (GetRSAPublicKeyResponse) {};
+    // Sign message with RSA
+    rpc RSASign(RSASignRequest) returns (RSASignResponse) {};
+    // Validate signature of the message using RSA key-pairs public key
+    rpc RSAValidatePublic(RSAValidatePublicRequest) returns (RSAValidatePublicResponse) {};
+
+    // Encrypts message using AES
+    // rpc Encrypt() returns () {};
+    // Decrypts message using AES
+    // rpc Decrypt() returns () {};
+}
