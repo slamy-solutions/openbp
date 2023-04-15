@@ -3,10 +3,10 @@ go 1.18
 use (
 	./modules/native/libs/golang
 	./modules/native/services/actor/user
+	./modules/native/services/iam/auth
 	./modules/native/services/iam/authentication/password
 	./modules/native/services/iam/config
 	./modules/native/services/iam/identity
-	./modules/native/services/iam/auth
 	./modules/native/services/iam/policy
 	./modules/native/services/iam/role
 	./modules/native/services/iam/token
@@ -14,6 +14,7 @@ use (
 	./modules/native/services/namespace
 	./modules/native/testing
 	./modules/system/libs/golang
+	./modules/system/services/vault
 	./modules/tools/libs/sdk/golang
 	./modules/tools/services/rest
 	./modules/tools/services/sdk

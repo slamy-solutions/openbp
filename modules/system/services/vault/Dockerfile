@@ -20,9 +20,11 @@ WORKDIR ${SOFTHSM2_SOURCES}
 
 RUN git checkout ${SOFTHSM2_VERSION} -b ${SOFTHSM2_VERSION} \
     && sh autogen.sh \
-    && ./configure --prefix=/usr/local --with-objectstore-backend-db \
+    && ./configure --prefix=/usr/local --with-objectstore-backend-db --with-crypto-backend=openssl \
     && make \
     && make install
+
+RUN softhsm2-util --init-token --free --label "openbp" --pin "12345678" --so-pin "12345678"
 
 ###### Build vault code
 FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.18-alpine as build
@@ -45,14 +47,18 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -
 RUN chmod +x app
 
 ###### Building final image
-FROM scratch
+FROM --platform=${BUILDPLATFORM:-linux/amd64} alpine:3.17.3
 
+RUN apk add --no-cache sqlite openssl
+
+ENV HSM_PROVIDER=softhsm2
 COPY modules/system/services/vault/softhsm2.conf /softhsm2.conf
 ENV SOFTHSM2_CONF=/softhsm2.conf
-ENV EMULATE_HSM=true
-ENV SOFTHSM_LIBRARY_PATH=/libsofthsm2.so
-ENV PKCS_LIBRARY_PATH=/pkcs/pkcs.so
-ENV MASTER_KEY_FILE_PATH=/data/master.key
+ENV SOFTHSM2_PKCS11_LIBRARY_PATH=/libsofthsm2.so
+ENV SOFTHSM2_PKCS11_TOKEN_LABEL=openbp
+
+ENV DYNAMIC_PKCS11_LIBRARY_PATH=/pkcs/pkcs.so
+ENV DYNAMIC_PKCS11_SLOT=0
 
 COPY --from=hsm-build /usr/lib/softhsm/libsofthsm2.so /libsofthsm2.so
 

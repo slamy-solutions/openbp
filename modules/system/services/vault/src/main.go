@@ -3,32 +3,28 @@ package main
 import (
 	"os"
 
+	"github.com/slamy-solutions/openbp/modules/system/services/vault/src/pkcs"
+
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	pkcs11Ctx, err := InitializePKCS()
+	pkcsCtx, err := pkcs.NewPKCSFromEnv()
 	if err != nil {
-		log.Panic("Failed to initialize PKCS: " + err.Error())
+		log.Panic("Failed to load PKCS from env: " + err.Error())
 		os.Exit(-1)
 	}
-	defer pkcs11Ctx.Destroy()
-	defer pkcs11Ctx.Finalize()
+	log.Info("Using [" + pkcsCtx.GetProviderName() + "] HSM provider.")
 
-	err = EnsureDefaultVaultMasterKey()
+	err = pkcsCtx.Initialize()
 	if err != nil {
-		log.Panic("Failed to ensure default vault master key: " + err.Error())
+		log.Panic("Failed to initialize PKCS: " + err.Error())
 		os.Exit(-2)
 	}
+	defer pkcsCtx.Close()
 
-	var masterKeyLoaded bool = false
-	vaultMasterKey, err := TryLoadVaultMasterKeyWithDefaultDecriptionSecret()
-	if err != nil {
-		if err != ErrFailedToDecryptMasterKey {
-			log.Panic("Unknown error while trying to load vault master key using default decription secret: " + err.Error())
-			os.Exit(-3)
-		}
-	} else {
-		masterKeyLoaded = true
-	}
+	sealer := pkcs.NewSealer(pkcsCtx)
+	sealer.Start()
+	defer sealer.Stop()
+
 }
