@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-openbp-system-redis-configmap" .Release.Name }}
+  namespace: {{ .Release.Namespace | quote }}
+data:
+  redis-config: |
+    appendonly no
+    save "60 1"

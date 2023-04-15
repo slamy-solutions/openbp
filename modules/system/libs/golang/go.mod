@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/nats-io/nats.go v1.23.0
-	github.com/redis/go-redis/v9 v9.0.1
+	github.com/redis/go-redis/v9 v9.0.2
 	go.mongodb.org/mongo-driver v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo v0.38.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.13.0
@@ -13,6 +13,11 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.12.0
 	go.opentelemetry.io/otel/sdk v1.12.0
 	go.opentelemetry.io/otel/trace v1.12.0
+)
+
+require (
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.2 // indirect
+	go.opentelemetry.io/otel/metric v0.35.0 // indirect
 )
 
 require (
@@ -30,6 +35,7 @@ require (
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/redis/go-redis/extra/redisotel/v9 v9.0.2
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

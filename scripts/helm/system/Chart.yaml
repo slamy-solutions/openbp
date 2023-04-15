@@ -6,7 +6,7 @@ keywords:
 annotations:
   category: Infrastructure
 type: application
-appVersion: 0.0.8
+appVersion: 0.0.9
 dependencies:
   - name: nats
     repository: https://nats-io.github.io/k8s/helm/charts/
@@ -20,9 +20,13 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami
     version: 17.1.5
     alias: system-redis-cache
+  - name: redis
+    repository: https://charts.bitnami.com/bitnami
+    version: 17.1.5
+    alias: system-redis
 maintainers:
   - name: Slamy
     url: https://github.com/slamy-solutions/openbp
 sources:
   - https://github.com/slamy-solutions/openbp/modules/system
-version: 0.0.8
+version: 0.0.9

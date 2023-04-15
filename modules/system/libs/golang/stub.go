@@ -6,16 +6,22 @@ import (
 	"os"
 
 	"github.com/nats-io/nats.go"
+	goredis "github.com/redis/go-redis/v9"
 	cache "github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/db"
 	system_nats "github.com/slamy-solutions/openbp/modules/system/libs/golang/nats"
 	otel "github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
+	redis "github.com/slamy-solutions/openbp/modules/system/libs/golang/redis"
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/vault"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 )
 
 type CacheConfig struct {
+	Enabled bool
+	URL     string
+}
+type RedisConfig struct {
 	Enabled bool
 	URL     string
 }
@@ -67,6 +73,7 @@ type GrpcServiceConfig struct {
 }
 
 type SystemStubConfig struct {
+	Redis RedisConfig
 	Cache CacheConfig
 	Nats  NatsConfig
 	Db    DBConfig
@@ -84,6 +91,19 @@ func (s *SystemStubConfig) WithCache(config ...CacheConfig) *SystemStubConfig {
 	}
 
 	s.Cache = *cfg
+	return s
+}
+
+func (s *SystemStubConfig) WithRedis(config ...RedisConfig) *SystemStubConfig {
+	cfg := &RedisConfig{
+		Enabled: true,
+		URL:     getConfigEnv("SYSTEM_REDIS_URL", "redis://system_redis"),
+	}
+	if len(config) > 0 {
+		cfg = &config[0]
+	}
+
+	s.Redis = *cfg
 	return s
 }
 
@@ -135,6 +155,10 @@ func (s *SystemStubConfig) WithVault(config ...GrpcServiceConfig) *SystemStubCon
 
 func NewSystemStubConfig() *SystemStubConfig {
 	return &SystemStubConfig{
+		Redis: RedisConfig{
+			Enabled: false,
+			URL:     "",
+		},
 		Cache: CacheConfig{
 			Enabled: false,
 			URL:     "",
@@ -164,6 +188,7 @@ func NewSystemStubConfig() *SystemStubConfig {
 }
 
 type SystemStub struct {
+	Redis *goredis.Client
 	Cache cache.Cache
 	DB    *mongo.Client
 	OTel  otel.Telemetry
@@ -216,12 +241,33 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 		s.Cache = cacheClient
 	}
 
+	if s.config.Redis.Enabled {
+		redisClient, err := redis.ConnectToRedis(s.config.Redis.URL)
+		if err != nil {
+			s.closeGRPCConnections()
+
+			//Close opened connections
+			if s.config.Cache.Enabled {
+				s.Cache.Shutdown(ctx)
+			}
+			if s.config.OTel.Enabled {
+				s.OTel.Shutdown(ctx)
+			}
+
+			return errors.New("failed to initialize connection to the redis: " + err.Error())
+		}
+		s.Redis = redisClient
+	}
+
 	if s.config.Db.Enabled {
 		dbClient, err := db.Connect(s.config.Db.URL)
 		if err != nil {
 			s.closeGRPCConnections()
 
 			//Close opened connections
+			if s.config.Redis.Enabled {
+				s.Redis.Close()
+			}
 			if s.config.Cache.Enabled {
 				s.Cache.Shutdown(ctx)
 			}
@@ -244,6 +290,9 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 			if s.config.Db.Enabled {
 				s.DB.Disconnect(ctx)
 			}
+			if s.config.Redis.Enabled {
+				s.Redis.Close()
+			}
 			if s.config.Cache.Enabled {
 				s.Cache.Shutdown(ctx)
 			}
@@ -261,6 +310,9 @@ func (s *SystemStub) Connect(ctx context.Context) error {
 }
 
 func (s *SystemStub) Close(ctx context.Context) {
+	if s.config.Redis.Enabled {
+		s.Redis.Close()
+	}
 	if s.config.Cache.Enabled {
 		s.Cache.Shutdown(ctx)
 	}
