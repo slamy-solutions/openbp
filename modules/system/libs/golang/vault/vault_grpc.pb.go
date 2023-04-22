@@ -34,9 +34,9 @@ type VaultServiceClient interface {
 	EnsureRSAKeyPair(ctx context.Context, in *EnsureRSAKeyPairRequest, opts ...grpc.CallOption) (*EnsureRSAKeyPairResponse, error)
 	// Get public key of the RSA keypair.
 	GetRSAPublicKey(ctx context.Context, in *GetRSAPublicKeyRequest, opts ...grpc.CallOption) (*GetRSAPublicKeyResponse, error)
-	// Sign message with RSA.
+	// Sign message with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
 	RSASign(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignClient, error)
-	// Validate signature of the message using RSA key-pairs public key.
+	// Validate signature of the message using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
 	RSAVerify(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyClient, error)
 }
 
@@ -186,9 +186,9 @@ type VaultServiceServer interface {
 	EnsureRSAKeyPair(context.Context, *EnsureRSAKeyPairRequest) (*EnsureRSAKeyPairResponse, error)
 	// Get public key of the RSA keypair.
 	GetRSAPublicKey(context.Context, *GetRSAPublicKeyRequest) (*GetRSAPublicKeyResponse, error)
-	// Sign message with RSA.
+	// Sign message with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
 	RSASign(VaultService_RSASignServer) error
-	// Validate signature of the message using RSA key-pairs public key.
+	// Validate signature of the message using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
 	RSAVerify(VaultService_RSAVerifyServer) error
 	mustEmbedUnimplementedVaultServiceServer()
 }

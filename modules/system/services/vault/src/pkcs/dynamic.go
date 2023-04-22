@@ -3,8 +3,11 @@ package pkcs
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
 	"errors"
 	"io"
+	"math/big"
 	"sync"
 
 	pkcs11 "github.com/miekg/pkcs11"
@@ -183,12 +186,53 @@ func (h *DynamicPKCSHandle) EnsureRSAKeyPair(ctx context.Context, name string) e
 	return nil
 }
 
-/*func (h *DynamicPKCSHandle) GetRSAPublicKey(ctx context.Context, name string) ([]byte, error) {
+func (h *DynamicPKCSHandle) GetRSAPublicKey(ctx context.Context, name string) ([]byte, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
-	h.PKCS11Ctx.obje
-}*/
+	findTemplate := []*pkcs11.Attribute{
+		pkcs11.NewAttribute(pkcs11.CKA_LABEL, name),
+		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY),
+	}
+
+	if err := h.PKCS11Ctx.FindObjectsInit(h.session, findTemplate); err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("error while initializing PKCS search of RSA public key: " + err.Error())
+	}
+	defer h.PKCS11Ctx.FindObjectsFinal(h.session)
+
+	objs, _, err := h.PKCS11Ctx.FindObjects(h.session, 1)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("error while performing PKCS search of RSA public key: " + err.Error())
+	}
+
+	if len(objs) != 1 {
+		return []byte{}, ErrRSAKeyDoesntExist
+	}
+
+	objectValue, err := h.PKCS11Ctx.GetAttributeValue(h.session, objs[0], []*pkcs11.Attribute{
+		pkcs11.NewAttribute(pkcs11.CKA_PUBLIC_EXPONENT, nil),
+		pkcs11.NewAttribute(pkcs11.CKA_MODULUS, nil),
+	})
+	if err != nil {
+		return nil, errors.New("error while getting RSA public key. Cant retrieve CKA_PUBLIC_EXPONENT and CKA_MODULUS from the PKCS11. Unknown error: " + err.Error())
+	}
+	if len(objectValue) != 2 {
+		return nil, errors.New("error while getting RSA public key. Cant retrieve CKA_PUBLIC_EXPONENT and CKA_MODULUS from the PKCS11. Not all attributes returned")
+	}
+
+	exponentInt := new(big.Int).SetBytes(objectValue[0].Value)
+	modulusInt := new(big.Int).SetBytes(objectValue[1].Value)
+
+	publicKey := &rsa.PublicKey{
+		N: modulusInt,
+		E: int(exponentInt.Int64()),
+	}
+
+	return x509.MarshalPKCS1PublicKey(publicKey), nil
+}
+
 func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()

@@ -55,12 +55,12 @@ func (wraper *otelPKCSWraper) EnsureRSAKeyPair(ctx context.Context, name string)
 	return wraper.innerPKCS.EnsureRSAKeyPair(ctx, name)
 }
 
-/*func (wraper *otelPKCSWraper) GetRSAPublicKey(ctx context.Context, name string) ([]byte, error) {
+func (wraper *otelPKCSWraper) GetRSAPublicKey(ctx context.Context, name string) ([]byte, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.GetRSAPublicKey")
 	defer span.End()
 
 	return wraper.innerPKCS.GetRSAPublicKey(ctx, name)
-}*/
+}
 
 func (wraper *otelPKCSWraper) SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignRSA")

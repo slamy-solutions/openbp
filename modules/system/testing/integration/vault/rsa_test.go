@@ -2,6 +2,10 @@ package rsa
 
 import (
 	"context"
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha512"
+	"crypto/x509"
 	"testing"
 	"time"
 
@@ -58,9 +62,6 @@ func (s *RSATestSuite) TestSignAndVerify() {
 		})
 		require.Nil(s.T(), err)
 	}
-
-	err = signChannel.CloseSend()
-	require.Nil(s.T(), err)
 
 	signResponse, err := signChannel.CloseAndRecv()
 	require.Nil(s.T(), err)
@@ -132,4 +133,49 @@ func (s *RSATestSuite) TestVerifyBadSignature() {
 	verifyResponse, err := verifyChannel.CloseAndRecv()
 	require.Nil(s.T(), err)
 	require.False(s.T(), verifyResponse.Valid)
+}
+
+func (s *RSATestSuite) TestGetPublicKey() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+	defer cancel()
+
+	rsaKeyName := tools.GetRandomString(20)
+	_, err := s.systemStub.Vault.EnsureRSAKeyPair(ctx, &vault.EnsureRSAKeyPairRequest{
+		KeyName: rsaKeyName,
+	})
+	require.Nil(s.T(), err)
+	//TODO: delete RSA key after the test
+
+	data := tools.GetRandomBytes(100000)
+
+	signChannel, err := s.systemStub.Vault.RSASign(ctx)
+	require.Nil(s.T(), err)
+	for i := 0; i < len(data); i += 1379 {
+		endByte := i + 1379
+		if len(data) < endByte {
+			endByte = len(data)
+		}
+		err := signChannel.Send(&vault.RSASignRequest{
+			KeyName: rsaKeyName,
+			Data:    data[i:endByte],
+		})
+		require.Nil(s.T(), err)
+	}
+
+	signResponse, err := signChannel.CloseAndRecv()
+	require.Nil(s.T(), err)
+
+	//Get public key and try validate the signature
+	getPublicKeyResponse, err := s.systemStub.Vault.GetRSAPublicKey(ctx, &vault.GetRSAPublicKeyRequest{
+		KeyName: rsaKeyName,
+	})
+	require.Nil(s.T(), err)
+
+	rsaPublicKey, err := x509.ParsePKCS1PublicKey(getPublicKeyResponse.PublicKey)
+	require.Nil(s.T(), err)
+
+	dataHash := sha512.Sum512(data)
+
+	err = rsa.VerifyPKCS1v15(rsaPublicKey, crypto.SHA512, dataHash[:], signResponse.Signature)
+	require.Nil(s.T(), err)
 }

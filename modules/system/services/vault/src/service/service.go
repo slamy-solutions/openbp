@@ -61,7 +61,21 @@ func (s *VaultService) EnsureRSAKeyPair(ctx context.Context, in *vault.EnsureRSA
 	return &vault.EnsureRSAKeyPairResponse{}, status.Error(codes.OK, "")
 }
 func (s *VaultService) GetRSAPublicKey(ctx context.Context, in *vault.GetRSAPublicKeyRequest) (*vault.GetRSAPublicKeyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRSAPublicKey not implemented")
+	key, err := s.pkcsHandle.GetRSAPublicKey(ctx, in.KeyName)
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return nil, status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+		if err == pkcs.ErrRSAKeyDoesntExist {
+			return nil, status.Error(codes.NotFound, "RSA key-pair doesnt exist")
+		}
+		log.Error("[GRPC Vault Service]-(GetRSAPublicKey) Internal error while getting public key of the RSA key-pair using PKCS11: " + err.Error())
+		return nil, status.Error(codes.Internal, "error while getting public key of the RSA key-pair using PKCS11: "+err.Error())
+	}
+
+	return &vault.GetRSAPublicKeyResponse{
+		PublicKey: key,
+	}, nil
 }
 
 func (s *VaultService) RSASign(srv vault.VaultService_RSASignServer) error {

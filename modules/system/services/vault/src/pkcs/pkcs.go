@@ -26,7 +26,7 @@ type PKCS interface {
 	// Creates RSA key-pair with specified name if it doesnt exist
 	EnsureRSAKeyPair(ctx context.Context, name string) error
 	// Returns RSA public key if it exists
-	// GetRSAPublicKey(ctx context.Context, name string) ([]byte, error)
+	GetRSAPublicKey(ctx context.Context, name string) ([]byte, error)
 	// Signs message using RSA private key
 	SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error)
 	// Verifies message using RSA public key
