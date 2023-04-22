@@ -18,17 +18,19 @@ type PKCS interface {
 
 	GetProviderName() string
 
-	EnsureSessionAndLogIn(password string) error
+	IsLoggedIn() bool
+	EnsureSessionAndLogIn(pin string) error
 	LogOutAndCloseSession() error
+	UpdatePins(ctx context.Context, adminPin string, newAdminPin string, newPin string) error
 
 	// Creates RSA key-pair with specified name if it doesnt exist
 	EnsureRSAKeyPair(ctx context.Context, name string) error
 	// Returns RSA public key if it exists
 	// GetRSAPublicKey(ctx context.Context, name string) ([]byte, error)
 	// Signs message using RSA private key
-	SignRSA(ctx context.Context, name string, message io.Reader) ([]byte, error)
+	SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error)
 	// Verifies message using RSA public key
-	VerifyRSA(ctx context.Context, name string, message io.Reader, signature []byte) (bool, error)
+	VerifyRSA(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error)
 
 	Close() error
 }
@@ -42,11 +44,12 @@ func NewPKCSFromEnv() (PKCS, error) {
 	switch hsmProvider {
 	case "softhsm2":
 		library := os.Getenv("SOFTHSM2_PKCS11_LIBRARY_PATH")
-		slot, err := strconv.ParseUint(os.Getenv("SOFTHSM2_PKCS11_SLOT"), 10, 32)
+		tokenLabel := os.Getenv("SOFTHSM2_PKCS11_TOKEN_LABEL")
+		p, err := NewSoftHSM2PKCSHandle(library, tokenLabel)
 		if err != nil {
-			return nil, errors.New("failed to parse SOFTHSM2_PKCS11_SLOT environment variable: " + err.Error())
+			return nil, errors.New("failed to setup SOFTHSM2 library: " + err.Error())
 		}
-		selectedPkcs = NewSoftHSM2PKCSHandle(library, uint(slot))
+		selectedPkcs = p
 	case "dynamic":
 		fallthrough
 	default:

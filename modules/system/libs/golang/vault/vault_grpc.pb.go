@@ -28,16 +28,16 @@ type VaultServiceClient interface {
 	Unseal(ctx context.Context, in *UnsealRequest, opts ...grpc.CallOption) (*UnsealResponse, error)
 	// Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation.
 	UpdateSealSecret(ctx context.Context, in *UpdateSealSecretRequest, opts ...grpc.CallOption) (*UpdateSealSecretResponse, error)
-	// Returns current status of the vault
+	// Returns current status of the vault.
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
-	// Creates RSA key pair if it doesnt exist
+	// Creates RSA key pair if it doesnt exist.
 	EnsureRSAKeyPair(ctx context.Context, in *EnsureRSAKeyPairRequest, opts ...grpc.CallOption) (*EnsureRSAKeyPairResponse, error)
-	// Get public key of the RSA keypair
+	// Get public key of the RSA keypair.
 	GetRSAPublicKey(ctx context.Context, in *GetRSAPublicKeyRequest, opts ...grpc.CallOption) (*GetRSAPublicKeyResponse, error)
-	// Sign message with RSA
-	RSASign(ctx context.Context, in *RSASignRequest, opts ...grpc.CallOption) (*RSASignResponse, error)
-	// Validate signature of the message using RSA key-pairs public key
-	RSAValidatePublic(ctx context.Context, in *RSAValidatePublicRequest, opts ...grpc.CallOption) (*RSAValidatePublicResponse, error)
+	// Sign message with RSA.
+	RSASign(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignClient, error)
+	// Validate signature of the message using RSA key-pairs public key.
+	RSAVerify(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyClient, error)
 }
 
 type vaultServiceClient struct {
@@ -102,22 +102,72 @@ func (c *vaultServiceClient) GetRSAPublicKey(ctx context.Context, in *GetRSAPubl
 	return out, nil
 }
 
-func (c *vaultServiceClient) RSASign(ctx context.Context, in *RSASignRequest, opts ...grpc.CallOption) (*RSASignResponse, error) {
-	out := new(RSASignResponse)
-	err := c.cc.Invoke(ctx, "/system_vault.VaultService/RSASign", in, out, opts...)
+func (c *vaultServiceClient) RSASign(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[0], "/system_vault.VaultService/RSASign", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &vaultServiceRSASignClient{stream}
+	return x, nil
 }
 
-func (c *vaultServiceClient) RSAValidatePublic(ctx context.Context, in *RSAValidatePublicRequest, opts ...grpc.CallOption) (*RSAValidatePublicResponse, error) {
-	out := new(RSAValidatePublicResponse)
-	err := c.cc.Invoke(ctx, "/system_vault.VaultService/RSAValidatePublic", in, out, opts...)
+type VaultService_RSASignClient interface {
+	Send(*RSASignRequest) error
+	CloseAndRecv() (*RSASignResponse, error)
+	grpc.ClientStream
+}
+
+type vaultServiceRSASignClient struct {
+	grpc.ClientStream
+}
+
+func (x *vaultServiceRSASignClient) Send(m *RSASignRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *vaultServiceRSASignClient) CloseAndRecv() (*RSASignResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(RSASignResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *vaultServiceClient) RSAVerify(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[1], "/system_vault.VaultService/RSAVerify", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &vaultServiceRSAVerifyClient{stream}
+	return x, nil
+}
+
+type VaultService_RSAVerifyClient interface {
+	Send(*RSAVerifyRequest) error
+	CloseAndRecv() (*RSAVerifyResponse, error)
+	grpc.ClientStream
+}
+
+type vaultServiceRSAVerifyClient struct {
+	grpc.ClientStream
+}
+
+func (x *vaultServiceRSAVerifyClient) Send(m *RSAVerifyRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *vaultServiceRSAVerifyClient) CloseAndRecv() (*RSAVerifyResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(RSAVerifyResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // VaultServiceServer is the server API for VaultService service.
@@ -130,16 +180,16 @@ type VaultServiceServer interface {
 	Unseal(context.Context, *UnsealRequest) (*UnsealResponse, error)
 	// Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation.
 	UpdateSealSecret(context.Context, *UpdateSealSecretRequest) (*UpdateSealSecretResponse, error)
-	// Returns current status of the vault
+	// Returns current status of the vault.
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
-	// Creates RSA key pair if it doesnt exist
+	// Creates RSA key pair if it doesnt exist.
 	EnsureRSAKeyPair(context.Context, *EnsureRSAKeyPairRequest) (*EnsureRSAKeyPairResponse, error)
-	// Get public key of the RSA keypair
+	// Get public key of the RSA keypair.
 	GetRSAPublicKey(context.Context, *GetRSAPublicKeyRequest) (*GetRSAPublicKeyResponse, error)
-	// Sign message with RSA
-	RSASign(context.Context, *RSASignRequest) (*RSASignResponse, error)
-	// Validate signature of the message using RSA key-pairs public key
-	RSAValidatePublic(context.Context, *RSAValidatePublicRequest) (*RSAValidatePublicResponse, error)
+	// Sign message with RSA.
+	RSASign(VaultService_RSASignServer) error
+	// Validate signature of the message using RSA key-pairs public key.
+	RSAVerify(VaultService_RSAVerifyServer) error
 	mustEmbedUnimplementedVaultServiceServer()
 }
 
@@ -165,11 +215,11 @@ func (UnimplementedVaultServiceServer) EnsureRSAKeyPair(context.Context, *Ensure
 func (UnimplementedVaultServiceServer) GetRSAPublicKey(context.Context, *GetRSAPublicKeyRequest) (*GetRSAPublicKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRSAPublicKey not implemented")
 }
-func (UnimplementedVaultServiceServer) RSASign(context.Context, *RSASignRequest) (*RSASignResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RSASign not implemented")
+func (UnimplementedVaultServiceServer) RSASign(VaultService_RSASignServer) error {
+	return status.Errorf(codes.Unimplemented, "method RSASign not implemented")
 }
-func (UnimplementedVaultServiceServer) RSAValidatePublic(context.Context, *RSAValidatePublicRequest) (*RSAValidatePublicResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RSAValidatePublic not implemented")
+func (UnimplementedVaultServiceServer) RSAVerify(VaultService_RSAVerifyServer) error {
+	return status.Errorf(codes.Unimplemented, "method RSAVerify not implemented")
 }
 func (UnimplementedVaultServiceServer) mustEmbedUnimplementedVaultServiceServer() {}
 
@@ -292,40 +342,56 @@ func _VaultService_GetRSAPublicKey_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VaultService_RSASign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RSASignRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(VaultServiceServer).RSASign(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/system_vault.VaultService/RSASign",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VaultServiceServer).RSASign(ctx, req.(*RSASignRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _VaultService_RSASign_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).RSASign(&vaultServiceRSASignServer{stream})
 }
 
-func _VaultService_RSAValidatePublic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RSAValidatePublicRequest)
-	if err := dec(in); err != nil {
+type VaultService_RSASignServer interface {
+	SendAndClose(*RSASignResponse) error
+	Recv() (*RSASignRequest, error)
+	grpc.ServerStream
+}
+
+type vaultServiceRSASignServer struct {
+	grpc.ServerStream
+}
+
+func (x *vaultServiceRSASignServer) SendAndClose(m *RSASignResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *vaultServiceRSASignServer) Recv() (*RSASignRequest, error) {
+	m := new(RSASignRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(VaultServiceServer).RSAValidatePublic(ctx, in)
+	return m, nil
+}
+
+func _VaultService_RSAVerify_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).RSAVerify(&vaultServiceRSAVerifyServer{stream})
+}
+
+type VaultService_RSAVerifyServer interface {
+	SendAndClose(*RSAVerifyResponse) error
+	Recv() (*RSAVerifyRequest, error)
+	grpc.ServerStream
+}
+
+type vaultServiceRSAVerifyServer struct {
+	grpc.ServerStream
+}
+
+func (x *vaultServiceRSAVerifyServer) SendAndClose(m *RSAVerifyResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *vaultServiceRSAVerifyServer) Recv() (*RSAVerifyRequest, error) {
+	m := new(RSAVerifyRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
 	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/system_vault.VaultService/RSAValidatePublic",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VaultServiceServer).RSAValidatePublic(ctx, req.(*RSAValidatePublicRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 // VaultService_ServiceDesc is the grpc.ServiceDesc for VaultService service.
@@ -359,15 +425,18 @@ var VaultService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetRSAPublicKey",
 			Handler:    _VaultService_GetRSAPublicKey_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "RSASign",
-			Handler:    _VaultService_RSASign_Handler,
+			StreamName:    "RSASign",
+			Handler:       _VaultService_RSASign_Handler,
+			ClientStreams: true,
 		},
 		{
-			MethodName: "RSAValidatePublic",
-			Handler:    _VaultService_RSAValidatePublic_Handler,
+			StreamName:    "RSAVerify",
+			Handler:       _VaultService_RSAVerify_Handler,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "vault.proto",
 }

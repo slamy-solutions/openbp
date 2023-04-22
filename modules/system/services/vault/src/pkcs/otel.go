@@ -27,7 +27,11 @@ func (wraper *otelPKCSWraper) Initialize() error {
 }
 
 func (wraper *otelPKCSWraper) GetProviderName() string {
-	return wraper.GetProviderName()
+	return wraper.innerPKCS.GetProviderName()
+}
+
+func (wraper *otelPKCSWraper) IsLoggedIn() bool {
+	return wraper.innerPKCS.IsLoggedIn()
 }
 
 func (wraper *otelPKCSWraper) EnsureSessionAndLogIn(password string) error {
@@ -35,6 +39,13 @@ func (wraper *otelPKCSWraper) EnsureSessionAndLogIn(password string) error {
 }
 func (wraper *otelPKCSWraper) LogOutAndCloseSession() error {
 	return wraper.innerPKCS.LogOutAndCloseSession()
+}
+
+func (wraper *otelPKCSWraper) UpdatePins(ctx context.Context, adminPin string, newAdminPin string, newPin string) error {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.UpdatePins")
+	defer span.End()
+
+	return wraper.innerPKCS.UpdatePins(ctx, adminPin, newAdminPin, newPin)
 }
 
 func (wraper *otelPKCSWraper) EnsureRSAKeyPair(ctx context.Context, name string) error {
@@ -51,14 +62,14 @@ func (wraper *otelPKCSWraper) EnsureRSAKeyPair(ctx context.Context, name string)
 	return wraper.innerPKCS.GetRSAPublicKey(ctx, name)
 }*/
 
-func (wraper *otelPKCSWraper) SignRSA(ctx context.Context, name string, message io.Reader) ([]byte, error) {
+func (wraper *otelPKCSWraper) SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignRSA")
 	defer span.End()
 
 	return wraper.innerPKCS.SignRSA(ctx, name, message)
 }
 
-func (wraper *otelPKCSWraper) VerifyRSA(ctx context.Context, name string, message io.Reader, signature []byte) (bool, error) {
+func (wraper *otelPKCSWraper) VerifyRSA(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyRSA")
 	defer span.End()
 

@@ -30,6 +30,16 @@ jobs:
         run: echo "Skipping tests"
   #  uses: ./.github/workflows/test.yml
   
+  # System
+  publish-system-vault:
+    needs: [tests,setup]
+    name: Publish system_vault docker image
+    uses: ./.github/workflows/publish-service.yml
+    with:
+      dockerfile: modules/system/services/vault/Dockerfile
+      tags: openbp/obp-system-vault:latest,openbp/obp-system-vault:${{ needs.setup.outputs.tag }}
+    secrets: inherit
+
   # Native
   publish-native-namespace:
     needs: [tests,setup]

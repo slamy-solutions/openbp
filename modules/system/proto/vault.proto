@@ -19,8 +19,12 @@ message UnsealResponse {
 }
 
 message UpdateSealSecretRequest {
-    // New secret for the vault
-    string newSecret = 1;
+    // Current administrator password. Administrator acess needed to modify secret. Administrator password will not be saved in the system.
+    string currentAdminPassword = 1;
+    // New administrator password. Administrator password will not be saved in the system.
+    string newAdminPassword = 2;
+    // New secret.
+    string newSecret = 3;
 }
 message UpdateSealSecretResponse {}
 
@@ -48,7 +52,7 @@ message GetRSAPublicKeyResponse {
 message RSASignRequest {
     // Name of the key pair to use
     string keyName = 1;
-    // Data to sign
+    // Data chunk to sign
     bytes data = 2;
 }
 message RSASignResponse {
@@ -56,15 +60,15 @@ message RSASignResponse {
     bytes signature = 1;
 }
 
-message RSAValidatePublicRequest {
+message RSAVerifyRequest {
     // Name of the key pair to use for validation
     string keyName = 1;
-    // Data to validate
+    // Data chunk to validate
     bytes data = 2;
     // Signature to validate
     bytes signature = 3;
 }
-message RSAValidatePublicResponse {
+message RSAVerifyResponse {
     // Returns True if and only if provided data and its signature matches provided key-pair
     bool valid = 1;
 }
@@ -76,17 +80,17 @@ service VaultService {
     rpc Unseal(UnsealRequest) returns (UnsealResponse) {};
     // Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation.
     rpc UpdateSealSecret(UpdateSealSecretRequest) returns (UpdateSealSecretResponse) {};
-    // Returns current status of the vault
+    // Returns current status of the vault.
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {};
 
-    // Creates RSA key pair if it doesnt exist
+    // Creates RSA key pair if it doesnt exist.
     rpc EnsureRSAKeyPair(EnsureRSAKeyPairRequest) returns (EnsureRSAKeyPairResponse) {};
-    // Get public key of the RSA keypair
+    // Get public key of the RSA keypair.
     rpc GetRSAPublicKey(GetRSAPublicKeyRequest) returns (GetRSAPublicKeyResponse) {};
-    // Sign message with RSA
-    rpc RSASign(RSASignRequest) returns (RSASignResponse) {};
-    // Validate signature of the message using RSA key-pairs public key
-    rpc RSAValidatePublic(RSAValidatePublicRequest) returns (RSAValidatePublicResponse) {};
+    // Sign message with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+    rpc RSASign(stream RSASignRequest) returns (RSASignResponse) {};
+    // Validate signature of the message using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+    rpc RSAVerify(stream RSAVerifyRequest) returns (RSAVerifyResponse) {};
 
     // Encrypts message using AES
     // rpc Encrypt() returns () {};

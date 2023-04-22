@@ -15,6 +15,7 @@ use (
 	./modules/native/testing
 	./modules/system/libs/golang
 	./modules/system/services/vault
+	./modules/system/testing
 	./modules/tools/libs/sdk/golang
 	./modules/tools/services/rest
 	./modules/tools/services/sdk

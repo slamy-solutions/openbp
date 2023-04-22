@@ -64,6 +64,17 @@ services:
     volumes:
       - ./data/system/redis:/redis-data
 
+  system_vault:
+    image: openbp/obp-system-vault:${OPENBP_VERSION:-latest}
+    container_name: system_vault
+    restart: always
+    ports:
+      - "127.0.0.1:28205:80" # For testing
+    networks:
+      - internal
+    volumes:
+      - ./data/system/vault:/data
+
   system_nats:
     image: nats:2.9-scratch
     container_name: system_nats

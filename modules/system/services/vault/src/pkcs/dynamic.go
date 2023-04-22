@@ -7,7 +7,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/miekg/pkcs11"
+	pkcs11 "github.com/miekg/pkcs11"
 )
 
 /*
@@ -42,6 +42,9 @@ func (h *DynamicPKCSHandle) Initialize() error {
 	defer h.lock.Unlock()
 
 	p := pkcs11.New(h.libraryPath)
+	if p == nil {
+		return errors.New("failed to open PKCS library. Most probably wrong file path to the library")
+	}
 	err := p.Initialize()
 	if err != nil {
 		return errors.New("failed to initialize PKCS library: " + err.Error())
@@ -63,6 +66,12 @@ func (h *DynamicPKCSHandle) Initialize() error {
 
 func (h *DynamicPKCSHandle) GetProviderName() string {
 	return "dynamic"
+}
+
+func (h *DynamicPKCSHandle) IsLoggedIn() bool {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	return h.loggedIn
 }
 
 func (h *DynamicPKCSHandle) EnsureSessionAndLogIn(password string) error {
@@ -108,6 +117,10 @@ func (h *DynamicPKCSHandle) LogOutAndCloseSession() error {
 	}
 
 	return nil
+}
+
+func (h *DynamicPKCSHandle) UpdatePins(ctx context.Context, adminPin string, newAdminPin string, newPin string) error {
+	return errors.New("not implemented")
 }
 
 func (h *DynamicPKCSHandle) EnsureRSAKeyPair(ctx context.Context, name string) error {
@@ -176,7 +189,7 @@ func (h *DynamicPKCSHandle) EnsureRSAKeyPair(ctx context.Context, name string) e
 
 	h.PKCS11Ctx.obje
 }*/
-func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message io.Reader) ([]byte, error) {
+func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -185,7 +198,7 @@ func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message io
 		return []byte{}, err
 	}
 
-	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_RSA_PKCS, nil)}
+	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
 	err = h.PKCS11Ctx.SignInit(h.session, mechanism, privateKey)
 	if err != nil {
 		go h.LogOutAndCloseSession()
@@ -200,7 +213,7 @@ func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message io
 			if updateErr := h.PKCS11Ctx.SignUpdate(h.session, dataBuffer[:readed]); updateErr != nil {
 				h.PKCS11Ctx.SignFinal(h.session)
 				go h.LogOutAndCloseSession()
-				return []byte{}, errors.New("error while signing block of data: " + err.Error())
+				return []byte{}, errors.New("error while signing block of data: " + updateErr.Error())
 			}
 		}
 
@@ -221,7 +234,7 @@ func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message io
 		}
 	}
 }
-func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message io.Reader, signature []byte) (bool, error) {
+func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -230,7 +243,7 @@ func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message 
 		return false, err
 	}
 
-	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_RSA_PKCS, nil)}
+	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
 	err = h.PKCS11Ctx.VerifyInit(h.session, mechanism, publicKey)
 	if err != nil {
 		go h.LogOutAndCloseSession()
@@ -242,10 +255,11 @@ func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message 
 		readed, err := message.Read(dataBuffer)
 
 		if readed != 0 {
-			if updateErr := h.PKCS11Ctx.SignUpdate(h.session, dataBuffer[:readed]); updateErr != nil {
+			if updateErr := h.PKCS11Ctx.VerifyUpdate(h.session, dataBuffer[:readed]); updateErr != nil {
+				message.CloseWithError(updateErr)
 				h.PKCS11Ctx.VerifyFinal(h.session, []byte{})
 				go h.LogOutAndCloseSession()
-				return false, errors.New("error while verifiying block of data: " + err.Error())
+				return false, errors.New("error while verifiying block of data: " + updateErr.Error())
 			}
 		}
 
@@ -279,7 +293,7 @@ func (h *DynamicPKCSHandle) findRSAKeyPair(name string) (pkcs11.ObjectHandle, pk
 		return 0, 0, errors.New("error while performing PKCS search of RSA keys: " + err.Error())
 	}
 
-	if len(objs) == 2 {
+	if len(objs) != 2 {
 		return 0, 0, ErrRSAKeyDoesntExist
 	}
 
@@ -289,7 +303,7 @@ func (h *DynamicPKCSHandle) findRSAKeyPair(name string) (pkcs11.ObjectHandle, pk
 	privKeyFounded := false
 
 	pubKeyAttribute := pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY)
-	privKeyAttribute := pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY)
+	privKeyAttribute := pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PRIVATE_KEY)
 
 	for _, obj := range objs {
 		attributes := []*pkcs11.Attribute{
@@ -305,13 +319,13 @@ func (h *DynamicPKCSHandle) findRSAKeyPair(name string) (pkcs11.ObjectHandle, pk
 			pubKeyFounded = true
 			rsaPublicKeyHandle = obj
 		} else if bytes.Equal(attributes[0].Value, privKeyAttribute.Value) {
-			privKeyFounded = false
+			privKeyFounded = true
 			rsaPrivateKeyHandle = obj
 		}
 	}
 
 	if !(pubKeyFounded && privKeyFounded) {
-		return 0, 0, errors.New("problems with RSA keys with name [" + name + "]. Probably duplicated object labels in the PKCS token.")
+		return 0, 0, errors.New("problems with RSA keys with name [" + name + "]. Probably duplicated object labels in the PKCS token. Also possible that part of the key-pair is missing.")
 	}
 
 	return rsaPrivateKeyHandle, rsaPublicKeyHandle, nil
@@ -322,6 +336,7 @@ func (h *DynamicPKCSHandle) Close() error {
 	defer h.lock.Unlock()
 
 	h.PKCS11Ctx.Destroy()
+	h.PKCS11Ctx.Finalize()
 	h.closed = true
 	return nil
 }

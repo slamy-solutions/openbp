@@ -25,3 +25,6 @@ system-nats:
   cluster:
     enabled: true
     replicas: 3
+vault:
+  image:
+    repository: openbp/obp-system-vault

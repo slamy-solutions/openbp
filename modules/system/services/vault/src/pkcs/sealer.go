@@ -60,6 +60,8 @@ func (s *Sealer) Start() {
 				}
 			}
 		}
+
+		log.Info("[PKSC sealer] Successfully closed update worker.")
 	}()
 
 	log.Info("[PKSC sealer] Started worker. Submitting default password for unsealing.")
@@ -104,6 +106,8 @@ func (s *Sealer) Seal() {
 func (s *Sealer) Stop() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
+	log.Info("[PKSC sealer] Raised closing event.")
 
 	s.savedPassword = ""
 	close(s.updatesChan)
