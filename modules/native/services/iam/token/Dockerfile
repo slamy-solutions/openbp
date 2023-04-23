@@ -23,6 +23,7 @@ RUN cd /src/modules/native/services/iam/token && go mod download
 WORKDIR /src/modules/native/services/iam/token/src
 COPY modules/native/services/iam/token/src/main.go ./main.go
 COPY modules/native/services/iam/token/src/services ./services/
+COPY modules/native/services/iam/token/src/jwt ./jwt/
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -ldflags="-w -s" -a -o app ./main.go
 RUN chmod +x app

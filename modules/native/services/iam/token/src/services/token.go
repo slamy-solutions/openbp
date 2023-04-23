@@ -15,14 +15,19 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 
 	"github.com/golang/protobuf/proto"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/cache"
 
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/token/src/jwt"
 )
 
 type IAmTokenServer struct {
 	nativeIAmTokenGRPC.UnimplementedIAMTokenServiceServer
+
+	jwtService jwt.JWTService
 
 	mongoClient           *mongo.Client
 	mongoGlobalCollection *mongo.Collection
@@ -73,13 +78,13 @@ func (t *tokenInMongo) ToProtoTokenData(namespace string) *nativeIAmTokenGRPC.To
 	}
 }
 
-func (t *tokenInMongo) ToJWTData(namespace string, refresh bool, maxExpiration time.Time) *JWTData {
-	scopes := []JWTScope{}
+func (t *tokenInMongo) ToJWTData(namespace string, refresh bool, maxExpiration time.Time) *jwt.JWTData {
+	scopes := []jwt.JWTScope{}
 
 	if !refresh {
-		scopes = make([]JWTScope, len(t.Scopes))
+		scopes = make([]jwt.JWTScope, len(t.Scopes))
 		for i, scope := range t.Scopes {
-			scopes[i] = JWTScope{
+			scopes[i] = jwt.JWTScope{
 				Namespace: scope.Namespace,
 				Resources: scope.Resources,
 				Actions:   scope.Actions,
@@ -91,7 +96,7 @@ func (t *tokenInMongo) ToJWTData(namespace string, refresh bool, maxExpiration t
 	if refresh || expirationTime.After(maxExpiration) {
 		expirationTime = maxExpiration
 	}
-	return NewJWTData(t.ID.Hex(), namespace, t.Identity, scopes, refresh, expirationTime)
+	return jwt.NewJWTData(t.ID.Hex(), namespace, t.Identity, scopes, refresh, expirationTime)
 }
 
 func collectionByNamespace(s *IAmTokenServer, namespace string) *mongo.Collection {
@@ -107,12 +112,13 @@ func makeTokenCacheKey(namespace string, uuid string) string {
 	return fmt.Sprintf("native_iam_token_data_%s_%s", namespace, uuid)
 }
 
-func NewIAmTokenServer(mongoClient *mongo.Client, cacheClient cache.Cache, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *IAmTokenServer {
+func NewIAmTokenServer(systemStub *system.SystemStub, nativeStub *native.NativeStub) *IAmTokenServer {
 	return &IAmTokenServer{
-		mongoClient:           mongoClient,
-		mongoGlobalCollection: mongoClient.Database("openbp_global").Collection("native_iam_token"),
-		cacheClient:           cacheClient,
-		nativeNamespaceClient: nativeNamespaceClient,
+		mongoClient:           systemStub.DB,
+		mongoGlobalCollection: systemStub.DB.Database("openbp_global").Collection("native_iam_token"),
+		cacheClient:           systemStub.Cache,
+		nativeNamespaceClient: nativeStub.Services.Namespace,
+		jwtService:            jwt.NewJWTService(systemStub),
 	}
 }
 
@@ -154,14 +160,21 @@ func (s *IAmTokenServer) Create(ctx context.Context, in *nativeIAmTokenGRPC.Crea
 	token.ID = insertResult.InsertedID.(primitive.ObjectID)
 
 	// Creating token and refresh token
-	stringToken, err := token.ToJWTData(in.Namespace, false, token.ExpireAt).ToSignedString()
+	stringToken, err := s.jwtService.JWTDataToSignedString(ctx, token.ToJWTData(in.Namespace, false, token.ExpireAt))
 	if err != nil {
 		collection.DeleteOne(ctx, bson.M{"_id": token.ID})
+
+		if err == jwt.ErrVaultSealed {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Failed to create token: "+err.Error())
+		}
 		return nil, status.Error(grpccodes.Internal, "Failed to create token: "+err.Error())
 	}
-	stringRefreshToken, err := token.ToJWTData(in.Namespace, true, token.ExpireAt).ToSignedString()
+	stringRefreshToken, err := s.jwtService.JWTDataToSignedString(ctx, token.ToJWTData(in.Namespace, true, token.ExpireAt))
 	if err != nil {
 		collection.DeleteOne(ctx, bson.M{"_id": token.ID})
+		if err == jwt.ErrVaultSealed {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Failed to create token: "+err.Error())
+		}
 		return nil, status.Error(grpccodes.Internal, "Failed to create refresh token: "+err.Error())
 	}
 
@@ -221,13 +234,16 @@ func (s *IAmTokenServer) Get(ctx context.Context, in *nativeIAmTokenGRPC.GetRequ
 
 func (s *IAmTokenServer) RawGet(ctx context.Context, in *nativeIAmTokenGRPC.RawGetRequest) (*nativeIAmTokenGRPC.RawGetResponse, error) {
 	// Decoding JWT
-	jwtData, err := JWTDataFromString(in.Token)
+	jwtData, err := s.jwtService.JWTDataFromString(ctx, in.Token)
 	if err != nil {
-		if err == ErrInvalidToken {
+		if err == jwt.ErrInvalidToken {
 			return nil, status.Error(grpccodes.InvalidArgument, "Token invalid. Bad token format or signature.")
 		}
-		if err == ErrTokenExpired {
+		if err == jwt.ErrTokenExpired {
 			return nil, status.Error(grpccodes.InvalidArgument, "Token expired and must not be used.")
+		}
+		if err == jwt.ErrVaultSealed {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Cant check token. Vault is sealed.")
 		}
 		return nil, status.Error(grpccodes.Internal, "Failed to verify token. "+err.Error())
 	}
@@ -304,13 +320,16 @@ func (s *IAmTokenServer) Disable(ctx context.Context, in *nativeIAmTokenGRPC.Dis
 
 func (s *IAmTokenServer) Validate(ctx context.Context, in *nativeIAmTokenGRPC.ValidateRequest) (*nativeIAmTokenGRPC.ValidateResponse, error) {
 	// Decoding JWT
-	jwtData, err := JWTDataFromString(in.Token)
+	jwtData, err := s.jwtService.JWTDataFromString(ctx, in.Token)
 	if err != nil {
-		if err == ErrInvalidToken {
+		if err == jwt.ErrInvalidToken {
 			return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_INVALID, TokenData: nil}, status.Error(grpccodes.OK, "")
 		}
-		if err == ErrTokenExpired {
+		if err == jwt.ErrTokenExpired {
 			return &nativeIAmTokenGRPC.ValidateResponse{Status: nativeIAmTokenGRPC.ValidateResponse_EXPIRED, TokenData: nil}, status.Error(grpccodes.OK, "JWT token expired")
+		}
+		if err == jwt.ErrVaultSealed {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Cant validate token. Vault is sealed.")
 		}
 		return nil, status.Error(grpccodes.Internal, "Failed to verify token. "+err.Error())
 	}
@@ -377,13 +396,16 @@ func (s *IAmTokenServer) Validate(ctx context.Context, in *nativeIAmTokenGRPC.Va
 }
 func (s *IAmTokenServer) Refresh(ctx context.Context, in *nativeIAmTokenGRPC.RefreshRequest) (*nativeIAmTokenGRPC.RefreshResponse, error) {
 	// Decoding JWT
-	jwtData, err := JWTDataFromString(in.RefreshToken)
+	jwtData, err := s.jwtService.JWTDataFromString(ctx, in.RefreshToken)
 	if err != nil {
-		if err == ErrInvalidToken {
+		if err == jwt.ErrInvalidToken {
 			return &nativeIAmTokenGRPC.RefreshResponse{Status: nativeIAmTokenGRPC.RefreshResponse_INVALID}, status.Error(grpccodes.OK, "")
 		}
-		if err == ErrTokenExpired {
+		if err == jwt.ErrTokenExpired {
 			return &nativeIAmTokenGRPC.RefreshResponse{Status: nativeIAmTokenGRPC.RefreshResponse_EXPIRED}, status.Error(grpccodes.OK, "")
+		}
+		if err == jwt.ErrVaultSealed {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Cant refresh token. Vault is sealed.")
 		}
 		return nil, status.Error(grpccodes.Internal, "Failed to verify token. "+err.Error())
 	}
@@ -419,8 +441,11 @@ func (s *IAmTokenServer) Refresh(ctx context.Context, in *nativeIAmTokenGRPC.Ref
 		return &nativeIAmTokenGRPC.RefreshResponse{Status: nativeIAmTokenGRPC.RefreshResponse_EXPIRED}, status.Error(grpccodes.OK, "")
 	}
 
-	tokenString, err := data.ToJWTData(jwtData.Namespace, false, data.ExpireAt).ToSignedString()
+	tokenString, err := s.jwtService.JWTDataToSignedString(ctx, data.ToJWTData(jwtData.Namespace, false, data.ExpireAt))
 	if err != nil {
+		if err == jwt.ErrVaultSealed {
+			return nil, status.Error(grpccodes.FailedPrecondition, "Cant refresh token. Vault is sealed.")
+		}
 		return nil, status.Error(grpccodes.Internal, "Failed to sign token. "+err.Error())
 	}
 
