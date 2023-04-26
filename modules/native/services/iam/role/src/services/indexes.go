@@ -47,7 +47,7 @@ func ensureIndexesForNamespace(ctx context.Context, namespace string, systemStub
 	})
 
 	if err == nil {
-		log.Info("Ensured indexes for the [" + namespace + "] namespace.")
+		log.WithField("namespace", namespace).Info("Ensured indexes for namespace.")
 	}
 
 	return err

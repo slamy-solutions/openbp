@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net"
 	"os"
 	"time"
@@ -60,7 +60,7 @@ func main() {
 	iamIdentityServer := services.NewIAmIdentityServer(systemStub, nativeStub)
 	native_iam_identity_grpc.RegisterIAMIdentityServiceServer(grpcServer, iamIdentityServer)
 
-	fmt.Println("Start listening for gRPC connections")
+	log.Println("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
 		panic(err)

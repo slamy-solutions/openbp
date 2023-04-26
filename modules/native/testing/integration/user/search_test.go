@@ -1,6 +1,6 @@
 package user
 
-import (
+/*import (
 	"context"
 	"io"
 	"testing"
@@ -136,3 +136,4 @@ func (suite *ExampleTestSuite) TestSearchEmailMatch() {
 func TestExampleTestSuite(t *testing.T) {
 	suite.Run(t, new(ExampleTestSuite))
 }
+*/

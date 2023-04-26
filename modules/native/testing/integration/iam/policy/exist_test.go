@@ -1,4 +1,4 @@
-package namespace
+package policy
 
 import (
 	"context"

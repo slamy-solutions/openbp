@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -69,7 +70,7 @@ func main() {
 	}
 	native_iam_policy_grpc.RegisterIAMPolicyServiceServer(grpcServer, iamPolicyServer)
 
-	fmt.Println("Start listening for gRPC connections")
+	log.Info("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
 		panic(err)

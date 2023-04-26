@@ -1,4 +1,4 @@
-package namespace
+package policy
 
 import (
 	"context"
@@ -17,27 +17,27 @@ import (
 	"github.com/slamy-solutions/openbp/modules/native/testing/tools"
 )
 
-type ManagedTestSuite struct {
+type ServiceManagedTestSuite struct {
 	suite.Suite
 
 	nativeStub *native.NativeStub
 }
 
-func (suite *ManagedTestSuite) SetupSuite() {
+func (suite *ServiceManagedTestSuite) SetupSuite() {
 	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService().WithIAMIdentityService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
 	}
 }
-func (suite *ManagedTestSuite) TearDownSuite() {
+func (suite *ServiceManagedTestSuite) TearDownSuite() {
 	suite.nativeStub.Close()
 }
-func TestManagedTestSuite(t *testing.T) {
-	suite.Run(t, new(ManagedTestSuite))
+func TestServiceManagedTestSuite(t *testing.T) {
+	suite.Run(t, new(ServiceManagedTestSuite))
 }
 
-func (s *ManagedTestSuite) TestServiceManagedForGlobalNamespace() {
+func (s *ServiceManagedTestSuite) TestServiceManagedForGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -78,7 +78,7 @@ func (s *ManagedTestSuite) TestServiceManagedForGlobalNamespace() {
 	require.Equal(s.T(), managedId, getResponse.Policy.Managed.(*policy.Policy_Service).Service.ManagementId)
 }
 
-func (s *ManagedTestSuite) TestServiceManagedForNamespace() {
+func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -130,7 +130,7 @@ func (s *ManagedTestSuite) TestServiceManagedForNamespace() {
 	require.Equal(s.T(), managedId, getResponse.Policy.Managed.(*policy.Policy_Service).Service.ManagementId)
 }
 
-func (s *ManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSameMnagementIdForGlobalNamespace() {
+func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSameMnagementIdForGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -173,7 +173,7 @@ func (s *ManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSameMnageme
 	}
 }
 
-func (s *ManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSameMnagementIdForNamespace() {
+func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSameMnagementIdForNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -227,7 +227,7 @@ func (s *ManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSameMnageme
 	}
 }
 
-func (s *ManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManagedIdForGlobalNamespace() {
+func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManagedIdForGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -264,7 +264,7 @@ func (s *ManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManagedIdForG
 	}
 }
 
-func (s *ManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManagedIdForNamespace() {
+func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManagedIdForNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -312,7 +312,7 @@ func (s *ManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManagedIdForN
 	}
 }
 
-func (s *ManagedTestSuite) TestServiceManagedFailWithNotFoundForNonExistingNamespace() {
+func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -358,7 +358,7 @@ func (s *ManagedTestSuite) TestServiceManagedFailWithNotFoundForNonExistingNames
 	}
 }
 
-func (s *ManagedTestSuite) TestIdentityManagedForGlobalNamespace() {
+func (s *ServiceManagedTestSuite) TestIdentityManagedForGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -396,7 +396,7 @@ func (s *ManagedTestSuite) TestIdentityManagedForGlobalNamespace() {
 	require.Equal(s.T(), identityCreateResponse.Identity.Uuid, getResponse.Policy.Managed.(*policy.Policy_Identity).Identity.IdentityUUID)
 }
 
-func (s *ManagedTestSuite) TestIdentityManagedForNamespace() {
+func (s *ServiceManagedTestSuite) TestIdentityManagedForNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 

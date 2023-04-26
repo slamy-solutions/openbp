@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -46,6 +47,12 @@ func main() {
 		panic("Failed to connect to native services: " + err.Error())
 	}
 	defer nativeStub.Close()
+
+	eventsHandler, err := services.NewEventHandlerService(systemStub, nativeStub)
+	if err != nil {
+		panic("Failed to create events handler. " + err.Error())
+	}
+	defer eventsHandler.Close()
 
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),

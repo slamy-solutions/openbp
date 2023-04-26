@@ -1,4 +1,4 @@
-package namespace
+package policy
 
 import (
 	tools "github.com/slamy-solutions/openbp/modules/native/testing/tools"

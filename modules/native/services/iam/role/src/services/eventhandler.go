@@ -3,11 +3,12 @@ package services
 import (
 	"context"
 	"errors"
-	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/proto"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/nats-io/nats.go"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
@@ -25,13 +26,20 @@ type eventHandlerService struct {
 	systemStub                       *system.SystemStub
 	nativeStub                       *native.NativeStub
 	namespaceCreateEventSubscription *nats.Subscription
+
+	logger *log.Logger
+	log    *log.Entry
 }
 
 func NewEventHandlerService(systemStub *system.SystemStub, nativeStub *native.NativeStub) (*eventHandlerService, error) {
+	logger := log.StandardLogger()
+
 	service := &eventHandlerService{
 		systemStub:                       systemStub,
 		nativeStub:                       nativeStub,
 		namespaceCreateEventSubscription: nil,
+		logger:                           logger,
+		log:                              logger.WithField("component", "EventHandler"),
 	}
 
 	js, err := systemStub.Nats.JetStream()
@@ -75,6 +83,7 @@ func (s *eventHandlerService) handleNamespaceCreationEvent(msg *nats.Msg) {
 	var namespace namespaceGRPC.Namespace
 	err := proto.Unmarshal(msg.Data, &namespace)
 	if err != nil {
+		s.log.Error("Failed to unmarshal namespace from event: " + err.Error())
 		span.SetStatus(codes.Error, "Failed to unmarshal namespace from event: "+err.Error())
 		span.RecordError(err)
 		// TODO: Dead leter queue
@@ -82,26 +91,33 @@ func (s *eventHandlerService) handleNamespaceCreationEvent(msg *nats.Msg) {
 		return
 	}
 
-	// Create indexes for policies collection inside namespace
+	eventLog := s.log.WithFields(log.Fields{"namespace": namespace.Name})
+
+	// Create indexes for roles collection inside namespace
 	err = ensureIndexesForNamespace(ctx, namespace.Name, s.systemStub)
 	if err != nil {
-		span.SetStatus(codes.Error, "Failed to create indexes. "+err.Error())
+		eventLog.Error("Failed to create indexes: " + err.Error())
+		span.SetStatus(codes.Error, "Failed to create indexes: "+err.Error())
 		span.RecordError(err)
 		// TODO: Dead leter queue
-		msg.NakWithDelay(time.Second * 5)
+		// msg.NakWithDelay(time.Second * 5)
+		msg.Ack()
 		return
 	}
 
-	// Create built-ins policies
+	// Create built-ins roles
 	err = ensureBuiltInsForNamespace(ctx, namespace.Name, s.systemStub, s.nativeStub)
 	if err != nil {
+		eventLog.Error("Failed to ensure built-ins: " + err.Error())
 		span.SetStatus(codes.Error, "Failed to ensure built-ins. "+err.Error())
 		span.RecordError(err)
 		// TODO: Dead leter queue
-		msg.NakWithDelay(time.Second * 5)
+		// msg.NakWithDelay(time.Second * 5)
+		msg.Ack()
 		return
 	}
 
+	eventLog.Info("Successfully handled namespace creation event.")
 	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(attribute.KeyValue{
 		Key:   "namespace",

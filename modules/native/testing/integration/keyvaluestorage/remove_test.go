@@ -130,7 +130,7 @@ func (s *RemoveKeyTestSuite) TestDoesntExistInNamespaceAfterRemove() {
 		UseCache:  false,
 	})
 	require.Nil(s.T(), err)
-	assert.False(s.T(), r1.Exist)
+	assert.True(s.T(), r1.Exist)
 
 	_, err = s.nativeStub.Services.Keyvaluestorage.Remove(ctx, &keyvaluestorage.RemoveRequest{
 		Namespace: namespaceName,

@@ -1,4 +1,4 @@
-package policy
+package role
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 	"github.com/slamy-solutions/openbp/modules/native/testing/tools"
 )
@@ -23,7 +23,7 @@ type GetMultipleTestSuite struct {
 }
 
 func (suite *GetMultipleTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMRoleService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -43,7 +43,7 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	namespaceName1 := tools.GetRandomString(20)
 	namespaceName2 := tools.GetRandomString(20)
 
-	var policies = []*struct {
+	var roles = []*struct {
 		namespace string
 		create    bool
 		search    bool
@@ -91,52 +91,49 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(ctx, &namespace.DeleteNamespaceRequest{Name: namespaceName2})
 
-	// Make sure at the end all policies deleted
+	// Make sure at the end all roles deleted
 	defer func() {
-		for _, p := range policies {
-			if p.create {
-				s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{
-					Namespace: p.namespace,
-					Uuid:      p.uuid,
+		for _, r := range roles {
+			if r.create {
+				s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{
+					Namespace: r.namespace,
+					Uuid:      r.uuid,
 				})
 			}
 		}
 	}()
 
-	// Create all the policies
-	for _, p := range policies {
-		if p.create {
-			r, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
-				Namespace:            p.namespace,
-				Name:                 tools.GetRandomString(20),
-				Description:          tools.GetRandomString(20),
-				Managed:              &policy.CreatePolicyRequest_No{No: &policy.NotManagedData{}},
-				NamespaceIndependent: false,
-				Resources:            []string{},
-				Actions:              []string{},
+	// Create all the roles
+	for _, roleData := range roles {
+		if roleData.create {
+			r, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+				Namespace:   roleData.namespace,
+				Name:        tools.GetRandomString(20),
+				Description: tools.GetRandomString(20),
+				Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 			})
 			require.Nil(s.T(), err)
-			p.uuid = r.Policy.Uuid
+			roleData.uuid = r.Role.Uuid
 		}
 	}
 
-	policiesToSearch := make([]*policy.GetMultiplePoliciesRequest_RequestedPolicy, 0, 12)
-	for _, p := range policies {
-		if p.search {
-			policiesToSearch = append(policiesToSearch, &policy.GetMultiplePoliciesRequest_RequestedPolicy{
-				Namespace: p.namespace,
-				Uuid:      p.uuid,
+	rolesToSearch := make([]*role.GetMultipleRolesRequest_RequestedRole, 0, 12)
+	for _, roleData := range roles {
+		if roleData.search {
+			rolesToSearch = append(rolesToSearch, &role.GetMultipleRolesRequest_RequestedRole{
+				Namespace: roleData.namespace,
+				Uuid:      roleData.uuid,
 			})
 		}
 	}
-	require.Len(s.T(), policiesToSearch, 14)
+	require.Len(s.T(), rolesToSearch, 14)
 
-	r, err := s.nativeStub.Services.IamPolicy.GetMultiple(ctx, &policy.GetMultiplePoliciesRequest{
-		Policies: policiesToSearch,
+	r, err := s.nativeStub.Services.IamRole.GetMultiple(ctx, &role.GetMultipleRolesRequest{
+		Roles: rolesToSearch,
 	})
 	require.Nil(s.T(), err)
 
-	receivedPolicies := make([]*policy.Policy, 0, 14)
+	receivedRoles := make([]*role.Role, 0, 14)
 	for {
 		chunk, err := r.Recv()
 		if err != nil {
@@ -144,13 +141,13 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 			break
 		}
 
-		receivedPolicies = append(receivedPolicies, chunk.Policy)
+		receivedRoles = append(receivedRoles, chunk.Role)
 	}
-	require.Len(s.T(), receivedPolicies, 6)
+	require.Len(s.T(), receivedRoles, 6)
 
 	existInResponse := func(namespaceName string, uuid string) bool {
-		for _, p := range receivedPolicies {
-			if p.Namespace == namespaceName && p.Uuid == uuid {
+		for _, r := range receivedRoles {
+			if r.Namespace == namespaceName && r.Uuid == uuid {
 				return true
 			}
 		}
@@ -158,8 +155,8 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	}
 
 	existInRequest := func(namespaceName string, uuid string) bool {
-		for _, p := range policiesToSearch {
-			if p.Namespace == namespaceName && p.Uuid == uuid {
+		for _, r := range rolesToSearch {
+			if r.Namespace == namespaceName && r.Uuid == uuid {
 				return true
 			}
 		}
@@ -167,12 +164,12 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	}
 
 	// Validating if request and result are same
-	for _, p := range receivedPolicies {
-		require.True(s.T(), existInRequest(p.Namespace, p.Uuid))
+	for _, r := range receivedRoles {
+		require.True(s.T(), existInRequest(r.Namespace, r.Uuid))
 	}
-	for _, p := range policies {
-		if p.create && p.search {
-			require.True(s.T(), existInResponse(p.namespace, p.uuid))
+	for _, r := range roles {
+		if r.create && r.search {
+			require.True(s.T(), existInResponse(r.namespace, r.uuid))
 		}
 	}
 }
