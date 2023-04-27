@@ -12,6 +12,8 @@ var ErrPKCSNotLoggedIn = errors.New("pkcs is not logged in")
 var ErrPKCSBadLoginPassword = errors.New("bad pkcs password")
 
 var ErrRSAKeyDoesntExist = errors.New("RSA key doesnt exist")
+var ErrHMACKeyDoesntExist = errors.New("HMAC key doesnt exist")
+var ErrEncryptionKeyDoesntExist = errors.New("Encryption key doesnt exist")
 
 type PKCS interface {
 	Initialize() error
@@ -31,6 +33,16 @@ type PKCS interface {
 	SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error)
 	// Verifies message using RSA public key
 	VerifyRSA(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error)
+
+	// Create HMAC based on message
+	SignHMAC(ctx context.Context, message *io.PipeReader) ([]byte, error)
+	// Checks if HMAC corresponds to provided message
+	VerifyHMAC(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error)
+
+	// Encrypt message
+	Encrypt(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error
+	// Decrypt message
+	Decrypt(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error
 
 	Close() error
 }

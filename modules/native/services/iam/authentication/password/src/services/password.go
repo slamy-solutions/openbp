@@ -29,6 +29,7 @@ type PasswordIdentificationService struct {
 
 type passwordInMongo struct {
 	Identity string `bson:"identity"`
+	//	Salt     []byte `bson:"salt"`
 	Password []byte `bson:"password"`
 }
 
@@ -88,13 +89,19 @@ func (s *PasswordIdentificationService) CreateOrUpdate(ctx context.Context, in *
 		}
 	}
 
+	/*salt := make([]byte, 32)
+	_, err := rand.Read(salt)
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, "Failed to generate salt: "+err.Error())
+	}*/
+
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), 10)
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, "Failed to hash password: "+err.Error())
 	}
 
 	collection := collectionByNamespace(s, in.Namespace)
-	_, err = collection.UpdateOne(ctx, bson.M{"identity": in.Identity}, bson.M{"$set": bson.M{"password": passwordHash}, "$setOnInsert": bson.M{"identity": in.Identity}}, options.Update().SetUpsert(true))
+	_, err = collection.UpdateOne(ctx, bson.M{"identity": in.Identity}, bson.M{"$set": bson.M{"password": passwordHash /*"salt": salt*/}, "$setOnInsert": bson.M{"identity": in.Identity}}, options.Update().SetUpsert(true))
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, "Error on updating password in database: "+err.Error())
 	}

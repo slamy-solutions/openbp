@@ -73,6 +73,42 @@ message RSAVerifyResponse {
     bool valid = 1;
 }
 
+message HMACSignRequest {
+    // Block of data to sign
+    bytes data = 1;
+}
+message HMACSignResponse {
+    // Signature of the provided data
+    bytes signature = 1;
+}
+message HMACVerifyRequest {
+    // Block of data to sign
+    bytes data = 1;
+    // Signature to validate
+    bytes signature = 2;
+}
+message HMACVerifyResponse {
+    // Returns True if and only if provided data and its signature is valid
+    bool valid = 1;
+}
+
+message EncryptRequest {
+    // Block of data to encrypt
+    bytes plainData = 1;
+}
+message EncryptResponse {
+    // Encrypted block of the data
+    bytes encryptedData = 1;
+}
+message DecryptRequest {
+    // Encrypted block of the data
+    bytes encryptedData = 1;
+}
+message DecryptResponse {
+    // Decrypted block of the data
+    bytes plainData = 1;
+}
+
 service VaultService {
     // Closes and encrypts vault. After sealing, most of the operations will not be accessible.
     rpc Seal(SealRequest) returns (SealResponse) {};
@@ -83,7 +119,7 @@ service VaultService {
     // Returns current status of the vault.
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {};
 
-    // Creates RSA key pair if it doesnt exist.
+    // Creates RSA key pair if it doesnt exist. Private key never leaves the HSM (hardware security module).
     rpc EnsureRSAKeyPair(EnsureRSAKeyPairRequest) returns (EnsureRSAKeyPairResponse) {};
     // Get public key of the RSA keypair.
     rpc GetRSAPublicKey(GetRSAPublicKeyRequest) returns (GetRSAPublicKeyResponse) {};
@@ -92,8 +128,13 @@ service VaultService {
     // Validate signature of the message using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
     rpc RSAVerify(stream RSAVerifyRequest) returns (RSAVerifyResponse) {};
 
-    // Encrypts message using AES
-    // rpc Encrypt() returns () {};
-    // Decrypts message using AES
-    // rpc Decrypt() returns () {};
+    // Calculates HMAC signature for input data. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
+    rpc HMACSign(stream HMACSignRequest) returns (HMACSignResponse) {};
+    // Verifies HMAC signature of the data.
+    rpc HMACVerify(stream HMACVerifyRequest) returns (HMACVerifyResponse) {};
+
+    // Encrypts message. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
+    rpc Encrypt(stream EncryptRequest) returns (stream EncryptResponse) {};
+    // Decrypts message. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
+    rpc Decrypt(stream DecryptRequest) returns (stream DecryptResponse) {};
 }

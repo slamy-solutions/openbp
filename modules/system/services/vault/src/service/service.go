@@ -223,3 +223,122 @@ func (s *VaultService) RSAVerify(srv vault.VaultService_RSAVerifyServer) error {
 	})
 	return nil
 }
+
+func (s *VaultService) HMACSign(srv vault.VaultService_HMACSignServer) error {
+	ctx := srv.Context()
+
+	dataReader, dataWriter := io.Pipe()
+	defer dataWriter.Close()
+	defer dataReader.Close()
+
+	go func() {
+		for {
+			message, err := srv.Recv()
+			if err != nil {
+				if err == io.EOF {
+					dataWriter.Close()
+					return
+				}
+				dataWriter.CloseWithError(errors.New("error while receiving message from grpc: " + err.Error()))
+				return
+			}
+			_, err = dataWriter.Write(message.Data)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	signature, err := s.pkcsHandle.SignHMAC(ctx, dataReader)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		//TODO: This is for the future
+		if err == pkcs.ErrHMACKeyDoesntExist {
+			return status.Error(codes.NotFound, "HMAC key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(HMACSign) Internal error while signing message with PKCS11 HMAC: " + err.Error())
+		return status.Error(codes.Internal, "error while signing message with PKCS11 RSA: "+err.Error())
+	}
+
+	srv.SendAndClose(&vault.HMACSignResponse{
+		Signature: signature,
+	})
+	return nil
+}
+
+func (s *VaultService) HMACVerify(srv vault.VaultService_HMACVerifyServer) error {
+	ctx := srv.Context()
+
+	dataReader, dataWriter := io.Pipe()
+	defer dataWriter.Close()
+	defer dataReader.Close()
+
+	metadataChanel := make(chan struct {
+		signature []byte
+		err       error
+	})
+	defer close(metadataChanel)
+
+	go func() {
+		metaSended := false
+		for {
+			message, err := srv.Recv()
+			if err != nil {
+				if !metaSended {
+					metadataChanel <- struct {
+						signature []byte
+						err       error
+					}{signature: []byte{}, err: errors.New("failed to receive first chunk of data from grpc stream: " + err.Error())}
+				}
+				if err == io.EOF {
+					dataWriter.Close()
+					return
+				}
+				dataWriter.CloseWithError(errors.New("error while receiving message from grpc: " + err.Error()))
+				return
+			}
+			if !metaSended {
+				metadataChanel <- struct {
+					signature []byte
+					err       error
+				}{signature: message.Signature, err: nil}
+				metaSended = true
+			}
+			_, err = dataWriter.Write(message.Data)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	metadata := <-metadataChanel
+	if metadata.err != nil {
+		log.Error("[GRPC Vault Service]-(HMACVerify) Internal error while reading signature: " + metadata.err.Error())
+		return status.Error(codes.Internal, "error while reading HMAC signature: "+metadata.err.Error())
+	}
+
+	valid, err := s.pkcsHandle.VerifyHMAC(ctx, dataReader, metadata.signature)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		if err == pkcs.ErrRSAKeyDoesntExist {
+			return status.Error(codes.NotFound, "HMAC key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(HMACVerify) Internal error while verifiying message with PKCS11 HMAC: " + err.Error())
+		return status.Error(codes.Internal, "error while verifiying message with PKCS11 HMAC: "+err.Error())
+	}
+
+	srv.SendAndClose(&vault.HMACVerifyResponse{
+		Valid: valid,
+	})
+	return nil
+}

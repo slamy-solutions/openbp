@@ -79,3 +79,29 @@ func (wraper *otelPKCSWraper) VerifyRSA(ctx context.Context, name string, messag
 func (wraper *otelPKCSWraper) Close() error {
 	return wraper.innerPKCS.Close()
 }
+
+func (wraper *otelPKCSWraper) SignHMAC(ctx context.Context, message *io.PipeReader) ([]byte, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignHMAC")
+	defer span.End()
+
+	return wraper.innerPKCS.SignHMAC(ctx, message)
+}
+func (wraper *otelPKCSWraper) VerifyHMAC(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyHMAC")
+	defer span.End()
+
+	return wraper.innerPKCS.VerifyHMAC(ctx, message, signature)
+}
+
+func (wraper *otelPKCSWraper) Encrypt(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.Encrypt")
+	defer span.End()
+
+	return wraper.innerPKCS.Encrypt(ctx, plain, encrypted)
+}
+func (wraper *otelPKCSWraper) Decrypt(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.Decrypt")
+	defer span.End()
+
+	return wraper.innerPKCS.Decrypt(ctx, encrypted, plain)
+}
