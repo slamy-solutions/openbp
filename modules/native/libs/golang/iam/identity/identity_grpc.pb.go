@@ -28,6 +28,10 @@ type IAMIdentityServiceClient interface {
 	Get(ctx context.Context, in *GetIdentityRequest, opts ...grpc.CallOption) (*GetIdentityResponse, error)
 	// Delete identity
 	Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*DeleteIdentityResponse, error)
+	// Check if identity exists
+	Exists(ctx context.Context, in *ExistsIdentityRequest, opts ...grpc.CallOption) (*ExistsIdentityResponse, error)
+	// Get policy that is managed by service
+	GetServiceManagedIdentity(ctx context.Context, in *GetServiceManagedIdentityRequest, opts ...grpc.CallOption) (*GetServiceManagedIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(ctx context.Context, in *AddPolicyRequest, opts ...grpc.CallOption) (*AddPolicyResponse, error)
 	// Remove policy from the identity. If policy was already removed - does nothing.
@@ -69,6 +73,24 @@ func (c *iAMIdentityServiceClient) Get(ctx context.Context, in *GetIdentityReque
 func (c *iAMIdentityServiceClient) Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*DeleteIdentityResponse, error) {
 	out := new(DeleteIdentityResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMIdentityServiceClient) Exists(ctx context.Context, in *ExistsIdentityRequest, opts ...grpc.CallOption) (*ExistsIdentityResponse, error) {
+	out := new(ExistsIdentityResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/Exists", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMIdentityServiceClient) GetServiceManagedIdentity(ctx context.Context, in *GetServiceManagedIdentityRequest, opts ...grpc.CallOption) (*GetServiceManagedIdentityResponse, error) {
+	out := new(GetServiceManagedIdentityResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/GetServiceManagedIdentity", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +152,10 @@ type IAMIdentityServiceServer interface {
 	Get(context.Context, *GetIdentityRequest) (*GetIdentityResponse, error)
 	// Delete identity
 	Delete(context.Context, *DeleteIdentityRequest) (*DeleteIdentityResponse, error)
+	// Check if identity exists
+	Exists(context.Context, *ExistsIdentityRequest) (*ExistsIdentityResponse, error)
+	// Get policy that is managed by service
+	GetServiceManagedIdentity(context.Context, *GetServiceManagedIdentityRequest) (*GetServiceManagedIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error)
 	// Remove policy from the identity. If policy was already removed - does nothing.
@@ -155,6 +181,12 @@ func (UnimplementedIAMIdentityServiceServer) Get(context.Context, *GetIdentityRe
 }
 func (UnimplementedIAMIdentityServiceServer) Delete(context.Context, *DeleteIdentityRequest) (*DeleteIdentityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) Exists(context.Context, *ExistsIdentityRequest) (*ExistsIdentityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Exists not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) GetServiceManagedIdentity(context.Context, *GetServiceManagedIdentityRequest) (*GetServiceManagedIdentityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServiceManagedIdentity not implemented")
 }
 func (UnimplementedIAMIdentityServiceServer) AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPolicy not implemented")
@@ -234,6 +266,42 @@ func _IAMIdentityService_Delete_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IAMIdentityServiceServer).Delete(ctx, req.(*DeleteIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMIdentityService_Exists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExistsIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).Exists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/Exists",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).Exists(ctx, req.(*ExistsIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMIdentityService_GetServiceManagedIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetServiceManagedIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).GetServiceManagedIdentity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/GetServiceManagedIdentity",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).GetServiceManagedIdentity(ctx, req.(*GetServiceManagedIdentityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -346,6 +414,14 @@ var IAMIdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _IAMIdentityService_Delete_Handler,
+		},
+		{
+			MethodName: "Exists",
+			Handler:    _IAMIdentityService_Exists_Handler,
+		},
+		{
+			MethodName: "GetServiceManagedIdentity",
+			Handler:    _IAMIdentityService_GetServiceManagedIdentity_Handler,
 		},
 		{
 			MethodName: "AddPolicy",

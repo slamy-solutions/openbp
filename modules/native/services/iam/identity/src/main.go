@@ -48,6 +48,12 @@ func main() {
 	}
 	defer nativeStub.Close()
 
+	eventsHandler, err := services.NewEventHandlerService(systemStub)
+	if err != nil {
+		panic("Failed to create events handler. " + err.Error())
+	}
+	defer eventsHandler.Close()
+
 	// Creating grpc server
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
@@ -57,7 +63,10 @@ func main() {
 		}),
 	)
 
-	iamIdentityServer := services.NewIAmIdentityServer(systemStub, nativeStub)
+	iamIdentityServer, err := services.NewIAmIdentityServer(context.Background(), systemStub, nativeStub)
+	if err != nil {
+		panic("Failed to create GRPC server: " + err.Error())
+	}
 	native_iam_identity_grpc.RegisterIAMIdentityServiceServer(grpcServer, iamIdentityServer)
 
 	log.Println("Start listening for gRPC connections")

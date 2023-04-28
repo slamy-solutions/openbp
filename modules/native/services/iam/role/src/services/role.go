@@ -120,7 +120,7 @@ func (s *IAMRoleServer) Create(ctx context.Context, in *nativeIAmRoleGRPC.Create
 		role.ID = r.InsertedID.(primitive.ObjectID)
 	}
 
-	log.Info("Created new role with UUID [%s] and name [%s] in the [%s] namespace", role.ID.Hex(), in.Name, in.Namespace)
+	log.Infof("Created new role with UUID [%s] and name [%s] in the [%s] namespace", role.ID.Hex(), in.Name, in.Namespace)
 
 	return &nativeIAmRoleGRPC.CreateRoleResponse{Role: role.ToGRPCRole(in.Namespace)}, status.Error(codes.OK, "")
 }
@@ -270,7 +270,7 @@ func (s *IAMRoleServer) Delete(ctx context.Context, in *nativeIAmRoleGRPC.Delete
 	}
 
 	if r.DeletedCount != 0 {
-		log.Info("Deleted role with UUID [%s] from the [%s] namespace", in.Uuid, in.Namespace)
+		log.Infof("Deleted role with UUID [%s] from the [%s] namespace", in.Uuid, in.Namespace)
 	}
 
 	return &nativeIAmRoleGRPC.DeleteRoleResponse{Existed: r.DeletedCount != 0}, status.Error(codes.OK, "")

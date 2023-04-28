@@ -149,6 +149,34 @@ message DeleteIdentityResponse {
     bool existed = 1;
 }
 
+message ExistsIdentityRequest {
+    // Identity namespace
+    string namespace = 1;
+    // Identity unique identifier inside namespace
+    string uuid = 2;
+    // Use cache or not. Cache may not be valid under very rare conditions (simultaniour read and writes). Cache automatically clears after short period of time (30 seconds by default).
+    bool useCache = 3;
+}
+message ExistsIdentityResponse {
+    // True if identity exists, false if not
+    bool exists = 1;
+}
+
+message GetServiceManagedIdentityRequest {
+    // Namespace where to search for identity
+    string namespace = 1;
+    // Service which manages this identity
+    string service = 2;
+    // Special ID for this identity defined by this service
+    string managedId = 3;
+    // Use cache or not. Cache may not be valid under very rare conditions (simultaniour read and writes). Cache automatically clears after short period of time (30 seconds by default).
+    bool useCache = 4;
+}
+message GetServiceManagedIdentityResponse {
+    // Founded identity
+    Identity identity = 1;
+}
+
 message AddPolicyRequest {
     // Identity namespace
     string identityNamespace = 1;
@@ -230,6 +258,11 @@ service IAMIdentityService {
     rpc Get(GetIdentityRequest) returns (GetIdentityResponse);
     // Delete identity
     rpc Delete(DeleteIdentityRequest) returns (DeleteIdentityResponse);
+    // Check if identity exists
+    rpc Exists(ExistsIdentityRequest) returns (ExistsIdentityResponse);
+
+    // Get policy that is managed by service
+    rpc GetServiceManagedIdentity(GetServiceManagedIdentityRequest) returns (GetServiceManagedIdentityResponse);
 
     // Add policy to the identity. If policy was already added - does nothing.
     rpc AddPolicy(AddPolicyRequest) returns (AddPolicyResponse);

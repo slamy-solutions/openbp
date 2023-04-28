@@ -62,14 +62,14 @@ func (s *jwtService) loadPublicKey(ctx context.Context) error {
 					KeyName: jwtVaultKeyName,
 				})
 				if err != nil {
-					return errors.New("JWT RSA public key not found system_vault. Unexpected error while creating it: " + err.Error())
+					return errors.New("JWT RSA public key not found in system_vault. Unexpected error while creating it: " + err.Error())
 				}
 
 				getRSAKeyResponse, err := s.systemStub.Vault.GetRSAPublicKey(ctx, &vault.GetRSAPublicKeyRequest{
 					KeyName: jwtVaultKeyName,
 				})
 				if err != nil {
-					return errors.New("JWT RSA public key not found system_vault. Key-pair was created, but still failed to get it: " + err.Error())
+					return errors.New("JWT RSA public key not found in system_vault. Key-pair was created, but still failed to get it: " + err.Error())
 				}
 				s.rsaKey = getRSAKeyResponse.PublicKey
 			}
@@ -133,6 +133,9 @@ func (s *jwtService) JWTDataFromString(ctx context.Context, input string) (*JWTD
 }
 
 func (s *jwtService) JWTDataToSignedString(ctx context.Context, data *JWTData) (string, error) {
+	// Make sure Key Pair created. In this case, public key must exist and be loaded.
+	s.getPublicKey(ctx)
+
 	token := goJWT.NewWithClaims(goJWT.SigningMethodRS512, data)
 	stringToSign, err := token.SigningString()
 	if err != nil {

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,13 +37,20 @@ const (
 	IDENTITY_CACHE_TIMEOUT = time.Second * 30
 )
 
-func NewIAmIdentityServer(systemStub *system.SystemStub, nativeStub *native.NativeStub) *IAmIdentityServer {
+func NewIAmIdentityServer(ctx context.Context, systemStub *system.SystemStub, nativeStub *native.NativeStub) (*IAmIdentityServer, error) {
 	mongoGlobalCollection := systemStub.DB.Database("openbp_global").Collection("native_iam_identity")
+
+	// Ensure indexes for global namespace
+	err := ensureIndexesForNamespace(ctx, "", systemStub)
+	if err != nil {
+		return nil, errors.New("Failed to ensure indexes for global namespace: " + err.Error())
+	}
+
 	return &IAmIdentityServer{
 		mongoGlobalCollection: mongoGlobalCollection,
 		systemStub:            systemStub,
 		nativeStub:            nativeStub,
-	}
+	}, nil
 }
 
 func makeIndetityCacheKey(namespace string, uuid string) string {
@@ -189,6 +197,83 @@ func (s *IAmIdentityServer) Delete(ctx context.Context, in *nativeIAmIdentityGRP
 	}
 
 	return &nativeIAmIdentityGRPC.DeleteIdentityResponse{Existed: result.DeletedCount != 0}, status.Error(grpccodes.OK, "")
+}
+
+func (s *IAmIdentityServer) Exists(ctx context.Context, in *nativeIAmIdentityGRPC.ExistsIdentityRequest) (*nativeIAmIdentityGRPC.ExistsIdentityResponse, error) {
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Identity UUID has bad format")
+	}
+
+	var cacheKey string
+	if in.UseCache {
+		cacheKey = makeIndetityCacheKey(in.Namespace, in.Uuid)
+		exist, err := s.systemStub.Cache.Has(ctx, cacheKey)
+		if err == nil && exist {
+			return &nativeIAmIdentityGRPC.ExistsIdentityResponse{Exists: true}, status.Error(grpccodes.OK, "")
+		}
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	if in.UseCache {
+		var mongoIdentity identityInMongo
+		err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&mongoIdentity)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return &nativeIAmIdentityGRPC.ExistsIdentityResponse{Exists: false}, status.Error(grpccodes.OK, "")
+			}
+			if err, ok := err.(mongo.WriteException); ok {
+				if err.HasErrorLabel("InvalidNamespace") {
+					return &nativeIAmIdentityGRPC.ExistsIdentityResponse{Exists: false}, status.Error(grpccodes.OK, "Namespace doesnt exist.")
+				}
+			}
+			return nil, status.Error(grpccodes.Internal, err.Error())
+		}
+		identity := mongoIdentity.ToGRPCIdentity(in.Namespace)
+		identityBytes, err := proto.Marshal(identity)
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Error while marshaling policy to cache: "+err.Error())
+		}
+		s.systemStub.Cache.Set(ctx, cacheKey, identityBytes, IDENTITY_CACHE_TIMEOUT)
+		return &nativeIAmIdentityGRPC.ExistsIdentityResponse{Exists: true}, status.Error(grpccodes.OK, "")
+	} else {
+		// Fast check in mongo if exist without getting data
+		count, err := collection.CountDocuments(ctx, bson.M{"_id": id}, options.Count().SetLimit(1))
+		if err != nil {
+			if err, ok := err.(mongo.WriteException); ok {
+				if err.HasErrorLabel("InvalidNamespace") {
+					return &nativeIAmIdentityGRPC.ExistsIdentityResponse{Exists: false}, status.Error(grpccodes.OK, "Namespace doesnt exist.")
+				}
+			}
+			return nil, status.Error(grpccodes.Internal, err.Error())
+		}
+
+		return &nativeIAmIdentityGRPC.ExistsIdentityResponse{Exists: count == 1}, status.Error(grpccodes.OK, "")
+	}
+}
+func (s *IAmIdentityServer) GetServiceManagedIdentity(ctx context.Context, in *nativeIAmIdentityGRPC.GetServiceManagedIdentityRequest) (*nativeIAmIdentityGRPC.GetServiceManagedIdentityResponse, error) {
+	// TODO: Add cache. Probably need to hash "service" and "managedid" to create index cause theirs values can be in any format
+
+	collection := collectionByNamespace(s, in.Namespace)
+	var identity identityInMongo
+	err := collection.FindOne(ctx, bson.M{
+		"managed._managementType":     identity_managed_service,
+		"managed.serviceName":         in.Service,
+		"managed.serviceManagementId": in.ManagedId,
+	}, options.FindOne().SetHint(fast_search_service_index)).Decode(&identity)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(grpccodes.NotFound, "Identity with provided service name, id and namespace not found")
+		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return nil, status.Error(grpccodes.NotFound, "Identity wasnt founded. Probably namespace doesnt exist")
+			}
+		}
+		return nil, status.Error(grpccodes.Internal, "Error while searching for policy in database. "+err.Error())
+	}
+
+	return &nativeIAmIdentityGRPC.GetServiceManagedIdentityResponse{Identity: identity.ToGRPCIdentity(in.Namespace)}, status.Error(grpccodes.OK, "")
 }
 
 func (s *IAmIdentityServer) AddPolicy(ctx context.Context, in *nativeIAmIdentityGRPC.AddPolicyRequest) (*nativeIAmIdentityGRPC.AddPolicyResponse, error) {

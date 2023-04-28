@@ -58,6 +58,9 @@ services:
     build:
       context: .
       dockerfile: modules/system/services/vault/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "system_vault"
     ports:
       - "127.0.0.1:28205:80" # For testing
 

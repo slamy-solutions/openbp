@@ -8,10 +8,13 @@ replace github.com/slamy-solutions/openbp/modules/native/libs/golang => ../../..
 
 require (
 	github.com/golang/protobuf v1.5.2
+	github.com/nats-io/nats.go v1.23.0
+	github.com/sirupsen/logrus v1.9.0
 	github.com/slamy-solutions/openbp/modules/native/libs/golang v0.0.0-20230115172437-fcc177ae9cff
 	github.com/slamy-solutions/openbp/modules/system/libs/golang v0.0.0-20230115172437-fcc177ae9cff
 	go.mongodb.org/mongo-driver v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.38.0
+	go.opentelemetry.io/otel v1.12.0
 	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
 )
@@ -28,19 +31,18 @@ require (
 	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.0 // indirect
 	github.com/nats-io/jwt/v2 v2.3.0 // indirect
-	github.com/nats-io/nats.go v1.23.0 // indirect
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/redis/go-redis/v9 v9.0.1 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.2 // indirect
+	github.com/redis/go-redis/extra/redisotel/v9 v9.0.2 // indirect
+	github.com/redis/go-redis/v9 v9.0.2 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo v0.38.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.13.0 // indirect
-	go.opentelemetry.io/otel v1.12.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.12.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.12.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.12.0 // indirect

@@ -22,14 +22,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IAMAuthServiceClient interface {
-	// Create access token and refresh token using password
+	// OAuth. Create access token and refresh token using password
 	CreateTokenWithPassword(ctx context.Context, in *CreateTokenWithPasswordRequest, opts ...grpc.CallOption) (*CreateTokenWithPasswordResponse, error)
-	// Creates new access token using refresh tokenna
+	// OAuth. Creates new access token using refresh tokenna
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 	// rpc VerifyResoureAccess(VerifyResourceAccessRequest) returns (VerifyResourceAccessResponse);
-	// Checks if token is allowed to perform actions from the specified scopes
+	// OAuth. Check if token is allowed to perform actions from the specified scopes
 	CheckAccessWithToken(ctx context.Context, in *CheckAccessWithTokenRequest, opts ...grpc.CallOption) (*CheckAccessWithTokenResponse, error)
-	// Checks if provided identity with proposed password is allowed to perform actions from the provided scopes
+	// Basic Auth. Check if provided identity with proposed password is allowed to perform actions from the provided scopes
 	CheckAccessWithPassword(ctx context.Context, in *CheckAccessWithPasswordRequest, opts ...grpc.CallOption) (*CheckAccessWithPasswordResponse, error)
 }
 
@@ -81,14 +81,14 @@ func (c *iAMAuthServiceClient) CheckAccessWithPassword(ctx context.Context, in *
 // All implementations must embed UnimplementedIAMAuthServiceServer
 // for forward compatibility
 type IAMAuthServiceServer interface {
-	// Create access token and refresh token using password
+	// OAuth. Create access token and refresh token using password
 	CreateTokenWithPassword(context.Context, *CreateTokenWithPasswordRequest) (*CreateTokenWithPasswordResponse, error)
-	// Creates new access token using refresh tokenna
+	// OAuth. Creates new access token using refresh tokenna
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	// rpc VerifyResoureAccess(VerifyResourceAccessRequest) returns (VerifyResourceAccessResponse);
-	// Checks if token is allowed to perform actions from the specified scopes
+	// OAuth. Check if token is allowed to perform actions from the specified scopes
 	CheckAccessWithToken(context.Context, *CheckAccessWithTokenRequest) (*CheckAccessWithTokenResponse, error)
-	// Checks if provided identity with proposed password is allowed to perform actions from the provided scopes
+	// Basic Auth. Check if provided identity with proposed password is allowed to perform actions from the provided scopes
 	CheckAccessWithPassword(context.Context, *CheckAccessWithPasswordRequest) (*CheckAccessWithPasswordResponse, error)
 	mustEmbedUnimplementedIAMAuthServiceServer()
 }
