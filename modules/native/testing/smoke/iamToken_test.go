@@ -50,6 +50,7 @@ func TestIAMToken(t *testing.T) {
 		UseCache: true,
 	})
 	require.Nil(t, err)
+	require.Equal(t, token.ValidateResponse_OK, tokenValidateResponse.Status)
 	assert.Equal(t, metadata, tokenValidateResponse.TokenData.CreationMetadata)
 	assert.Equal(t, tokenCreateResponse.TokenData.Uuid, tokenValidateResponse.TokenData.Uuid)
 

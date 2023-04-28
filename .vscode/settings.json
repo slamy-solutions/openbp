@@ -1,4 +1,5 @@
 {
+    "go.testFlags": ["--count=1"],
     "go.testEnvVars": {
         "SYSTEM_DB_URL": "mongodb://root:example@127.0.0.1:28200/admin",
         "SYSTEM_CACHE_URL": "redis://127.0.0.1:28201",

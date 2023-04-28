@@ -2,8 +2,11 @@ package jwt
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -18,8 +21,8 @@ import (
 const jwtVaultKeyName = "native_iam_token_jwt"
 
 type jwtService struct {
-	rsaKey       []byte
-	keyLoadMutex sync.RWMutex
+	rsaKey       *rsa.PublicKey
+	keyLoadMutex *sync.RWMutex
 
 	systemStub *system.SystemStub
 }
@@ -35,8 +38,8 @@ var ErrVaultSealed = errors.New("vault is sealed. Its impossible to perform any 
 
 func NewJWTService(systemStub *system.SystemStub) JWTService {
 	return &jwtService{
-		rsaKey:       []byte{},
-		keyLoadMutex: sync.RWMutex{},
+		rsaKey:       nil,
+		keyLoadMutex: &sync.RWMutex{},
 		systemStub:   systemStub,
 	}
 }
@@ -45,7 +48,7 @@ func (s *jwtService) loadPublicKey(ctx context.Context) error {
 	s.keyLoadMutex.Lock()
 	defer s.keyLoadMutex.Unlock()
 
-	if len(s.rsaKey) != 0 {
+	if s.rsaKey != nil {
 		return nil
 	}
 
@@ -71,13 +74,21 @@ func (s *jwtService) loadPublicKey(ctx context.Context) error {
 				if err != nil {
 					return errors.New("JWT RSA public key not found in system_vault. Key-pair was created, but still failed to get it: " + err.Error())
 				}
-				s.rsaKey = getRSAKeyResponse.PublicKey
+				key, err := x509.ParsePKCS1PublicKey(getRSAKeyResponse.PublicKey)
+				if err != nil {
+					return errors.New("failed to parse RSA public key: " + err.Error())
+				}
+				s.rsaKey = key
 			}
+		} else {
+			return errors.New("unexpected error while trying to get JWT RSA public key from the system_vault: " + err.Error())
 		}
-
-		return errors.New("unexpected error while trying to get JWT RSA public key from the system_vault: " + err.Error())
 	} else {
-		s.rsaKey = getRSAKeyResponse.PublicKey
+		key, err := x509.ParsePKCS1PublicKey(getRSAKeyResponse.PublicKey)
+		if err != nil {
+			return errors.New("failed to parse RSA public key: " + err.Error())
+		}
+		s.rsaKey = key
 	}
 
 	// Remove key from the memory after small period of time. This will force even public key to be deleted when vault is sealed.
@@ -85,27 +96,23 @@ func (s *jwtService) loadPublicKey(ctx context.Context) error {
 		time.Sleep(time.Second * 30)
 
 		s.keyLoadMutex.Lock()
-		defer s.keyLoadMutex.Unlock()
-
-		s.rsaKey = []byte{}
+		s.rsaKey = nil
+		s.keyLoadMutex.Unlock()
 	}()
 
 	return nil
 }
 
-func (s *jwtService) getPublicKey(ctx context.Context) ([]byte, error) {
-	{
-		s.keyLoadMutex.RLock()
-		defer s.keyLoadMutex.RUnlock()
+func (s *jwtService) getPublicKey(ctx context.Context) (*rsa.PublicKey, error) {
+	s.keyLoadMutex.RLock()
+	loaded := s.rsaKey != nil
+	s.keyLoadMutex.RUnlock()
 
-		if len(s.rsaKey) != 0 {
-			return s.rsaKey, nil
+	if !loaded {
+		err := s.loadPublicKey(ctx)
+		if err != nil {
+			return nil, err
 		}
-	}
-
-	err := s.loadPublicKey(ctx)
-	if err != nil {
-		return []byte{}, err
 	}
 	return s.rsaKey, nil
 }
@@ -118,6 +125,10 @@ func (s *jwtService) JWTDataFromString(ctx context.Context, input string) (*JWTD
 
 	data := &JWTData{}
 	_, err = goJWT.ParseWithClaims(input, data, func(token *goJWT.Token) (interface{}, error) {
+		if _, ok := token.Method.(*goJWT.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected method: %s", token.Header["alg"])
+		}
+
 		return rsaKey, nil
 	})
 	if err != nil {
@@ -181,6 +192,6 @@ func (s *jwtService) JWTDataToSignedString(ctx context.Context, data *JWTData) (
 		return "", errors.New("unexpected error while signing JWT token in the syste_vault: " + err.Error())
 	}
 
-	signature := base64.StdEncoding.EncodeToString(signResponse.Signature)
+	signature := base64.RawURLEncoding.EncodeToString(signResponse.Signature)
 	return strings.Join([]string{stringToSign, signature}, "."), nil
 }
