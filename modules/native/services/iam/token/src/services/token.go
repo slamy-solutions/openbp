@@ -481,6 +481,13 @@ func (s *IAmTokenServer) GetTokensForIdentity(in *nativeIAmTokenGRPC.GetTokensFo
 	findOptions := options.Find().SetSkip(int64(in.Skip)).SetLimit(int64(in.Limit)).SetSort(bson.D{{Key: "createdAt", Value: -1}})
 	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {
+		// Handle error in case if namespaces is not valid (not exist)
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorCode(73) { // InvalidNamespace
+				return status.Error(grpccodes.OK, "")
+			}
+		}
+
 		return status.Error(grpccodes.Internal, "Failed to fetch data from the database: "+err.Error())
 	}
 	defer cursor.Close(ctx)
