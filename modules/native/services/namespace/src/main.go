@@ -40,6 +40,7 @@ func main() {
 	if err != nil {
 		panic("Failed to connect to the system services: " + err.Error())
 	}
+	defer systemStub.Close(context.Background())
 
 	js, err := systemStub.Nats.JetStream()
 	if err != nil {
