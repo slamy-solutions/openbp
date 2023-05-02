@@ -82,7 +82,7 @@ func (s *BuiltInTestSuite) TestGetForNamespaceEmpty() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Millisecond * 500)
 
 	_, err = s.nativeStub.Services.IamPolicy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
 		Namespace: namespaceName,

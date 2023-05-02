@@ -43,7 +43,7 @@ func Register(ctx context.Context, endpoint string, serviceModule string, servic
 
 	r, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(serviceName),
+			semconv.ServiceNameKey.String(serviceModule+":"+serviceName),
 			semconv.ServiceVersionKey.String(serviceVersion),
 			semconv.ServiceNamespaceKey.String(serviceModule),
 			semconv.ServiceInstanceIDKey.String(serviceInstanceID),

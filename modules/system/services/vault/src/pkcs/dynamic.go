@@ -288,7 +288,7 @@ func (h *DynamicPKCSHandle) GetRSAPublicKey(ctx context.Context, name string) ([
 	return x509.MarshalPKCS1PublicKey(publicKey), nil
 }
 
-func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
+func (h *DynamicPKCSHandle) SignRSAStream(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -333,7 +333,7 @@ func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message *i
 		}
 	}
 }
-func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
+func (h *DynamicPKCSHandle) VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -372,6 +372,49 @@ func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message 
 			return false, errors.New("error while reading data for verification: " + err.Error())
 		}
 	}
+}
+
+func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message []byte) ([]byte, error) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	privateKey, _, err := h.findRSAKeyPair(name)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
+	err = h.PKCS11Ctx.SignInit(h.session, mechanism, privateKey)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("error while initializing RSA signing algorithm: " + err.Error())
+	}
+
+	signature, err := h.PKCS11Ctx.Sign(h.session, message)
+	if err != nil {
+		return []byte{}, errors.New("error while signing message with RSA: " + err.Error())
+	}
+
+	return signature, nil
+}
+func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message []byte, signature []byte) (bool, error) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	_, publicKey, err := h.findRSAKeyPair(name)
+	if err != nil {
+		return false, err
+	}
+
+	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
+	err = h.PKCS11Ctx.VerifyInit(h.session, mechanism, publicKey)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return false, errors.New("error while initializing RSA verification algorithm: " + err.Error())
+	}
+
+	err = h.PKCS11Ctx.Verify(h.session, message, signature)
+	return err == nil, nil
 }
 
 // Tries to find key-pair. returns private and public key handles
@@ -455,7 +498,7 @@ func (h *DynamicPKCSHandle) findHMACKey(name string) (pkcs11.ObjectHandle, error
 	return objs[0], nil
 }
 
-func (h *DynamicPKCSHandle) SignHMAC(ctx context.Context, message *io.PipeReader) ([]byte, error) {
+func (h *DynamicPKCSHandle) SignHMACStream(ctx context.Context, message *io.PipeReader) ([]byte, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -468,7 +511,7 @@ func (h *DynamicPKCSHandle) SignHMAC(ctx context.Context, message *io.PipeReader
 	err = h.PKCS11Ctx.SignInit(h.session, mechanism, key)
 	if err != nil {
 		go h.LogOutAndCloseSession()
-		return []byte{}, errors.New("error while initializing RSA signing algorithm: " + err.Error())
+		return []byte{}, errors.New("error while initializing HMAC signing algorithm: " + err.Error())
 	}
 
 	dataBuffer := make([]byte, 2048)
@@ -500,7 +543,7 @@ func (h *DynamicPKCSHandle) SignHMAC(ctx context.Context, message *io.PipeReader
 		}
 	}
 }
-func (h *DynamicPKCSHandle) VerifyHMAC(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error) {
+func (h *DynamicPKCSHandle) VerifyHMACStream(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -513,7 +556,7 @@ func (h *DynamicPKCSHandle) VerifyHMAC(ctx context.Context, message *io.PipeRead
 	err = h.PKCS11Ctx.VerifyInit(h.session, mechanism, key)
 	if err != nil {
 		go h.LogOutAndCloseSession()
-		return false, errors.New("error while initializing RSA signing algorithm: " + err.Error())
+		return false, errors.New("error while initializing HMAC signing algorithm: " + err.Error())
 	}
 
 	dataBuffer := make([]byte, 2048)
@@ -541,14 +584,57 @@ func (h *DynamicPKCSHandle) VerifyHMAC(ctx context.Context, message *io.PipeRead
 	}
 }
 
+func (h *DynamicPKCSHandle) SignHMAC(ctx context.Context, message []byte) ([]byte, error) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	key, err := h.findHMACKey(defaultHMACKeyName)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_HMAC, nil)}
+	err = h.PKCS11Ctx.SignInit(h.session, mechanism, key)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("error while initializing HMAC signing algorithm: " + err.Error())
+	}
+
+	signature, err := h.PKCS11Ctx.Sign(h.session, message)
+	if err != nil {
+		return []byte{}, errors.New("error while signing message with HMAC: " + err.Error())
+	}
+
+	return signature, nil
+}
+func (h *DynamicPKCSHandle) VerifyHMAC(ctx context.Context, message []byte, signature []byte) (bool, error) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	key, err := h.findHMACKey(defaultHMACKeyName)
+	if err != nil {
+		return false, err
+	}
+
+	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_HMAC, nil)}
+	err = h.PKCS11Ctx.VerifyInit(h.session, mechanism, key)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return false, errors.New("error while initializing HMAC signing algorithm: " + err.Error())
+	}
+
+	err = h.PKCS11Ctx.Verify(h.session, message, signature)
+	return err == nil, nil
+}
+
 func (h *DynamicPKCSHandle) findEncryptionKey(name string) (pkcs11.ObjectHandle, error) {
 	return 0, nil
 }
 
-func (h *DynamicPKCSHandle) Encrypt(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error {
+func (h *DynamicPKCSHandle) EncryptStream(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error {
 	return errors.New("not implemented")
 }
-func (h *DynamicPKCSHandle) Decrypt(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error {
+func (h *DynamicPKCSHandle) DecryptStream(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error {
 	return errors.New("not implemented")
 }
 

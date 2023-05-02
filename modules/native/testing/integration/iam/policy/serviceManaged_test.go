@@ -117,6 +117,8 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
 	require.Equal(s.T(), managedReason, createResponse.Policy.Managed.(*policy.Policy_Service).Service.Reason)
 	require.Equal(s.T(), managedId, createResponse.Policy.Managed.(*policy.Policy_Service).Service.ManagementId)
 
+	time.Sleep(time.Second) // You need time after namespace creation for this functionality to start working.
+
 	getResponse, err := s.nativeStub.Services.IamPolicy.GetServiceManagedPolicy(ctx, &policy.GetServiceManagedPolicyRequest{
 		Namespace: namespaceName,
 		Service:   managedService,
@@ -298,6 +300,8 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManage
 	})
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
+
+	time.Sleep(time.Second) // You need time after namespace creation for this functionality to start working.
 
 	_, err = s.nativeStub.Services.IamPolicy.GetServiceManagedPolicy(ctx, &policy.GetServiceManagedPolicyRequest{
 		Namespace: namespaceName,

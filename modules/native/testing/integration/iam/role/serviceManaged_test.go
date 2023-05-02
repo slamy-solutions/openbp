@@ -111,6 +111,8 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
 	require.Equal(s.T(), managedReason, createResponse.Role.Managed.(*role.Role_Service).Service.Reason)
 	require.Equal(s.T(), managedId, createResponse.Role.Managed.(*role.Role_Service).Service.ManagementId)
 
+	time.Sleep(time.Second) // You need time after namespace creation for this functionality to start working.
+
 	getResponse, err := s.nativeStub.Services.IamRole.GetServiceManagedRole(ctx, &role.GetServiceManagedRoleRequest{
 		Namespace: namespaceName,
 		Service:   managedService,
@@ -274,6 +276,8 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManage
 	})
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: createResponse.Role.Uuid})
+
+	time.Sleep(time.Second) // You need time after namespace creation for this functionality to start working.
 
 	_, err = s.nativeStub.Services.IamRole.GetServiceManagedRole(ctx, &role.GetServiceManagedRoleRequest{
 		Namespace: namespaceName,

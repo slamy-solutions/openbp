@@ -13,7 +13,7 @@ var ErrPKCSBadLoginPassword = errors.New("bad pkcs password")
 
 var ErrRSAKeyDoesntExist = errors.New("RSA key doesnt exist")
 var ErrHMACKeyDoesntExist = errors.New("HMAC key doesnt exist")
-var ErrEncryptionKeyDoesntExist = errors.New("Encryption key doesnt exist")
+var ErrEncryptionKeyDoesntExist = errors.New("encryption key doesnt exist")
 
 type PKCS interface {
 	Initialize() error
@@ -29,20 +29,28 @@ type PKCS interface {
 	EnsureRSAKeyPair(ctx context.Context, name string) error
 	// Returns RSA public key if it exists
 	GetRSAPublicKey(ctx context.Context, name string) ([]byte, error)
+	// Signs message stream using RSA private key
+	SignRSAStream(ctx context.Context, name string, message *io.PipeReader) ([]byte, error)
+	// Verifies message stream using RSA public key
+	VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error)
 	// Signs message using RSA private key
-	SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error)
+	SignRSA(ctx context.Context, name string, message []byte) ([]byte, error)
 	// Verifies message using RSA public key
-	VerifyRSA(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error)
+	VerifyRSA(ctx context.Context, name string, message []byte, signature []byte) (bool, error)
 
+	// Create HMAC based on message stream
+	SignHMACStream(ctx context.Context, message *io.PipeReader) ([]byte, error)
+	// Checks if HMAC corresponds to provided message stream
+	VerifyHMACStream(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error)
 	// Create HMAC based on message
-	SignHMAC(ctx context.Context, message *io.PipeReader) ([]byte, error)
+	SignHMAC(ctx context.Context, message []byte) ([]byte, error)
 	// Checks if HMAC corresponds to provided message
-	VerifyHMAC(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error)
+	VerifyHMAC(ctx context.Context, message []byte, signature []byte) (bool, error)
 
-	// Encrypt message
-	Encrypt(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error
-	// Decrypt message
-	Decrypt(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error
+	// Encrypt message stream
+	EncryptStream(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error
+	// Decrypt message stream
+	DecryptStream(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error
 
 	Close() error
 }

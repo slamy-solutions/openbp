@@ -34,18 +34,26 @@ type VaultServiceClient interface {
 	EnsureRSAKeyPair(ctx context.Context, in *EnsureRSAKeyPairRequest, opts ...grpc.CallOption) (*EnsureRSAKeyPairResponse, error)
 	// Get public key of the RSA keypair.
 	GetRSAPublicKey(ctx context.Context, in *GetRSAPublicKeyRequest, opts ...grpc.CallOption) (*GetRSAPublicKeyResponse, error)
-	// Sign message with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
-	RSASign(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignClient, error)
-	// Validate signature of the message using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
-	RSAVerify(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyClient, error)
-	// Calculates HMAC signature for input data. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
-	HMACSign(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACSignClient, error)
-	// Verifies HMAC signature of the data.
-	HMACVerify(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACVerifyClient, error)
-	// Encrypts message. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
-	Encrypt(ctx context.Context, opts ...grpc.CallOption) (VaultService_EncryptClient, error)
-	// Decrypts message. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
-	Decrypt(ctx context.Context, opts ...grpc.CallOption) (VaultService_DecryptClient, error)
+	// Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	RSASignStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignStreamClient, error)
+	// Validate signature of the message stream using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+	RSAVerifyStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyStreamClient, error)
+	// Sign message with RSA. Message should be short (max several kylobytes). If data is longer - use `RSASignStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	RSASign(ctx context.Context, in *RSASignRequest, opts ...grpc.CallOption) (*RSASignResponse, error)
+	// Validate signature of the message using RSA key-pairs public key. Message should be short (max several kylobytes). If data is longer - use `RSAVerifyStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+	RSAVerify(ctx context.Context, in *RSAVerifyRequest, opts ...grpc.CallOption) (*RSAVerifyResponse, error)
+	// Calculates HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	HMACSignStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACSignStreamClient, error)
+	// Verifies HMAC signature of the data stream.
+	HMACVerifyStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACVerifyStreamClient, error)
+	// Calculates HMAC signature for input data. Data should be short (max several kylobytes). If data is longer - use `HMACSignStream`. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	HMACSign(ctx context.Context, in *HMACSignRequest, opts ...grpc.CallOption) (*HMACSignResponse, error)
+	// Verifies HMAC signature of the data. Data should be short (max several kylobytes). If data is longer - use `HMACVerifyStream`.
+	HMACVerify(ctx context.Context, in *HMACVerifyRequest, opts ...grpc.CallOption) (*HMACVerifyResponse, error)
+	// Encrypts message stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
+	EncryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_EncryptStreamClient, error)
+	// Decrypts message stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
+	DecryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_DecryptStreamClient, error)
 }
 
 type vaultServiceClient struct {
@@ -110,198 +118,234 @@ func (c *vaultServiceClient) GetRSAPublicKey(ctx context.Context, in *GetRSAPubl
 	return out, nil
 }
 
-func (c *vaultServiceClient) RSASign(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignClient, error) {
-	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[0], "/system_vault.VaultService/RSASign", opts...)
+func (c *vaultServiceClient) RSASignStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[0], "/system_vault.VaultService/RSASignStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &vaultServiceRSASignClient{stream}
+	x := &vaultServiceRSASignStreamClient{stream}
 	return x, nil
 }
 
-type VaultService_RSASignClient interface {
-	Send(*RSASignRequest) error
-	CloseAndRecv() (*RSASignResponse, error)
+type VaultService_RSASignStreamClient interface {
+	Send(*RSASignStreamRequest) error
+	CloseAndRecv() (*RSASignStreamResponse, error)
 	grpc.ClientStream
 }
 
-type vaultServiceRSASignClient struct {
+type vaultServiceRSASignStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *vaultServiceRSASignClient) Send(m *RSASignRequest) error {
+func (x *vaultServiceRSASignStreamClient) Send(m *RSASignStreamRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *vaultServiceRSASignClient) CloseAndRecv() (*RSASignResponse, error) {
+func (x *vaultServiceRSASignStreamClient) CloseAndRecv() (*RSASignStreamResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(RSASignResponse)
+	m := new(RSASignStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *vaultServiceClient) RSAVerify(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyClient, error) {
-	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[1], "/system_vault.VaultService/RSAVerify", opts...)
+func (c *vaultServiceClient) RSAVerifyStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[1], "/system_vault.VaultService/RSAVerifyStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &vaultServiceRSAVerifyClient{stream}
+	x := &vaultServiceRSAVerifyStreamClient{stream}
 	return x, nil
 }
 
-type VaultService_RSAVerifyClient interface {
-	Send(*RSAVerifyRequest) error
-	CloseAndRecv() (*RSAVerifyResponse, error)
+type VaultService_RSAVerifyStreamClient interface {
+	Send(*RSAVerifyStreamRequest) error
+	CloseAndRecv() (*RSAVerifyStreamResponse, error)
 	grpc.ClientStream
 }
 
-type vaultServiceRSAVerifyClient struct {
+type vaultServiceRSAVerifyStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *vaultServiceRSAVerifyClient) Send(m *RSAVerifyRequest) error {
+func (x *vaultServiceRSAVerifyStreamClient) Send(m *RSAVerifyStreamRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *vaultServiceRSAVerifyClient) CloseAndRecv() (*RSAVerifyResponse, error) {
+func (x *vaultServiceRSAVerifyStreamClient) CloseAndRecv() (*RSAVerifyStreamResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(RSAVerifyResponse)
+	m := new(RSAVerifyStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *vaultServiceClient) HMACSign(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACSignClient, error) {
-	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[2], "/system_vault.VaultService/HMACSign", opts...)
+func (c *vaultServiceClient) RSASign(ctx context.Context, in *RSASignRequest, opts ...grpc.CallOption) (*RSASignResponse, error) {
+	out := new(RSASignResponse)
+	err := c.cc.Invoke(ctx, "/system_vault.VaultService/RSASign", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &vaultServiceHMACSignClient{stream}
+	return out, nil
+}
+
+func (c *vaultServiceClient) RSAVerify(ctx context.Context, in *RSAVerifyRequest, opts ...grpc.CallOption) (*RSAVerifyResponse, error) {
+	out := new(RSAVerifyResponse)
+	err := c.cc.Invoke(ctx, "/system_vault.VaultService/RSAVerify", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vaultServiceClient) HMACSignStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACSignStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[2], "/system_vault.VaultService/HMACSignStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &vaultServiceHMACSignStreamClient{stream}
 	return x, nil
 }
 
-type VaultService_HMACSignClient interface {
-	Send(*HMACSignRequest) error
-	CloseAndRecv() (*HMACSignResponse, error)
+type VaultService_HMACSignStreamClient interface {
+	Send(*HMACSignStreamRequest) error
+	CloseAndRecv() (*HMACSignStreamResponse, error)
 	grpc.ClientStream
 }
 
-type vaultServiceHMACSignClient struct {
+type vaultServiceHMACSignStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *vaultServiceHMACSignClient) Send(m *HMACSignRequest) error {
+func (x *vaultServiceHMACSignStreamClient) Send(m *HMACSignStreamRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *vaultServiceHMACSignClient) CloseAndRecv() (*HMACSignResponse, error) {
+func (x *vaultServiceHMACSignStreamClient) CloseAndRecv() (*HMACSignStreamResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(HMACSignResponse)
+	m := new(HMACSignStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *vaultServiceClient) HMACVerify(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACVerifyClient, error) {
-	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[3], "/system_vault.VaultService/HMACVerify", opts...)
+func (c *vaultServiceClient) HMACVerifyStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACVerifyStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[3], "/system_vault.VaultService/HMACVerifyStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &vaultServiceHMACVerifyClient{stream}
+	x := &vaultServiceHMACVerifyStreamClient{stream}
 	return x, nil
 }
 
-type VaultService_HMACVerifyClient interface {
-	Send(*HMACVerifyRequest) error
-	CloseAndRecv() (*HMACVerifyResponse, error)
+type VaultService_HMACVerifyStreamClient interface {
+	Send(*HMACVerifyStreamRequest) error
+	CloseAndRecv() (*HMACVerifyStreamResponse, error)
 	grpc.ClientStream
 }
 
-type vaultServiceHMACVerifyClient struct {
+type vaultServiceHMACVerifyStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *vaultServiceHMACVerifyClient) Send(m *HMACVerifyRequest) error {
+func (x *vaultServiceHMACVerifyStreamClient) Send(m *HMACVerifyStreamRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *vaultServiceHMACVerifyClient) CloseAndRecv() (*HMACVerifyResponse, error) {
+func (x *vaultServiceHMACVerifyStreamClient) CloseAndRecv() (*HMACVerifyStreamResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(HMACVerifyResponse)
+	m := new(HMACVerifyStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *vaultServiceClient) Encrypt(ctx context.Context, opts ...grpc.CallOption) (VaultService_EncryptClient, error) {
-	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[4], "/system_vault.VaultService/Encrypt", opts...)
+func (c *vaultServiceClient) HMACSign(ctx context.Context, in *HMACSignRequest, opts ...grpc.CallOption) (*HMACSignResponse, error) {
+	out := new(HMACSignResponse)
+	err := c.cc.Invoke(ctx, "/system_vault.VaultService/HMACSign", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &vaultServiceEncryptClient{stream}
+	return out, nil
+}
+
+func (c *vaultServiceClient) HMACVerify(ctx context.Context, in *HMACVerifyRequest, opts ...grpc.CallOption) (*HMACVerifyResponse, error) {
+	out := new(HMACVerifyResponse)
+	err := c.cc.Invoke(ctx, "/system_vault.VaultService/HMACVerify", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vaultServiceClient) EncryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_EncryptStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[4], "/system_vault.VaultService/EncryptStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &vaultServiceEncryptStreamClient{stream}
 	return x, nil
 }
 
-type VaultService_EncryptClient interface {
-	Send(*EncryptRequest) error
-	Recv() (*EncryptResponse, error)
+type VaultService_EncryptStreamClient interface {
+	Send(*EncryptStreamRequest) error
+	Recv() (*EncryptStreamResponse, error)
 	grpc.ClientStream
 }
 
-type vaultServiceEncryptClient struct {
+type vaultServiceEncryptStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *vaultServiceEncryptClient) Send(m *EncryptRequest) error {
+func (x *vaultServiceEncryptStreamClient) Send(m *EncryptStreamRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *vaultServiceEncryptClient) Recv() (*EncryptResponse, error) {
-	m := new(EncryptResponse)
+func (x *vaultServiceEncryptStreamClient) Recv() (*EncryptStreamResponse, error) {
+	m := new(EncryptStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *vaultServiceClient) Decrypt(ctx context.Context, opts ...grpc.CallOption) (VaultService_DecryptClient, error) {
-	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[5], "/system_vault.VaultService/Decrypt", opts...)
+func (c *vaultServiceClient) DecryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_DecryptStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &VaultService_ServiceDesc.Streams[5], "/system_vault.VaultService/DecryptStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &vaultServiceDecryptClient{stream}
+	x := &vaultServiceDecryptStreamClient{stream}
 	return x, nil
 }
 
-type VaultService_DecryptClient interface {
-	Send(*DecryptRequest) error
-	Recv() (*DecryptResponse, error)
+type VaultService_DecryptStreamClient interface {
+	Send(*DecryptStreamRequest) error
+	Recv() (*DecryptStreamResponse, error)
 	grpc.ClientStream
 }
 
-type vaultServiceDecryptClient struct {
+type vaultServiceDecryptStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *vaultServiceDecryptClient) Send(m *DecryptRequest) error {
+func (x *vaultServiceDecryptStreamClient) Send(m *DecryptStreamRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *vaultServiceDecryptClient) Recv() (*DecryptResponse, error) {
-	m := new(DecryptResponse)
+func (x *vaultServiceDecryptStreamClient) Recv() (*DecryptStreamResponse, error) {
+	m := new(DecryptStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -324,18 +368,26 @@ type VaultServiceServer interface {
 	EnsureRSAKeyPair(context.Context, *EnsureRSAKeyPairRequest) (*EnsureRSAKeyPairResponse, error)
 	// Get public key of the RSA keypair.
 	GetRSAPublicKey(context.Context, *GetRSAPublicKeyRequest) (*GetRSAPublicKeyResponse, error)
-	// Sign message with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
-	RSASign(VaultService_RSASignServer) error
-	// Validate signature of the message using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
-	RSAVerify(VaultService_RSAVerifyServer) error
-	// Calculates HMAC signature for input data. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
-	HMACSign(VaultService_HMACSignServer) error
-	// Verifies HMAC signature of the data.
-	HMACVerify(VaultService_HMACVerifyServer) error
-	// Encrypts message. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
-	Encrypt(VaultService_EncryptServer) error
-	// Decrypts message. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
-	Decrypt(VaultService_DecryptServer) error
+	// Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	RSASignStream(VaultService_RSASignStreamServer) error
+	// Validate signature of the message stream using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+	RSAVerifyStream(VaultService_RSAVerifyStreamServer) error
+	// Sign message with RSA. Message should be short (max several kylobytes). If data is longer - use `RSASignStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	RSASign(context.Context, *RSASignRequest) (*RSASignResponse, error)
+	// Validate signature of the message using RSA key-pairs public key. Message should be short (max several kylobytes). If data is longer - use `RSAVerifyStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+	RSAVerify(context.Context, *RSAVerifyRequest) (*RSAVerifyResponse, error)
+	// Calculates HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	HMACSignStream(VaultService_HMACSignStreamServer) error
+	// Verifies HMAC signature of the data stream.
+	HMACVerifyStream(VaultService_HMACVerifyStreamServer) error
+	// Calculates HMAC signature for input data. Data should be short (max several kylobytes). If data is longer - use `HMACSignStream`. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	HMACSign(context.Context, *HMACSignRequest) (*HMACSignResponse, error)
+	// Verifies HMAC signature of the data. Data should be short (max several kylobytes). If data is longer - use `HMACVerifyStream`.
+	HMACVerify(context.Context, *HMACVerifyRequest) (*HMACVerifyResponse, error)
+	// Encrypts message stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
+	EncryptStream(VaultService_EncryptStreamServer) error
+	// Decrypts message stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
+	DecryptStream(VaultService_DecryptStreamServer) error
 	mustEmbedUnimplementedVaultServiceServer()
 }
 
@@ -361,23 +413,35 @@ func (UnimplementedVaultServiceServer) EnsureRSAKeyPair(context.Context, *Ensure
 func (UnimplementedVaultServiceServer) GetRSAPublicKey(context.Context, *GetRSAPublicKeyRequest) (*GetRSAPublicKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRSAPublicKey not implemented")
 }
-func (UnimplementedVaultServiceServer) RSASign(VaultService_RSASignServer) error {
-	return status.Errorf(codes.Unimplemented, "method RSASign not implemented")
+func (UnimplementedVaultServiceServer) RSASignStream(VaultService_RSASignStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method RSASignStream not implemented")
 }
-func (UnimplementedVaultServiceServer) RSAVerify(VaultService_RSAVerifyServer) error {
-	return status.Errorf(codes.Unimplemented, "method RSAVerify not implemented")
+func (UnimplementedVaultServiceServer) RSAVerifyStream(VaultService_RSAVerifyStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method RSAVerifyStream not implemented")
 }
-func (UnimplementedVaultServiceServer) HMACSign(VaultService_HMACSignServer) error {
-	return status.Errorf(codes.Unimplemented, "method HMACSign not implemented")
+func (UnimplementedVaultServiceServer) RSASign(context.Context, *RSASignRequest) (*RSASignResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RSASign not implemented")
 }
-func (UnimplementedVaultServiceServer) HMACVerify(VaultService_HMACVerifyServer) error {
-	return status.Errorf(codes.Unimplemented, "method HMACVerify not implemented")
+func (UnimplementedVaultServiceServer) RSAVerify(context.Context, *RSAVerifyRequest) (*RSAVerifyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RSAVerify not implemented")
 }
-func (UnimplementedVaultServiceServer) Encrypt(VaultService_EncryptServer) error {
-	return status.Errorf(codes.Unimplemented, "method Encrypt not implemented")
+func (UnimplementedVaultServiceServer) HMACSignStream(VaultService_HMACSignStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method HMACSignStream not implemented")
 }
-func (UnimplementedVaultServiceServer) Decrypt(VaultService_DecryptServer) error {
-	return status.Errorf(codes.Unimplemented, "method Decrypt not implemented")
+func (UnimplementedVaultServiceServer) HMACVerifyStream(VaultService_HMACVerifyStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method HMACVerifyStream not implemented")
+}
+func (UnimplementedVaultServiceServer) HMACSign(context.Context, *HMACSignRequest) (*HMACSignResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HMACSign not implemented")
+}
+func (UnimplementedVaultServiceServer) HMACVerify(context.Context, *HMACVerifyRequest) (*HMACVerifyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HMACVerify not implemented")
+}
+func (UnimplementedVaultServiceServer) EncryptStream(VaultService_EncryptStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method EncryptStream not implemented")
+}
+func (UnimplementedVaultServiceServer) DecryptStream(VaultService_DecryptStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method DecryptStream not implemented")
 }
 func (UnimplementedVaultServiceServer) mustEmbedUnimplementedVaultServiceServer() {}
 
@@ -500,156 +564,228 @@ func _VaultService_GetRSAPublicKey_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VaultService_RSASign_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(VaultServiceServer).RSASign(&vaultServiceRSASignServer{stream})
+func _VaultService_RSASignStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).RSASignStream(&vaultServiceRSASignStreamServer{stream})
 }
 
-type VaultService_RSASignServer interface {
-	SendAndClose(*RSASignResponse) error
-	Recv() (*RSASignRequest, error)
+type VaultService_RSASignStreamServer interface {
+	SendAndClose(*RSASignStreamResponse) error
+	Recv() (*RSASignStreamRequest, error)
 	grpc.ServerStream
 }
 
-type vaultServiceRSASignServer struct {
+type vaultServiceRSASignStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *vaultServiceRSASignServer) SendAndClose(m *RSASignResponse) error {
+func (x *vaultServiceRSASignStreamServer) SendAndClose(m *RSASignStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *vaultServiceRSASignServer) Recv() (*RSASignRequest, error) {
-	m := new(RSASignRequest)
+func (x *vaultServiceRSASignStreamServer) Recv() (*RSASignStreamRequest, error) {
+	m := new(RSASignStreamRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func _VaultService_RSAVerify_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(VaultServiceServer).RSAVerify(&vaultServiceRSAVerifyServer{stream})
+func _VaultService_RSAVerifyStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).RSAVerifyStream(&vaultServiceRSAVerifyStreamServer{stream})
 }
 
-type VaultService_RSAVerifyServer interface {
-	SendAndClose(*RSAVerifyResponse) error
-	Recv() (*RSAVerifyRequest, error)
+type VaultService_RSAVerifyStreamServer interface {
+	SendAndClose(*RSAVerifyStreamResponse) error
+	Recv() (*RSAVerifyStreamRequest, error)
 	grpc.ServerStream
 }
 
-type vaultServiceRSAVerifyServer struct {
+type vaultServiceRSAVerifyStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *vaultServiceRSAVerifyServer) SendAndClose(m *RSAVerifyResponse) error {
+func (x *vaultServiceRSAVerifyStreamServer) SendAndClose(m *RSAVerifyStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *vaultServiceRSAVerifyServer) Recv() (*RSAVerifyRequest, error) {
-	m := new(RSAVerifyRequest)
+func (x *vaultServiceRSAVerifyStreamServer) Recv() (*RSAVerifyStreamRequest, error) {
+	m := new(RSAVerifyStreamRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func _VaultService_HMACSign_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(VaultServiceServer).HMACSign(&vaultServiceHMACSignServer{stream})
+func _VaultService_RSASign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RSASignRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VaultServiceServer).RSASign(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/system_vault.VaultService/RSASign",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VaultServiceServer).RSASign(ctx, req.(*RSASignRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type VaultService_HMACSignServer interface {
-	SendAndClose(*HMACSignResponse) error
-	Recv() (*HMACSignRequest, error)
+func _VaultService_RSAVerify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RSAVerifyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VaultServiceServer).RSAVerify(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/system_vault.VaultService/RSAVerify",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VaultServiceServer).RSAVerify(ctx, req.(*RSAVerifyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VaultService_HMACSignStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).HMACSignStream(&vaultServiceHMACSignStreamServer{stream})
+}
+
+type VaultService_HMACSignStreamServer interface {
+	SendAndClose(*HMACSignStreamResponse) error
+	Recv() (*HMACSignStreamRequest, error)
 	grpc.ServerStream
 }
 
-type vaultServiceHMACSignServer struct {
+type vaultServiceHMACSignStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *vaultServiceHMACSignServer) SendAndClose(m *HMACSignResponse) error {
+func (x *vaultServiceHMACSignStreamServer) SendAndClose(m *HMACSignStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *vaultServiceHMACSignServer) Recv() (*HMACSignRequest, error) {
-	m := new(HMACSignRequest)
+func (x *vaultServiceHMACSignStreamServer) Recv() (*HMACSignStreamRequest, error) {
+	m := new(HMACSignStreamRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func _VaultService_HMACVerify_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(VaultServiceServer).HMACVerify(&vaultServiceHMACVerifyServer{stream})
+func _VaultService_HMACVerifyStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).HMACVerifyStream(&vaultServiceHMACVerifyStreamServer{stream})
 }
 
-type VaultService_HMACVerifyServer interface {
-	SendAndClose(*HMACVerifyResponse) error
-	Recv() (*HMACVerifyRequest, error)
+type VaultService_HMACVerifyStreamServer interface {
+	SendAndClose(*HMACVerifyStreamResponse) error
+	Recv() (*HMACVerifyStreamRequest, error)
 	grpc.ServerStream
 }
 
-type vaultServiceHMACVerifyServer struct {
+type vaultServiceHMACVerifyStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *vaultServiceHMACVerifyServer) SendAndClose(m *HMACVerifyResponse) error {
+func (x *vaultServiceHMACVerifyStreamServer) SendAndClose(m *HMACVerifyStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *vaultServiceHMACVerifyServer) Recv() (*HMACVerifyRequest, error) {
-	m := new(HMACVerifyRequest)
+func (x *vaultServiceHMACVerifyStreamServer) Recv() (*HMACVerifyStreamRequest, error) {
+	m := new(HMACVerifyStreamRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func _VaultService_Encrypt_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(VaultServiceServer).Encrypt(&vaultServiceEncryptServer{stream})
+func _VaultService_HMACSign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HMACSignRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VaultServiceServer).HMACSign(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/system_vault.VaultService/HMACSign",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VaultServiceServer).HMACSign(ctx, req.(*HMACSignRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type VaultService_EncryptServer interface {
-	Send(*EncryptResponse) error
-	Recv() (*EncryptRequest, error)
+func _VaultService_HMACVerify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HMACVerifyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VaultServiceServer).HMACVerify(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/system_vault.VaultService/HMACVerify",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VaultServiceServer).HMACVerify(ctx, req.(*HMACVerifyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VaultService_EncryptStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).EncryptStream(&vaultServiceEncryptStreamServer{stream})
+}
+
+type VaultService_EncryptStreamServer interface {
+	Send(*EncryptStreamResponse) error
+	Recv() (*EncryptStreamRequest, error)
 	grpc.ServerStream
 }
 
-type vaultServiceEncryptServer struct {
+type vaultServiceEncryptStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *vaultServiceEncryptServer) Send(m *EncryptResponse) error {
+func (x *vaultServiceEncryptStreamServer) Send(m *EncryptStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *vaultServiceEncryptServer) Recv() (*EncryptRequest, error) {
-	m := new(EncryptRequest)
+func (x *vaultServiceEncryptStreamServer) Recv() (*EncryptStreamRequest, error) {
+	m := new(EncryptStreamRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func _VaultService_Decrypt_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(VaultServiceServer).Decrypt(&vaultServiceDecryptServer{stream})
+func _VaultService_DecryptStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(VaultServiceServer).DecryptStream(&vaultServiceDecryptStreamServer{stream})
 }
 
-type VaultService_DecryptServer interface {
-	Send(*DecryptResponse) error
-	Recv() (*DecryptRequest, error)
+type VaultService_DecryptStreamServer interface {
+	Send(*DecryptStreamResponse) error
+	Recv() (*DecryptStreamRequest, error)
 	grpc.ServerStream
 }
 
-type vaultServiceDecryptServer struct {
+type vaultServiceDecryptStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *vaultServiceDecryptServer) Send(m *DecryptResponse) error {
+func (x *vaultServiceDecryptStreamServer) Send(m *DecryptStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *vaultServiceDecryptServer) Recv() (*DecryptRequest, error) {
-	m := new(DecryptRequest)
+func (x *vaultServiceDecryptStreamServer) Recv() (*DecryptStreamRequest, error) {
+	m := new(DecryptStreamRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -687,37 +823,53 @@ var VaultService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetRSAPublicKey",
 			Handler:    _VaultService_GetRSAPublicKey_Handler,
 		},
+		{
+			MethodName: "RSASign",
+			Handler:    _VaultService_RSASign_Handler,
+		},
+		{
+			MethodName: "RSAVerify",
+			Handler:    _VaultService_RSAVerify_Handler,
+		},
+		{
+			MethodName: "HMACSign",
+			Handler:    _VaultService_HMACSign_Handler,
+		},
+		{
+			MethodName: "HMACVerify",
+			Handler:    _VaultService_HMACVerify_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "RSASign",
-			Handler:       _VaultService_RSASign_Handler,
+			StreamName:    "RSASignStream",
+			Handler:       _VaultService_RSASignStream_Handler,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "RSAVerify",
-			Handler:       _VaultService_RSAVerify_Handler,
+			StreamName:    "RSAVerifyStream",
+			Handler:       _VaultService_RSAVerifyStream_Handler,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "HMACSign",
-			Handler:       _VaultService_HMACSign_Handler,
+			StreamName:    "HMACSignStream",
+			Handler:       _VaultService_HMACSignStream_Handler,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "HMACVerify",
-			Handler:       _VaultService_HMACVerify_Handler,
+			StreamName:    "HMACVerifyStream",
+			Handler:       _VaultService_HMACVerifyStream_Handler,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "Encrypt",
-			Handler:       _VaultService_Encrypt_Handler,
+			StreamName:    "EncryptStream",
+			Handler:       _VaultService_EncryptStream_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "Decrypt",
-			Handler:       _VaultService_Decrypt_Handler,
+			StreamName:    "DecryptStream",
+			Handler:       _VaultService_DecryptStream_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

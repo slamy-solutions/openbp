@@ -154,42 +154,17 @@ func (s *jwtService) JWTDataToSignedString(ctx context.Context, data *JWTData) (
 	}
 	bytesToSign := []byte(stringToSign)
 
-	signStream, err := s.systemStub.Vault.RSASign(ctx)
+	signResponse, err := s.systemStub.Vault.RSASign(ctx, &vault.RSASignRequest{
+		KeyName: jwtVaultKeyName,
+		Data:    bytesToSign,
+	})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.FailedPrecondition {
 				return "", ErrVaultSealed
 			}
 		}
-		return "", errors.New("failed to open system_vault signing stream for JWT token data: " + err.Error())
-	}
-	for i := 0; i < len(bytesToSign); i += 4096 {
-		end := i + 4096
-		if end > len(bytesToSign) {
-			end = len(bytesToSign)
-		}
-		err := signStream.Send(&vault.RSASignRequest{
-			KeyName: jwtVaultKeyName,
-			Data:    bytesToSign[i:end],
-		})
-		if err != nil {
-			if st, ok := status.FromError(err); ok {
-				if st.Code() == codes.FailedPrecondition {
-					return "", ErrVaultSealed
-				}
-			}
-
-			return "", errors.New("failed to send chunk of JWT token to sign to system_vault: " + err.Error())
-		}
-	}
-	signResponse, err := signStream.CloseAndRecv()
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() == codes.FailedPrecondition {
-				return "", ErrVaultSealed
-			}
-		}
-		return "", errors.New("unexpected error while signing JWT token in the syste_vault: " + err.Error())
+		return "", errors.New("unexpected error while signing JWT token in the system_vault: " + err.Error())
 	}
 
 	signature := base64.RawURLEncoding.EncodeToString(signResponse.Signature)

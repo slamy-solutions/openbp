@@ -49,21 +49,43 @@ message GetRSAPublicKeyResponse {
     bytes publicKey = 1;
 }
 
-message RSASignRequest {
+message RSASignStreamRequest {
     // Name of the key pair to use
     string keyName = 1;
     // Data chunk to sign
+    bytes data = 2;
+}
+message RSASignStreamResponse {
+    // Signature of the provided data
+    bytes signature = 1;
+}
+message RSAVerifyStreamRequest {
+    // Name of the key pair to use for validation
+    string keyName = 1;
+    // Data chunk to validate
+    bytes data = 2;
+    // Signature to validate
+    bytes signature = 3;
+}
+message RSAVerifyStreamResponse {
+    // Returns True if and only if provided data and its signature matches provided key-pair
+    bool valid = 1;
+}
+
+message RSASignRequest {
+    // Name of the key pair to use
+    string keyName = 1;
+    // Data to sign
     bytes data = 2;
 }
 message RSASignResponse {
     // Signature of the provided data
     bytes signature = 1;
 }
-
 message RSAVerifyRequest {
     // Name of the key pair to use for validation
     string keyName = 1;
-    // Data chunk to validate
+    // Data to validate
     bytes data = 2;
     // Signature to validate
     bytes signature = 3;
@@ -73,8 +95,27 @@ message RSAVerifyResponse {
     bool valid = 1;
 }
 
-message HMACSignRequest {
+message HMACSignStreamRequest {
     // Block of data to sign
+    bytes data = 1;
+}
+message HMACSignStreamResponse {
+    // Signature of the provided data
+    bytes signature = 1;
+}
+message HMACVerifyStreamRequest {
+    // Block of data to sign
+    bytes data = 1;
+    // Signature to validate
+    bytes signature = 2;
+}
+message HMACVerifyStreamResponse {
+    // Returns True if and only if provided data and its signature is valid
+    bool valid = 1;
+}
+
+message HMACSignRequest {
+    // Data to sign
     bytes data = 1;
 }
 message HMACSignResponse {
@@ -82,7 +123,7 @@ message HMACSignResponse {
     bytes signature = 1;
 }
 message HMACVerifyRequest {
-    // Block of data to sign
+    // Data to sign
     bytes data = 1;
     // Signature to validate
     bytes signature = 2;
@@ -92,19 +133,19 @@ message HMACVerifyResponse {
     bool valid = 1;
 }
 
-message EncryptRequest {
+message EncryptStreamRequest {
     // Block of data to encrypt
     bytes plainData = 1;
 }
-message EncryptResponse {
+message EncryptStreamResponse {
     // Encrypted block of the data
     bytes encryptedData = 1;
 }
-message DecryptRequest {
+message DecryptStreamRequest {
     // Encrypted block of the data
     bytes encryptedData = 1;
 }
-message DecryptResponse {
+message DecryptStreamResponse {
     // Decrypted block of the data
     bytes plainData = 1;
 }
@@ -123,18 +164,26 @@ service VaultService {
     rpc EnsureRSAKeyPair(EnsureRSAKeyPairRequest) returns (EnsureRSAKeyPairResponse) {};
     // Get public key of the RSA keypair.
     rpc GetRSAPublicKey(GetRSAPublicKeyRequest) returns (GetRSAPublicKeyResponse) {};
-    // Sign message with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
-    rpc RSASign(stream RSASignRequest) returns (RSASignResponse) {};
-    // Validate signature of the message using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
-    rpc RSAVerify(stream RSAVerifyRequest) returns (RSAVerifyResponse) {};
+    // Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+    rpc RSASignStream(stream RSASignStreamRequest) returns (RSASignStreamResponse) {};
+    // Validate signature of the message stream using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+    rpc RSAVerifyStream(stream RSAVerifyStreamRequest) returns (RSAVerifyStreamResponse) {};
+    // Sign message with RSA. Message should be short (max several kylobytes). If data is longer - use `RSASignStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+    rpc RSASign(RSASignRequest) returns (RSASignResponse) {};
+    // Validate signature of the message using RSA key-pairs public key. Message should be short (max several kylobytes). If data is longer - use `RSAVerifyStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+    rpc RSAVerify(RSAVerifyRequest) returns (RSAVerifyResponse) {};
 
-    // Calculates HMAC signature for input data. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
-    rpc HMACSign(stream HMACSignRequest) returns (HMACSignResponse) {};
-    // Verifies HMAC signature of the data.
-    rpc HMACVerify(stream HMACVerifyRequest) returns (HMACVerifyResponse) {};
+    // Calculates HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
+    rpc HMACSignStream(stream HMACSignStreamRequest) returns (HMACSignStreamResponse) {};
+    // Verifies HMAC signature of the data stream.
+    rpc HMACVerifyStream(stream HMACVerifyStreamRequest) returns (HMACVerifyStreamResponse) {};
+    // Calculates HMAC signature for input data. Data should be short (max several kylobytes). If data is longer - use `HMACSignStream`. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
+    rpc HMACSign(HMACSignRequest) returns (HMACSignResponse) {};
+    // Verifies HMAC signature of the data. Data should be short (max several kylobytes). If data is longer - use `HMACVerifyStream`.
+    rpc HMACVerify(HMACVerifyRequest) returns (HMACVerifyResponse) {};
 
-    // Encrypts message. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
-    rpc Encrypt(stream EncryptRequest) returns (stream EncryptResponse) {};
-    // Decrypts message. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
-    rpc Decrypt(stream DecryptRequest) returns (stream DecryptResponse) {};
+    // Encrypts message stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
+    rpc EncryptStream(stream EncryptStreamRequest) returns (stream EncryptStreamResponse) {};
+    // Decrypts message stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
+    rpc DecryptStream(stream DecryptStreamRequest) returns (stream DecryptStreamResponse) {};
 }

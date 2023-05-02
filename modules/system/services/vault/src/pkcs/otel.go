@@ -62,14 +62,28 @@ func (wraper *otelPKCSWraper) GetRSAPublicKey(ctx context.Context, name string) 
 	return wraper.innerPKCS.GetRSAPublicKey(ctx, name)
 }
 
-func (wraper *otelPKCSWraper) SignRSA(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
+func (wraper *otelPKCSWraper) SignRSAStream(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignRSA")
+	defer span.End()
+
+	return wraper.innerPKCS.SignRSAStream(ctx, name, message)
+}
+
+func (wraper *otelPKCSWraper) VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyRSA")
+	defer span.End()
+
+	return wraper.innerPKCS.VerifyRSAStream(ctx, name, message, signature)
+}
+
+func (wraper *otelPKCSWraper) SignRSA(ctx context.Context, name string, message []byte) ([]byte, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignRSA")
 	defer span.End()
 
 	return wraper.innerPKCS.SignRSA(ctx, name, message)
 }
 
-func (wraper *otelPKCSWraper) VerifyRSA(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
+func (wraper *otelPKCSWraper) VerifyRSA(ctx context.Context, name string, message []byte, signature []byte) (bool, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyRSA")
 	defer span.End()
 
@@ -80,28 +94,41 @@ func (wraper *otelPKCSWraper) Close() error {
 	return wraper.innerPKCS.Close()
 }
 
-func (wraper *otelPKCSWraper) SignHMAC(ctx context.Context, message *io.PipeReader) ([]byte, error) {
+func (wraper *otelPKCSWraper) SignHMACStream(ctx context.Context, message *io.PipeReader) ([]byte, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignHMAC")
+	defer span.End()
+
+	return wraper.innerPKCS.SignHMACStream(ctx, message)
+}
+func (wraper *otelPKCSWraper) VerifyHMACStream(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyHMAC")
+	defer span.End()
+
+	return wraper.innerPKCS.VerifyHMACStream(ctx, message, signature)
+}
+
+func (wraper *otelPKCSWraper) SignHMAC(ctx context.Context, message []byte) ([]byte, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignHMAC")
 	defer span.End()
 
 	return wraper.innerPKCS.SignHMAC(ctx, message)
 }
-func (wraper *otelPKCSWraper) VerifyHMAC(ctx context.Context, message *io.PipeReader, signature []byte) (bool, error) {
+func (wraper *otelPKCSWraper) VerifyHMAC(ctx context.Context, message []byte, signature []byte) (bool, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyHMAC")
 	defer span.End()
 
 	return wraper.innerPKCS.VerifyHMAC(ctx, message, signature)
 }
 
-func (wraper *otelPKCSWraper) Encrypt(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error {
+func (wraper *otelPKCSWraper) EncryptStream(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.Encrypt")
 	defer span.End()
 
-	return wraper.innerPKCS.Encrypt(ctx, plain, encrypted)
+	return wraper.innerPKCS.EncryptStream(ctx, plain, encrypted)
 }
-func (wraper *otelPKCSWraper) Decrypt(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error {
+func (wraper *otelPKCSWraper) DecryptStream(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.Decrypt")
 	defer span.End()
 
-	return wraper.innerPKCS.Decrypt(ctx, encrypted, plain)
+	return wraper.innerPKCS.DecryptStream(ctx, encrypted, plain)
 }

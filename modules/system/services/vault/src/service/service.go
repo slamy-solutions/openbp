@@ -78,7 +78,7 @@ func (s *VaultService) GetRSAPublicKey(ctx context.Context, in *vault.GetRSAPubl
 	}, nil
 }
 
-func (s *VaultService) RSASign(srv vault.VaultService_RSASignServer) error {
+func (s *VaultService) RSASignStream(srv vault.VaultService_RSASignStreamServer) error {
 	ctx := srv.Context()
 
 	dataReader, dataWriter := io.Pipe()
@@ -125,11 +125,11 @@ func (s *VaultService) RSASign(srv vault.VaultService_RSASignServer) error {
 
 	nameData := <-keyPairNameChanel
 	if nameData.err != nil {
-		log.Error("[GRPC Vault Service]-(RSASign) Internal error while reading RSA keypair name: " + nameData.err.Error())
+		log.Error("[GRPC Vault Service]-(RSASignStream) Internal error while reading RSA keypair name: " + nameData.err.Error())
 		return status.Error(codes.Internal, "error while reading RSA keypair name: "+nameData.err.Error())
 	}
 
-	signature, err := s.pkcsHandle.SignRSA(ctx, nameData.name, dataReader)
+	signature, err := s.pkcsHandle.SignRSAStream(ctx, nameData.name, dataReader)
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {
@@ -140,16 +140,16 @@ func (s *VaultService) RSASign(srv vault.VaultService_RSASignServer) error {
 			return status.Error(codes.NotFound, "RSA key-pair doesnt exist")
 		}
 
-		log.Error("[GRPC Vault Service]-(RSASign) Internal error while signing message with PKCS11 RSA: " + err.Error())
+		log.Error("[GRPC Vault Service]-(RSASignStream) Internal error while signing message with PKCS11 RSA: " + err.Error())
 		return status.Error(codes.Internal, "error while signing message with PKCS11 RSA: "+err.Error())
 	}
 
-	srv.SendAndClose(&vault.RSASignResponse{
+	srv.SendAndClose(&vault.RSASignStreamResponse{
 		Signature: signature,
 	})
 	return nil
 }
-func (s *VaultService) RSAVerify(srv vault.VaultService_RSAVerifyServer) error {
+func (s *VaultService) RSAVerifyStream(srv vault.VaultService_RSAVerifyStreamServer) error {
 	ctx := srv.Context()
 
 	dataReader, dataWriter := io.Pipe()
@@ -199,11 +199,11 @@ func (s *VaultService) RSAVerify(srv vault.VaultService_RSAVerifyServer) error {
 
 	metadata := <-metadataChanel
 	if metadata.err != nil {
-		log.Error("[GRPC Vault Service]-(RSAVerify) Internal error while reading RSA keypair name: " + metadata.err.Error())
+		log.Error("[GRPC Vault Service]-(RSAVerifyStream) Internal error while reading RSA keypair name: " + metadata.err.Error())
 		return status.Error(codes.Internal, "error while reading RSA keypair name: "+metadata.err.Error())
 	}
 
-	valid, err := s.pkcsHandle.VerifyRSA(ctx, metadata.name, dataReader, metadata.signature)
+	valid, err := s.pkcsHandle.VerifyRSAStream(ctx, metadata.name, dataReader, metadata.signature)
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {
@@ -214,17 +214,59 @@ func (s *VaultService) RSAVerify(srv vault.VaultService_RSAVerifyServer) error {
 			return status.Error(codes.NotFound, "RSA key-pair doesnt exist")
 		}
 
-		log.Error("[GRPC Vault Service]-(RSAVerify) Internal error while verifiying message with PKCS11 RSA: " + err.Error())
+		log.Error("[GRPC Vault Service]-(RSAVerifyStream) Internal error while verifiying message with PKCS11 RSA: " + err.Error())
 		return status.Error(codes.Internal, "error while verifiying message with PKCS11 RSA: "+err.Error())
 	}
 
-	srv.SendAndClose(&vault.RSAVerifyResponse{
+	srv.SendAndClose(&vault.RSAVerifyStreamResponse{
 		Valid: valid,
 	})
 	return nil
 }
 
-func (s *VaultService) HMACSign(srv vault.VaultService_HMACSignServer) error {
+func (s *VaultService) RSASign(ctx context.Context, in *vault.RSASignRequest) (*vault.RSASignResponse, error) {
+	signature, err := s.pkcsHandle.SignRSA(ctx, in.KeyName, in.Data)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return nil, status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		//TODO: This is for the future
+		if err == pkcs.ErrRSAKeyDoesntExist {
+			return nil, status.Error(codes.NotFound, "RSA key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(RSASign) Internal error while signing message with PKCS11 RSA: " + err.Error())
+		return nil, status.Error(codes.Internal, "error while signing message with PKCS11 RSA: "+err.Error())
+	}
+
+	return &vault.RSASignResponse{
+		Signature: signature,
+	}, status.Error(codes.OK, "")
+}
+func (s *VaultService) RSAVerify(ctx context.Context, in *vault.RSAVerifyRequest) (*vault.RSAVerifyResponse, error) {
+	valid, err := s.pkcsHandle.VerifyRSA(ctx, in.KeyName, in.Data, in.Signature)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return nil, status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		if err == pkcs.ErrRSAKeyDoesntExist {
+			return nil, status.Error(codes.NotFound, "RSA key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(RSAVerify) Internal error while verifiying message with PKCS11 RSA: " + err.Error())
+		return nil, status.Error(codes.Internal, "error while verifiying message with PKCS11 RSA: "+err.Error())
+	}
+
+	return &vault.RSAVerifyResponse{
+		Valid: valid,
+	}, status.Error(codes.OK, "")
+}
+
+func (s *VaultService) HMACSignStream(srv vault.VaultService_HMACSignStreamServer) error {
 	ctx := srv.Context()
 
 	dataReader, dataWriter := io.Pipe()
@@ -249,7 +291,7 @@ func (s *VaultService) HMACSign(srv vault.VaultService_HMACSignServer) error {
 		}
 	}()
 
-	signature, err := s.pkcsHandle.SignHMAC(ctx, dataReader)
+	signature, err := s.pkcsHandle.SignHMACStream(ctx, dataReader)
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {
@@ -261,17 +303,17 @@ func (s *VaultService) HMACSign(srv vault.VaultService_HMACSignServer) error {
 			return status.Error(codes.NotFound, "HMAC key doesnt exist")
 		}
 
-		log.Error("[GRPC Vault Service]-(HMACSign) Internal error while signing message with PKCS11 HMAC: " + err.Error())
-		return status.Error(codes.Internal, "error while signing message with PKCS11 RSA: "+err.Error())
+		log.Error("[GRPC Vault Service]-(HMACSignStream) Internal error while signing message with PKCS11 HMAC: " + err.Error())
+		return status.Error(codes.Internal, "error while signing message with PKCS11 HMAC: "+err.Error())
 	}
 
-	srv.SendAndClose(&vault.HMACSignResponse{
+	srv.SendAndClose(&vault.HMACSignStreamResponse{
 		Signature: signature,
 	})
 	return nil
 }
 
-func (s *VaultService) HMACVerify(srv vault.VaultService_HMACVerifyServer) error {
+func (s *VaultService) HMACVerifyStream(srv vault.VaultService_HMACVerifyStreamServer) error {
 	ctx := srv.Context()
 
 	dataReader, dataWriter := io.Pipe()
@@ -318,27 +360,69 @@ func (s *VaultService) HMACVerify(srv vault.VaultService_HMACVerifyServer) error
 
 	metadata := <-metadataChanel
 	if metadata.err != nil {
-		log.Error("[GRPC Vault Service]-(HMACVerify) Internal error while reading signature: " + metadata.err.Error())
+		log.Error("[GRPC Vault Service]-(HMACVerifyStream) Internal error while reading signature: " + metadata.err.Error())
 		return status.Error(codes.Internal, "error while reading HMAC signature: "+metadata.err.Error())
 	}
 
-	valid, err := s.pkcsHandle.VerifyHMAC(ctx, dataReader, metadata.signature)
+	valid, err := s.pkcsHandle.VerifyHMACStream(ctx, dataReader, metadata.signature)
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {
 			return status.Error(codes.FailedPrecondition, "the vault is sealed")
 		}
 
-		if err == pkcs.ErrRSAKeyDoesntExist {
+		if err == pkcs.ErrHMACKeyDoesntExist {
 			return status.Error(codes.NotFound, "HMAC key doesnt exist")
 		}
 
-		log.Error("[GRPC Vault Service]-(HMACVerify) Internal error while verifiying message with PKCS11 HMAC: " + err.Error())
+		log.Error("[GRPC Vault Service]-(HMACVerifyStream) Internal error while verifiying message with PKCS11 HMAC: " + err.Error())
 		return status.Error(codes.Internal, "error while verifiying message with PKCS11 HMAC: "+err.Error())
 	}
 
-	srv.SendAndClose(&vault.HMACVerifyResponse{
+	srv.SendAndClose(&vault.HMACVerifyStreamResponse{
 		Valid: valid,
 	})
 	return nil
+}
+
+func (s *VaultService) HMACSign(ctx context.Context, in *vault.HMACSignRequest) (*vault.HMACSignResponse, error) {
+	signature, err := s.pkcsHandle.SignHMAC(ctx, in.Data)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return nil, status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		//TODO: This is for the future
+		if err == pkcs.ErrHMACKeyDoesntExist {
+			return nil, status.Error(codes.NotFound, "HMAC key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(HMACSign) Internal error while signing message with PKCS11 HMAC: " + err.Error())
+		return nil, status.Error(codes.Internal, "error while signing message with PKCS11 HMAC: "+err.Error())
+	}
+
+	return &vault.HMACSignResponse{
+		Signature: signature,
+	}, status.Error(codes.OK, "")
+}
+func (s *VaultService) HMACVerify(ctx context.Context, in *vault.HMACVerifyRequest) (*vault.HMACVerifyResponse, error) {
+	valid, err := s.pkcsHandle.VerifyHMAC(ctx, in.Data, in.Signature)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return nil, status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		if err == pkcs.ErrHMACKeyDoesntExist {
+			return nil, status.Error(codes.NotFound, "HMAC key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(HMACVerify) Internal error while verifiying message with PKCS11 HMAC: " + err.Error())
+		return nil, status.Error(codes.Internal, "error while verifiying message with PKCS11 HMAC: "+err.Error())
+	}
+
+	return &vault.HMACVerifyResponse{
+		Valid: valid,
+	}, status.Error(codes.OK, "")
 }
