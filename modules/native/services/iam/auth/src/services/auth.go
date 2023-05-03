@@ -102,7 +102,7 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 	// TODO: refactor this function. Refactor usage of the pointers
 
 	// Authenticate
-	authenticateResponse, err := s.nativeStub.Services.IamAuthenticationPassword.Authenticate(ctx, &nativeIAmAuthenticationPasswordGRPC.AuthenticateRequest{
+	authenticateResponse, err := s.nativeStub.Services.IamAuthentication.Password.Authenticate(ctx, &nativeIAmAuthenticationPasswordGRPC.AuthenticateRequest{
 		Namespace: in.Namespace,
 		Identity:  in.Identity,
 		Password:  in.Password,
@@ -276,7 +276,7 @@ func (s *IAmAuthServer) CheckAccessWithToken(ctx context.Context, in *nativeIAmA
 func (s *IAmAuthServer) CheckAccessWithPassword(ctx context.Context, in *nativeIAmAuthGRPC.CheckAccessWithPasswordRequest) (*nativeIAmAuthGRPC.CheckAccessWithPasswordResponse, error) {
 	//TODO: use provided metadata
 
-	authenticateResponse, err := s.nativeStub.Services.IamAuthenticationPassword.Authenticate(ctx, &nativeIAmAuthenticationPasswordGRPC.AuthenticateRequest{
+	authenticateResponse, err := s.nativeStub.Services.IamAuthentication.Password.Authenticate(ctx, &nativeIAmAuthenticationPasswordGRPC.AuthenticateRequest{
 		Namespace: in.Namespace,
 		Identity:  in.Identity,
 		Password:  in.Password,

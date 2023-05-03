@@ -34,8 +34,8 @@ spec:
           value: "{{ .Release.Name }}-native-iam-role:80"
         - name: NATIVE_IAM_IDENTITY_URL
           value: "{{ .Release.Name }}-native-iam-identity:80"
-        - name: NATIVE_IAM_AUTHENTICATION_PASSWORD_URL
-          value: "{{ .Release.Name }}-native-iam-authentication-password:80"
+        - name: NATIVE_IAM_AUTHENTICATION_URL
+          value: "{{ .Release.Name }}-native-iam-authentication:80"
         resources:
           limits:
             cpu: 1000m

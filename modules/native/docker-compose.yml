@@ -136,7 +136,7 @@ services:
       - native_iam_policy
       - native_iam_identity
       - native_iam_token
-      - native_iam_authentication_password
+      - native_iam_authentication
     ports:
       - "127.0.0.1:28256:80" # For testing
 
@@ -158,15 +158,15 @@ services:
     ports:
       - "127.0.0.1:28257:80" # For testing
 
-  native_iam_authentication_password:
-    container_name: native_iam_authentication_password
+  native_iam_authentication:
+    container_name: native_iam_authentication
     restart: always
     build:
       context: .
-      dockerfile: modules/native/services/iam/authentication/password/Dockerfile
+      dockerfile: modules/native/services/iam/authentication/Dockerfile
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_authentication_password"
+      OTEL_SERVICE_NAME: "native_iam_authentication"
     depends_on:
       - system_db
       - system_telemetry

@@ -29,7 +29,7 @@ type IAMAuthenticationPasswordServiceClient interface {
 	// Deletes idenity password. After this action, action can not be authentificated using password.
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// Checks if password authentification method is defined for specified entity
-	Exist(ctx context.Context, in *ExistRequest, opts ...grpc.CallOption) (*ExistResponse, error)
+	Exists(ctx context.Context, in *ExistsRequest, opts ...grpc.CallOption) (*ExistsResponse, error)
 }
 
 type iAMAuthenticationPasswordServiceClient struct {
@@ -67,9 +67,9 @@ func (c *iAMAuthenticationPasswordServiceClient) Delete(ctx context.Context, in 
 	return out, nil
 }
 
-func (c *iAMAuthenticationPasswordServiceClient) Exist(ctx context.Context, in *ExistRequest, opts ...grpc.CallOption) (*ExistResponse, error) {
-	out := new(ExistResponse)
-	err := c.cc.Invoke(ctx, "/native_iam_authentication_password.IAMAuthenticationPasswordService/Exist", in, out, opts...)
+func (c *iAMAuthenticationPasswordServiceClient) Exists(ctx context.Context, in *ExistsRequest, opts ...grpc.CallOption) (*ExistsResponse, error) {
+	out := new(ExistsResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_authentication_password.IAMAuthenticationPasswordService/Exists", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ type IAMAuthenticationPasswordServiceServer interface {
 	// Deletes idenity password. After this action, action can not be authentificated using password.
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// Checks if password authentification method is defined for specified entity
-	Exist(context.Context, *ExistRequest) (*ExistResponse, error)
+	Exists(context.Context, *ExistsRequest) (*ExistsResponse, error)
 	mustEmbedUnimplementedIAMAuthenticationPasswordServiceServer()
 }
 
@@ -104,8 +104,8 @@ func (UnimplementedIAMAuthenticationPasswordServiceServer) CreateOrUpdate(contex
 func (UnimplementedIAMAuthenticationPasswordServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedIAMAuthenticationPasswordServiceServer) Exist(context.Context, *ExistRequest) (*ExistResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Exist not implemented")
+func (UnimplementedIAMAuthenticationPasswordServiceServer) Exists(context.Context, *ExistsRequest) (*ExistsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Exists not implemented")
 }
 func (UnimplementedIAMAuthenticationPasswordServiceServer) mustEmbedUnimplementedIAMAuthenticationPasswordServiceServer() {
 }
@@ -175,20 +175,20 @@ func _IAMAuthenticationPasswordService_Delete_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IAMAuthenticationPasswordService_Exist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExistRequest)
+func _IAMAuthenticationPasswordService_Exists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExistsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IAMAuthenticationPasswordServiceServer).Exist(ctx, in)
+		return srv.(IAMAuthenticationPasswordServiceServer).Exists(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_iam_authentication_password.IAMAuthenticationPasswordService/Exist",
+		FullMethod: "/native_iam_authentication_password.IAMAuthenticationPasswordService/Exists",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IAMAuthenticationPasswordServiceServer).Exist(ctx, req.(*ExistRequest))
+		return srv.(IAMAuthenticationPasswordServiceServer).Exists(ctx, req.(*ExistsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -213,8 +213,8 @@ var IAMAuthenticationPasswordService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IAMAuthenticationPasswordService_Delete_Handler,
 		},
 		{
-			MethodName: "Exist",
-			Handler:    _IAMAuthenticationPasswordService_Exist_Handler,
+			MethodName: "Exists",
+			Handler:    _IAMAuthenticationPasswordService_Exists_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

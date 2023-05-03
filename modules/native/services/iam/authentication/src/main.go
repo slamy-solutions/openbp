@@ -13,8 +13,9 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-	native_iam_auth_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
-	"github.com/slamy-solutions/openbp/modules/native/services/iam/auth/src/services"
+	native_iam_authentication_password_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/src/eventHandling"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/authentication/src/services"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 )
 
@@ -32,7 +33,7 @@ func getHostname() string {
 
 func main() {
 	systemStub := system.NewSystemStub(
-		system.NewSystemStubConfig().WithOTel(system.NewOTelConfig("native", "iam_auth", VERSION, getHostname())),
+		system.NewSystemStubConfig().WithCache().WithDB().WithNats().WithVault().WithOTel(system.NewOTelConfig("native", "iam_authentication", VERSION, getHostname())),
 	)
 	systemConnectionContext, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -40,20 +41,27 @@ func main() {
 	if err != nil {
 		panic("Failed to connect to the system services: " + err.Error())
 	}
+	defer systemStub.Close(context.Background())
 
-	nativeStub := native.NewNativeStub(native.NewStubConfig().
-		WithNamespaceService().
-		WithIAMAuthenticationService().
-		WithIAMIdentityService().
-		WithIAMPolicyService().
-		WithIAMRoleService().
-		WithIAMTokenService(),
-	)
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService())
 	err = nativeStub.Connect()
 	if err != nil {
 		panic("Failed to connect to native services: " + err.Error())
 	}
 	defer nativeStub.Close()
+
+	ensureIndexesContext, cancelEnsureIndexesContext := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancelEnsureIndexesContext()
+	err = services.EnsureIndexesForNamespace(ensureIndexesContext, "", systemStub)
+	if err != nil {
+		panic("Failed to ensure indexes for global namespace " + err.Error())
+	}
+
+	eventsHandler, err := eventHandling.NewEventHandlerService(systemStub)
+	if err != nil {
+		panic("Failed to create events handler. " + err.Error())
+	}
+	defer eventsHandler.Close()
 
 	// Creating grpc server
 	grpcServer := grpc.NewServer(
@@ -64,8 +72,8 @@ func main() {
 		}),
 	)
 
-	iamAuthServer := services.NewIAmAuthServer(systemStub, nativeStub)
-	native_iam_auth_grpc.RegisterIAMAuthServiceServer(grpcServer, iamAuthServer)
+	iamAuthenticationPasswordServer := services.NewPasswordIdentificationService(systemStub, nativeStub)
+	native_iam_authentication_password_grpc.RegisterIAMAuthenticationPasswordServiceServer(grpcServer, iamAuthenticationPasswordServer)
 
 	fmt.Println("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")

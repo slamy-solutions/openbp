@@ -25,16 +25,20 @@ func getConfigEnv(key string, fallback string) string {
 	return fallback
 }
 
+type IamAuthenticationServices struct {
+	Password iamAuthenticationPasswordGrpc.IAMAuthenticationPasswordServiceClient
+}
+
 type services struct {
-	ActorUser                 actorUserGrpc.ActorUserServiceClient
-	IamAuthenticationPassword iamAuthenticationPasswordGrpc.IAMAuthenticationPasswordServiceClient
-	IamIdentity               iamIdentityGrpc.IAMIdentityServiceClient
-	IamAuth                   iamAuthGrpc.IAMAuthServiceClient
-	IamPolicy                 iamPolicyGrpc.IAMPolicyServiceClient
-	IamRole                   iamRoleGrpc.IAMRoleServiceClient
-	IamToken                  iamTokenGrpc.IAMTokenServiceClient
-	Keyvaluestorage           keyvaluestorageGrpc.KeyValueStorageServiceClient
-	Namespace                 namespaceGrpc.NamespaceServiceClient
+	ActorUser         actorUserGrpc.ActorUserServiceClient
+	IamAuthentication *IamAuthenticationServices
+	IamIdentity       iamIdentityGrpc.IAMIdentityServiceClient
+	IamAuth           iamAuthGrpc.IAMAuthServiceClient
+	IamPolicy         iamPolicyGrpc.IAMPolicyServiceClient
+	IamRole           iamRoleGrpc.IAMRoleServiceClient
+	IamToken          iamTokenGrpc.IAMTokenServiceClient
+	Keyvaluestorage   keyvaluestorageGrpc.KeyValueStorageServiceClient
+	Namespace         namespaceGrpc.NamespaceServiceClient
 }
 
 type GrpcServiceConfig struct {
@@ -49,12 +53,12 @@ type StubConfig struct {
 	keyValueStorage GrpcServiceConfig
 	actorUser       GrpcServiceConfig
 
-	iamAuthenticationPassword GrpcServiceConfig
-	iamIdentity               GrpcServiceConfig
-	iamAuth                   GrpcServiceConfig
-	iamPolicy                 GrpcServiceConfig
-	iamRole                   GrpcServiceConfig
-	iamToken                  GrpcServiceConfig
+	iamAuthentication GrpcServiceConfig
+	iamIdentity       GrpcServiceConfig
+	iamAuth           GrpcServiceConfig
+	iamPolicy         GrpcServiceConfig
+	iamRole           GrpcServiceConfig
+	iamToken          GrpcServiceConfig
 }
 
 func NewStubConfig() *StubConfig {
@@ -112,13 +116,13 @@ func (sc *StubConfig) WithKeyValueStorageService(conf ...GrpcServiceConfig) *Stu
 	return sc
 }
 
-func (sc *StubConfig) WithIAMAuthenticationPasswordService(conf ...GrpcServiceConfig) *StubConfig {
+func (sc *StubConfig) WithIAMAuthenticationService(conf ...GrpcServiceConfig) *StubConfig {
 	if len(conf) != 0 {
-		sc.iamAuthenticationPassword = conf[0]
+		sc.iamAuthentication = conf[0]
 	} else {
-		sc.iamAuthenticationPassword = GrpcServiceConfig{
+		sc.iamAuthentication = GrpcServiceConfig{
 			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_AUTHENTICATION_PASSWORD_URL", "native_iam_authentication_password:80"),
+			url:     getConfigEnv("NATIVE_IAM_AUTHENTICATION_URL", "native_iam_authentication:80"),
 		}
 	}
 	return sc
@@ -248,16 +252,16 @@ func (n *NativeStub) Connect() error {
 		n.Services.Keyvaluestorage = service
 	}
 
-	if n.config.iamAuthenticationPassword.enabled {
-		conn, service, err := NewIAMAuthenticationPasswordConnection(n.config.iamAuthenticationPassword.url)
+	if n.config.iamAuthentication.enabled {
+		conn, services, err := NewIAMAuthenticationConnection(n.config.iamAuthentication.url)
 		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_authentication_password service: " + err.Error())
+			n.log.Error("Error while connecting to the native_iam_authentication service: " + err.Error())
 			n.closeConnections()
 			return err
 		}
-		n.log.Info("Successfully connected to the native_iam_authentication_password service")
+		n.log.Info("Successfully connected to the native_iam_authentication service")
 		n.dials = append(n.dials, conn)
-		n.Services.IamAuthenticationPassword = service
+		n.Services.IamAuthentication = services
 	}
 
 	if n.config.iamIdentity.enabled {

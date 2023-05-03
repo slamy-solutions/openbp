@@ -197,15 +197,15 @@ services:
       - native_iam_role
       - native_iam_identity
       - native_iam_token
-      - native_iam_authentication_password
+      - native_iam_authentication
     networks:
       - internal
     ports:
       - "127.0.0.1:28256:80"
 
-  native_iam_authentication_password:
-    image: openbp/obp-native-iam-authentication-password:${OPENBP_VERSION:-latest}
-    container_name: native_iam_authentication_password
+  native_iam_authentication:
+    image: openbp/obp-native-iam-authentication:${OPENBP_VERSION:-latest}
+    container_name: native_iam_authentication
     restart: always
     depends_on:
       - system_db
@@ -248,7 +248,7 @@ services:
       - native_iam_auth
       - native_iam_policy
       - native_iam_identity
-      - native_iam_authentication_password
+      - native_iam_authentication
       - native_keyvaluestorage
       - system_telemetry
     networks:

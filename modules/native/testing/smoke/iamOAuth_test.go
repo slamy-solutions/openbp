@@ -17,7 +17,7 @@ import (
 )
 
 func TestIAMAuth(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMIdentityService().WithIAMTokenService().WithIAMAuthService().WithIAMAuthenticationPasswordService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMIdentityService().WithIAMTokenService().WithIAMAuthService().WithIAMAuthenticationService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -37,13 +37,13 @@ func TestIAMAuth(t *testing.T) {
 	//Add some password to the identity
 	plainPassword := tools.GetRandomString(20)
 
-	_, err = nativeStub.Services.IamAuthenticationPassword.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+	_, err = nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  plainPassword,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamAuthenticationPassword.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IamAuthentication.Password.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
 
 	// Create Auth token
 	createAuthTokenResponse, err := nativeStub.Services.IamAuth.CreateTokenWithPassword(ctx, &auth.CreateTokenWithPasswordRequest{

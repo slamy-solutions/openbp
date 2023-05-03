@@ -4,7 +4,7 @@ use (
 	./modules/native/libs/golang
 	./modules/native/services/actor/user
 	./modules/native/services/iam/auth
-	./modules/native/services/iam/authentication/password
+	./modules/native/services/iam/authentication
 	./modules/native/services/iam/config
 	./modules/native/services/iam/identity
 	./modules/native/services/iam/policy

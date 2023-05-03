@@ -1,6 +1,7 @@
 package native
 
 import (
+	"errors"
 	"time"
 
 	actorUser "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
@@ -17,7 +18,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func makeGrpcClient[T interface{}](clientFunction func(grpc.ClientConnInterface) T, address string, opts ...grpc.DialOption) (*grpc.ClientConn, T, error) {
+func makeGrpcDial(address string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	opts = append(
 		[]grpc.DialOption{
 			grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
@@ -31,6 +32,15 @@ func makeGrpcClient[T interface{}](clientFunction func(grpc.ClientConnInterface)
 	)
 
 	dial, err := grpc.Dial(address, opts...)
+	if err != nil {
+		return nil, errors.New("failed to establish grpc dial: " + err.Error())
+	}
+
+	return dial, nil
+}
+
+func makeGrpcClient[T interface{}](clientFunction func(grpc.ClientConnInterface) T, address string, opts ...grpc.DialOption) (*grpc.ClientConn, T, error) {
+	dial, err := makeGrpcDial(address, opts...)
 	if err != nil {
 		var result T
 		return nil, result, err
@@ -85,7 +95,14 @@ func NewIAMConfigConnection(address string, opts ...grpc.DialOption) (*grpc.Clie
 	return makeGrpcClient(iamConfig.NewIAMConfigServiceClient, address, opts...)
 }
 
-// Connect to IAM_Authentication_Password service
-func NewIAMAuthenticationPasswordConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamAuthenticationPassword.IAMAuthenticationPasswordServiceClient, error) {
-	return makeGrpcClient(iamAuthenticationPassword.NewIAMAuthenticationPasswordServiceClient, address, opts...)
+// Connect to IAM_Authentication service
+func NewIAMAuthenticationConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *IamAuthenticationServices, error) {
+	dial, err := makeGrpcDial(address, opts...)
+	if err != nil {
+		return nil, nil, errors.New("failed to connect to service: " + err.Error())
+	}
+
+	passwordClient := iamAuthenticationPassword.NewIAMAuthenticationPasswordServiceClient(dial)
+
+	return dial, &IamAuthenticationServices{Password: passwordClient}, nil
 }

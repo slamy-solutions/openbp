@@ -2,9 +2,8 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-
-	"golang.org/x/crypto/bcrypt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,22 +13,25 @@ import (
 
 	grpccodes "google.golang.org/grpc/codes"
 
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	nativeNamespaceGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
+	"github.com/slamy-solutions/openbp/modules/system/libs/golang/vault"
 )
 
 type PasswordIdentificationService struct {
 	grpc.UnimplementedIAMAuthenticationPasswordServiceServer
 
-	mongoClient           *mongo.Client
-	globalMongoCollection *mongo.Collection
+	nativeStub *native.NativeStub
+	systemStub *system.SystemStub
 
-	nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient
+	globalMongoCollection *mongo.Collection
 }
 
 type passwordInMongo struct {
 	Identity string `bson:"identity"`
-	//	Salt     []byte `bson:"salt"`
+	Salt     []byte `bson:"salt"`
 	Password []byte `bson:"password"`
 }
 
@@ -38,15 +40,15 @@ func collectionByNamespace(s *PasswordIdentificationService, namespace string) *
 		return s.globalMongoCollection
 	} else {
 		dbName := fmt.Sprintf("openbp_namespace_%s", namespace)
-		return s.mongoClient.Database(dbName).Collection("native_iam_authentication_password")
+		return s.systemStub.DB.Database(dbName).Collection("native_iam_authentication_password")
 	}
 }
 
-func NewPasswordIdentificationService(mongoClient *mongo.Client, nativeNamespaceClient nativeNamespaceGRPC.NamespaceServiceClient) *PasswordIdentificationService {
+func NewPasswordIdentificationService(systemStub *system.SystemStub, nativeStub *native.NativeStub) *PasswordIdentificationService {
 	return &PasswordIdentificationService{
-		mongoClient:           mongoClient,
-		globalMongoCollection: mongoClient.Database("openbp_global").Collection("native_iam_authentication_password"),
-		nativeNamespaceClient: nativeNamespaceClient,
+		systemStub:            systemStub,
+		globalMongoCollection: systemStub.DB.Database("openbp_global").Collection("native_iam_authentication_password"),
+		nativeStub:            nativeStub,
 	}
 }
 
@@ -66,21 +68,29 @@ func (s *PasswordIdentificationService) Authenticate(ctx context.Context, in *gr
 		return nil, status.Error(grpccodes.Internal, "Failed to fetch information about identity: "+err.Error())
 	}
 
-	err = bcrypt.CompareHashAndPassword(entry.Password, []byte(in.Password))
+	dataToValidate := make([]byte, 0, 32+len(in.Password))
+	dataToValidate = append(dataToValidate, entry.Salt...)
+	dataToValidate = append(dataToValidate, in.Password...)
+	verifyResponse, err := s.systemStub.Vault.HMACVerify(ctx, &vault.HMACVerifyRequest{
+		Data:      dataToValidate,
+		Signature: entry.Password,
+	})
 	if err != nil {
-		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return &grpc.AuthenticateResponse{Authenticated: false}, status.Error(grpccodes.OK, "")
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == grpccodes.FailedPrecondition {
+				return nil, status.Error(grpccodes.FailedPrecondition, "The vault is sealed. Message from system_vault: "+err.Error())
+			}
 		}
-		return nil, status.Error(grpccodes.Internal, "Failed to compare passwords: "+err.Error())
+		return nil, status.Error(grpccodes.Internal, "Failed to verify password: "+err.Error())
 	}
 
-	return &grpc.AuthenticateResponse{Authenticated: true}, status.Error(grpccodes.OK, "")
+	return &grpc.AuthenticateResponse{Authenticated: verifyResponse.Valid}, status.Error(grpccodes.OK, "")
 }
 
 func (s *PasswordIdentificationService) CreateOrUpdate(ctx context.Context, in *grpc.CreateOrUpdateRequest) (*grpc.CreateOrUpdateResponse, error) {
 	// Check if namespace exists
 	if in.Namespace != "" {
-		namespaceExistResponse, err := s.nativeNamespaceClient.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
+		namespaceExistResponse, err := s.nativeStub.Services.Namespace.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
 		if err != nil {
 			return nil, status.Error(grpccodes.Internal, "Failed to check if namespace exist "+err.Error())
 		}
@@ -89,26 +99,34 @@ func (s *PasswordIdentificationService) CreateOrUpdate(ctx context.Context, in *
 		}
 	}
 
-	/*salt := make([]byte, 32)
+	salt := make([]byte, 32, 32+len(in.Password))
 	_, err := rand.Read(salt)
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, "Failed to generate salt: "+err.Error())
-	}*/
+	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), 10)
+	passwordHashResponse, err := s.systemStub.Vault.HMACSign(ctx, &vault.HMACSignRequest{
+		Data: append(salt, in.Password...),
+	})
 	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == grpccodes.FailedPrecondition {
+				return nil, status.Error(grpccodes.FailedPrecondition, "The vault is sealed. Message from system_vault: "+err.Error())
+			}
+		}
+
 		return nil, status.Error(grpccodes.Internal, "Failed to hash password: "+err.Error())
 	}
 
 	collection := collectionByNamespace(s, in.Namespace)
-	_, err = collection.UpdateOne(ctx, bson.M{"identity": in.Identity}, bson.M{"$set": bson.M{"password": passwordHash /*"salt": salt*/}, "$setOnInsert": bson.M{"identity": in.Identity}}, options.Update().SetUpsert(true))
+	updateResponse, err := collection.UpdateOne(ctx, bson.M{"identity": in.Identity}, bson.M{"$set": bson.M{"password": passwordHashResponse.Signature, "salt": salt}, "$setOnInsert": bson.M{"identity": in.Identity}}, options.Update().SetUpsert(true))
 	if err != nil {
 		return nil, status.Error(grpccodes.Internal, "Error on updating password in database: "+err.Error())
 	}
 
 	// TODO: index on identity field
 
-	return &grpc.CreateOrUpdateResponse{}, status.Error(grpccodes.OK, "")
+	return &grpc.CreateOrUpdateResponse{Created: updateResponse.UpsertedCount != 0}, status.Error(grpccodes.OK, "")
 }
 
 func (s *PasswordIdentificationService) Delete(ctx context.Context, in *grpc.DeleteRequest) (*grpc.DeleteResponse, error) {
@@ -125,17 +143,17 @@ func (s *PasswordIdentificationService) Delete(ctx context.Context, in *grpc.Del
 	return &grpc.DeleteResponse{Existed: deleteResult.DeletedCount != 0}, status.Error(grpccodes.OK, "")
 }
 
-func (s *PasswordIdentificationService) Exist(ctx context.Context, in *grpc.ExistRequest) (*grpc.ExistResponse, error) {
+func (s *PasswordIdentificationService) Exists(ctx context.Context, in *grpc.ExistsRequest) (*grpc.ExistsResponse, error) {
 	collection := collectionByNamespace(s, in.Namespace)
 	count, err := collection.CountDocuments(ctx, bson.M{"identity": in.Identity}, options.Count().SetLimit(1))
 	if err != nil {
 		if err, ok := err.(mongo.WriteException); ok {
 			if err.HasErrorLabel("InvalidNamespace") {
-				return &grpc.ExistResponse{Exist: false}, status.Error(grpccodes.OK, "")
+				return &grpc.ExistsResponse{Exists: false}, status.Error(grpccodes.OK, "")
 			}
 		}
 		return nil, status.Error(grpccodes.Internal, err.Error())
 	}
 
-	return &grpc.ExistResponse{Exist: count == 1}, status.Error(grpccodes.OK, "")
+	return &grpc.ExistsResponse{Exists: count == 1}, status.Error(grpccodes.OK, "")
 }

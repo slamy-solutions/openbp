@@ -15,7 +15,7 @@ import (
 )
 
 func TestIAMAuthenticationPassword(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMAuthenticationPasswordService().WithIAMIdentityService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMAuthenticationService().WithIAMIdentityService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -33,15 +33,15 @@ func TestIAMAuthenticationPassword(t *testing.T) {
 
 	plainPassword := tools.GetRandomString(20)
 
-	_, err = nativeStub.Services.IamAuthenticationPassword.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+	_, err = nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  plainPassword,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamAuthenticationPassword.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IamAuthentication.Password.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
 
-	authenticateResponse, err := nativeStub.Services.IamAuthenticationPassword.Authenticate(ctx, &password.AuthenticateRequest{
+	authenticateResponse, err := nativeStub.Services.IamAuthentication.Password.Authenticate(ctx, &password.AuthenticateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  plainPassword,
@@ -49,7 +49,7 @@ func TestIAMAuthenticationPassword(t *testing.T) {
 	require.Nil(t, err)
 	assert.True(t, authenticateResponse.Authenticated)
 
-	passwordDeleteResponse, err := nativeStub.Services.IamAuthenticationPassword.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
+	passwordDeleteResponse, err := nativeStub.Services.IamAuthentication.Password.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
 	require.Nil(t, err)
 	assert.True(t, passwordDeleteResponse.Existed)
 }

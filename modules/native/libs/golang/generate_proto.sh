@@ -38,7 +38,7 @@ protoc --go_out=./iam/config --go_opt=paths=source_relative --go-grpc_out=./iam/
 echo "Generating proto for iam_identity service"
 mkdir -p ./iam/identity
 protoc --go_out=./iam/identity --go_opt=paths=source_relative --go-grpc_out=./iam/identity --go-grpc_opt=paths=source_relative -I ../../proto/iam identity.proto
-# iam_authentication_password
-echo "Generating proto for iam_authentication_password service"
+# iam_authentication
+echo "Generating proto for iam_authentication service"
 mkdir -p ./iam/authentication/password
 protoc --go_out=./iam/authentication/password --go_opt=paths=source_relative --go-grpc_out=./iam/authentication/password --go-grpc_opt=paths=source_relative -I ../../proto/iam/authentication password.proto
