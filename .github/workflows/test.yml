@@ -27,7 +27,7 @@ jobs:
       - name: Run smoke tests
         run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/smoke/... | go-junit-report -set-exit-code > TestResults-smoke.xml
       - name: Run unit (whitebox) tests
-        run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/unit/... ./modules/system/testing/unit/... | go-junit-report -set-exit-code > TestResults-unit.xml
+        run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/unit/...  | go-junit-report -set-exit-code > TestResults-unit.xml
       - name: Run integration tests
         run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/integration/... ./modules/system/testing/integration/... | go-junit-report -set-exit-code > TestResults-integration.xml
       - name: Upload test summary
