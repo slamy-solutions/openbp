@@ -23,23 +23,29 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
       - name: Run smoke tests
+        id: smoke
         run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/smoke/... > TestResults-smoke.json
       - name: Upload smoke tests results
         uses: actions/upload-artifact@v3
+        if: success() || steps.smoke.conclusion == 'failure'
         with:
           name: TestResults-smoke
           path: TestResults-smoke.json
       - name: Run unit (whitebox) tests
+        id: unit
         run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/unit/... ./modules/system/testing/unit/... > TestResults-unit.json
       - name: Upload unit tests results
         uses: actions/upload-artifact@v3
+        if: success() || steps.unit.conclusion == 'failure'
         with:
           name: TestResults-unit
           path: TestResults-unit.json
       - name: Run integration tests
+        id: integration
         run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/integration/... ./modules/system/testing/integration/... > TestResults-integration.json
       - name: Upload integration tests results
         uses: actions/upload-artifact@v3
+        if: success() || steps.integration.conclusion == 'failure'
         with:
           name: TestResults-integration
           path: TestResults-integration.json
