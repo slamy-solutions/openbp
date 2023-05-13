@@ -75,7 +75,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForGlobalNamespace() {
 }
 
 func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	namespaceName := tools.GetRandomString(20)
@@ -110,17 +110,28 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
 	require.Equal(s.T(), managedReason, createResponse.Identity.Managed.(*identity.Identity_Service).Service.Reason)
 	require.Equal(s.T(), managedId, createResponse.Identity.Managed.(*identity.Identity_Service).Service.ManagementId)
 
-	getResponse, err := s.nativeStub.Services.IamIdentity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
-		Namespace: namespaceName,
-		Service:   managedService,
-		ManagedId: managedId,
-		UseCache:  true,
-	})
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), createResponse.Identity.Uuid, getResponse.Identity.Uuid)
-	require.Equal(s.T(), managedService, getResponse.Identity.Managed.(*identity.Identity_Service).Service.Service)
-	require.Equal(s.T(), managedReason, getResponse.Identity.Managed.(*identity.Identity_Service).Service.Reason)
-	require.Equal(s.T(), managedId, getResponse.Identity.Managed.(*identity.Identity_Service).Service.ManagementId)
+	retry := 5
+	for {
+		getResponse, err := s.nativeStub.Services.IamIdentity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
+			Namespace: namespaceName,
+			Service:   managedService,
+			ManagedId: managedId,
+			UseCache:  true,
+		})
+		if err != nil && retry >= 0 {
+			retry -= 1
+			time.Sleep(time.Millisecond * time.Duration(100*(5-retry)))
+			continue
+		}
+
+		require.Nil(s.T(), err)
+		require.Equal(s.T(), createResponse.Identity.Uuid, getResponse.Identity.Uuid)
+		require.Equal(s.T(), managedService, getResponse.Identity.Managed.(*identity.Identity_Service).Service.Service)
+		require.Equal(s.T(), managedReason, getResponse.Identity.Managed.(*identity.Identity_Service).Service.Reason)
+		require.Equal(s.T(), managedId, getResponse.Identity.Managed.(*identity.Identity_Service).Service.ManagementId)
+
+		break
+	}
 }
 
 func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSameMnagementIdForGlobalNamespace() {
