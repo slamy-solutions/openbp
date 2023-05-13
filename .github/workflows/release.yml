@@ -21,14 +21,8 @@ jobs:
 
   
   tests:
-    #Tests arent working at this point.
-    name: Skipped tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Skip
-        shell: bash
-        run: echo "Skipping tests"
-  #  uses: ./.github/workflows/test.yml
+    name: Test
+    uses: ./.github/workflows/test.yml
   
   # System
   publish-system-vault:

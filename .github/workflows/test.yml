@@ -14,9 +14,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Prebuild one of the containers
+        run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml build native_iam_auth
       - name: Build the stack
         run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml build --parallel
       - name: Run the stack
         run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml up -d
-      - name: Run tests
-        run: docker run --network openbp_internal -v $PWD:/app node:alpine3.15 sh -c "cd /app && yarn && npx jest -i ./modules/native/testing"
+      - name: Setup Go
+        uses: actions/setup-go@v4
+      - name: Run smoke tests
+        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/smoke/... ./modules/system/testing/smoke/... > TestResults-smoke.json
+      - name: Upload smoke tests results
+        uses: actions/upload-artifact@v3
+        with:
+          name: TestResults-smoke
+          path: TestResults-smoke.json
+      - name: Run unit (whitebox) tests
+        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/unit/... ./modules/system/testing/unit/... > TestResults-unit.json
+      - name: Upload unit tests results
+        uses: actions/upload-artifact@v3
+        with:
+          name: TestResults-unit
+          path: TestResults-unit.json
+      - name: Run integration tests
+        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/integration/... ./modules/system/testing/integration/... > TestResults-integration.json
+      - name: Upload integration tests results
+        uses: actions/upload-artifact@v3
+        with:
+          name: TestResults-integration
+          path: TestResults-integration.json
