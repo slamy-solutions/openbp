@@ -33,8 +33,5 @@ jobs:
       - name: Upload test summary
         uses: test-summary/action@v1
         with:
-          paths: |
-                    TestResults-smoke.xml
-                    TestResults-unit.xml
-                    TestResults-integration.xml
+          paths: "TestResults-*.xml"
         if: always()
