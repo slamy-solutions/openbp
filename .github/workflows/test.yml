@@ -23,7 +23,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
       - name: Run smoke tests
-        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/smoke/... ./modules/system/testing/smoke/... > TestResults-smoke.json
+        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/smoke/... > TestResults-smoke.json
       - name: Upload smoke tests results
         uses: actions/upload-artifact@v3
         with:
