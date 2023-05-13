@@ -22,30 +22,19 @@ jobs:
         run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml up -d
       - name: Setup Go
         uses: actions/setup-go@v4
+      - name: Install test reporting tool
+        run: go install github.com/jstemmer/go-junit-report/v2@latest
       - name: Run smoke tests
-        id: smoke
-        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/smoke/... > TestResults-smoke.json
-      - name: Upload smoke tests results
-        uses: actions/upload-artifact@v3
-        if: success() || steps.smoke.conclusion == 'failure'
-        with:
-          name: TestResults-smoke
-          path: TestResults-smoke.json
+        run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/smoke/... | go-junit-report -set-exit-code > TestResults-smoke.xml
       - name: Run unit (whitebox) tests
-        id: unit
-        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/unit/... ./modules/system/testing/unit/... > TestResults-unit.json
-      - name: Upload unit tests results
-        uses: actions/upload-artifact@v3
-        if: success() || steps.unit.conclusion == 'failure'
-        with:
-          name: TestResults-unit
-          path: TestResults-unit.json
+        run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/unit/... ./modules/system/testing/unit/... | go-junit-report -set-exit-code > TestResults-unit.xml
       - name: Run integration tests
-        id: integration
-        run: env $(cat ./modules/.test.env) go test -json -parallel 8 ./modules/native/testing/integration/... ./modules/system/testing/integration/... > TestResults-integration.json
-      - name: Upload integration tests results
-        uses: actions/upload-artifact@v3
-        if: success() || steps.integration.conclusion == 'failure'
+        run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/integration/... ./modules/system/testing/integration/... | go-junit-report -set-exit-code > TestResults-integration.xml
+      - name: Upload test summary
+        uses: test-summary/action@v1
         with:
-          name: TestResults-integration
-          path: TestResults-integration.json
+          paths: |
+                    TestResults-smoke.xml
+                    TestResults-unit.xml
+                    TestResults-integration.xml
+        if: always()
