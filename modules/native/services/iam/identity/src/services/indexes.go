@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	log "github.com/sirupsen/logrus"
 
@@ -41,4 +42,39 @@ func ensureIndexesForNamespace(ctx context.Context, namespace string, systemStub
 	}
 
 	return err
+}
+
+func checkIfIndexesCreated(ctx context.Context, namespace string, systemStub *system.SystemStub) (bool, error) {
+	collection := systemStub.DB.Database("openbp_global").Collection("native_iam_identity")
+	if namespace != "" {
+		collection = systemStub.DB.Database("openbp_namespace_" + namespace).Collection("native_iam_identity")
+	}
+
+	cur, err := collection.Indexes().List(ctx)
+	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return false, nil
+			}
+		}
+
+		return false, errors.New("failed to list indexes for namespace: " + err.Error())
+	}
+	defer cur.Close(ctx)
+
+	var result []bson.M
+	err = cur.All(ctx, &result)
+	if err != nil {
+		return false, errors.New("failed to decode index information: " + err.Error())
+	}
+
+	for _, v := range result {
+		for k1, v1 := range v {
+			if k1 == "name" && v1 == fast_search_service_index {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }

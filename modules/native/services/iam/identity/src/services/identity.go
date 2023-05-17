@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 	grpccodes "google.golang.org/grpc/codes"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
@@ -67,13 +68,41 @@ func collectionByNamespace(s *IAmIdentityServer, namespace string) *mongo.Collec
 }
 
 func (s *IAmIdentityServer) Create(ctx context.Context, in *nativeIAmIdentityGRPC.CreateIdentityRequest) (*nativeIAmIdentityGRPC.CreateIdentityResponse, error) {
-	if in.Namespace != "" {
+	// This will check if namespace exists
+	indexesExist, err := checkIfIndexesCreated(ctx, in.Namespace, s.systemStub)
+	if err != nil {
+		return nil, status.Error(grpccodes.Internal, "Error while checking namespace. Error checking index: "+err.Error())
+	}
+
+	// Indexes creation operation is asynchronous. We have to try to wait indexes creation.
+	if !indexesExist {
 		r, err := s.nativeStub.Services.Namespace.Exists(ctx, &nativeNamespaceGRPC.IsNamespaceExistRequest{Name: in.Namespace, UseCache: true})
 		if err != nil {
 			return nil, status.Error(grpccodes.Internal, "Error while checking namespace: "+err.Error())
 		}
 		if !r.Exist {
 			return nil, status.Error(grpccodes.FailedPrecondition, "Namespace doesnt exist")
+		}
+
+		// Namespace exist, but indexes wasnt created. Try to wait for indexes creation.
+		repeats := 10
+		for repeats > 0 {
+			time.Sleep(time.Millisecond * 200)
+			indexesExist, err := checkIfIndexesCreated(ctx, in.Namespace, s.systemStub)
+			if err != nil {
+				return nil, status.Error(grpccodes.Internal, "Error while checking namespace. Error checking index: "+err.Error())
+			}
+			if indexesExist {
+				break
+			}
+			repeats -= 1
+		}
+
+		if repeats <= 0 {
+			if err != nil {
+				logrus.Error("Namespace exist, but indexes wasnt created. Timeout on waiting for indexes creation.")
+				return nil, status.Error(grpccodes.Internal, "Namespace exist, but indexes wasnt created. Timeout on waiting for indexes creation.")
+			}
 		}
 	}
 
