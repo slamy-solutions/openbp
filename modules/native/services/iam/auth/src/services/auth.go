@@ -146,18 +146,20 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 		scopesToAssign = make([]*nativeIAmTokenGRPC.Scope, len(policies))
 		for i, policy := range policies {
 			scopesToAssign[i] = &nativeIAmTokenGRPC.Scope{
-				Namespace: policy.Namespace,
-				Resources: policy.Resources,
-				Actions:   policy.Actions,
+				Namespace:            policy.Namespace,
+				Resources:            policy.Resources,
+				Actions:              policy.Actions,
+				NamespaceIndependent: policy.NamespaceIndependent,
 			}
 		}
 	} else {
 		scopesToAssign = make([]*nativeIAmTokenGRPC.Scope, len(in.Scopes))
 		for i, scope := range in.Scopes {
 			scopesToAssign[i] = &nativeIAmTokenGRPC.Scope{
-				Namespace: scope.Namespace,
-				Resources: scope.Resources,
-				Actions:   scope.Actions,
+				Namespace:            scope.Namespace,
+				Resources:            scope.Resources,
+				Actions:              scope.Actions,
+				NamespaceIndependent: scope.NamespaceIndependent,
 			}
 		}
 	}

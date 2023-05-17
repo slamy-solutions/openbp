@@ -10,8 +10,10 @@ message Scope {
     string namespace = 1;
     // Resources that can be accessed using token
     repeated string resources = 2;
-    // Actions that can be done on the resources
+    // Actions that can be done on resources
     repeated string actions = 3;
+    // If this scope applies to all namespaces
+    bool namespaceIndependent = 4;
 }
 
 message CreateTokenWithPasswordRequest {

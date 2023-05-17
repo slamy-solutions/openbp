@@ -60,7 +60,7 @@ func arePoliciesAllowScopes(policies []*nativeIAmPolicyGRPC.Policy, scopes []*na
 	for _, scope := range scopes {
 		scopeIsOk := false
 		for _, policy := range policies {
-			if scope.Namespace == policy.Namespace || policy.NamespaceIndependent {
+			if (!scope.NamespaceIndependent && scope.Namespace == policy.Namespace) || policy.NamespaceIndependent {
 				if compareStringList(policy.Resources, scope.Resources) && compareStringList(policy.Actions, scope.Actions) {
 					scopeIsOk = true
 					break
@@ -79,7 +79,7 @@ func areTokenScopesValidForIdentityScopes(policies []*nativeIAmPolicyGRPC.Policy
 	for _, scope := range scopes {
 		scopeIsOk := false
 		for _, policy := range policies {
-			if scope.Namespace == policy.Namespace {
+			if (!scope.NamespaceIndependent && scope.Namespace == policy.Namespace) || policy.NamespaceIndependent {
 				if compareStringList(policy.Resources, scope.Resources) && compareStringList(policy.Actions, scope.Actions) {
 					scopeIsOk = true
 					break
@@ -98,7 +98,7 @@ func areTokenScopesAllowAccess(tokenScopes []*nativeIAmTokenGRPC.Scope, systemSc
 	for _, systemScope := range systemScopes {
 		scopeIsOk := false
 		for _, tokenScope := range tokenScopes {
-			if systemScope.Namespace == tokenScope.Namespace {
+			if (!systemScope.NamespaceIndependent && systemScope.Namespace == tokenScope.Namespace) || tokenScope.NamespaceIndependent {
 				if compareStringList(tokenScope.Resources, systemScope.Resources) && compareStringList(tokenScope.Actions, systemScope.Actions) {
 					scopeIsOk = true
 					break

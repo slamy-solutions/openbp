@@ -7,9 +7,10 @@ import (
 )
 
 type JWTScope struct {
-	Namespace string   `json:"namespace"`
-	Resources []string `json:"resources"`
-	Actions   []string `json:"actions"`
+	Namespace            string   `json:"namespace"`
+	Resources            []string `json:"resources"`
+	Actions              []string `json:"actions"`
+	NamespaceIndependent bool     `json:"namespaceIndependent"`
 }
 
 type JWTData struct {

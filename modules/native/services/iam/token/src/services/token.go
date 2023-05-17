@@ -36,9 +36,10 @@ type IAmTokenServer struct {
 }
 
 type scopeInMongo struct {
-	Namespace string   `bson:"namespace"`
-	Resources []string `bson:"resources"`
-	Actions   []string `bson:"actions"`
+	Namespace            string   `bson:"namespace"`
+	Resources            []string `bson:"resources"`
+	Actions              []string `bson:"actions"`
+	NamespaceIndependent bool     `bson:"namespaceIndependent"`
 }
 
 type tokenInMongo struct {
@@ -61,9 +62,10 @@ func (t *tokenInMongo) ToProtoTokenData(namespace string) *nativeIAmTokenGRPC.To
 	scopes := make([]*nativeIAmTokenGRPC.Scope, len(t.Scopes))
 	for i, scope := range t.Scopes {
 		scopes[i] = &nativeIAmTokenGRPC.Scope{
-			Namespace: scope.Namespace,
-			Resources: scope.Resources,
-			Actions:   scope.Actions,
+			Namespace:            scope.Namespace,
+			Resources:            scope.Resources,
+			Actions:              scope.Actions,
+			NamespaceIndependent: scope.NamespaceIndependent,
 		}
 	}
 	return &nativeIAmTokenGRPC.TokenData{
@@ -85,9 +87,10 @@ func (t *tokenInMongo) ToJWTData(namespace string, refresh bool, maxExpiration t
 		scopes = make([]jwt.JWTScope, len(t.Scopes))
 		for i, scope := range t.Scopes {
 			scopes[i] = jwt.JWTScope{
-				Namespace: scope.Namespace,
-				Resources: scope.Resources,
-				Actions:   scope.Actions,
+				Namespace:            scope.Namespace,
+				Resources:            scope.Resources,
+				Actions:              scope.Actions,
+				NamespaceIndependent: scope.NamespaceIndependent,
 			}
 		}
 	}
@@ -140,6 +143,7 @@ func (s *IAmTokenServer) Create(ctx context.Context, in *nativeIAmTokenGRPC.Crea
 		scopes[i].Namespace = scope.Namespace
 		scopes[i].Resources = scope.Resources
 		scopes[i].Actions = scope.Actions
+		scopes[i].NamespaceIndependent = scope.NamespaceIndependent
 	}
 	creationTime := time.Now().UTC()
 	token := &tokenInMongo{

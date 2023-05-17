@@ -15,7 +15,7 @@ message Scope {
     // Actions that can be performed on accessible resources
     repeated string actions = 3;
     // Should scope work in all namespaces
-    // bool namespaceIndependent = 4;
+    bool namespaceIndependent = 4;
 }
 
 message TokenData {
