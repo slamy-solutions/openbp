@@ -10,7 +10,7 @@ message SealRequest {}
 message SealResponse {}
 
 message UnsealRequest {
-    // Secret used for decripting the vault
+    // Secret used for decrypting the vault
     string secret = 1;
 }
 message UnsealResponse {
@@ -45,7 +45,7 @@ message GetRSAPublicKeyRequest {
     string keyName = 1;
 }
 message GetRSAPublicKeyResponse {
-    // Public key of the RSA key pair
+    // Public key of the RSA key pair in PKCS #1, ASN.1 DER format
     bytes publicKey = 1;
 }
 
@@ -151,39 +151,40 @@ message DecryptStreamResponse {
 }
 
 service VaultService {
-    // Closes and encrypts vault. After sealing, most of the operations will not be accessible.
+    // Close and encrypt vault. After sealing, most of the operations will not be accessible.
     rpc Seal(SealRequest) returns (SealResponse) {};
-    // Decrypts and opens vault. Must be done before most of the operations with vault secrets.
+    // Decrypt and open vault. Must be done before most of the operations with vault secrets.
     rpc Unseal(UnsealRequest) returns (UnsealResponse) {};
-    // Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation.
+    // Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation. You don't need to unseal vault after this operation.
+    // This operation requires you to have administrator access to the HSM. Check PKCS11 spec. If you are using emulated HSM (by default) this will be the same as the seal/unseal secret by default ("12345678"). Change it.
     rpc UpdateSealSecret(UpdateSealSecretRequest) returns (UpdateSealSecretResponse) {};
-    // Returns current status of the vault.
+    // Get current status of the vault.
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {};
 
     // Creates RSA key pair if it doesnt exist. Private key never leaves the HSM (hardware security module).
     rpc EnsureRSAKeyPair(EnsureRSAKeyPairRequest) returns (EnsureRSAKeyPairResponse) {};
     // Get public key of the RSA keypair.
     rpc GetRSAPublicKey(GetRSAPublicKeyRequest) returns (GetRSAPublicKeyResponse) {};
-    // Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+    // Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sign the message.
     rpc RSASignStream(stream RSASignStreamRequest) returns (RSASignStreamResponse) {};
     // Validate signature of the message stream using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
     rpc RSAVerifyStream(stream RSAVerifyStreamRequest) returns (RSAVerifyStreamResponse) {};
-    // Sign message with RSA. Message should be short (max several kylobytes). If data is longer - use `RSASignStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+    // Sign message with RSA. The data must be short (max several kilobytes). If i is longer - use `RSASignStream` instead. It will use SHA512_RSA_PKCS (RS512) algorithm to sign the message.
     rpc RSASign(RSASignRequest) returns (RSASignResponse) {};
-    // Validate signature of the message using RSA key-pairs public key. Message should be short (max several kylobytes). If data is longer - use `RSAVerifyStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+    // Validate signature of the message using RSA key-pairs public key. The data must be short (max several kilobytes). If i is longer - use `RSAVerifyStream` instead. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
     rpc RSAVerify(RSAVerifyRequest) returns (RSAVerifyResponse) {};
 
-    // Calculates HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
+    // Calculate HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
     rpc HMACSignStream(stream HMACSignStreamRequest) returns (HMACSignStreamResponse) {};
-    // Verifies HMAC signature of the data stream.
+    // Verify HMAC signature of the data stream.
     rpc HMACVerifyStream(stream HMACVerifyStreamRequest) returns (HMACVerifyStreamResponse) {};
-    // Calculates HMAC signature for input data. Data should be short (max several kylobytes). If data is longer - use `HMACSignStream`. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
+    // Calculate HMAC signature for input data. The data must be short (max several kilobytes). If it is longer - use `HMACSignStream` instead. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM. 
     rpc HMACSign(HMACSignRequest) returns (HMACSignResponse) {};
-    // Verifies HMAC signature of the data. Data should be short (max several kylobytes). If data is longer - use `HMACVerifyStream`.
+    // Verify HMAC signature of the data. The data must be short (max several kilobytes). If it is longer - use `HMACVerifyStream` instead.
     rpc HMACVerify(HMACVerifyRequest) returns (HMACVerifyResponse) {};
 
-    // Encrypts message stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
+    // Encrypt data stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable of decrypting from the middle of the whole data (partial decryption).
     rpc EncryptStream(stream EncryptStreamRequest) returns (stream EncryptStreamResponse) {};
-    // Decrypts message stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
+    // Decrypt data stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
     rpc DecryptStream(stream DecryptStreamRequest) returns (stream DecryptStreamResponse) {};
 }

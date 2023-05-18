@@ -36,10 +36,12 @@ nav:
     - Modules:
       - What is the module?: docs/modules/overview.en.md
       - System:
-        - What is the system module?: docs/modules/system/overview.en.md
-        - MongoDB: docs/modules/system/mongodb.en.md
-        - AMQP: docs/modules/system/amqp.en.md
-        - Redis Cache: docs/modules/system/redis_cache.en.md
+        - What is the system module?: docs/modules/system/overview.md
+        - DB: docs/modules/system/db.md
+        - Vault: docs/modules/system/vault.md
+        - NATS: docs/modules/system/nats.md
+        - Cache: docs/modules/system/cache.md
+        - Redis: docs/modules/system/redis.md
       - Native:
         - What is the native module?: docs/modules/native/overview.en.md
         - Namespace: docs/modules/native/namespace.en.md
