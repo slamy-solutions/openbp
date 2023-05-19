@@ -30,6 +30,7 @@ nav:
       #- Deploy for development: docs/getting-started/dev.en.md
       #- Develop your first module: docs/getting-started/first-app-tutorial.en.md
     - Concepts:
+      - Security: docs/concepts/security.md
       - IaC: docs/concepts/IaC.en.md
       - GIT CI/CD: docs/concepts/cicd.en.md
       - Use the language you want: docs/concepts/languageYouWant.en.md
