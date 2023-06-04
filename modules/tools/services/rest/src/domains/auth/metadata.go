@@ -14,12 +14,25 @@ type Metadata struct {
 	UserAgent     string `json:"UserAgent"`
 }
 
+func maxHeaderSizeString(s string, max int) string {
+	if len(s) > max {
+		r := 0
+		for i := range s {
+			r++
+			if r > max {
+				return s[:i]
+			}
+		}
+	}
+	return s
+}
+
 func MetadataFromRequestContext(ctx *gin.Context) *Metadata {
 	return &Metadata{
 		RealAddress:   ctx.ClientIP(),
-		Host:          ctx.GetHeader("Host"),
-		XForwardedFor: ctx.GetHeader("X-Forwarded-For"),
-		UserAgent:     ctx.GetHeader("User-Agent"),
+		Host:          maxHeaderSizeString(ctx.GetHeader("Host"), 128),
+		XForwardedFor: maxHeaderSizeString(ctx.GetHeader("X-Forwarded-For"), 128),
+		UserAgent:     maxHeaderSizeString(ctx.GetHeader("User-Agent"), 128),
 	}
 }
 

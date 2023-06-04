@@ -52,6 +52,9 @@ func makePolicyCacheKey(namespace string, uuid string) string {
 func makeBuiltInPolicyCacheKey(builtInType string) string {
 	return fmt.Sprintf("native_iam_policy_builtin_%s", builtInType)
 }
+func makeCountPolicyCacheKey(namespace string) string {
+	return fmt.Sprintf("native_iam_policy_count_%s", namespace)
+}
 
 func NewIAMPolicyServer(ctx context.Context, systemStub *system.SystemStub, nativeStub *native.NativeStub) (*IAMPolicyServer, error) {
 	err := ensureIndexesForNamespace(ctx, "", systemStub)
@@ -127,10 +130,10 @@ func (s *IAMPolicyServer) Create(ctx context.Context, in *nativeIAmPolicyGRPC.Cr
 	if policy.Managed.ManagementType == policy_managed_service && policy.Managed.ServiceManagementID != "" {
 		r, err := collection.UpdateOne(
 			ctx,
-			bson.M{"managed": bson.M{
-				"serviceName":         policy.Managed.ServiceName,
-				"serviceManagementId": policy.Managed.ServiceManagementID,
-			}},
+			bson.M{
+				"managed.serviceName":         policy.Managed.ServiceName,
+				"managed.serviceManagementId": policy.Managed.ServiceManagementID,
+			},
 			bson.M{
 				"$setOnInsert": policy,
 			},
@@ -150,6 +153,8 @@ func (s *IAMPolicyServer) Create(ctx context.Context, in *nativeIAmPolicyGRPC.Cr
 		}
 		policy.UUID = insertResponse.InsertedID.(primitive.ObjectID)
 	}
+
+	s.systemStub.Cache.Remove(ctx, makeCountPolicyCacheKey(in.Namespace))
 
 	return &nativeIAmPolicyGRPC.CreatePolicyResponse{
 		Policy: policy.ToGRPCPolicy(in.Namespace),
@@ -414,7 +419,7 @@ func (s *IAMPolicyServer) Delete(ctx context.Context, in *nativeIAmPolicyGRPC.De
 	}
 
 	if r.DeletedCount != 0 {
-		s.systemStub.Cache.Remove(ctx, makePolicyCacheKey(in.Namespace, in.Uuid))
+		s.systemStub.Cache.Remove(ctx, makePolicyCacheKey(in.Namespace, in.Uuid), makeCountPolicyCacheKey(in.Namespace))
 	}
 
 	return &nativeIAmPolicyGRPC.DeletePolicyResponse{Existed: r.DeletedCount != 0}, status.Error(grpccodes.OK, "")
@@ -460,6 +465,49 @@ func (s *IAMPolicyServer) List(in *nativeIAmPolicyGRPC.ListPoliciesRequest, out 
 
 	return status.Error(grpccodes.OK, "")
 }
+func (s *IAMPolicyServer) Count(ctx context.Context, in *nativeIAmPolicyGRPC.CountPoliciesRequest) (*nativeIAmPolicyGRPC.CountPoliciesResponse, error) {
+	var cacheKey string
+	if in.UseCache {
+		cacheKey = makeCountPolicyCacheKey(in.Namespace)
+		byteData, _ := s.systemStub.Cache.Get(ctx, cacheKey)
+		if byteData != nil {
+			var response nativeIAmPolicyGRPC.CountPoliciesResponse
+			err := proto.Unmarshal(byteData, &response)
+			if err != nil {
+				return nil, status.Error(grpccodes.Internal, "Error while unmarshaling policy count response from cache: "+err.Error())
+			}
+			return &response, status.Error(grpccodes.OK, "")
+		}
+	}
+
+	collection := s.collectionByNamespace(in.Namespace)
+	count, err := collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return &nativeIAmPolicyGRPC.CountPoliciesResponse{
+					Count: 0,
+				}, status.Error(grpccodes.OK, "Namespace doesnt exist")
+			}
+		}
+		return nil, status.Error(grpccodes.Internal, "error while counting documents in mongo:"+err.Error())
+	}
+
+	response := nativeIAmPolicyGRPC.CountPoliciesResponse{
+		Count: uint64(count),
+	}
+
+	if in.UseCache {
+		responseBytes, err := proto.Marshal(&response)
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Error while marshaling policy count to cache: "+err.Error())
+		}
+		s.systemStub.Cache.Set(ctx, cacheKey, responseBytes, POLICY_CACHE_TIMEOUT)
+	}
+
+	return &response, status.Error(grpccodes.OK, "")
+}
+
 func (s *IAMPolicyServer) GetServiceManagedPolicy(ctx context.Context, in *nativeIAmPolicyGRPC.GetServiceManagedPolicyRequest) (*nativeIAmPolicyGRPC.GetServiceManagedPolicyResponse, error) {
 	// TODO: Add cache. Probably need to hash "service" and "managedid" to create index cause theirs values can be in any format
 

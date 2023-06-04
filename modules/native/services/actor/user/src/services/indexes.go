@@ -14,6 +14,7 @@ import (
 const (
 	unique_login_index         = "unique_login"
 	fast_identity_search_index = "fast_identity_search"
+	text_search_index          = "text_search"
 )
 
 func ensureIndexesForNamespace(ctx context.Context, namespace string, systemStub *system.SystemStub) error {
@@ -30,6 +31,14 @@ func ensureIndexesForNamespace(ctx context.Context, namespace string, systemStub
 		{
 			Options: options.Index().SetName(fast_identity_search_index),
 			Keys:    bson.D{bson.E{Key: "identity", Value: "hashed"}},
+		},
+		{
+			Options: options.Index().SetName(text_search_index),
+			Keys: bson.D{
+				bson.E{Key: "login", Value: "text"},
+				bson.E{Key: "fullName", Value: "text"},
+				bson.E{Key: "email", Value: "text"},
+			},
 		},
 	})
 

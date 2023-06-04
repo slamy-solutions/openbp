@@ -71,7 +71,7 @@ func ensureBuiltInsForNamespace(ctx context.Context, namespace string, systemStu
 
 	r, err := collection.UpdateOne(
 		builtInPolicyCreationContext,
-		bson.M{"managed": bson.M{"_managementType": policy_managed_builtin, "builtInType": policy_builtin_empty}},
+		bson.M{"managed._managementType": policy_managed_builtin, "managed.builtInType": policy_builtin_empty},
 		bson.M{"$setOnInsert": newEmptyPolicy()},
 		options.Update().SetUpsert(true),
 	)
@@ -84,7 +84,7 @@ func ensureBuiltInsForNamespace(ctx context.Context, namespace string, systemStu
 
 	r, err = collection.UpdateOne(
 		builtInPolicyCreationContext,
-		bson.M{"managed": bson.M{"_managementType": policy_managed_builtin, "builtInType": policy_builtin_namespace_root}},
+		bson.M{"managed._managementType": policy_managed_builtin, "managed.builtInType": policy_builtin_namespace_root},
 		bson.M{"$setOnInsert": newNamespaceRootPolicy()},
 		options.Update().SetUpsert(true),
 	)
@@ -98,7 +98,7 @@ func ensureBuiltInsForNamespace(ctx context.Context, namespace string, systemStu
 	if namespace == "" {
 		r, err = collection.UpdateOne(
 			builtInPolicyCreationContext,
-			bson.M{"managed": bson.M{"_managementType": policy_managed_builtin, "builtInType": policy_builtin_global_root}},
+			bson.M{"managed._managementType": policy_managed_builtin, "managed.builtInType": policy_builtin_global_root},
 			bson.M{"$setOnInsert": newGlobalRootPolicy()},
 			options.Update().SetUpsert(true),
 		)

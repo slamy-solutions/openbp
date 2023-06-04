@@ -1,19 +1,16 @@
 package bootstrap
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
-	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 )
 
 const (
@@ -21,16 +18,14 @@ const (
 )
 
 type RootUserRouter struct {
-	servicesHandler *services.ServicesConnectionHandler
-
-	allowInit bool
+	nativeStub *native.NativeStub
+	systemStub *system.SystemStub
 }
 
 type initRootUserRequest struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+	Login    string `json:"login" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
-type initRootUserResponse struct{}
 
 func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 	var requestData initRootUserRequest
@@ -39,18 +34,34 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 		return
 	}
 
-	userExist, err := r.isRootUserInited(ctx.Request.Context())
+	vaultSealed, err := isVaultSealed(ctx.Request.Context(), r.systemStub)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if vaultSealed {
+		ctx.AbortWithStatusJSON(http.StatusPreconditionFailed, gin.H{"message": "The vault is sealed."})
+		return
+	}
+
+	blocked := isRootUserCreationBlocked()
+	if blocked {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Root user creation is blocked."})
+		return
+	}
+
+	userExist, err := isRootUserCreated(ctx.Request.Context(), r.nativeStub)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	if userExist {
-		ctx.AbortWithStatusJSON(http.StatusPreconditionFailed, gin.H{"message": "Root user was already initialized"})
+		ctx.AbortWithStatusJSON(http.StatusConflict, gin.H{"message": "Root user was already initialized"})
 		return
 	}
 
 	// Create user
-	userResponse, err := r.servicesHandler.Native.ActorUser.Create(ctx.Request.Context(), &user.CreateRequest{
+	userResponse, err := r.nativeStub.Services.ActorUser.Create(ctx.Request.Context(), &user.CreateRequest{
 		Login:    requestData.Login,
 		FullName: "Root",
 		Avatar:   "",
@@ -62,76 +73,42 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 	}
 
 	// Assign password to user
-	_, err = r.servicesHandler.Native.IAMAuthenticationPassword.CreateOrUpdate(ctx.Request.Context(), &password.CreateOrUpdateRequest{
+	_, err = r.nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx.Request.Context(), &password.CreateOrUpdateRequest{
 		Namespace: "",
 		Identity:  userResponse.User.Identity,
 		Password:  requestData.Password,
 	})
 	if err != nil {
+		r.nativeStub.Services.ActorUser.Delete(ctx.Request.Context(), &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	// Create policy for root with access to entire system
-	policyResponse, err := r.servicesHandler.Native.IAMPolicy.Create(ctx.Request.Context(), &policy.CreatePolicyRequest{
+	// Get Root Role
+	roleResponse, err := r.nativeStub.Services.IamRole.GetBuiltInRole(ctx.Request.Context(), &role.GetBuiltInRoleRequest{
 		Namespace: "",
-		Name:      "root",
-		Resources: []string{"*"},
-		Actions:   []string{"*"},
+		Type:      role.BuiltInRoleType_GLOBAL_ROOT,
 	})
 	if err != nil {
+		r.nativeStub.Services.IamAuthentication.Password.Delete(ctx.Request.Context(), &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
+		r.nativeStub.Services.ActorUser.Delete(ctx.Request.Context(), &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	// Assign policy to the user identity
-	_, err = r.servicesHandler.Native.IAMIdentity.AddPolicy(ctx.Request.Context(), &identity.AddPolicyRequest{
+	// Assign role to the user identity
+	_, err = r.nativeStub.Services.IamIdentity.AddRole(ctx.Request.Context(), &identity.AddRoleRequest{
 		IdentityNamespace: "",
 		IdentityUUID:      userResponse.User.Identity,
-		PolicyNamespace:   "",
-		PolicyUUID:        policyResponse.Policy.Uuid,
+		RoleNamespace:     "",
+		RoleUUID:          roleResponse.Role.Uuid,
 	})
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	// Set ROOT_USER_CREATED_KEY to identify that root user was created
-	_, err = r.servicesHandler.Native.KeyValueStorage.Set(ctx.Request.Context(), &keyvaluestorage.SetRequest{
-		Namespace: "",
-		Key:       ROOT_USER_CREATED_KEY,
-		Value:     []byte{},
-	})
-	if err != nil {
+		r.nativeStub.Services.IamAuthentication.Password.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
+		r.nativeStub.Services.ActorUser.Delete(ctx, &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Root user successfully initialized"})
-}
-
-func (r *RootUserRouter) isRootUserInited(ctx context.Context) (bool, error) {
-	if !r.allowInit {
-		return true, nil
-	}
-
-	// Check if root user doesnt exist
-	// TODO: change to 'Exist' instead of 'Get'
-	_, err := r.servicesHandler.Native.KeyValueStorage.Get(ctx, &keyvaluestorage.GetRequest{
-		Namespace: "",
-		Key:       ROOT_USER_CREATED_KEY,
-		UseCache:  true,
-	})
-	if err != nil {
-		if st, ok := status.FromError(err); !ok || st.Code() != codes.NotFound {
-			return false, err
-		}
-	} else {
-		// Root user was already created
-		return true, nil
-	}
-
-	//TODO: check list of users. If there are other users => return that already exist
-
-	return false, nil
 }

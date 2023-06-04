@@ -165,6 +165,29 @@ message GetMultipleRolesResponse {
     Role role = 1;
 }
 
+message ListRolesRequest {
+    // Namesapce where to search for roles
+    string namespace = 1;
+    // Skip specified number of roles before return response. All the roleas are returned sorted, so this parameter can be used for list pagination.
+    uint64 skip = 2;
+    // Limits the count of returned responses to specified value
+    uint64 limit = 3;
+}
+message ListRolesResponse {
+    Role role = 1;
+}
+
+message CountRolesRequest {
+    // Namespace where to count roles
+    string namespace = 1;
+    // Use cache or not. Cached role data may not be actual under very rare conditions. Invalid cache data is automatically clear after short period of time.
+    bool useCache = 2;
+}
+message CountRolesResponse {
+    // Total count of roles in the namespace
+    uint64 count = 1;
+}
+
 message DeleteRoleRequest {
     // Namespace where to search for role. Leave empty for global role.
     string namespace = 1;
@@ -252,6 +275,10 @@ service IAMRoleService {
     rpc Get(GetRoleRequest) returns (GetRoleResponse);
     // Get multiple roles in one request.
     rpc GetMultiple(GetMultipleRolesRequest) returns (stream GetMultipleRolesResponse);
+    // Get list of roles in the namespace
+    rpc List(ListRolesRequest) returns (stream ListRolesResponse);
+    // Count roles in the namespace
+    rpc Count(CountRolesRequest) returns (CountRolesResponse);
     // Delete role
     rpc Delete(DeleteRoleRequest) returns (DeleteRoleResponse);
 

@@ -7,15 +7,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
-	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
 
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/models"
 )
 
 type PasswordRouter struct {
-	servicesHandler *services.ServicesConnectionHandler
+	nativeStub *native.NativeStub
 }
 
 type passwordLoginRequest struct {
@@ -35,7 +35,7 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	// Try to find user with this login
-	userGetResponse, err := r.servicesHandler.Native.ActorUser.GetByLogin(ctx.Request.Context(), &user.GetByLoginRequest{
+	userGetResponse, err := r.nativeStub.Services.ActorUser.GetByLogin(ctx.Request.Context(), &user.GetByLoginRequest{
 		Login:    requestData.Login,
 		UseCache: false,
 	})
@@ -51,7 +51,7 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	// Try to verify password and create authorization token for user
-	tokenCreationResponse, err := r.servicesHandler.Native.IAMAuth.CreateTokenWithPassword(ctx.Request.Context(), &auth.CreateTokenWithPasswordRequest{
+	tokenCreationResponse, err := r.nativeStub.Services.IamAuth.CreateTokenWithPassword(ctx.Request.Context(), &auth.CreateTokenWithPasswordRequest{
 		Namespace: "",
 		Identity:  userGetResponse.User.Identity,
 		Password:  requestData.Password,
@@ -66,22 +66,18 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	switch tokenCreationResponse.Status {
 	case auth.CreateTokenWithPasswordResponse_OK:
 		ctx.JSON(http.StatusOK, passwordLoginResponse{AccessToken: tokenCreationResponse.AccessToken, RefreshToken: tokenCreationResponse.RefreshToken})
-		break
 	case auth.CreateTokenWithPasswordResponse_IDENTITY_NOT_ACTIVE:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordIdentityNotActive))
-		break
 	case auth.CreateTokenWithPasswordResponse_CREDENTIALS_INVALID:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordCredentialsInvalid))
-		break
 	case auth.CreateTokenWithPasswordResponse_UNAUTHORIZED:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordNotEnoughtPrivileges))
-		break
 	default:
 		ctx.JSON(http.StatusUnauthorized, models.NewAPIError(models.ErrorAuthPasswordUnauthorizedUnknown))
 	}
 }
 
-type passwordRestRequest struct {
+/*type passwordRestRequest struct {
 	Login string `json:"login" binding:"required"`
 }
 type passwordResetResponse struct{}
@@ -118,4 +114,4 @@ func (r *PasswordRouter) Reset(ctx *gin.Context) {
 	}
 
 	ctx.AbortWithError(http.StatusNotImplemented, err)
-}
+}*/

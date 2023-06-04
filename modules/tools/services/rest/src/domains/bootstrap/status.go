@@ -5,38 +5,48 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
-)
-
-const (
-	STATUS_OK                        = "OK"
-	STATUS_ROOT_USER_NOT_INITIALIZED = "ROOT_USER_NOT_INITIALIZED"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 )
 
 type StatusRouter struct {
-	servicesHandler *services.ServicesConnectionHandler
-
-	rootUserRouter *RootUserRouter
+	systemStub *system.SystemStub
+	nativeStub *native.NativeStub
 }
 
-type statusRequest struct{}
 type statusResponse struct {
-	FullyBootstrapped bool   `json:"fullyBootstrapped"`
-	Code              string `json:"code"`
+	VaultSealed             bool `json:"vaultSealed"`
+	RootUserCreated         bool `json:"rootUserCreated"`
+	RootUserCreationBlocked bool `json:"rootUserCreationBlocked"`
 }
 
 func (r *StatusRouter) Status(ctx *gin.Context) {
-	rootUserInited, err := r.rootUserRouter.isRootUserInited(ctx.Request.Context())
+	response := &statusResponse{
+		VaultSealed:             false,
+		RootUserCreated:         false,
+		RootUserCreationBlocked: false,
+	}
+
+	vaultSealed, err := isVaultSealed(ctx.Request.Context(), r.systemStub)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	if !rootUserInited {
-		ctx.JSON(http.StatusOK, &statusResponse{FullyBootstrapped: true, Code: STATUS_ROOT_USER_NOT_INITIALIZED})
+	response.VaultSealed = vaultSealed
+	if vaultSealed {
+		// Return immediatelly, because if vault is sealed other services may not work
+		ctx.JSON(http.StatusOK, response)
 		return
 	}
 
-	// TODO: Set cache when everything initialized
+	rootUserCreated, err := isRootUserCreated(ctx.Request.Context(), r.nativeStub)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	response.RootUserCreated = rootUserCreated
 
-	ctx.JSON(http.StatusOK, &statusResponse{FullyBootstrapped: true, Code: STATUS_OK})
+	response.RootUserCreationBlocked = isRootUserCreationBlocked()
+
+	ctx.JSON(http.StatusOK, response)
 }

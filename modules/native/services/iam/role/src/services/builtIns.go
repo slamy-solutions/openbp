@@ -82,7 +82,7 @@ func ensureBuiltInsForNamespace(ctx context.Context, namespaceName string, syste
 	// EMPTY
 	emptyInsertResult, err := collection.UpdateOne(
 		builtInRolesCreationContext,
-		bson.M{"managed": bson.M{"_managementType": role_managed_builtin, "builtInType": role_builtin_empty}},
+		bson.M{"managed._managementType": role_managed_builtin, "managed.builtInType": role_builtin_empty},
 		bson.M{"$setOnInsert": newEmptyRole()},
 		options.Update().SetUpsert(true),
 	)
@@ -129,7 +129,7 @@ func ensureBuiltInsForNamespace(ctx context.Context, namespaceName string, syste
 	}
 	namespaceRootInsertResult, err := collection.UpdateOne(
 		builtInRolesCreationContext,
-		bson.M{"managed": bson.M{"_managementType": role_managed_builtin, "builtInType": role_builtin_namespace_root}},
+		bson.M{"managed._managementType": role_managed_builtin, "managed.builtInType": role_builtin_namespace_root},
 		bson.M{"$setOnInsert": newNamespaceRootRole(namespaceName, rootPolicyUUID)},
 		options.Update().SetUpsert(true),
 	)
@@ -151,7 +151,7 @@ func ensureBuiltInsForNamespace(ctx context.Context, namespaceName string, syste
 		}
 		globalRootInsertResult, err := collection.UpdateOne(
 			builtInRolesCreationContext,
-			bson.M{"managed": bson.M{"_managementType": role_managed_builtin, "builtInType": role_builtin_global_root}},
+			bson.M{"managed._managementType": role_managed_builtin, "managed.builtInType": role_builtin_global_root},
 			bson.M{"$setOnInsert": newGlobalRootRole(namespaceName, rootPolicyResponse.Policy.Uuid)},
 			options.Update().SetUpsert(true),
 		)

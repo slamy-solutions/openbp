@@ -36,6 +36,8 @@ type IAMPolicyServiceClient interface {
 	Delete(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error)
 	// List policies in namespace
 	List(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (IAMPolicyService_ListClient, error)
+	// Count policies in namespace
+	Count(ctx context.Context, in *CountPoliciesRequest, opts ...grpc.CallOption) (*CountPoliciesResponse, error)
 	// Get policy that is managed by service
 	GetServiceManagedPolicy(ctx context.Context, in *GetServiceManagedPolicyRequest, opts ...grpc.CallOption) (*GetServiceManagedPolicyResponse, error)
 	// Get one of the builtin policies
@@ -159,6 +161,15 @@ func (x *iAMPolicyServiceListClient) Recv() (*ListPoliciesResponse, error) {
 	return m, nil
 }
 
+func (c *iAMPolicyServiceClient) Count(ctx context.Context, in *CountPoliciesRequest, opts ...grpc.CallOption) (*CountPoliciesResponse, error) {
+	out := new(CountPoliciesResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_policy.IAMPolicyService/Count", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMPolicyServiceClient) GetServiceManagedPolicy(ctx context.Context, in *GetServiceManagedPolicyRequest, opts ...grpc.CallOption) (*GetServiceManagedPolicyResponse, error) {
 	out := new(GetServiceManagedPolicyResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_policy.IAMPolicyService/GetServiceManagedPolicy", in, out, opts...)
@@ -195,6 +206,8 @@ type IAMPolicyServiceServer interface {
 	Delete(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error)
 	// List policies in namespace
 	List(*ListPoliciesRequest, IAMPolicyService_ListServer) error
+	// Count policies in namespace
+	Count(context.Context, *CountPoliciesRequest) (*CountPoliciesResponse, error)
 	// Get policy that is managed by service
 	GetServiceManagedPolicy(context.Context, *GetServiceManagedPolicyRequest) (*GetServiceManagedPolicyResponse, error)
 	// Get one of the builtin policies
@@ -226,6 +239,9 @@ func (UnimplementedIAMPolicyServiceServer) Delete(context.Context, *DeletePolicy
 }
 func (UnimplementedIAMPolicyServiceServer) List(*ListPoliciesRequest, IAMPolicyService_ListServer) error {
 	return status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedIAMPolicyServiceServer) Count(context.Context, *CountPoliciesRequest) (*CountPoliciesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Count not implemented")
 }
 func (UnimplementedIAMPolicyServiceServer) GetServiceManagedPolicy(context.Context, *GetServiceManagedPolicyRequest) (*GetServiceManagedPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServiceManagedPolicy not implemented")
@@ -378,6 +394,24 @@ func (x *iAMPolicyServiceListServer) Send(m *ListPoliciesResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _IAMPolicyService_Count_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountPoliciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMPolicyServiceServer).Count(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_policy.IAMPolicyService/Count",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMPolicyServiceServer).Count(ctx, req.(*CountPoliciesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IAMPolicyService_GetServiceManagedPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetServiceManagedPolicyRequest)
 	if err := dec(in); err != nil {
@@ -440,6 +474,10 @@ var IAMPolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _IAMPolicyService_Delete_Handler,
+		},
+		{
+			MethodName: "Count",
+			Handler:    _IAMPolicyService_Count_Handler,
 		},
 		{
 			MethodName: "GetServiceManagedPolicy",

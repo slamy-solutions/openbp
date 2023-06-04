@@ -28,6 +28,10 @@ type IAMRoleServiceClient interface {
 	Get(ctx context.Context, in *GetRoleRequest, opts ...grpc.CallOption) (*GetRoleResponse, error)
 	// Get multiple roles in one request.
 	GetMultiple(ctx context.Context, in *GetMultipleRolesRequest, opts ...grpc.CallOption) (IAMRoleService_GetMultipleClient, error)
+	// Get list of roles in the namespace
+	List(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (IAMRoleService_ListClient, error)
+	// Count roles in the namespace
+	Count(ctx context.Context, in *CountRolesRequest, opts ...grpc.CallOption) (*CountRolesResponse, error)
 	// Delete role
 	Delete(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
 	// Get role that is managed by service
@@ -99,6 +103,47 @@ func (x *iAMRoleServiceGetMultipleClient) Recv() (*GetMultipleRolesResponse, err
 	return m, nil
 }
 
+func (c *iAMRoleServiceClient) List(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (IAMRoleService_ListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &IAMRoleService_ServiceDesc.Streams[1], "/native_iam_role.IAMRoleService/List", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &iAMRoleServiceListClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type IAMRoleService_ListClient interface {
+	Recv() (*ListRolesResponse, error)
+	grpc.ClientStream
+}
+
+type iAMRoleServiceListClient struct {
+	grpc.ClientStream
+}
+
+func (x *iAMRoleServiceListClient) Recv() (*ListRolesResponse, error) {
+	m := new(ListRolesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *iAMRoleServiceClient) Count(ctx context.Context, in *CountRolesRequest, opts ...grpc.CallOption) (*CountRolesResponse, error) {
+	out := new(CountRolesResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_role.IAMRoleService/Count", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMRoleServiceClient) Delete(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error) {
 	out := new(DeleteRoleResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_role.IAMRoleService/Delete", in, out, opts...)
@@ -163,6 +208,10 @@ type IAMRoleServiceServer interface {
 	Get(context.Context, *GetRoleRequest) (*GetRoleResponse, error)
 	// Get multiple roles in one request.
 	GetMultiple(*GetMultipleRolesRequest, IAMRoleService_GetMultipleServer) error
+	// Get list of roles in the namespace
+	List(*ListRolesRequest, IAMRoleService_ListServer) error
+	// Count roles in the namespace
+	Count(context.Context, *CountRolesRequest) (*CountRolesResponse, error)
 	// Delete role
 	Delete(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
 	// Get role that is managed by service
@@ -189,6 +238,12 @@ func (UnimplementedIAMRoleServiceServer) Get(context.Context, *GetRoleRequest) (
 }
 func (UnimplementedIAMRoleServiceServer) GetMultiple(*GetMultipleRolesRequest, IAMRoleService_GetMultipleServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetMultiple not implemented")
+}
+func (UnimplementedIAMRoleServiceServer) List(*ListRolesRequest, IAMRoleService_ListServer) error {
+	return status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedIAMRoleServiceServer) Count(context.Context, *CountRolesRequest) (*CountRolesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Count not implemented")
 }
 func (UnimplementedIAMRoleServiceServer) Delete(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -276,6 +331,45 @@ type iAMRoleServiceGetMultipleServer struct {
 
 func (x *iAMRoleServiceGetMultipleServer) Send(m *GetMultipleRolesResponse) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func _IAMRoleService_List_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListRolesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(IAMRoleServiceServer).List(m, &iAMRoleServiceListServer{stream})
+}
+
+type IAMRoleService_ListServer interface {
+	Send(*ListRolesResponse) error
+	grpc.ServerStream
+}
+
+type iAMRoleServiceListServer struct {
+	grpc.ServerStream
+}
+
+func (x *iAMRoleServiceListServer) Send(m *ListRolesResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _IAMRoleService_Count_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMRoleServiceServer).Count(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_role.IAMRoleService/Count",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMRoleServiceServer).Count(ctx, req.(*CountRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _IAMRoleService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -402,6 +496,10 @@ var IAMRoleService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IAMRoleService_Get_Handler,
 		},
 		{
+			MethodName: "Count",
+			Handler:    _IAMRoleService_Count_Handler,
+		},
+		{
 			MethodName: "Delete",
 			Handler:    _IAMRoleService_Delete_Handler,
 		},
@@ -430,6 +528,11 @@ var IAMRoleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetMultiple",
 			Handler:       _IAMRoleService_GetMultiple_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "List",
+			Handler:       _IAMRoleService_List_Handler,
 			ServerStreams: true,
 		},
 	},

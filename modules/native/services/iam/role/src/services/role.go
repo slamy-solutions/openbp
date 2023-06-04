@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 	"google.golang.org/grpc/codes"
@@ -61,6 +63,11 @@ func NewIAMRoleServer(ctx context.Context, systemStub *system.SystemStub, native
 }
 
 //TODO: add cache
+const ROLE_CACHE_TIMEOUT = time.Second * 30
+
+func makeCountRoleCacheKey(namespace string) string {
+	return fmt.Sprintf("native_iam_role_count_%s", namespace)
+}
 
 func (s *IAMRoleServer) Create(ctx context.Context, in *nativeIAmRoleGRPC.CreateRoleRequest) (*nativeIAmRoleGRPC.CreateRoleResponse, error) {
 	creationTime := time.Now().UTC()
@@ -96,10 +103,10 @@ func (s *IAMRoleServer) Create(ctx context.Context, in *nativeIAmRoleGRPC.Create
 	if role.Managed.ManagementType == role_managed_service && role.Managed.ServiceManagementID != "" {
 		r, err := collection.UpdateOne(
 			ctx,
-			bson.M{"managed": bson.M{
-				"serviceName":         role.Managed.ServiceName,
-				"serviceManagementId": role.Managed.ServiceManagementID,
-			}},
+			bson.M{
+				"managed.serviceName":         role.Managed.ServiceName,
+				"managed.serviceManagementId": role.Managed.ServiceManagementID,
+			},
 			bson.M{
 				"$setOnInsert": role,
 			},
@@ -251,6 +258,85 @@ func (s *IAMRoleServer) GetMultiple(in *nativeIAmRoleGRPC.GetMultipleRolesReques
 		return status.Error(codes.Internal, "Error while fetching roles from database. "+err.Error())
 	}
 	return status.Error(codes.OK, "")
+}
+func (s *IAMRoleServer) List(in *nativeIAmRoleGRPC.ListRolesRequest, out nativeIAmRoleGRPC.IAMRoleService_ListServer) error {
+	collection := s.getCollectionByNamespace(in.Namespace)
+	options := options.Find().SetSort(bson.D{{Key: "_id", Value: 1}})
+	if in.Skip != 0 {
+		options.SetSkip(int64(in.Skip))
+	}
+	if in.Limit != 0 {
+		options.SetLimit(int64(in.Limit))
+	}
+	cursor, err := collection.Find(out.Context(), bson.M{}, options)
+	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return status.Error(codes.OK, "Namespace doesnt exist")
+			}
+		}
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer cursor.Close(out.Context())
+
+	for cursor.Next(out.Context()) {
+		var role roleInMongo
+		err = cursor.Decode(&role)
+		if err != nil {
+			return status.Error(codes.Internal, "error while decoding role from mongo:"+err.Error())
+		}
+
+		err = out.Send(&nativeIAmRoleGRPC.ListRolesResponse{
+			Role: role.ToGRPCRole(in.Namespace),
+		})
+		if err != nil {
+			return status.Error(codes.Internal, "error while sending role:"+err.Error())
+		}
+	}
+
+	return status.Error(codes.OK, "")
+}
+func (s *IAMRoleServer) Count(ctx context.Context, in *nativeIAmRoleGRPC.CountRolesRequest) (*nativeIAmRoleGRPC.CountRolesResponse, error) {
+	var cacheKey string
+	if in.UseCache {
+		cacheKey = makeCountRoleCacheKey(in.Namespace)
+		byteData, _ := s.systemStub.Cache.Get(ctx, cacheKey)
+		if byteData != nil {
+			var response nativeIAmRoleGRPC.CountRolesResponse
+			err := proto.Unmarshal(byteData, &response)
+			if err != nil {
+				return nil, status.Error(codes.Internal, "Error while unmarshaling roles count response from cache: "+err.Error())
+			}
+			return &response, status.Error(codes.OK, "")
+		}
+	}
+
+	collection := s.getCollectionByNamespace(in.Namespace)
+	count, err := collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return &nativeIAmRoleGRPC.CountRolesResponse{
+					Count: 0,
+				}, status.Error(codes.OK, "Namespace doesnt exist")
+			}
+		}
+		return nil, status.Error(codes.Internal, "error while counting documents in mongo:"+err.Error())
+	}
+
+	response := nativeIAmRoleGRPC.CountRolesResponse{
+		Count: uint64(count),
+	}
+
+	if in.UseCache {
+		responseBytes, err := proto.Marshal(&response)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "Error while marshaling policy count to cache: "+err.Error())
+		}
+		s.systemStub.Cache.Set(ctx, cacheKey, responseBytes, ROLE_CACHE_TIMEOUT)
+	}
+
+	return &response, status.Error(codes.OK, "")
 }
 func (s *IAMRoleServer) Delete(ctx context.Context, in *nativeIAmRoleGRPC.DeleteRoleRequest) (*nativeIAmRoleGRPC.DeleteRoleResponse, error) {
 	id, err := primitive.ObjectIDFromHex(in.Uuid)

@@ -162,6 +162,30 @@ message ExistsIdentityResponse {
     bool exists = 1;
 }
 
+message ListIdentityRequest {
+    // Namespace where to get identitites
+    string namespace = 1;
+    // The returned identities will always be sorted. So you can load them with pagination. Service will not return first "skip" identities. Use "0" if you want to ignore pagination,
+    uint64 skip = 2;
+    // Limit the number of returned entries. Use "0" to ignore limit.
+    uint64 limit = 3;
+}
+message ListIdentityResponse {
+    // One of the founded identities
+    Identity identity = 1;
+}
+
+message CountIdentityRequest {
+    // Namespace where to count identities
+    string namespace = 1;
+    // Use cache or not. Cache may not be valid under very rare conditions (simultaniour read and writes). Cache automatically clears after short period of time (30 seconds by default).
+    bool useCache = 2;
+}
+message CountIdentityResponse {
+    // Number of the identities in the provided namespace
+    uint64 count = 1;
+}
+
 message GetServiceManagedIdentityRequest {
     // Namespace where to search for identity
     string namespace = 1;
@@ -260,6 +284,10 @@ service IAMIdentityService {
     rpc Delete(DeleteIdentityRequest) returns (DeleteIdentityResponse);
     // Check if identity exists
     rpc Exists(ExistsIdentityRequest) returns (ExistsIdentityResponse);
+    // Get list of the identities
+    rpc List(ListIdentityRequest) returns (stream ListIdentityResponse);
+    // Get number of the identities in the namespace
+    rpc Count(CountIdentityRequest) returns (CountIdentityResponse);
 
     // Get policy that is managed by service
     rpc GetServiceManagedIdentity(GetServiceManagedIdentityRequest) returns (GetServiceManagedIdentityResponse);

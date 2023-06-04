@@ -3,12 +3,13 @@ package auth
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 )
 
-func FillRouterGroup(group *gin.RouterGroup, servicesHandler *services.ServicesConnectionHandler) {
-	passwordRouter := &PasswordRouter{servicesHandler: servicesHandler}
-	tokenRouter := &TokenRouter{servicesHandler: servicesHandler}
+func FillRouterGroup(group *gin.RouterGroup, systemStub *system.SystemStub, nativeStub *native.NativeStub) {
+	passwordRouter := &PasswordRouter{nativeStub: nativeStub}
+	tokenRouter := &TokenRouter{nativeStub: nativeStub}
 
 	// Login
 	group.POST("/login/password", passwordRouter.Login)

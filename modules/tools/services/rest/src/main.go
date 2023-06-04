@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -10,17 +11,39 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
-	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 
+	accesscontrol "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/accessControl"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/auth"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/bootstrap"
+	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/namespace"
 )
 
+const (
+	VERSION = "1.0.0"
+)
+
+func getHostname() string {
+	name, err := os.Hostname()
+	if err != nil {
+		return "unknown"
+	}
+	return name
+}
+
 func main() {
-	// Connect to internal services
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
-	servicesHandler, err := services.ConnectToServices(ctx)
+
+	systemStub := system.NewSystemStub(system.NewSystemStubConfig().WithOTel(system.NewOTelConfig("tools", "rest", VERSION, getHostname())).WithVault())
+	err := systemStub.Connect(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMAuthService().WithActorUserService().WithIAMTokenService().WithIAMAuthenticationService().WithIAMRoleService().WithIAMIdentityService().WithNamespaceService().WithIAMPolicyService())
+	err = nativeStub.Connect()
 	if err != nil {
 		panic(err)
 	}
@@ -28,15 +51,18 @@ func main() {
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"https://localhost:30442", "https://127.0.0.1:30442", "http://localhost:30442", "http://127.0.0.1:30442"}
+	corsConfig.AllowOrigins = []string{"*"} //TODO: somehow handle this. Is this possible?
 	corsConfig.AllowCredentials = true
+	corsConfig.AllowHeaders = []string{"*"}
 	r.Use(cors.New(corsConfig))
 
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(otelgin.Middleware("tools_rest"))
 
-	auth.FillRouterGroup(r.Group("/api/auth"), servicesHandler)
-	bootstrap.FillRouterGroup(r.Group("/api/bootstrap"), servicesHandler)
+	auth.FillRouterGroup(r.Group("/api/auth"), systemStub, nativeStub)
+	bootstrap.FillRouterGroup(r.Group("/api/bootstrap"), systemStub, nativeStub)
+	namespace.FillRouterGroup(r.Group("/api/namespace"), nativeStub)
+	accesscontrol.FillRouterGroup(r.Group("/api/accessControl"), nativeStub)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

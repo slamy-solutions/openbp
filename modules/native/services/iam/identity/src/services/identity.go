@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
@@ -56,6 +57,9 @@ func NewIAmIdentityServer(ctx context.Context, systemStub *system.SystemStub, na
 
 func makeIndetityCacheKey(namespace string, uuid string) string {
 	return fmt.Sprintf("native_iam_identity_data_%s_%s", namespace, uuid)
+}
+func makeIndetityCountCacheKey(namespace string) string {
+	return fmt.Sprintf("native_iam_identity_count_%s", namespace)
 }
 
 func collectionByNamespace(s *IAmIdentityServer, namespace string) *mongo.Collection {
@@ -137,10 +141,10 @@ func (s *IAmIdentityServer) Create(ctx context.Context, in *nativeIAmIdentityGRP
 	if insertData.Managed.ManagementType == identity_managed_service && insertData.Managed.ServiceManagementID != "" {
 		r, err := collection.UpdateOne(
 			ctx,
-			bson.M{"managed": bson.M{
-				"serviceName":         insertData.Managed.ServiceName,
-				"serviceManagementId": insertData.Managed.ServiceManagementID,
-			}},
+			bson.M{
+				"managed.serviceName":         insertData.Managed.ServiceName,
+				"managed.serviceManagementId": insertData.Managed.ServiceManagementID,
+			},
 			bson.M{
 				"$setOnInsert": insertData,
 			},
@@ -160,6 +164,8 @@ func (s *IAmIdentityServer) Create(ctx context.Context, in *nativeIAmIdentityGRP
 		}
 		insertData.ID = insertResponse.InsertedID.(primitive.ObjectID)
 	}
+
+	s.systemStub.Cache.Remove(ctx, makeIndetityCountCacheKey(in.Namespace))
 
 	return &nativeIAmIdentityGRPC.CreateIdentityResponse{
 		Identity: insertData.ToGRPCIdentity(in.Namespace),
@@ -222,7 +228,7 @@ func (s *IAmIdentityServer) Delete(ctx context.Context, in *nativeIAmIdentityGRP
 	}
 
 	if result.DeletedCount != 0 {
-		s.systemStub.Cache.Remove(ctx, makeIndetityCacheKey(in.Namespace, in.Uuid))
+		s.systemStub.Cache.Remove(ctx, makeIndetityCacheKey(in.Namespace, in.Uuid), makeIndetityCountCacheKey(in.Namespace))
 	}
 
 	return &nativeIAmIdentityGRPC.DeleteIdentityResponse{Existed: result.DeletedCount != 0}, status.Error(grpccodes.OK, "")
@@ -280,6 +286,87 @@ func (s *IAmIdentityServer) Exists(ctx context.Context, in *nativeIAmIdentityGRP
 		return &nativeIAmIdentityGRPC.ExistsIdentityResponse{Exists: count == 1}, status.Error(grpccodes.OK, "")
 	}
 }
+
+func (s *IAmIdentityServer) List(in *nativeIAmIdentityGRPC.ListIdentityRequest, out nativeIAmIdentityGRPC.IAMIdentityService_ListServer) error {
+	collection := collectionByNamespace(s, in.Namespace)
+	options := options.Find().SetSort(bson.D{{Key: "_id", Value: 1}})
+	if in.Skip != 0 {
+		options.SetSkip(int64(in.Skip))
+	}
+	if in.Limit != 0 {
+		options.SetLimit(int64(in.Limit))
+	}
+	cursor, err := collection.Find(out.Context(), bson.M{}, options)
+	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return status.Error(codes.OK, "Namespace doesnt exist")
+			}
+		}
+		return status.Error(grpccodes.Internal, err.Error())
+	}
+	defer cursor.Close(out.Context())
+
+	for cursor.Next(out.Context()) {
+		var identity identityInMongo
+		err = cursor.Decode(&identity)
+		if err != nil {
+			return status.Error(grpccodes.Internal, "error while decoding identity from mongo:"+err.Error())
+		}
+
+		err = out.Send(&nativeIAmIdentityGRPC.ListIdentityResponse{
+			Identity: identity.ToGRPCIdentity(in.Namespace),
+		})
+		if err != nil {
+			return status.Error(grpccodes.Internal, "error while sending identity:"+err.Error())
+		}
+	}
+
+	return status.Error(codes.OK, "")
+}
+func (s *IAmIdentityServer) Count(ctx context.Context, in *nativeIAmIdentityGRPC.CountIdentityRequest) (*nativeIAmIdentityGRPC.CountIdentityResponse, error) {
+	var cacheKey string
+	if in.UseCache {
+		cacheKey = makeIndetityCountCacheKey(in.Namespace)
+		byteData, _ := s.systemStub.Cache.Get(ctx, cacheKey)
+		if byteData != nil {
+			var response nativeIAmIdentityGRPC.CountIdentityResponse
+			err := proto.Unmarshal(byteData, &response)
+			if err != nil {
+				return nil, status.Error(grpccodes.Internal, "Error while unmarshaling identity count response from cache: "+err.Error())
+			}
+			return &response, status.Error(grpccodes.OK, "")
+		}
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	count, err := collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return &nativeIAmIdentityGRPC.CountIdentityResponse{
+					Count: 0,
+				}, status.Error(codes.OK, "Namespace doesnt exist")
+			}
+		}
+		return nil, status.Error(grpccodes.Internal, "error while counting documents in mongo:"+err.Error())
+	}
+
+	response := nativeIAmIdentityGRPC.CountIdentityResponse{
+		Count: uint64(count),
+	}
+
+	if in.UseCache {
+		responseBytes, err := proto.Marshal(&response)
+		if err != nil {
+			return nil, status.Error(grpccodes.Internal, "Error while marshaling identiry count to cache: "+err.Error())
+		}
+		s.systemStub.Cache.Set(ctx, cacheKey, responseBytes, IDENTITY_CACHE_TIMEOUT)
+	}
+
+	return &response, status.Error(codes.OK, "")
+}
+
 func (s *IAmIdentityServer) GetServiceManagedIdentity(ctx context.Context, in *nativeIAmIdentityGRPC.GetServiceManagedIdentityRequest) (*nativeIAmIdentityGRPC.GetServiceManagedIdentityResponse, error) {
 	// TODO: Add cache. Probably need to hash "service" and "managedid" to create index cause theirs values can be in any format
 

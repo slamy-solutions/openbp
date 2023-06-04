@@ -5,14 +5,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
-	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/models"
 )
 
 type TokenRouter struct {
-	servicesHandler *services.ServicesConnectionHandler
+	nativeStub *native.NativeStub
 }
 
 type refreshTokenRequest struct {
@@ -29,7 +30,7 @@ func (r *TokenRouter) Refresh(ctx *gin.Context) {
 		return
 	}
 
-	refreshResponse, err := r.servicesHandler.Native.IAMAuth.RefreshToken(ctx.Request.Context(), &auth.RefreshTokenRequest{
+	refreshResponse, err := r.nativeStub.Services.IamAuth.RefreshToken(ctx.Request.Context(), &auth.RefreshTokenRequest{
 		RefreshToken: requestData.RefreshToken,
 	})
 	if err != nil {
@@ -62,12 +63,10 @@ func (r *TokenRouter) Refresh(ctx *gin.Context) {
 }
 
 type validateTokenRequest struct {
-	AccessToken string `json:"accessToken" binding:"required"`
+	Token string `json:"token" binding:"required"`
 }
 type validateTokenResponse struct {
 	Valid bool `json:"valid"`
-
-	Message string `json:"message"`
 }
 
 func (r *TokenRouter) Validate(ctx *gin.Context) {
@@ -77,16 +76,15 @@ func (r *TokenRouter) Validate(ctx *gin.Context) {
 		return
 	}
 
-	checkResponse, err := r.servicesHandler.Native.IAMAuth.CheckAccessWithToken(ctx.Request.Context(), &auth.CheckAccessWithTokenRequest{
-		AccessToken: requestData.AccessToken,
-		Scopes:      []*auth.Scope{},
+	checkResponse, err := r.nativeStub.Services.IamToken.Validate(ctx.Request.Context(), &token.ValidateRequest{
+		Token:    requestData.Token,
+		UseCache: true,
 	})
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	valid := checkResponse.Status == auth.CheckAccessWithTokenResponse_OK
-
-	ctx.JSON(http.StatusOK, validateTokenResponse{Valid: valid, Message: checkResponse.Message})
+	valid := checkResponse.Status == token.ValidateResponse_OK
+	ctx.JSON(http.StatusOK, validateTokenResponse{Valid: valid})
 }

@@ -270,8 +270,11 @@ func (s *IAmAuthServer) CheckAccessWithToken(ctx context.Context, in *nativeIAmA
 	}
 
 	return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{
-		Status:  nativeIAmAuthGRPC.CheckAccessWithTokenResponse_OK,
-		Message: "",
+		Status:       nativeIAmAuthGRPC.CheckAccessWithTokenResponse_OK,
+		Message:      "",
+		Namespace:    tokenResponse.TokenData.Namespace,
+		TokenUUID:    tokenResponse.TokenData.Uuid,
+		IdentityUUID: tokenResponse.TokenData.Identity,
 	}, status.Error(grpccodes.OK, "")
 }
 

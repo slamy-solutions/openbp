@@ -135,6 +135,13 @@ message CheckAccessWithTokenResponse {
     Status status = 1;
     // Details of the status, that can be safelly returned and displayed to the requester
     string message = 2;
+
+    // Namespace where token and identity are located
+    string namespace = 3;
+    // Unique token id
+    string tokenUUID = 4;
+    // Unique identity id
+    string identityUUID = 5;
 }
 
 message CheckAccessWithPasswordRequest {

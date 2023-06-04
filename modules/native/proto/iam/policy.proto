@@ -213,12 +213,23 @@ message ListPoliciesRequest {
     // Namespace from where to list policies
     string namespace = 1;
     // How many values to skip before returning result
-    uint32 skip = 2;
+    uint64 skip = 2;
     // Maximum number of values to return. Use 0 to return all up to the end.
-    uint32 limit = 3;
+    uint64 limit = 3;
 }
 message ListPoliciesResponse {
     Policy policy = 1;
+}
+
+message CountPoliciesRequest {
+    // Namespace where to count policies
+    string namespace = 1;
+    // Use cache or not. Cached policy data may not be actual under very rare conditions. Invalid cache data is automatically clear after short period of time.
+    bool useCache = 2;
+}
+message CountPoliciesResponse {
+    // Count of policies in specified namespace
+    uint64 count = 1;
 }
 
 message GetServiceManagedPolicyRequest {
@@ -262,6 +273,8 @@ service IAMPolicyService {
     rpc Delete(DeletePolicyRequest) returns (DeletePolicyResponse);
     // List policies in namespace
     rpc List(ListPoliciesRequest) returns (stream ListPoliciesResponse);
+    // Count policies in namespace
+    rpc Count(CountPoliciesRequest) returns (CountPoliciesResponse);
 
     // Get policy that is managed by service
     rpc GetServiceManagedPolicy(GetServiceManagedPolicyRequest) returns (GetServiceManagedPolicyResponse);

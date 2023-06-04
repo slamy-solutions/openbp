@@ -2,19 +2,13 @@ package bootstrap
 
 import (
 	"github.com/gin-gonic/gin"
-
-	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/services"
+	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 )
 
-const (
-	_ENV_ALLOW_ROOT_USER_INIT       = "ALLOW_ROOT_USER_INIT"
-	_ENV_DEFAULT_ROOT_USER_LOGIN    = "DEFAULT_ROOT_USER_LOGIN"
-	_ENV_DEFAULT_ROOT_USER_PASSWORD = "DEFAULT_ROOT_USER_PASSWORD"
-)
-
-func FillRouterGroup(group *gin.RouterGroup, servicesHandler *services.ServicesConnectionHandler) {
-	rootUserRouter := &RootUserRouter{servicesHandler: servicesHandler, allowInit: true}
-	statusRouter := &StatusRouter{servicesHandler: servicesHandler, rootUserRouter: rootUserRouter}
+func FillRouterGroup(group *gin.RouterGroup, systemStub *system.SystemStub, nativeStub *native.NativeStub) {
+	rootUserRouter := &RootUserRouter{systemStub: systemStub, nativeStub: nativeStub}
+	statusRouter := &StatusRouter{systemStub: systemStub, nativeStub: nativeStub}
 
 	group.GET("/status", statusRouter.Status)
 	group.POST("/rootUser", rootUserRouter.InitRootUser)
