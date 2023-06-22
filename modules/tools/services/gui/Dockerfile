@@ -1,4 +1,4 @@
-FROM node:18-alpine3.18 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} node:18-alpine3.18 as builder
 RUN yarn global add @quasar/cli
 WORKDIR /app
 COPY modules/tools/services/gui/package.json package.json
