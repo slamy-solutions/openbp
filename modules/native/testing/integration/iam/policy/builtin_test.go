@@ -23,7 +23,7 @@ type BuiltInTestSuite struct {
 }
 
 func (suite *BuiltInTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -40,7 +40,7 @@ func (s *BuiltInTestSuite) TestGetForGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	_, err := s.nativeStub.Services.IamPolicy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
+	_, err := s.nativeStub.Services.IAM.Policy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
 		Namespace: "",
 		Type:      policy.BuiltInPolicyType_GLOBAL_ROOT,
 	})
@@ -62,7 +62,7 @@ func (s *BuiltInTestSuite) TestGetForNamespaceRoot() {
 
 	time.Sleep(time.Millisecond * 100)
 
-	_, err = s.nativeStub.Services.IamPolicy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Policy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
 		Namespace: namespaceName,
 		Type:      policy.BuiltInPolicyType_NAMESPACE_ROOT,
 	})
@@ -84,7 +84,7 @@ func (s *BuiltInTestSuite) TestGetForNamespaceEmpty() {
 
 	time.Sleep(time.Millisecond * 500)
 
-	_, err = s.nativeStub.Services.IamPolicy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Policy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
 		Namespace: namespaceName,
 		Type:      policy.BuiltInPolicyType_EMPTY,
 	})
@@ -95,7 +95,7 @@ func (s *BuiltInTestSuite) TestFailsWithNotFoundErrorForNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	_, err := s.nativeStub.Services.IamPolicy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
+	_, err := s.nativeStub.Services.IAM.Policy.GetBuiltInPolicy(ctx, &policy.GetBuiltInPolicyRequest{
 		Namespace: tools.GetRandomString(20),
 		Type:      policy.BuiltInPolicyType_EMPTY,
 	})

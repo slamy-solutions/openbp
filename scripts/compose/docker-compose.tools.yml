@@ -14,10 +14,7 @@ services:
     depends_on:
       - native_namespace
       - native_actor_user
-      - native_iam_auth
-      - native_iam_policy
-      - native_iam_identity
-      - native_iam_authentication
+      - native_iam
       - native_keyvaluestorage
       - system_telemetry
 

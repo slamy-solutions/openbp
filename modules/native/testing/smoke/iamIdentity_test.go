@@ -16,7 +16,7 @@ import (
 )
 
 func TestIAMIdentity(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMPolicyService().WithIAMRoleService().WithIAMIdentityService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -27,27 +27,27 @@ func TestIAMIdentity(t *testing.T) {
 	name := tools.GetRandomString(20)
 	initiallyActive := true
 
-	identityCreateResponse, err := nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            name,
 		InitiallyActive: initiallyActive,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
 	assert.Equal(t, name, identityCreateResponse.Identity.Name)
 	assert.Equal(t, initiallyActive, identityCreateResponse.Identity.Active)
 
 	// Create role and add it to the identity
-	roleCreateResponse, err := nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
-	_, err = nativeStub.Services.IamIdentity.AddRole(ctx, &identity.AddRoleRequest{
+	defer nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
+	_, err = nativeStub.Services.IAM.Identity.AddRole(ctx, &identity.AddRoleRequest{
 		IdentityNamespace: "",
 		IdentityUUID:      identityCreateResponse.Identity.Uuid,
 		RoleNamespace:     "",
@@ -56,7 +56,7 @@ func TestIAMIdentity(t *testing.T) {
 	require.Nil(t, err)
 
 	// Create policy and add it to the identity
-	policyCreateResponse, err := nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	policyCreateResponse, err := nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -66,8 +66,8 @@ func TestIAMIdentity(t *testing.T) {
 		Actions:              []string{},
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: policyCreateResponse.Policy.Uuid})
-	_, err = nativeStub.Services.IamIdentity.AddPolicy(ctx, &identity.AddPolicyRequest{
+	defer nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: policyCreateResponse.Policy.Uuid})
+	_, err = nativeStub.Services.IAM.Identity.AddPolicy(ctx, &identity.AddPolicyRequest{
 		IdentityNamespace: "",
 		IdentityUUID:      identityCreateResponse.Identity.Uuid,
 		PolicyNamespace:   "",
@@ -76,7 +76,7 @@ func TestIAMIdentity(t *testing.T) {
 	require.Nil(t, err)
 
 	// Get the identity and validate if information is actual
-	identityGetResponse, err := nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	identityGetResponse, err := nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: "",
 		Uuid:      identityCreateResponse.Identity.Uuid,
 		UseCache:  true,
@@ -92,7 +92,7 @@ func TestIAMIdentity(t *testing.T) {
 	assert.Equal(t, roleCreateResponse.Role.Uuid, identityGetResponse.Identity.Roles[0].Uuid)
 
 	// Delete identity
-	identityDeleteResponse, err := nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{
+	identityDeleteResponse, err := nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{
 		Namespace: "",
 		Uuid:      identityCreateResponse.Identity.Uuid,
 	})

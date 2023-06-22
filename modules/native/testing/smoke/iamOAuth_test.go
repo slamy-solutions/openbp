@@ -17,7 +17,7 @@ import (
 )
 
 func TestIAMAuth(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMIdentityService().WithIAMTokenService().WithIAMAuthService().WithIAMAuthenticationService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -26,27 +26,27 @@ func TestIAMAuth(t *testing.T) {
 	defer cancel()
 
 	// Create identity
-	identityCreateResponse, err := nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
 	//Add some password to the identity
 	plainPassword := tools.GetRandomString(20)
 
-	_, err = nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+	_, err = nativeStub.Services.IAM.Authentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  plainPassword,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamAuthentication.Password.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IAM.Authentication.Password.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
 
 	// Create Auth token
-	createAuthTokenResponse, err := nativeStub.Services.IamAuth.CreateTokenWithPassword(ctx, &auth.CreateTokenWithPasswordRequest{
+	createAuthTokenResponse, err := nativeStub.Services.IAM.Auth.CreateTokenWithPassword(ctx, &auth.CreateTokenWithPasswordRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  plainPassword,
@@ -55,18 +55,18 @@ func TestIAMAuth(t *testing.T) {
 	})
 	require.Nil(t, err)
 
-	getTokenDataResponse, err := nativeStub.Services.IamToken.RawGet(ctx, &token.RawGetRequest{
+	getTokenDataResponse, err := nativeStub.Services.IAM.Token.RawGet(ctx, &token.RawGetRequest{
 		Token:    createAuthTokenResponse.AccessToken,
 		UseCache: true,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{
+	defer nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{
 		Namespace: "",
 		Uuid:      getTokenDataResponse.TokenData.Uuid,
 	})
 
 	// Try to authorize with Auth token
-	authorizeResponse, err := nativeStub.Services.IamAuth.CheckAccessWithToken(ctx, &auth.CheckAccessWithTokenRequest{
+	authorizeResponse, err := nativeStub.Services.IAM.Auth.CheckAccessWithToken(ctx, &auth.CheckAccessWithTokenRequest{
 		AccessToken: createAuthTokenResponse.AccessToken,
 		Scopes:      []*auth.Scope{},
 	})

@@ -23,7 +23,7 @@ type ServiceManagedTestSuite struct {
 }
 
 func (suite *ServiceManagedTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMIdentityService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -44,7 +44,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForGlobalNamespace() {
 	managedReason := tools.GetRandomString(20)
 	managedId := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: "",
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -55,13 +55,13 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForGlobalNamespace() {
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 
 	require.Equal(s.T(), managedService, createResponse.Identity.Managed.(*identity.Identity_Service).Service.Service)
 	require.Equal(s.T(), managedReason, createResponse.Identity.Managed.(*identity.Identity_Service).Service.Reason)
 	require.Equal(s.T(), managedId, createResponse.Identity.Managed.(*identity.Identity_Service).Service.ManagementId)
 
-	getResponse, err := s.nativeStub.Services.IamIdentity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Identity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
 		Namespace: "",
 		Service:   managedService,
 		ManagedId: managedId,
@@ -93,7 +93,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
 	managedReason := tools.GetRandomString(20)
 	managedId := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: namespaceName,
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -104,7 +104,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
 	require.Equal(s.T(), managedService, createResponse.Identity.Managed.(*identity.Identity_Service).Service.Service)
 	require.Equal(s.T(), managedReason, createResponse.Identity.Managed.(*identity.Identity_Service).Service.Reason)
@@ -112,7 +112,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedForNamespace() {
 
 	retry := 5
 	for {
-		getResponse, err := s.nativeStub.Services.IamIdentity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
+		getResponse, err := s.nativeStub.Services.IAM.Identity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
 			Namespace: namespaceName,
 			Service:   managedService,
 			ManagedId: managedId,
@@ -142,7 +142,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSame
 	managedReason := tools.GetRandomString(20)
 	managedId := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: "",
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -153,9 +153,9 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSame
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 
-	createResponse2, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse2, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: "",
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -165,8 +165,8 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSame
 		}},
 		InitiallyActive: true,
 	})
-	if err != nil {
-		s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse2.Identity.Uuid})
+	if err == nil {
+		s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse2.Identity.Uuid})
 		require.Fail(s.T(), "Error wasnt received")
 	}
 }
@@ -190,7 +190,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSame
 	managedReason := tools.GetRandomString(20)
 	managedId := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: namespaceName,
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -201,9 +201,9 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSame
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
-	createResponse2, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse2, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: namespaceName,
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -213,8 +213,8 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailsWithAlreadyExistForSame
 		}},
 		InitiallyActive: true,
 	})
-	if err != nil {
-		s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse2.Identity.Uuid})
+	if err == nil {
+		s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse2.Identity.Uuid})
 		require.Fail(s.T(), "Error wasnt received")
 	}
 }
@@ -227,7 +227,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManage
 	managedReason := tools.GetRandomString(20)
 	managedId := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: "",
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -238,9 +238,9 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManage
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 
-	_, err = s.nativeStub.Services.IamIdentity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
 		Namespace: "",
 		Service:   managedService,
 		ManagedId: tools.GetRandomString(20),
@@ -272,7 +272,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManage
 	managedReason := tools.GetRandomString(20)
 	managedId := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: namespaceName,
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -283,9 +283,9 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForBabManage
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
-	_, err = s.nativeStub.Services.IamIdentity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
 		Namespace: namespaceName,
 		Service:   managedService,
 		ManagedId: tools.GetRandomString(20),
@@ -315,7 +315,7 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForNonExisti
 	managedReason := tools.GetRandomString(20)
 	managedId := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: namespaceName,
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Service{Service: &identity.ServiceManagedData{
@@ -326,9 +326,9 @@ func (s *ServiceManagedTestSuite) TestServiceManagedFailWithNotFoundForNonExisti
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
-	_, err = s.nativeStub.Services.IamIdentity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.GetServiceManagedIdentity(ctx, &identity.GetServiceManagedIdentityRequest{
 		Namespace: tools.GetRandomString(20),
 		Service:   managedService,
 		ManagedId: tools.GetRandomString(20),
@@ -345,16 +345,16 @@ func (s *ServiceManagedTestSuite) TestIdentityManagedForGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: false,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: "",
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Identity{Identity: &identity.IdentityManagedData{
@@ -364,10 +364,10 @@ func (s *ServiceManagedTestSuite) TestIdentityManagedForGlobalNamespace() {
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 	require.Equal(s.T(), identityCreateResponse.Identity.Uuid, createResponse.Identity.Managed.(*identity.Identity_Identity).Identity.IdentityUUID)
 
-	getResponse, err := s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  true,
@@ -389,16 +389,16 @@ func (s *ServiceManagedTestSuite) TestIdentityManagedForNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: false,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace: namespaceName,
 		Name:      tools.GetRandomString(20),
 		Managed: &identity.CreateIdentityRequest_Identity{Identity: &identity.IdentityManagedData{
@@ -408,10 +408,10 @@ func (s *ServiceManagedTestSuite) TestIdentityManagedForNamespace() {
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 	require.Equal(s.T(), identityCreateResponse.Identity.Uuid, createResponse.Identity.Managed.(*identity.Identity_Identity).Identity.IdentityUUID)
 
-	getResponse, err := s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  true,

@@ -14,7 +14,7 @@ import (
 )
 
 func TestIAMPolicy(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMPolicyService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -28,7 +28,7 @@ func TestIAMPolicy(t *testing.T) {
 	resource := tools.GetRandomString(30)
 	action := tools.GetRandomString(30)
 
-	createResponse, err := nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 name,
 		Description:          description,
@@ -38,7 +38,7 @@ func TestIAMPolicy(t *testing.T) {
 		Actions:              []string{action},
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
+	defer nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
 
 	assert.Equal(t, name, createResponse.Policy.Name)
 	assert.Equal(t, description, createResponse.Policy.Description)
@@ -48,7 +48,7 @@ func TestIAMPolicy(t *testing.T) {
 	require.Len(t, createResponse.Policy.Actions, 1)
 	assert.Equal(t, action, createResponse.Policy.Actions[0])
 
-	getResponse, err := nativeStub.Services.IamPolicy.Get(ctx, &policy.GetPolicyRequest{
+	getResponse, err := nativeStub.Services.IAM.Policy.Get(ctx, &policy.GetPolicyRequest{
 		Namespace: "",
 		Uuid:      createResponse.Policy.Uuid,
 		UseCache:  true,
@@ -62,7 +62,7 @@ func TestIAMPolicy(t *testing.T) {
 	require.Len(t, getResponse.Policy.Actions, 1)
 	assert.Equal(t, action, getResponse.Policy.Actions[0])
 
-	deleteResponse, err := nativeStub.Services.IamPolicy.Delete(ctx, &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
+	deleteResponse, err := nativeStub.Services.IAM.Policy.Delete(ctx, &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
 	require.Nil(t, err)
 	assert.True(t, deleteResponse.Existed)
 }

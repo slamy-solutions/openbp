@@ -28,11 +28,7 @@ func (suite *PasswordAuthTestSuite) SetupSuite() {
 	suite.nativeStub = native.NewNativeStub(
 		native.NewStubConfig().
 			WithNamespaceService().
-			WithIAMIdentityService().
-			WithIAMAuthenticationService().
-			WithIAMPolicyService().
-			WithIAMRoleService().
-			WithIAMAuthService())
+			WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -367,11 +363,11 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 			}, 0, len(tc.assignedPolicies))
 			defer func() {
 				for _, createdPolicy := range createdPolicies {
-					s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: createdPolicy.namespace, Uuid: createdPolicy.uuid})
+					s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: createdPolicy.namespace, Uuid: createdPolicy.uuid})
 				}
 			}()
 			for _, p := range tc.createPolicies {
-				createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+				createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 					Namespace:            p.namespace,
 					Name:                 tools.GetRandomString(10),
 					Description:          tools.GetRandomString(10),
@@ -394,11 +390,11 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 			}, 0, len(tc.assignedPolicies))
 			defer func() {
 				for _, createdRole := range createdRoles {
-					s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: createdRole.namespace, Uuid: createdRole.uuid})
+					s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: createdRole.namespace, Uuid: createdRole.uuid})
 				}
 			}()
 			for _, r := range tc.createRoles {
-				createResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+				createResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 					Namespace:   r.namespace,
 					Name:        tools.GetRandomString(10),
 					Description: tools.GetRandomString(10),
@@ -411,7 +407,7 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 				}{uuid: createResponse.Role.Uuid, namespace: createResponse.Role.Namespace})
 
 				for _, assignedPolicyIndex := range r.policies {
-					_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+					_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 						RoleNamespace:   createResponse.Role.Namespace,
 						RoleUUID:        createResponse.Role.Uuid,
 						PolicyNamespace: createdPolicies[assignedPolicyIndex].namespace,
@@ -422,7 +418,7 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 			}
 
 			// Create Identity. Assign policies and roles
-			identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+			identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 				Namespace:       testNamespaceName,
 				Name:            tools.GetRandomString(10),
 				InitiallyActive: true,
@@ -431,7 +427,7 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 			require.Nil(s.T(), err)
 
 			pwd := tools.GetRandomString(20)
-			_, err = s.nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+			_, err = s.nativeStub.Services.IAM.Authentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 				Namespace: identityCreateResponse.Identity.Namespace,
 				Identity:  identityCreateResponse.Identity.Uuid,
 				Password:  pwd,
@@ -439,7 +435,7 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 			require.Nil(s.T(), err)
 
 			for _, policyIndexToAssign := range tc.assignedPolicies {
-				_, err := s.nativeStub.Services.IamIdentity.AddPolicy(ctx, &identity.AddPolicyRequest{
+				_, err := s.nativeStub.Services.IAM.Identity.AddPolicy(ctx, &identity.AddPolicyRequest{
 					IdentityNamespace: identityCreateResponse.Identity.Namespace,
 					IdentityUUID:      identityCreateResponse.Identity.Uuid,
 					PolicyNamespace:   createdPolicies[policyIndexToAssign].namespace,
@@ -449,7 +445,7 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 			}
 
 			for _, roleIndexToAssign := range tc.assignedRoles {
-				_, err := s.nativeStub.Services.IamIdentity.AddRole(ctx, &identity.AddRoleRequest{
+				_, err := s.nativeStub.Services.IAM.Identity.AddRole(ctx, &identity.AddRoleRequest{
 					IdentityNamespace: identityCreateResponse.Identity.Namespace,
 					IdentityUUID:      identityCreateResponse.Identity.Uuid,
 					RoleNamespace:     createdRoles[roleIndexToAssign].namespace,
@@ -459,7 +455,7 @@ func (s *PasswordAuthTestSuite) TestAuth() {
 			}
 
 			// Actually verify access
-			accessResponse, err := s.nativeStub.Services.IamAuth.CheckAccessWithPassword(ctx, &auth.CheckAccessWithPasswordRequest{
+			accessResponse, err := s.nativeStub.Services.IAM.Auth.CheckAccessWithPassword(ctx, &auth.CheckAccessWithPasswordRequest{
 				Namespace: identityCreateResponse.Identity.Namespace,
 				Identity:  identityCreateResponse.Identity.Uuid,
 				Password:  pwd,

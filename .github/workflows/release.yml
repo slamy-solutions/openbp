@@ -51,53 +51,13 @@ jobs:
       dockerfile: modules/native/services/keyvaluestorage/Dockerfile
       tags: openbp/obp-native-keyvaluestorage:latest,openbp/obp-native-keyvaluestorage:${{ needs.setup.outputs.tag }}
     secrets: inherit
-  publish-native-iam-policy:
+  publish-native-iam:
     needs: [tests,setup]
-    name: Publish native_iam_policy docker image
+    name: Publish native_iam docker image
     uses: ./.github/workflows/publish-service.yml
     with:
-      dockerfile: modules/native/services/iam/policy/Dockerfile
-      tags: openbp/obp-native-iam-policy:latest,openbp/obp-native-iam-policy:${{ needs.setup.outputs.tag }}
-    secrets: inherit
-  publish-native-iam-role:
-    needs: [tests,setup]
-    name: Publish native_iam_role docker image
-    uses: ./.github/workflows/publish-service.yml
-    with:
-      dockerfile: modules/native/services/iam/role/Dockerfile
-      tags: openbp/obp-native-iam-role:latest,openbp/obp-native-iam-role:${{ needs.setup.outputs.tag }}
-    secrets: inherit
-  publish-native-iam-token:
-    needs: [tests,setup]
-    name: Publish native_iam_token docker image
-    uses: ./.github/workflows/publish-service.yml
-    with:
-      dockerfile: modules/native/services/iam/token/Dockerfile
-      tags: openbp/obp-native-iam-token:latest,openbp/obp-native-iam-token:${{ needs.setup.outputs.tag }}
-    secrets: inherit
-  publish-native-iam-auth:
-    needs: [tests,setup]
-    name: Publish native_iam_auth docker image
-    uses: ./.github/workflows/publish-service.yml
-    with:
-      dockerfile: modules/native/services/iam/auth/Dockerfile
-      tags: openbp/obp-native-iam-auth:latest,openbp/obp-native-iam-auth:${{ needs.setup.outputs.tag }}
-    secrets: inherit
-  publish-native-iam-identity:
-    needs: [tests,setup]
-    name: Publish native_iam_identity docker image
-    uses: ./.github/workflows/publish-service.yml
-    with:
-      dockerfile: modules/native/services/iam/identity/Dockerfile
-      tags: openbp/obp-native-iam-identity:latest,openbp/obp-native-iam-identity:${{ needs.setup.outputs.tag }}
-    secrets: inherit
-  publish-native-iam-authentication:
-    needs: [tests,setup]
-    name: Publish native_iam_authentication docker image
-    uses: ./.github/workflows/publish-service.yml
-    with:
-      dockerfile: modules/native/services/iam/authentication/Dockerfile
-      tags: openbp/obp-native-iam-authentication:latest,openbp/obp-native-iam-authentication:${{ needs.setup.outputs.tag }}
+      dockerfile: modules/native/services/iam/Dockerfile
+      tags: openbp/obp-native-iam:latest,openbp/obp-native-iam:${{ needs.setup.outputs.tag }}
     secrets: inherit
   publish-native-actor-user:
     needs: [tests,setup]
@@ -130,12 +90,7 @@ jobs:
     needs:
       - publish-native-namespace
       - publish-native-keyvaluestorage
-      - publish-native-iam-policy
-      - publish-native-iam-role
-      - publish-native-iam-token
-      - publish-native-iam-auth
-      - publish-native-iam-identity
-      - publish-native-iam-authentication-password
+      - publish-native-iam
       - publish-native-actor-user
       - publish-tools-rest
       - publish-tools-gui

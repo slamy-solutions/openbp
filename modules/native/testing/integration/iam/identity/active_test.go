@@ -24,7 +24,7 @@ type ActiveTestSuite struct {
 }
 
 func (suite *ActiveTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -41,22 +41,22 @@ func (s *ActiveTestSuite) TestInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		Active:    false,
 	})
 	require.Nil(s.T(), err)
-	getResponse, err := s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  false,
@@ -64,13 +64,13 @@ func (s *ActiveTestSuite) TestInGlobalNamespace() {
 	require.Nil(s.T(), err)
 	require.False(s.T(), getResponse.Identity.Active)
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		Active:    true,
 	})
 	require.Nil(s.T(), err)
-	getResponse, err = s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err = s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  false,
@@ -78,13 +78,13 @@ func (s *ActiveTestSuite) TestInGlobalNamespace() {
 	require.Nil(s.T(), err)
 	require.True(s.T(), getResponse.Identity.Active)
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		Active:    false,
 	})
 	require.Nil(s.T(), err)
-	getResponse, err = s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err = s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  false,
@@ -106,22 +106,22 @@ func (s *ActiveTestSuite) TestInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		Active:    false,
 	})
 	require.Nil(s.T(), err)
-	getResponse, err := s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  false,
@@ -129,13 +129,13 @@ func (s *ActiveTestSuite) TestInNamespace() {
 	require.Nil(s.T(), err)
 	require.False(s.T(), getResponse.Identity.Active)
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		Active:    true,
 	})
 	require.Nil(s.T(), err)
-	getResponse, err = s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err = s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  false,
@@ -143,13 +143,13 @@ func (s *ActiveTestSuite) TestInNamespace() {
 	require.Nil(s.T(), err)
 	require.True(s.T(), getResponse.Identity.Active)
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		Active:    false,
 	})
 	require.Nil(s.T(), err)
-	getResponse, err = s.nativeStub.Services.IamIdentity.Get(ctx, &identity.GetIdentityRequest{
+	getResponse, err = s.nativeStub.Services.IAM.Identity.Get(ctx, &identity.GetIdentityRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  false,
@@ -162,16 +162,16 @@ func (s *ActiveTestSuite) TestFailsWithNotFoundErrorWhenIdentityDoesntExistInGlo
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: "",
 		Uuid:      primitive.NewObjectID().Hex(),
 		Active:    false,
@@ -196,16 +196,16 @@ func (s *ActiveTestSuite) TestFailsWithNotFoundErrorWhenIdentityDoesntExistInNam
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
-	_, err = s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: namespaceName,
 		Uuid:      primitive.NewObjectID().Hex(),
 		Active:    false,
@@ -221,7 +221,7 @@ func (s *ActiveTestSuite) TestFailsWithNotFoundErrorWhenNamespaceDoesntExist() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	_, err := s.nativeStub.Services.IamIdentity.SetActive(ctx, &identity.SetIdentityActiveRequest{
+	_, err := s.nativeStub.Services.IAM.Identity.SetActive(ctx, &identity.SetIdentityActiveRequest{
 		Namespace: tools.GetRandomString(20),
 		Uuid:      primitive.NewObjectID().Hex(),
 		Active:    false,

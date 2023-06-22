@@ -22,7 +22,7 @@ type ValidateTestSuite struct {
 }
 
 func (suite *ValidateTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMTokenService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -39,32 +39,32 @@ func (s *ValidateTestSuite) TestValidateTokenFromGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  tools.GetRandomString(20),
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	validateResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	validateResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.Token,
 		UseCache: false,
 	})
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), token.ValidateResponse_OK, validateResponse.Status)
 
-	validateRefreshResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	validateRefreshResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.RefreshToken,
 		UseCache: false,
 	})
@@ -85,32 +85,32 @@ func (s *ValidateTestSuite) TestValidateTokenFromNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  tools.GetRandomString(20),
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	validateResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	validateResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.Token,
 		UseCache: false,
 	})
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), token.ValidateResponse_OK, validateResponse.Status)
 
-	validateRefreshResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	validateRefreshResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.RefreshToken,
 		UseCache: false,
 	})
@@ -122,38 +122,38 @@ func (s *ValidateTestSuite) TestValidateDisabledTokenInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  tools.GetRandomString(20),
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	_, err = s.nativeStub.Services.IamToken.Disable(ctx, &token.DisableRequest{
+	_, err = s.nativeStub.Services.IAM.Token.Disable(ctx, &token.DisableRequest{
 		Namespace: "",
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})
 	require.Nil(s.T(), err)
 
-	tokenValidateResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.Token,
 		UseCache: true,
 	})
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), token.ValidateResponse_DISABLED, tokenValidateResponse.Status)
 
-	tokenValidateResponse, err = s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err = s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.RefreshToken,
 		UseCache: true,
 	})
@@ -174,38 +174,38 @@ func (s *ValidateTestSuite) TestValidateDisabledTokenInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  tools.GetRandomString(20),
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	_, err = s.nativeStub.Services.IamToken.Disable(ctx, &token.DisableRequest{
+	_, err = s.nativeStub.Services.IAM.Token.Disable(ctx, &token.DisableRequest{
 		Namespace: namespaceName,
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})
 	require.Nil(s.T(), err)
 
-	tokenValidateResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.Token,
 		UseCache: true,
 	})
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), token.ValidateResponse_DISABLED, tokenValidateResponse.Status)
 
-	tokenValidateResponse, err = s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err = s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.RefreshToken,
 		UseCache: true,
 	})
@@ -217,38 +217,38 @@ func (s *ValidateTestSuite) TestValidateDeletedTokenInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  tools.GetRandomString(20),
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	_, err = s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	_, err = s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: "",
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})
 	require.Nil(s.T(), err)
 
-	tokenValidateResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.Token,
 		UseCache: true,
 	})
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), token.ValidateResponse_NOT_FOUND, tokenValidateResponse.Status)
 
-	tokenValidateResponse, err = s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err = s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.RefreshToken,
 		UseCache: true,
 	})
@@ -269,38 +269,38 @@ func (s *ValidateTestSuite) TestValidateDeletedTokenInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  tools.GetRandomString(20),
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	_, err = s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	_, err = s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: namespaceName,
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})
 	require.Nil(s.T(), err)
 
-	tokenValidateResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.Token,
 		UseCache: true,
 	})
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), token.ValidateResponse_NOT_FOUND, tokenValidateResponse.Status)
 
-	tokenValidateResponse, err = s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err = s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.RefreshToken,
 		UseCache: true,
 	})
@@ -312,7 +312,7 @@ func (s *ValidateTestSuite) TestValidateInvalidTokenString() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	tokenGetResponse, err := s.nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenGetResponse, err := s.nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tools.GetRandomString(20),
 		UseCache: true,
 	})

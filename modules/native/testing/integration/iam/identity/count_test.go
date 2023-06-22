@@ -21,7 +21,7 @@ type CountTestSuite struct {
 }
 
 func (suite *CountTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -41,11 +41,11 @@ func (s *CountTestSuite) TestCountsDataInGlobalNamespace() {
 	created := []string{}
 	defer func() {
 		for _, identityUUID := range created {
-			s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityUUID})
+			s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		r, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       "",
 			Name:            "",
 			InitiallyActive: true,
@@ -55,9 +55,9 @@ func (s *CountTestSuite) TestCountsDataInGlobalNamespace() {
 		created = append(created, r.Identity.Uuid)
 	}
 
-	response, err := s.nativeStub.Services.IamIdentity.Count(ctx, &identity.CountIdentityRequest{Namespace: "", UseCache: false})
+	response, err := s.nativeStub.Services.IAM.Identity.Count(ctx, &identity.CountIdentityRequest{Namespace: "", UseCache: false})
 	require.Nil(s.T(), err)
-	require.GreaterOrEqual(s.T(), response.Count, 10)
+	require.GreaterOrEqual(s.T(), response.Count, uint64(10))
 }
 
 func (s *CountTestSuite) TestCountsDataInNamespace() {
@@ -73,18 +73,18 @@ func (s *CountTestSuite) TestCountsDataInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	response, err := s.nativeStub.Services.IamIdentity.Count(ctx, &identity.CountIdentityRequest{Namespace: namespaceName, UseCache: true})
+	response, err := s.nativeStub.Services.IAM.Identity.Count(ctx, &identity.CountIdentityRequest{Namespace: namespaceName, UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, response.Count)
+	require.Equal(s.T(), uint64(0), response.Count)
 
 	created := []string{}
 	defer func() {
 		for _, identityUUID := range created {
-			s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityUUID})
+			s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		r, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       namespaceName,
 			Name:            "",
 			InitiallyActive: true,
@@ -94,12 +94,12 @@ func (s *CountTestSuite) TestCountsDataInNamespace() {
 		created = append(created, r.Identity.Uuid)
 	}
 
-	response, err = s.nativeStub.Services.IamIdentity.Count(ctx, &identity.CountIdentityRequest{Namespace: namespaceName, UseCache: true})
+	response, err = s.nativeStub.Services.IAM.Identity.Count(ctx, &identity.CountIdentityRequest{Namespace: namespaceName, UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 10, response.Count)
+	require.Equal(s.T(), uint64(10), response.Count)
 
 	for i := 0; i < 7; i++ {
-		r, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		r, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       namespaceName,
 			Name:            "",
 			InitiallyActive: true,
@@ -109,16 +109,16 @@ func (s *CountTestSuite) TestCountsDataInNamespace() {
 		created = append(created, r.Identity.Uuid)
 	}
 
-	response, err = s.nativeStub.Services.IamIdentity.Count(ctx, &identity.CountIdentityRequest{Namespace: namespaceName, UseCache: true})
+	response, err = s.nativeStub.Services.IAM.Identity.Count(ctx, &identity.CountIdentityRequest{Namespace: namespaceName, UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 17, response.Count)
+	require.Equal(s.T(), uint64(17), response.Count)
 }
 
 func (s *CountTestSuite) TestCountInNonExistingNamespaceIsOk() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	response, err := s.nativeStub.Services.IamIdentity.Count(ctx, &identity.CountIdentityRequest{Namespace: tools.GetRandomString(20), UseCache: true})
+	response, err := s.nativeStub.Services.IAM.Identity.Count(ctx, &identity.CountIdentityRequest{Namespace: tools.GetRandomString(20), UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, response.Count)
+	require.Equal(s.T(), uint64(0), response.Count)
 }

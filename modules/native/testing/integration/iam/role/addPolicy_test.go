@@ -25,7 +25,7 @@ type AddPolicyTestSuite struct {
 }
 
 func (suite *AddPolicyTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMRoleService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -42,16 +42,16 @@ func (s *AddPolicyTestSuite) TestReturnsActualDataAfterAddingInGlobalNamespace()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	roleCreateResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
 
-	createPolicyResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createPolicyResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -61,9 +61,9 @@ func (s *AddPolicyTestSuite) TestReturnsActualDataAfterAddingInGlobalNamespace()
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
 
-	addPolicyResponse, err := s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	addPolicyResponse, err := s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		RoleNamespace:   "",
 		RoleUUID:        roleCreateResponse.Role.Uuid,
 		PolicyNamespace: "",
@@ -74,7 +74,7 @@ func (s *AddPolicyTestSuite) TestReturnsActualDataAfterAddingInGlobalNamespace()
 	require.Len(s.T(), addPolicyResponse.Role.Policies, 1)
 	require.Equal(s.T(), createPolicyResponse.Policy.Uuid, addPolicyResponse.Role.Policies[0].Uuid)
 
-	getRoleResponse, err := s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	getRoleResponse, err := s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: "",
 		Uuid:      roleCreateResponse.Role.Uuid,
 		UseCache:  false,
@@ -98,16 +98,16 @@ func (s *AddPolicyTestSuite) TestReturnsActualDataAfterAddingInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	roleCreateResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   namespaceName,
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleCreateResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleCreateResponse.Role.Uuid})
 
-	createPolicyResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createPolicyResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -117,9 +117,9 @@ func (s *AddPolicyTestSuite) TestReturnsActualDataAfterAddingInNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createPolicyResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createPolicyResponse.Policy.Uuid})
 
-	addPolicyResponse, err := s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	addPolicyResponse, err := s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		RoleNamespace:   namespaceName,
 		RoleUUID:        roleCreateResponse.Role.Uuid,
 		PolicyNamespace: namespaceName,
@@ -130,7 +130,7 @@ func (s *AddPolicyTestSuite) TestReturnsActualDataAfterAddingInNamespace() {
 	require.Len(s.T(), addPolicyResponse.Role.Policies, 1)
 	require.Equal(s.T(), createPolicyResponse.Policy.Uuid, addPolicyResponse.Role.Policies[0].Uuid)
 
-	getRoleResponse, err := s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	getRoleResponse, err := s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: namespaceName,
 		Uuid:      roleCreateResponse.Role.Uuid,
 		UseCache:  false,
@@ -145,16 +145,16 @@ func (s *AddPolicyTestSuite) TestMultipleAddingInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	roleCreateResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
 
-	createPolicyResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createPolicyResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -164,10 +164,10 @@ func (s *AddPolicyTestSuite) TestMultipleAddingInGlobalNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
 
 	for i := 0; i < 5; i++ {
-		_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+		_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 			RoleNamespace:   "",
 			RoleUUID:        roleCreateResponse.Role.Uuid,
 			PolicyNamespace: "",
@@ -176,7 +176,7 @@ func (s *AddPolicyTestSuite) TestMultipleAddingInGlobalNamespace() {
 		require.Nil(s.T(), err)
 	}
 
-	getRoleResponse, err := s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	getRoleResponse, err := s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: "",
 		Uuid:      roleCreateResponse.Role.Uuid,
 		UseCache:  false,
@@ -200,16 +200,16 @@ func (s *AddPolicyTestSuite) TestMultipleAddingInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	roleCreateResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   namespaceName,
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleCreateResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleCreateResponse.Role.Uuid})
 
-	createPolicyResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createPolicyResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -219,10 +219,10 @@ func (s *AddPolicyTestSuite) TestMultipleAddingInNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createPolicyResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createPolicyResponse.Policy.Uuid})
 
 	for i := 0; i < 5; i++ {
-		_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+		_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 			RoleNamespace:   namespaceName,
 			RoleUUID:        roleCreateResponse.Role.Uuid,
 			PolicyNamespace: namespaceName,
@@ -231,7 +231,7 @@ func (s *AddPolicyTestSuite) TestMultipleAddingInNamespace() {
 		require.Nil(s.T(), err)
 	}
 
-	getRoleResponse, err := s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	getRoleResponse, err := s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: namespaceName,
 		Uuid:      roleCreateResponse.Role.Uuid,
 		UseCache:  false,
@@ -246,16 +246,16 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingPolicyFailsWithFailedPrecon
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	roleCreateResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
 
-	_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		PolicyNamespace: "",
 		PolicyUUID:      primitive.NewObjectID().Hex(),
 		RoleNamespace:   "",
@@ -281,16 +281,16 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingPolicyFailsWithFailedPrecon
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	roleCreateResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   namespaceName,
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleCreateResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleCreateResponse.Role.Uuid})
 
-	_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		PolicyNamespace: namespaceName,
 		PolicyUUID:      primitive.NewObjectID().Hex(),
 		RoleNamespace:   namespaceName,
@@ -307,7 +307,7 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingRoleFailsWithNotFoundErrorF
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createPolicyResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createPolicyResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -317,9 +317,9 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingRoleFailsWithNotFoundErrorF
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
 
-	_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		PolicyNamespace: "",
 		PolicyUUID:      createPolicyResponse.Policy.Uuid,
 		RoleNamespace:   "",
@@ -345,7 +345,7 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingRoleFailsWithNotFoundErrorF
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createPolicyResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createPolicyResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -355,9 +355,9 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingRoleFailsWithNotFoundErrorF
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createPolicyResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createPolicyResponse.Policy.Uuid})
 
-	_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		PolicyNamespace: namespaceName,
 		PolicyUUID:      createPolicyResponse.Policy.Uuid,
 		RoleNamespace:   namespaceName,
@@ -374,16 +374,16 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingNamespaceFailsWithNotFoundE
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	roleCreateResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
 
-	createPolicyResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createPolicyResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -393,9 +393,9 @@ func (s *AddPolicyTestSuite) TestAddingForNonExistingNamespaceFailsWithNotFoundE
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createPolicyResponse.Policy.Uuid})
 
-	_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		PolicyNamespace: "",
 		PolicyUUID:      createPolicyResponse.Policy.Uuid,
 		RoleNamespace:   tools.GetRandomString(20),

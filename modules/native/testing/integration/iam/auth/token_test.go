@@ -28,11 +28,7 @@ func (suite *TokenAuthTestSuite) SetupSuite() {
 	suite.nativeStub = native.NewNativeStub(
 		native.NewStubConfig().
 			WithNamespaceService().
-			WithIAMIdentityService().
-			WithIAMAuthenticationService().
-			WithIAMPolicyService().
-			WithIAMRoleService().
-			WithIAMAuthService())
+			WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -347,11 +343,11 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			}, 0, len(tc.assignedPolicies))
 			defer func() {
 				for _, createdPolicy := range createdPolicies {
-					s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: createdPolicy.namespace, Uuid: createdPolicy.uuid})
+					s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: createdPolicy.namespace, Uuid: createdPolicy.uuid})
 				}
 			}()
 			for _, p := range tc.createPolicies {
-				createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+				createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 					Namespace:            p.namespace,
 					Name:                 tools.GetRandomString(10),
 					Description:          tools.GetRandomString(10),
@@ -374,11 +370,11 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			}, 0, len(tc.assignedPolicies))
 			defer func() {
 				for _, createdRole := range createdRoles {
-					s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: createdRole.namespace, Uuid: createdRole.uuid})
+					s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: createdRole.namespace, Uuid: createdRole.uuid})
 				}
 			}()
 			for _, r := range tc.createRoles {
-				createResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+				createResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 					Namespace:   r.namespace,
 					Name:        tools.GetRandomString(10),
 					Description: tools.GetRandomString(10),
@@ -391,7 +387,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 				}{uuid: createResponse.Role.Uuid, namespace: createResponse.Role.Namespace})
 
 				for _, assignedPolicyIndex := range r.policies {
-					_, err = s.nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+					_, err = s.nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 						RoleNamespace:   createResponse.Role.Namespace,
 						RoleUUID:        createResponse.Role.Uuid,
 						PolicyNamespace: createdPolicies[assignedPolicyIndex].namespace,
@@ -402,7 +398,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			}
 
 			// Create Identity. Assign policies and roles
-			identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+			identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 				Namespace:       testNamespaceName,
 				Name:            tools.GetRandomString(10),
 				InitiallyActive: true,
@@ -411,7 +407,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			require.Nil(s.T(), err)
 
 			pwd := tools.GetRandomString(20)
-			_, err = s.nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+			_, err = s.nativeStub.Services.IAM.Authentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 				Namespace: identityCreateResponse.Identity.Namespace,
 				Identity:  identityCreateResponse.Identity.Uuid,
 				Password:  pwd,
@@ -419,7 +415,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			require.Nil(s.T(), err)
 
 			for _, policyIndexToAssign := range tc.assignedPolicies {
-				_, err := s.nativeStub.Services.IamIdentity.AddPolicy(ctx, &identity.AddPolicyRequest{
+				_, err := s.nativeStub.Services.IAM.Identity.AddPolicy(ctx, &identity.AddPolicyRequest{
 					IdentityNamespace: identityCreateResponse.Identity.Namespace,
 					IdentityUUID:      identityCreateResponse.Identity.Uuid,
 					PolicyNamespace:   createdPolicies[policyIndexToAssign].namespace,
@@ -429,7 +425,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			}
 
 			for _, roleIndexToAssign := range tc.assignedRoles {
-				_, err := s.nativeStub.Services.IamIdentity.AddRole(ctx, &identity.AddRoleRequest{
+				_, err := s.nativeStub.Services.IAM.Identity.AddRole(ctx, &identity.AddRoleRequest{
 					IdentityNamespace: identityCreateResponse.Identity.Namespace,
 					IdentityUUID:      identityCreateResponse.Identity.Uuid,
 					RoleNamespace:     createdRoles[roleIndexToAssign].namespace,
@@ -440,7 +436,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 
 			// Actually verify access
 			// Verify if its possible to create token
-			createTokenResponse, err := s.nativeStub.Services.IamAuth.CreateTokenWithPassword(ctx, &auth.CreateTokenWithPasswordRequest{
+			createTokenResponse, err := s.nativeStub.Services.IAM.Auth.CreateTokenWithPassword(ctx, &auth.CreateTokenWithPasswordRequest{
 				Namespace: identityCreateResponse.Identity.Namespace,
 				Identity:  identityCreateResponse.Identity.Uuid,
 				Password:  pwd,
@@ -451,7 +447,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			require.Equal(s.T(), tc.hasAccess, createTokenResponse.Status == auth.CreateTokenWithPasswordResponse_OK)
 
 			// Verify if you token has all the possible scope, if you can access resources with it
-			createTokenResponse, err = s.nativeStub.Services.IamAuth.CreateTokenWithPassword(ctx, &auth.CreateTokenWithPasswordRequest{
+			createTokenResponse, err = s.nativeStub.Services.IAM.Auth.CreateTokenWithPassword(ctx, &auth.CreateTokenWithPasswordRequest{
 				Namespace: identityCreateResponse.Identity.Namespace,
 				Identity:  identityCreateResponse.Identity.Uuid,
 				Password:  pwd,
@@ -461,7 +457,7 @@ func (s *TokenAuthTestSuite) TestAuth() {
 			require.Nil(s.T(), err)
 			require.Equal(s.T(), auth.CreateTokenWithPasswordResponse_OK, createTokenResponse.Status)
 
-			accessResponse, err := s.nativeStub.Services.IamAuth.CheckAccessWithToken(ctx, &auth.CheckAccessWithTokenRequest{
+			accessResponse, err := s.nativeStub.Services.IAM.Auth.CheckAccessWithToken(ctx, &auth.CheckAccessWithTokenRequest{
 				AccessToken: createTokenResponse.AccessToken,
 				Scopes:      tc.requestedScopes,
 			})

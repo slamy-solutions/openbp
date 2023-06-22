@@ -129,7 +129,7 @@ func (r *PolicyRouter) List(ctx *gin.Context) {
 		return
 	}
 
-	listStream, err := r.nativeStub.Services.IamPolicy.List(ctx.Request.Context(), &policy.ListPoliciesRequest{
+	listStream, err := r.nativeStub.Services.IAM.Policy.List(ctx.Request.Context(), &policy.ListPoliciesRequest{
 		Namespace: requestData.Namespace,
 		Skip:      uint64(requestData.Skip),
 		Limit:     uint64(requestData.Limit),
@@ -159,7 +159,7 @@ func (r *PolicyRouter) List(ctx *gin.Context) {
 		policies = append(policies, FormatPolicy(response.Policy))
 	}
 
-	countResponse, err := r.nativeStub.Services.IamPolicy.Count(ctx.Request.Context(), &policy.CountPoliciesRequest{
+	countResponse, err := r.nativeStub.Services.IAM.Policy.Count(ctx.Request.Context(), &policy.CountPoliciesRequest{
 		Namespace: requestData.Namespace, UseCache: true,
 	})
 	if err != nil {
@@ -208,7 +208,7 @@ func (r *PolicyRouter) Create(ctx *gin.Context) {
 		return
 	}
 
-	response, err := r.nativeStub.Services.IamPolicy.Create(ctx.Request.Context(), &policy.CreatePolicyRequest{
+	response, err := r.nativeStub.Services.IAM.Policy.Create(ctx.Request.Context(), &policy.CreatePolicyRequest{
 		Namespace:   requestData.Namespace,
 		Name:        requestData.Name,
 		Description: requestData.Description,
@@ -266,7 +266,7 @@ func (r *PolicyRouter) Delete(ctx *gin.Context) {
 	}
 
 	// Delete policy
-	_, err = r.nativeStub.Services.IamPolicy.Delete(ctx.Request.Context(), &policy.DeletePolicyRequest{
+	_, err = r.nativeStub.Services.IAM.Policy.Delete(ctx.Request.Context(), &policy.DeletePolicyRequest{
 		Namespace: requestData.Namespace,
 		Uuid:      requestData.UUID,
 	})
@@ -313,7 +313,7 @@ func (r *PolicyRouter) Get(ctx *gin.Context) {
 	}
 
 	// Delete policy
-	response, err := r.nativeStub.Services.IamPolicy.Get(ctx.Request.Context(), &policy.GetPolicyRequest{
+	response, err := r.nativeStub.Services.IAM.Policy.Get(ctx.Request.Context(), &policy.GetPolicyRequest{
 		Namespace: requestData.Namespace,
 		Uuid:      requestData.UUID,
 		UseCache:  true,
@@ -375,7 +375,7 @@ func (r *PolicyRouter) Update(ctx *gin.Context) {
 	}
 
 	// Update policy
-	response, err := r.nativeStub.Services.IamPolicy.Update(ctx.Request.Context(), &policy.UpdatePolicyRequest{
+	response, err := r.nativeStub.Services.IAM.Policy.Update(ctx.Request.Context(), &policy.UpdatePolicyRequest{
 		Namespace:            requestData.Namespace,
 		Uuid:                 requestData.UUID,
 		Name:                 requestData.Name,

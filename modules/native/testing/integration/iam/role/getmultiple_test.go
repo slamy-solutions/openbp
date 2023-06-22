@@ -23,7 +23,7 @@ type GetMultipleTestSuite struct {
 }
 
 func (suite *GetMultipleTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMRoleService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -95,7 +95,7 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	defer func() {
 		for _, r := range roles {
 			if r.create {
-				s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{
+				s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{
 					Namespace: r.namespace,
 					Uuid:      r.uuid,
 				})
@@ -106,7 +106,7 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	// Create all the roles
 	for _, roleData := range roles {
 		if roleData.create {
-			r, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+			r, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 				Namespace:   roleData.namespace,
 				Name:        tools.GetRandomString(20),
 				Description: tools.GetRandomString(20),
@@ -128,7 +128,7 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	}
 	require.Len(s.T(), rolesToSearch, 14)
 
-	r, err := s.nativeStub.Services.IamRole.GetMultiple(ctx, &role.GetMultipleRolesRequest{
+	r, err := s.nativeStub.Services.IAM.Role.GetMultiple(ctx, &role.GetMultipleRolesRequest{
 		Roles: rolesToSearch,
 	})
 	require.Nil(s.T(), err)

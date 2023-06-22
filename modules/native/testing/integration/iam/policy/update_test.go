@@ -24,7 +24,7 @@ type UpdateTestSuite struct {
 }
 
 func (suite *UpdateTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -46,7 +46,7 @@ func (s *UpdateTestSuite) TestUpdateInGlobalNamespace() {
 	resources := []string{tools.GetRandomString(20)}
 	actions := []string{tools.GetRandomString(20)}
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 name,
 		Description:          description,
@@ -56,14 +56,14 @@ func (s *UpdateTestSuite) TestUpdateInGlobalNamespace() {
 		Actions:              actions,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
 
 	newName := tools.GetRandomString(20)
 	newDescription := tools.GetRandomString(20)
 	newResources := []string{tools.GetRandomString(20)}
 	newActions := []string{tools.GetRandomString(20)}
 
-	updateResponse, err := s.nativeStub.Services.IamPolicy.Update(ctx, &policy.UpdatePolicyRequest{
+	updateResponse, err := s.nativeStub.Services.IAM.Policy.Update(ctx, &policy.UpdatePolicyRequest{
 		Namespace:            "",
 		Uuid:                 createResponse.Policy.Uuid,
 		Name:                 newName,
@@ -81,7 +81,7 @@ func (s *UpdateTestSuite) TestUpdateInGlobalNamespace() {
 	require.Len(s.T(), updateResponse.Policy.Resources, 1)
 	require.Equal(s.T(), newResources[0], updateResponse.Policy.Resources[0])
 
-	getResponse, err := s.nativeStub.Services.IamPolicy.Get(ctx, &policy.GetPolicyRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Policy.Get(ctx, &policy.GetPolicyRequest{
 		Namespace: "",
 		Uuid:      createResponse.Policy.Uuid,
 		UseCache:  true,
@@ -114,7 +114,7 @@ func (s *UpdateTestSuite) TestUpdateInNamespace() {
 	resources := []string{tools.GetRandomString(20)}
 	actions := []string{tools.GetRandomString(20)}
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 name,
 		Description:          description,
@@ -124,14 +124,14 @@ func (s *UpdateTestSuite) TestUpdateInNamespace() {
 		Actions:              actions,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
 
 	newName := tools.GetRandomString(20)
 	newDescription := tools.GetRandomString(20)
 	newResources := []string{tools.GetRandomString(20)}
 	newActions := []string{tools.GetRandomString(20)}
 
-	updateResponse, err := s.nativeStub.Services.IamPolicy.Update(ctx, &policy.UpdatePolicyRequest{
+	updateResponse, err := s.nativeStub.Services.IAM.Policy.Update(ctx, &policy.UpdatePolicyRequest{
 		Namespace:            namespaceName,
 		Uuid:                 createResponse.Policy.Uuid,
 		Name:                 newName,
@@ -150,7 +150,7 @@ func (s *UpdateTestSuite) TestUpdateInNamespace() {
 	require.Equal(s.T(), newResources[0], updateResponse.Policy.Resources[0])
 	require.True(s.T(), updateResponse.Policy.NamespaceIndependent)
 
-	getResponse, err := s.nativeStub.Services.IamPolicy.Get(ctx, &policy.GetPolicyRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Policy.Get(ctx, &policy.GetPolicyRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Policy.Uuid,
 		UseCache:  true,
@@ -175,7 +175,7 @@ func (s *UpdateTestSuite) TestFailsWithNotFoundErrorWhenPolicyDoesntExistInGloba
 	resources := []string{tools.GetRandomString(20)}
 	actions := []string{tools.GetRandomString(20)}
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 name,
 		Description:          description,
@@ -185,9 +185,9 @@ func (s *UpdateTestSuite) TestFailsWithNotFoundErrorWhenPolicyDoesntExistInGloba
 		Actions:              actions,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
 
-	_, err = s.nativeStub.Services.IamPolicy.Update(ctx, &policy.UpdatePolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Policy.Update(ctx, &policy.UpdatePolicyRequest{
 		Namespace:            "",
 		Uuid:                 primitive.NewObjectID().Hex(),
 		Name:                 tools.GetRandomString(20),
@@ -222,7 +222,7 @@ func (s *UpdateTestSuite) TestFailsWithNotFoundErrorWhenPolicyDoesntExistInNames
 	resources := []string{tools.GetRandomString(20)}
 	actions := []string{tools.GetRandomString(20)}
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 name,
 		Description:          description,
@@ -232,9 +232,9 @@ func (s *UpdateTestSuite) TestFailsWithNotFoundErrorWhenPolicyDoesntExistInNames
 		Actions:              actions,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
 
-	_, err = s.nativeStub.Services.IamPolicy.Update(ctx, &policy.UpdatePolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Policy.Update(ctx, &policy.UpdatePolicyRequest{
 		Namespace:            namespaceName,
 		Uuid:                 primitive.NewObjectID().Hex(),
 		Name:                 tools.GetRandomString(20),
@@ -269,7 +269,7 @@ func (s *UpdateTestSuite) TestFailsWithNotFoundErrorWhenNamespaceDoesntExist() {
 	resources := []string{tools.GetRandomString(20)}
 	actions := []string{tools.GetRandomString(20)}
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 name,
 		Description:          description,
@@ -279,9 +279,9 @@ func (s *UpdateTestSuite) TestFailsWithNotFoundErrorWhenNamespaceDoesntExist() {
 		Actions:              actions,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
 
-	_, err = s.nativeStub.Services.IamPolicy.Update(ctx, &policy.UpdatePolicyRequest{
+	_, err = s.nativeStub.Services.IAM.Policy.Update(ctx, &policy.UpdatePolicyRequest{
 		Namespace:            tools.GetRandomString(20),
 		Uuid:                 primitive.NewObjectID().Hex(),
 		Name:                 tools.GetRandomString(20),

@@ -7,7 +7,6 @@ import (
 	actorUser "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
 	iamAuth "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	iamAuthenticationPassword "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
-	iamConfig "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/config"
 	iamIdentity "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 	iamPolicy "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
 	iamRole "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
@@ -65,44 +64,21 @@ func NewActorUserConnection(address string, opts ...grpc.DialOption) (*grpc.Clie
 	return makeGrpcClient(actorUser.NewActorUserServiceClient, address, opts...)
 }
 
-// Connect to IAM_Token service
-func NewIAMTokenConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamToken.IAMTokenServiceClient, error) {
-	return makeGrpcClient(iamToken.NewIAMTokenServiceClient, address, opts...)
-}
-
-// Connect to IAM_Policy service
-func NewIAMPolicyConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamPolicy.IAMPolicyServiceClient, error) {
-	return makeGrpcClient(iamPolicy.NewIAMPolicyServiceClient, address, opts...)
-}
-
-// Connect to IAM_Role service
-func NewIAMRoleConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamRole.IAMRoleServiceClient, error) {
-	return makeGrpcClient(iamRole.NewIAMRoleServiceClient, address, opts...)
-}
-
-// Connect to IAM_Auth service
-func NewIAMAuthConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamAuth.IAMAuthServiceClient, error) {
-	return makeGrpcClient(iamAuth.NewIAMAuthServiceClient, address, opts...)
-}
-
-// Connect to IAM_Identity service
-func NewIAMIdentityConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamIdentity.IAMIdentityServiceClient, error) {
-	return makeGrpcClient(iamIdentity.NewIAMIdentityServiceClient, address, opts...)
-}
-
-// Connect to IAM_Config service
-func NewIAMConfigConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, iamConfig.IAMConfigServiceClient, error) {
-	return makeGrpcClient(iamConfig.NewIAMConfigServiceClient, address, opts...)
-}
-
-// Connect to IAM_Authentication service
-func NewIAMAuthenticationConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *IamAuthenticationServices, error) {
+// Connect to IAM service
+func NewIAMConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *IAMService, error) {
 	dial, err := makeGrpcDial(address, opts...)
 	if err != nil {
 		return nil, nil, errors.New("failed to connect to service: " + err.Error())
 	}
 
-	passwordClient := iamAuthenticationPassword.NewIAMAuthenticationPasswordServiceClient(dial)
-
-	return dial, &IamAuthenticationServices{Password: passwordClient}, nil
+	return dial, &IAMService{
+		Authentication: &IamAuthenticationServices{
+			Password: iamAuthenticationPassword.NewIAMAuthenticationPasswordServiceClient(dial),
+		},
+		Identity: iamIdentity.NewIAMIdentityServiceClient(dial),
+		Auth:     iamAuth.NewIAMAuthServiceClient(dial),
+		Policy:   iamPolicy.NewIAMPolicyServiceClient(dial),
+		Role:     iamRole.NewIAMRoleServiceClient(dial),
+		Token:    iamToken.NewIAMTokenServiceClient(dial),
+	}, nil
 }

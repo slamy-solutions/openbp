@@ -42,7 +42,7 @@ func main() {
 		panic(err)
 	}
 
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMAuthService().WithActorUserService().WithIAMTokenService().WithIAMAuthenticationService().WithIAMRoleService().WithIAMIdentityService().WithNamespaceService().WithIAMPolicyService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithActorUserService().WithNamespaceService())
 	err = nativeStub.Connect()
 	if err != nil {
 		panic(err)

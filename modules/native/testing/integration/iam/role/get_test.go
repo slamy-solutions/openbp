@@ -25,7 +25,7 @@ type GetTestSuite struct {
 }
 
 func (suite *GetTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMRoleService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -45,16 +45,16 @@ func (s *GetTestSuite) TestGetsDataInGlobalNamespace() {
 	name := tools.GetRandomString(20)
 	description := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        name,
 		Description: description,
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
 
-	getResponse, err := s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: "",
 		Uuid:      createResponse.Role.Uuid,
 		UseCache:  true,
@@ -81,16 +81,16 @@ func (s *GetTestSuite) TestGetsDataInNamespace() {
 	name := tools.GetRandomString(20)
 	description := tools.GetRandomString(20)
 
-	createResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   namespaceName,
 		Name:        name,
 		Description: description,
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: createResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: createResponse.Role.Uuid})
 
-	getResponse, err := s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	getResponse, err := s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Role.Uuid,
 		UseCache:  true,
@@ -105,16 +105,16 @@ func (s *GetTestSuite) TestFailsWithNotFoundErrorWhenRoleDoesntExistInGlobalName
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
 
-	_, err = s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	_, err = s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: "",
 		Uuid:      primitive.NewObjectID().Hex(),
 		UseCache:  true,
@@ -139,16 +139,16 @@ func (s *GetTestSuite) TestFailsWithNotFoundErrorWhenRoleDoesntExistInNamespace(
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   namespaceName,
 		Name:        tools.GetRandomString(20),
 		Description: tools.GetRandomString(20),
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
 
-	_, err = s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	_, err = s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: namespaceName,
 		Uuid:      primitive.NewObjectID().Hex(),
 		UseCache:  true,
@@ -164,7 +164,7 @@ func (s *GetTestSuite) TestFailsWithNotFoundErrorWhenNamespaceDoesntExist() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	_, err := s.nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	_, err := s.nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: tools.GetRandomString(20),
 		Uuid:      primitive.NewObjectID().Hex(),
 		UseCache:  true,

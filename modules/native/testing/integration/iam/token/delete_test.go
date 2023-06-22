@@ -25,7 +25,7 @@ type DeleteTestSuite struct {
 }
 
 func (suite *DeleteTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMTokenService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -42,32 +42,32 @@ func (s *DeleteTestSuite) TestDeleteFromGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  "{}",
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: "", Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	deleteResponse, err := s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: "",
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})
 	require.Nil(s.T(), err)
 	require.True(s.T(), deleteResponse.Existed)
 
-	_, err = s.nativeStub.Services.IamToken.Get(ctx, &token.GetRequest{
+	_, err = s.nativeStub.Services.IAM.Token.Get(ctx, &token.GetRequest{
 		Namespace: "",
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 		UseCache:  false,
@@ -92,32 +92,32 @@ func (s *DeleteTestSuite) TestDeleteFromNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityCreateResponse.Identity.Uuid})
 
-	tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  "{}",
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamToken.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
+	defer s.nativeStub.Services.IAM.Token.Delete(context.Background(), &token.DeleteRequest{Namespace: namespaceName, Uuid: tokenCreateResponse.TokenData.Uuid})
 
-	deleteResponse, err := s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: namespaceName,
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})
 	require.Nil(s.T(), err)
 	require.True(s.T(), deleteResponse.Existed)
 
-	_, err = s.nativeStub.Services.IamToken.Get(ctx, &token.GetRequest{
+	_, err = s.nativeStub.Services.IAM.Token.Get(ctx, &token.GetRequest{
 		Namespace: namespaceName,
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 		UseCache:  false,
@@ -133,7 +133,7 @@ func (s *DeleteTestSuite) TestDeleteNonExistingTokenFromGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	deleteResponse, err := s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: "",
 		Uuid:      primitive.NewObjectID().Hex(),
 	})
@@ -154,7 +154,7 @@ func (s *DeleteTestSuite) TestDeleteNonExistingTokenFromNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	deleteResponse, err := s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: namespaceName,
 		Uuid:      primitive.NewObjectID().Hex(),
 	})
@@ -166,7 +166,7 @@ func (s *DeleteTestSuite) TestDeleteNonExistingTokenFromNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	deleteResponse, err := s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: tools.GetRandomString(20),
 		Uuid:      primitive.NewObjectID().Hex(),
 	})

@@ -108,7 +108,7 @@ func (s *ActorUserServer) collectionByNamespace(namespace string) *mongo.Collect
 
 func (s *ActorUserServer) Create(ctx context.Context, in *nativeActorUserGRPC.CreateRequest) (*nativeActorUserGRPC.CreateResponse, error) {
 	// Create identity for user
-	identityResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &nativeIAmIdentityGRPC.CreateIdentityRequest{
+	identityResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &nativeIAmIdentityGRPC.CreateIdentityRequest{
 		Namespace: in.Namespace,
 		Name:      "",
 		Managed: &nativeIAmIdentityGRPC.CreateIdentityRequest_Service{
@@ -141,7 +141,7 @@ func (s *ActorUserServer) Create(ctx context.Context, in *nativeActorUserGRPC.Cr
 	insertResult, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		// Delete identity on error. Dont care about errors, because even it will occure it is harmless. Chance of error is ridicously low so there is no reason to do something with it.
-		s.nativeStub.Services.IamIdentity.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
+		s.nativeStub.Services.IAM.Identity.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
 			Namespace: "",
 			Uuid:      identityResponse.Identity.Uuid,
 		})
@@ -367,7 +367,7 @@ func (s *ActorUserServer) Delete(ctx context.Context, in *nativeActorUserGRPC.De
 	clearUserCache(ctx, s, in.Namespace, &user)
 	log.Info("Deleted user with UUID [" + user.ID.Hex() + "] in namespace [" + in.Namespace + "]")
 
-	_, err = s.nativeStub.Services.IamIdentity.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
+	_, err = s.nativeStub.Services.IAM.Identity.Delete(ctx, &nativeIAmIdentityGRPC.DeleteIdentityRequest{
 		Namespace: in.Namespace,
 		Uuid:      user.Identity,
 	})

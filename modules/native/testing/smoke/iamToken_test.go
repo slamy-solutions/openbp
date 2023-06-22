@@ -15,7 +15,7 @@ import (
 )
 
 func TestIAMToken(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMTokenService().WithIAMIdentityService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -23,29 +23,29 @@ func TestIAMToken(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	identityCreateResponse, err := nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
 	metadata := tools.GetRandomString(20)
 
-	tokenCreateResponse, err := nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+	tokenCreateResponse, err := nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Scopes:    []*token.Scope{},
 		Metadata:  metadata,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	defer nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: "",
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})
 
-	tokenValidateResponse, err := nativeStub.Services.IamToken.Validate(ctx, &token.ValidateRequest{
+	tokenValidateResponse, err := nativeStub.Services.IAM.Token.Validate(ctx, &token.ValidateRequest{
 		Token:    tokenCreateResponse.Token,
 		UseCache: true,
 	})
@@ -54,7 +54,7 @@ func TestIAMToken(t *testing.T) {
 	assert.Equal(t, metadata, tokenValidateResponse.TokenData.CreationMetadata)
 	assert.Equal(t, tokenCreateResponse.TokenData.Uuid, tokenValidateResponse.TokenData.Uuid)
 
-	tokenDeleteResponse, err := nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{
+	tokenDeleteResponse, err := nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{
 		Namespace: "",
 		Uuid:      tokenCreateResponse.TokenData.Uuid,
 	})

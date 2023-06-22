@@ -29,16 +29,20 @@ type IamAuthenticationServices struct {
 	Password iamAuthenticationPasswordGrpc.IAMAuthenticationPasswordServiceClient
 }
 
+type IAMService struct {
+	Authentication *IamAuthenticationServices
+	Identity       iamIdentityGrpc.IAMIdentityServiceClient
+	Auth           iamAuthGrpc.IAMAuthServiceClient
+	Policy         iamPolicyGrpc.IAMPolicyServiceClient
+	Role           iamRoleGrpc.IAMRoleServiceClient
+	Token          iamTokenGrpc.IAMTokenServiceClient
+}
+
 type services struct {
-	ActorUser         actorUserGrpc.ActorUserServiceClient
-	IamAuthentication *IamAuthenticationServices
-	IamIdentity       iamIdentityGrpc.IAMIdentityServiceClient
-	IamAuth           iamAuthGrpc.IAMAuthServiceClient
-	IamPolicy         iamPolicyGrpc.IAMPolicyServiceClient
-	IamRole           iamRoleGrpc.IAMRoleServiceClient
-	IamToken          iamTokenGrpc.IAMTokenServiceClient
-	Keyvaluestorage   keyvaluestorageGrpc.KeyValueStorageServiceClient
-	Namespace         namespaceGrpc.NamespaceServiceClient
+	ActorUser       actorUserGrpc.ActorUserServiceClient
+	IAM             *IAMService
+	Keyvaluestorage keyvaluestorageGrpc.KeyValueStorageServiceClient
+	Namespace       namespaceGrpc.NamespaceServiceClient
 }
 
 type GrpcServiceConfig struct {
@@ -53,12 +57,7 @@ type StubConfig struct {
 	keyValueStorage GrpcServiceConfig
 	actorUser       GrpcServiceConfig
 
-	iamAuthentication GrpcServiceConfig
-	iamIdentity       GrpcServiceConfig
-	iamAuth           GrpcServiceConfig
-	iamPolicy         GrpcServiceConfig
-	iamRole           GrpcServiceConfig
-	iamToken          GrpcServiceConfig
+	iam GrpcServiceConfig
 }
 
 func NewStubConfig() *StubConfig {
@@ -116,73 +115,13 @@ func (sc *StubConfig) WithKeyValueStorageService(conf ...GrpcServiceConfig) *Stu
 	return sc
 }
 
-func (sc *StubConfig) WithIAMAuthenticationService(conf ...GrpcServiceConfig) *StubConfig {
+func (sc *StubConfig) WithIAMService(conf ...GrpcServiceConfig) *StubConfig {
 	if len(conf) != 0 {
-		sc.iamAuthentication = conf[0]
+		sc.iam = conf[0]
 	} else {
-		sc.iamAuthentication = GrpcServiceConfig{
+		sc.iam = GrpcServiceConfig{
 			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_AUTHENTICATION_URL", "native_iam_authentication:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMIdentityService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamIdentity = conf[0]
-	} else {
-		sc.iamIdentity = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_IDENTITY_URL", "native_iam_identity:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMPolicyService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamPolicy = conf[0]
-	} else {
-		sc.iamPolicy = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_POLICY_URL", "native_iam_policy:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMRoleService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamRole = conf[0]
-	} else {
-		sc.iamRole = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_ROLE_URL", "native_iam_role:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMTokenService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamToken = conf[0]
-	} else {
-		sc.iamToken = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_TOKEN_URL", "native_iam_token:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMAuthService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamAuth = conf[0]
-	} else {
-		sc.iamAuth = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_AUTH_URL", "native_iam_auth:80"),
+			url:     getConfigEnv("NATIVE_IAM_URL", "native_iam:80"),
 		}
 	}
 	return sc
@@ -252,76 +191,16 @@ func (n *NativeStub) Connect() error {
 		n.Services.Keyvaluestorage = service
 	}
 
-	if n.config.iamAuthentication.enabled {
-		conn, services, err := NewIAMAuthenticationConnection(n.config.iamAuthentication.url)
+	if n.config.iam.enabled {
+		conn, services, err := NewIAMConnection(n.config.iam.url)
 		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_authentication service: " + err.Error())
+			n.log.Error("Error while connecting to the native_iam service: " + err.Error())
 			n.closeConnections()
 			return err
 		}
-		n.log.Info("Successfully connected to the native_iam_authentication service")
+		n.log.Info("Successfully connected to the native_iam service")
 		n.dials = append(n.dials, conn)
-		n.Services.IamAuthentication = services
-	}
-
-	if n.config.iamIdentity.enabled {
-		conn, service, err := NewIAMIdentityConnection(n.config.iamIdentity.url)
-		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_identity service: " + err.Error())
-			n.closeConnections()
-			return err
-		}
-		n.log.Info("Successfully connected to the native_iam_identity service")
-		n.dials = append(n.dials, conn)
-		n.Services.IamIdentity = service
-	}
-
-	if n.config.iamPolicy.enabled {
-		conn, service, err := NewIAMPolicyConnection(n.config.iamPolicy.url)
-		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_policy service: " + err.Error())
-			n.closeConnections()
-			return err
-		}
-		n.log.Info("Successfully connected to the native_iam_policy service")
-		n.dials = append(n.dials, conn)
-		n.Services.IamPolicy = service
-	}
-
-	if n.config.iamRole.enabled {
-		conn, service, err := NewIAMRoleConnection(n.config.iamRole.url)
-		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_role service: " + err.Error())
-			n.closeConnections()
-			return err
-		}
-		n.log.Info("Successfully connected to the native_iam_role service")
-		n.dials = append(n.dials, conn)
-		n.Services.IamRole = service
-	}
-
-	if n.config.iamAuth.enabled {
-		conn, service, err := NewIAMAuthConnection(n.config.iamAuth.url)
-		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_auth service: " + err.Error())
-			n.closeConnections()
-			return err
-		}
-		n.log.Info("Successfully connected to the native_iam_auth service")
-		n.dials = append(n.dials, conn)
-		n.Services.IamAuth = service
-	}
-
-	if n.config.iamToken.enabled {
-		conn, service, err := NewIAMTokenConnection(n.config.iamToken.url)
-		if err != nil {
-			n.log.Error("Error while connecting to the native_iam_token service: " + err.Error())
-			n.closeConnections()
-			return err
-		}
-		n.log.Info("Successfully connected to the native_iam_token service")
-		n.dials = append(n.dials, conn)
-		n.Services.IamToken = service
+		n.Services.IAM = services
 	}
 
 	n.connected = true

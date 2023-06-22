@@ -121,7 +121,7 @@ func (r *RoleRouter) List(ctx *gin.Context) {
 		return
 	}
 
-	listStream, err := r.nativeStub.Services.IamRole.List(ctx.Request.Context(), &role.ListRolesRequest{
+	listStream, err := r.nativeStub.Services.IAM.Role.List(ctx.Request.Context(), &role.ListRolesRequest{
 		Namespace: requestData.Namespace,
 		Skip:      uint64(requestData.Skip),
 		Limit:     uint64(requestData.Limit),
@@ -151,7 +151,7 @@ func (r *RoleRouter) List(ctx *gin.Context) {
 		roles = append(roles, FormatRole(response.Role))
 	}
 
-	countResponse, err := r.nativeStub.Services.IamRole.Count(ctx.Request.Context(), &role.CountRolesRequest{
+	countResponse, err := r.nativeStub.Services.IAM.Role.Count(ctx.Request.Context(), &role.CountRolesRequest{
 		Namespace: requestData.Namespace, UseCache: true,
 	})
 	if err != nil {
@@ -197,7 +197,7 @@ func (r *RoleRouter) Create(ctx *gin.Context) {
 		return
 	}
 
-	response, err := r.nativeStub.Services.IamRole.Create(ctx.Request.Context(), &role.CreateRoleRequest{
+	response, err := r.nativeStub.Services.IAM.Role.Create(ctx.Request.Context(), &role.CreateRoleRequest{
 		Namespace:   requestData.Namespace,
 		Name:        requestData.Name,
 		Description: requestData.Description,
@@ -256,7 +256,7 @@ func (r *RoleRouter) Get(ctx *gin.Context) {
 	}
 
 	// Delete policy
-	response, err := r.nativeStub.Services.IamRole.Get(ctx.Request.Context(), &role.GetRoleRequest{
+	response, err := r.nativeStub.Services.IAM.Role.Get(ctx.Request.Context(), &role.GetRoleRequest{
 		Namespace: requestData.Namespace,
 		Uuid:      requestData.UUID,
 		UseCache:  true,
@@ -315,7 +315,7 @@ func (r *RoleRouter) Update(ctx *gin.Context) {
 		return
 	}
 
-	r.nativeStub.Services.IamRole.
+	r.nativeStub.Services.IAM.Role.
 }
 */
 
@@ -365,7 +365,7 @@ func (r *RoleRouter) AddPolicy(ctx *gin.Context) {
 		return
 	}
 
-	response, err := r.nativeStub.Services.IamRole.AddPolicy(ctx.Request.Context(), &role.AddPolicyRequest{
+	response, err := r.nativeStub.Services.IAM.Role.AddPolicy(ctx.Request.Context(), &role.AddPolicyRequest{
 		RoleNamespace:   requestData.RoleNamespace,
 		RoleUUID:        requestData.RoleUUID,
 		PolicyNamespace: requestData.Policyamespace,
@@ -436,7 +436,7 @@ func (r *RoleRouter) RemovePolicy(ctx *gin.Context) {
 		return
 	}
 
-	response, err := r.nativeStub.Services.IamRole.RemovePolicy(ctx.Request.Context(), &role.RemovePolicyRequest{
+	response, err := r.nativeStub.Services.IAM.Role.RemovePolicy(ctx.Request.Context(), &role.RemovePolicyRequest{
 		RoleNamespace:   requestData.RoleNamespace,
 		RoleUUID:        requestData.RoleUUID,
 		PolicyNamespace: requestData.Policyamespace,
@@ -492,7 +492,7 @@ func (r *RoleRouter) Delete(ctx *gin.Context) {
 	}
 
 	// Delete policy
-	_, err = r.nativeStub.Services.IamRole.Delete(ctx.Request.Context(), &role.DeleteRoleRequest{
+	_, err = r.nativeStub.Services.IAM.Role.Delete(ctx.Request.Context(), &role.DeleteRoleRequest{
 		Namespace: requestData.Namespace,
 		Uuid:      requestData.UUID,
 	})

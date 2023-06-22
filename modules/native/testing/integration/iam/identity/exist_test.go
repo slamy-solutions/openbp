@@ -22,7 +22,7 @@ type ExistTestSuite struct {
 }
 
 func (suite *ExistTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -39,16 +39,16 @@ func (s *ExistTestSuite) TestExistInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 
-	existResponse, err := s.nativeStub.Services.IamIdentity.Exists(ctx, &identity.ExistsIdentityRequest{
+	existResponse, err := s.nativeStub.Services.IAM.Identity.Exists(ctx, &identity.ExistsIdentityRequest{
 		Namespace: "",
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  true,
@@ -62,16 +62,16 @@ func (s *ExistTestSuite) TestDoesntExistInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: createResponse.Identity.Uuid})
 
-	existResponse, err := s.nativeStub.Services.IamIdentity.Exists(ctx, &identity.ExistsIdentityRequest{
+	existResponse, err := s.nativeStub.Services.IAM.Identity.Exists(ctx, &identity.ExistsIdentityRequest{
 		Namespace: "",
 		Uuid:      primitive.NewObjectID().Hex(),
 		UseCache:  true,
@@ -94,16 +94,16 @@ func (s *ExistTestSuite) TestExistInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
-	existResponse, err := s.nativeStub.Services.IamIdentity.Exists(ctx, &identity.ExistsIdentityRequest{
+	existResponse, err := s.nativeStub.Services.IAM.Identity.Exists(ctx, &identity.ExistsIdentityRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Identity.Uuid,
 		UseCache:  true,
@@ -126,16 +126,16 @@ func (s *ExistTestSuite) TestDoesntExistInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 		InitiallyActive: true,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: createResponse.Identity.Uuid})
 
-	existResponse, err := s.nativeStub.Services.IamIdentity.Exists(ctx, &identity.ExistsIdentityRequest{
+	existResponse, err := s.nativeStub.Services.IAM.Identity.Exists(ctx, &identity.ExistsIdentityRequest{
 		Namespace: namespaceName,
 		Uuid:      primitive.NewObjectID().Hex(),
 		UseCache:  true,
@@ -149,7 +149,7 @@ func (s *ExistTestSuite) TestDoesntExistWhenNamespaceDoesntExist() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	existResponse, err := s.nativeStub.Services.IamIdentity.Exists(ctx, &identity.ExistsIdentityRequest{
+	existResponse, err := s.nativeStub.Services.IAM.Identity.Exists(ctx, &identity.ExistsIdentityRequest{
 		Namespace: tools.GetRandomString(20),
 		Uuid:      primitive.NewObjectID().Hex(),
 		UseCache:  true,

@@ -23,7 +23,7 @@ type ExistsTestSuite struct {
 }
 
 func (suite *ExistsTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMIdentityService().WithIAMAuthenticationService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -40,37 +40,37 @@ func (s *ExistsTestSuite) TestExistsInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{
 		Namespace: "",
 		Uuid:      identityCreateResponse.Identity.Uuid,
 	})
 
-	existsResponse, err := s.nativeStub.Services.IamAuthentication.Password.Exists(ctx, &password.ExistsRequest{
+	existsResponse, err := s.nativeStub.Services.IAM.Authentication.Password.Exists(ctx, &password.ExistsRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 	})
 	require.Nil(s.T(), err)
 	require.False(s.T(), existsResponse.Exists)
 
-	_, err = s.nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+	_, err = s.nativeStub.Services.IAM.Authentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  tools.GetRandomString(20),
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamAuthentication.Password.Delete(context.Background(), &password.DeleteRequest{
+	defer s.nativeStub.Services.IAM.Authentication.Password.Delete(context.Background(), &password.DeleteRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 	})
 
-	existsResponse, err = s.nativeStub.Services.IamAuthentication.Password.Exists(ctx, &password.ExistsRequest{
+	existsResponse, err = s.nativeStub.Services.IAM.Authentication.Password.Exists(ctx, &password.ExistsRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 	})
@@ -91,19 +91,19 @@ func (s *ExistsTestSuite) TestExistsInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       namespaceName,
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 		Managed:         &identity.CreateIdentityRequest_No{No: &identity.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{
+	defer s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{
 		Namespace: namespaceName,
 		Uuid:      identityCreateResponse.Identity.Uuid,
 	})
 
-	existsResponse, err := s.nativeStub.Services.IamAuthentication.Password.Exists(ctx, &password.ExistsRequest{
+	existsResponse, err := s.nativeStub.Services.IAM.Authentication.Password.Exists(ctx, &password.ExistsRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 	})
@@ -111,18 +111,18 @@ func (s *ExistsTestSuite) TestExistsInNamespace() {
 	require.False(s.T(), existsResponse.Exists)
 
 	pwd := tools.GetRandomString(20)
-	_, err = s.nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+	_, err = s.nativeStub.Services.IAM.Authentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  pwd,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamAuthentication.Password.Delete(context.Background(), &password.DeleteRequest{
+	defer s.nativeStub.Services.IAM.Authentication.Password.Delete(context.Background(), &password.DeleteRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 	})
 
-	existsResponse, err = s.nativeStub.Services.IamAuthentication.Password.Exists(ctx, &password.ExistsRequest{
+	existsResponse, err = s.nativeStub.Services.IAM.Authentication.Password.Exists(ctx, &password.ExistsRequest{
 		Namespace: namespaceName,
 		Identity:  identityCreateResponse.Identity.Uuid,
 	})
@@ -134,7 +134,7 @@ func (s *ExistsTestSuite) TestDoesntExistForNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	existsResponse, err := s.nativeStub.Services.IamAuthentication.Password.Exists(ctx, &password.ExistsRequest{
+	existsResponse, err := s.nativeStub.Services.IAM.Authentication.Password.Exists(ctx, &password.ExistsRequest{
 		Namespace: tools.GetRandomString(20),
 		Identity:  primitive.NewObjectID().Hex(),
 	})

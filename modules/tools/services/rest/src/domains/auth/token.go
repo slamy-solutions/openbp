@@ -30,7 +30,7 @@ func (r *TokenRouter) Refresh(ctx *gin.Context) {
 		return
 	}
 
-	refreshResponse, err := r.nativeStub.Services.IamAuth.RefreshToken(ctx.Request.Context(), &auth.RefreshTokenRequest{
+	refreshResponse, err := r.nativeStub.Services.IAM.Auth.RefreshToken(ctx.Request.Context(), &auth.RefreshTokenRequest{
 		RefreshToken: requestData.RefreshToken,
 	})
 	if err != nil {
@@ -76,7 +76,7 @@ func (r *TokenRouter) Validate(ctx *gin.Context) {
 		return
 	}
 
-	checkResponse, err := r.nativeStub.Services.IamToken.Validate(ctx.Request.Context(), &token.ValidateRequest{
+	checkResponse, err := r.nativeStub.Services.IAM.Token.Validate(ctx.Request.Context(), &token.ValidateRequest{
 		Token:    requestData.Token,
 		UseCache: true,
 	})

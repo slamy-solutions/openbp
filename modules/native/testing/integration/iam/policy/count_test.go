@@ -21,7 +21,7 @@ type CountTestSuite struct {
 }
 
 func (suite *CountTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -41,11 +41,11 @@ func (s *CountTestSuite) TestCountsDataInGlobalNamespace() {
 	created := []string{}
 	defer func() {
 		for _, policyUUID := range created {
-			s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: policyUUID})
+			s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: policyUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+		r, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 			Namespace:            "",
 			Name:                 tools.GetRandomString(20),
 			Description:          "",
@@ -58,9 +58,9 @@ func (s *CountTestSuite) TestCountsDataInGlobalNamespace() {
 		created = append(created, r.Policy.Uuid)
 	}
 
-	response, err := s.nativeStub.Services.IamPolicy.Count(ctx, &policy.CountPoliciesRequest{Namespace: "", UseCache: false})
+	response, err := s.nativeStub.Services.IAM.Policy.Count(ctx, &policy.CountPoliciesRequest{Namespace: "", UseCache: false})
 	require.Nil(s.T(), err)
-	require.GreaterOrEqual(s.T(), response.Count, 10)
+	require.GreaterOrEqual(s.T(), response.Count, uint64(10))
 }
 
 func (s *CountTestSuite) TestCountsDataInNamespace() {
@@ -76,18 +76,18 @@ func (s *CountTestSuite) TestCountsDataInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	response, err := s.nativeStub.Services.IamPolicy.Count(ctx, &policy.CountPoliciesRequest{Namespace: namespaceName, UseCache: true})
+	response, err := s.nativeStub.Services.IAM.Policy.Count(ctx, &policy.CountPoliciesRequest{Namespace: namespaceName, UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, response.Count)
+	require.Equal(s.T(), uint64(0), response.Count)
 
 	created := []string{}
 	defer func() {
 		for _, policyUUID := range created {
-			s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: policyUUID})
+			s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: policyUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+		r, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 			Namespace:            namespaceName,
 			Name:                 tools.GetRandomString(20),
 			Description:          "",
@@ -100,12 +100,12 @@ func (s *CountTestSuite) TestCountsDataInNamespace() {
 		created = append(created, r.Policy.Uuid)
 	}
 
-	response, err = s.nativeStub.Services.IamPolicy.Count(ctx, &policy.CountPoliciesRequest{Namespace: namespaceName, UseCache: true})
+	response, err = s.nativeStub.Services.IAM.Policy.Count(ctx, &policy.CountPoliciesRequest{Namespace: namespaceName, UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 10, response.Count)
+	require.Equal(s.T(), uint64(10), response.Count)
 
 	for i := 0; i < 7; i++ {
-		r, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+		r, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 			Namespace:            namespaceName,
 			Name:                 tools.GetRandomString(20),
 			Description:          "",
@@ -118,16 +118,16 @@ func (s *CountTestSuite) TestCountsDataInNamespace() {
 		created = append(created, r.Policy.Uuid)
 	}
 
-	response, err = s.nativeStub.Services.IamPolicy.Count(ctx, &policy.CountPoliciesRequest{Namespace: namespaceName, UseCache: true})
+	response, err = s.nativeStub.Services.IAM.Policy.Count(ctx, &policy.CountPoliciesRequest{Namespace: namespaceName, UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 17, response.Count)
+	require.Equal(s.T(), uint64(17), response.Count)
 }
 
 func (s *CountTestSuite) TestCountInNonExistingNamespaceIsOk() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	response, err := s.nativeStub.Services.IamPolicy.Count(ctx, &policy.CountPoliciesRequest{Namespace: tools.GetRandomString(20), UseCache: true})
+	response, err := s.nativeStub.Services.IAM.Policy.Count(ctx, &policy.CountPoliciesRequest{Namespace: tools.GetRandomString(20), UseCache: true})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, response.Count)
+	require.Equal(s.T(), uint64(0), response.Count)
 }

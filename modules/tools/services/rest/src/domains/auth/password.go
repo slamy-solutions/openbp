@@ -51,7 +51,7 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	// Try to verify password and create authorization token for user
-	tokenCreationResponse, err := r.nativeStub.Services.IamAuth.CreateTokenWithPassword(ctx.Request.Context(), &auth.CreateTokenWithPasswordRequest{
+	tokenCreationResponse, err := r.nativeStub.Services.IAM.Auth.CreateTokenWithPassword(ctx.Request.Context(), &auth.CreateTokenWithPasswordRequest{
 		Namespace: "",
 		Identity:  userGetResponse.User.Identity,
 		Password:  requestData.Password,

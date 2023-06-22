@@ -22,7 +22,7 @@ type ListTestSuite struct {
 }
 
 func (suite *ListTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMRoleService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -42,11 +42,11 @@ func (s *ListTestSuite) TestListsDataInGlobalNamespace() {
 	created := []string{}
 	defer func() {
 		for _, roleUUID := range created {
-			s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleUUID})
+			s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+		r, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 			Namespace:   "",
 			Name:        tools.GetRandomString(20),
 			Description: "",
@@ -56,7 +56,7 @@ func (s *ListTestSuite) TestListsDataInGlobalNamespace() {
 		created = append(created, r.Role.Uuid)
 	}
 
-	listStream, err := s.nativeStub.Services.IamRole.List(ctx, &role.ListRolesRequest{
+	listStream, err := s.nativeStub.Services.IAM.Role.List(ctx, &role.ListRolesRequest{
 		Namespace: "",
 		Skip:      0,
 		Limit:     0,
@@ -96,11 +96,11 @@ func (s *ListTestSuite) TestListsDataInNamespace() {
 	created := []string{}
 	defer func() {
 		for _, roleUUID := range created {
-			s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleUUID})
+			s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+		r, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 			Namespace:   namespaceName,
 			Name:        tools.GetRandomString(20),
 			Description: "",
@@ -110,7 +110,7 @@ func (s *ListTestSuite) TestListsDataInNamespace() {
 		created = append(created, r.Role.Uuid)
 	}
 
-	listStream, err := s.nativeStub.Services.IamRole.List(ctx, &role.ListRolesRequest{
+	listStream, err := s.nativeStub.Services.IAM.Role.List(ctx, &role.ListRolesRequest{
 		Namespace: namespaceName,
 		Skip:      0,
 		Limit:     0,
@@ -150,11 +150,11 @@ func (s *ListTestSuite) TestListSkipAndLimit() {
 	created := []string{}
 	defer func() {
 		for _, roleUUID := range created {
-			s.nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleUUID})
+			s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: roleUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+		r, err := s.nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 			Namespace:   namespaceName,
 			Name:        tools.GetRandomString(20),
 			Description: "",
@@ -164,7 +164,7 @@ func (s *ListTestSuite) TestListSkipAndLimit() {
 		created = append(created, r.Role.Uuid)
 	}
 
-	listStream, err := s.nativeStub.Services.IamRole.List(ctx, &role.ListRolesRequest{
+	listStream, err := s.nativeStub.Services.IAM.Role.List(ctx, &role.ListRolesRequest{
 		Namespace: namespaceName,
 		Skip:      3,
 		Limit:     2,
@@ -191,7 +191,7 @@ func (s *ListTestSuite) TestListInNonExistingNamespaceIsOk() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	listStream, err := s.nativeStub.Services.IamRole.List(ctx, &role.ListRolesRequest{
+	listStream, err := s.nativeStub.Services.IAM.Role.List(ctx, &role.ListRolesRequest{
 		Namespace: tools.GetRandomString(20),
 		Skip:      3,
 		Limit:     2,

@@ -73,7 +73,7 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 	}
 
 	// Assign password to user
-	_, err = r.nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx.Request.Context(), &password.CreateOrUpdateRequest{
+	_, err = r.nativeStub.Services.IAM.Authentication.Password.CreateOrUpdate(ctx.Request.Context(), &password.CreateOrUpdateRequest{
 		Namespace: "",
 		Identity:  userResponse.User.Identity,
 		Password:  requestData.Password,
@@ -85,26 +85,26 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 	}
 
 	// Get Root Role
-	roleResponse, err := r.nativeStub.Services.IamRole.GetBuiltInRole(ctx.Request.Context(), &role.GetBuiltInRoleRequest{
+	roleResponse, err := r.nativeStub.Services.IAM.Role.GetBuiltInRole(ctx.Request.Context(), &role.GetBuiltInRoleRequest{
 		Namespace: "",
 		Type:      role.BuiltInRoleType_GLOBAL_ROOT,
 	})
 	if err != nil {
-		r.nativeStub.Services.IamAuthentication.Password.Delete(ctx.Request.Context(), &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
+		r.nativeStub.Services.IAM.Authentication.Password.Delete(ctx.Request.Context(), &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
 		r.nativeStub.Services.ActorUser.Delete(ctx.Request.Context(), &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	// Assign role to the user identity
-	_, err = r.nativeStub.Services.IamIdentity.AddRole(ctx.Request.Context(), &identity.AddRoleRequest{
+	_, err = r.nativeStub.Services.IAM.Identity.AddRole(ctx.Request.Context(), &identity.AddRoleRequest{
 		IdentityNamespace: "",
 		IdentityUUID:      userResponse.User.Identity,
 		RoleNamespace:     "",
 		RoleUUID:          roleResponse.Role.Uuid,
 	})
 	if err != nil {
-		r.nativeStub.Services.IamAuthentication.Password.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
+		r.nativeStub.Services.IAM.Authentication.Password.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
 		r.nativeStub.Services.ActorUser.Delete(ctx, &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return

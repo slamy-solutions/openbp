@@ -22,7 +22,7 @@ type DeleteTestSuite struct {
 }
 
 func (suite *DeleteTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -39,7 +39,7 @@ func (s *DeleteTestSuite) TestDeleteFromGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -49,9 +49,9 @@ func (s *DeleteTestSuite) TestDeleteFromGlobalNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
 
-	deleteResponse, err := s.nativeStub.Services.IamPolicy.Delete(ctx, &policy.DeletePolicyRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Policy.Delete(ctx, &policy.DeletePolicyRequest{
 		Namespace: "",
 		Uuid:      createResponse.Policy.Uuid,
 	})
@@ -72,7 +72,7 @@ func (s *DeleteTestSuite) TestDeleteFromNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -82,9 +82,9 @@ func (s *DeleteTestSuite) TestDeleteFromNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
 
-	deleteResponse, err := s.nativeStub.Services.IamPolicy.Delete(ctx, &policy.DeletePolicyRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Policy.Delete(ctx, &policy.DeletePolicyRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Policy.Uuid,
 	})
@@ -96,7 +96,7 @@ func (s *DeleteTestSuite) TestDeleteNonExistingPolicyFromGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -106,9 +106,9 @@ func (s *DeleteTestSuite) TestDeleteNonExistingPolicyFromGlobalNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
 
-	deleteResponse, err := s.nativeStub.Services.IamPolicy.Delete(ctx, &policy.DeletePolicyRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Policy.Delete(ctx, &policy.DeletePolicyRequest{
 		Namespace: "",
 		Uuid:      primitive.NewObjectID().Hex(),
 	})
@@ -129,7 +129,7 @@ func (s *DeleteTestSuite) TestDeleteNonExistingPolicyFromNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -139,9 +139,9 @@ func (s *DeleteTestSuite) TestDeleteNonExistingPolicyFromNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
 
-	deleteResponse, err := s.nativeStub.Services.IamPolicy.Delete(ctx, &policy.DeletePolicyRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Policy.Delete(ctx, &policy.DeletePolicyRequest{
 		Namespace: namespaceName,
 		Uuid:      primitive.NewObjectID().Hex(),
 	})
@@ -153,7 +153,7 @@ func (s *DeleteTestSuite) TestDeleteNonExistingPolicyFromNonExistingNamespace() 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	deleteResponse, err := s.nativeStub.Services.IamPolicy.Delete(ctx, &policy.DeletePolicyRequest{
+	deleteResponse, err := s.nativeStub.Services.IAM.Policy.Delete(ctx, &policy.DeletePolicyRequest{
 		Namespace: tools.GetRandomString(20),
 		Uuid:      primitive.NewObjectID().Hex(),
 	})

@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Prebuild one of the containers
-        run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml build native_iam_auth
+        run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml build native_iam
       - name: Build the stack
         run: docker-compose -f docker-compose.yml -f modules/system/docker-compose.yml -f modules/native/docker-compose.yml build --parallel
       - name: Run the stack

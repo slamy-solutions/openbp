@@ -42,7 +42,7 @@ func main() {
 	}
 	defer systemStub.Close(context.Background())
 
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMIdentityService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err = nativeStub.Connect()
 	if err != nil {
 		panic("Failed to connect to native services: " + err.Error())

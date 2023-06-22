@@ -1,4 +1,4 @@
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.18-alpine as build
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.20-alpine as build
 RUN apk add --no-cache git
 
 ENV GOPATH=/src

@@ -18,42 +18,10 @@ actor:
     maxReplicas: 10
     replicas: 1
 iam:
-  policy:
-    image:
-      repository: openbp/obp-native-iam-policy
-    minReplicas: 1
-    maxReplicas: 10
-    replicas: 1
-  role:
-    image:
-      repository: openbp/obp-native-iam-role
-    minReplicas: 1
-    maxReplicas: 10
-    replicas: 1
-  identity:
-    image:
-      repository: openbp/obp-native-iam-identity
-    minReplicas: 1
-    maxReplicas: 10
-    replicas: 1
-  token:
-    image:
-      repository: openbp/obp-native-iam-token
-    minReplicas: 1
-    maxReplicas: 10
-    replicas: 1
-  auth:
-    image:
-      repository: openbp/obp-native-iam-auth
-    minReplicas: 1
-    maxReplicas: 10
-    replicas: 1
-  authentication:
-    password:
-      image:
-        repository: openbp/obp-native-iam-authentication-password
-      minReplicas: 1
-      maxReplicas: 10
-      replicas: 1
+  image:
+    repository: openbp/obp-native-iam
+  minReplicas: 1
+  maxReplicas: 10
+  replicas: 1
 
   

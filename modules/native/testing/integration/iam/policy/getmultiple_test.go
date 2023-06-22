@@ -23,7 +23,7 @@ type GetMultipleTestSuite struct {
 }
 
 func (suite *GetMultipleTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -95,7 +95,7 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	defer func() {
 		for _, p := range policies {
 			if p.create {
-				s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{
+				s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{
 					Namespace: p.namespace,
 					Uuid:      p.uuid,
 				})
@@ -106,7 +106,7 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	// Create all the policies
 	for _, p := range policies {
 		if p.create {
-			r, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+			r, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 				Namespace:            p.namespace,
 				Name:                 tools.GetRandomString(20),
 				Description:          tools.GetRandomString(20),
@@ -131,7 +131,7 @@ func (s *GetMultipleTestSuite) TestGetMultiple() {
 	}
 	require.Len(s.T(), policiesToSearch, 14)
 
-	r, err := s.nativeStub.Services.IamPolicy.GetMultiple(ctx, &policy.GetMultiplePoliciesRequest{
+	r, err := s.nativeStub.Services.IAM.Policy.GetMultiple(ctx, &policy.GetMultiplePoliciesRequest{
 		Policies: policiesToSearch,
 	})
 	require.Nil(s.T(), err)

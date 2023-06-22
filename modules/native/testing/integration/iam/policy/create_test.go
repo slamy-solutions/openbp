@@ -24,7 +24,7 @@ type CreateTestSuite struct {
 }
 
 func (suite *CreateTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMPolicyService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -43,7 +43,7 @@ func (s *CreateTestSuite) TestParamsValidation() {
 
 	for _, tc := range writeParamsValidationTestCases {
 		s.Run(tc.testName, func() {
-			r, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+			r, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 				Namespace:            "",
 				Name:                 tc.name,
 				Description:          tc.description,
@@ -53,7 +53,7 @@ func (s *CreateTestSuite) TestParamsValidation() {
 				Actions:              tc.actions,
 			})
 			if err == nil {
-				defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: r.Policy.Uuid})
+				defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: r.Policy.Uuid})
 			}
 
 			assert.Equal(s.T(), tc.ok, err == nil)
@@ -75,7 +75,7 @@ func (s *CreateTestSuite) TestReturnsDataInReponseToCreation() {
 	resources := []string{tools.GetRandomString(20)}
 	actions := []string{tools.GetRandomString(20)}
 
-	r, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	r, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 name,
 		Description:          description,
@@ -85,7 +85,7 @@ func (s *CreateTestSuite) TestReturnsDataInReponseToCreation() {
 		Actions:              actions,
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: r.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: r.Policy.Uuid})
 
 	require.Equal(s.T(), name, r.Policy.Name)
 	require.Equal(s.T(), description, r.Policy.Description)
@@ -99,7 +99,7 @@ func (s *CreateTestSuite) TestAvailableAfterCreationInGlobalNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -109,9 +109,9 @@ func (s *CreateTestSuite) TestAvailableAfterCreationInGlobalNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: createResponse.Policy.Uuid})
 
-	existResponse, err := s.nativeStub.Services.IamPolicy.Exist(ctx, &policy.ExistPolicyRequest{
+	existResponse, err := s.nativeStub.Services.IAM.Policy.Exist(ctx, &policy.ExistPolicyRequest{
 		Namespace: "",
 		Uuid:      createResponse.Policy.Uuid,
 		UseCache:  true,
@@ -133,7 +133,7 @@ func (s *CreateTestSuite) TestAvailableAfterCreationInNamespace() {
 	require.Nil(s.T(), err)
 	defer s.nativeStub.Services.Namespace.Delete(context.Background(), &namespace.DeleteNamespaceRequest{Name: namespaceName})
 
-	createResponse, err := s.nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	createResponse, err := s.nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            namespaceName,
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -143,9 +143,9 @@ func (s *CreateTestSuite) TestAvailableAfterCreationInNamespace() {
 		Actions:              []string{},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
+	defer s.nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: namespaceName, Uuid: createResponse.Policy.Uuid})
 
-	existResponse, err := s.nativeStub.Services.IamPolicy.Exist(ctx, &policy.ExistPolicyRequest{
+	existResponse, err := s.nativeStub.Services.IAM.Policy.Exist(ctx, &policy.ExistPolicyRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Policy.Uuid,
 		UseCache:  true,

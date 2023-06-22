@@ -1,3 +1,3 @@
 module github.com/slamy-solutions/openbp
 
-go 1.18
+go 1.20

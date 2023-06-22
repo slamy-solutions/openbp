@@ -15,7 +15,7 @@ import (
 )
 
 func TestIAMAuthenticationPassword(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMAuthenticationService().WithIAMIdentityService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -23,25 +23,25 @@ func TestIAMAuthenticationPassword(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	identityCreateResponse, err := nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+	identityCreateResponse, err := nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 		Namespace:       "",
 		Name:            tools.GetRandomString(20),
 		InitiallyActive: true,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityCreateResponse.Identity.Uuid})
 
 	plainPassword := tools.GetRandomString(20)
 
-	_, err = nativeStub.Services.IamAuthentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
+	_, err = nativeStub.Services.IAM.Authentication.Password.CreateOrUpdate(ctx, &password.CreateOrUpdateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  plainPassword,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamAuthentication.Password.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
+	defer nativeStub.Services.IAM.Authentication.Password.Delete(context.Background(), &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
 
-	authenticateResponse, err := nativeStub.Services.IamAuthentication.Password.Authenticate(ctx, &password.AuthenticateRequest{
+	authenticateResponse, err := nativeStub.Services.IAM.Authentication.Password.Authenticate(ctx, &password.AuthenticateRequest{
 		Namespace: "",
 		Identity:  identityCreateResponse.Identity.Uuid,
 		Password:  plainPassword,
@@ -49,7 +49,7 @@ func TestIAMAuthenticationPassword(t *testing.T) {
 	require.Nil(t, err)
 	assert.True(t, authenticateResponse.Authenticated)
 
-	passwordDeleteResponse, err := nativeStub.Services.IamAuthentication.Password.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
+	passwordDeleteResponse, err := nativeStub.Services.IAM.Authentication.Password.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: identityCreateResponse.Identity.Uuid})
 	require.Nil(t, err)
 	assert.True(t, passwordDeleteResponse.Existed)
 }

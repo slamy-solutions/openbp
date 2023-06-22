@@ -34,112 +34,24 @@ services:
       - native_namespace
     ports:
       - "127.0.0.1:28251:80" # For testing
-  
-  #native_iam_config:
-  #  container_name: native_iam_config
-  #  restart: always
-  #  build:
-  #    context: .
-  #    dockerfile: modules/native/services/iam/config/Dockerfile
-  #  environment:
-  #    OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-  #    OTEL_SERVICE_NAME: "native_iam_config"
-  #  depends_on:
-  #    - system_cache
-  #    - system_telemetry
-  #    - native_keyvaluestorage
 
-  native_iam_policy:
-    container_name: native_iam_policy
+  native_iam:
+    container_name: native_iam
     restart: always
     build:
       context: .
-      dockerfile: modules/native/services/iam/policy/Dockerfile
+      dockerfile: modules/native/services/iam/Dockerfile
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_policy"
+      OTEL_SERVICE_NAME: "native_iam"
     depends_on:
       - system_db
       - system_cache
       - system_telemetry
+      - system_vault
       - native_namespace
     ports:
       - "127.0.0.1:28252:80" # For testing
-
-  native_iam_role:
-    container_name: native_iam_role
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/iam/role/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_role"
-    depends_on:
-      - system_db
-      - system_cache
-      - system_telemetry
-      - native_namespace
-      - native_iam_policy
-    ports:
-      - "127.0.0.1:28253:80" # For testing
-
-  native_iam_identity:
-    container_name: native_iam_identity
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/iam/identity/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_identity"
-    depends_on:
-      - system_db
-      - system_cache
-      - system_telemetry
-      - native_namespace
-      - native_iam_policy
-    ports:
-      - "127.0.0.1:28254:80" # For testing
-
-  native_iam_token:
-    container_name: native_iam_token
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/iam/token/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_token"
-    depends_on:
-      - system_db
-      - system_cache
-      - system_telemetry
-      - native_namespace
-    ports:
-      - "127.0.0.1:28255:80" # For testing
-
-  native_iam_auth:
-    container_name: native_iam_auth
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/iam/auth/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_auth"
-    depends_on:
-      - system_db
-      - system_cache
-      - system_telemetry
-      - native_namespace
-      - native_iam_policy
-      - native_iam_identity
-      - native_iam_token
-      - native_iam_authentication
-    ports:
-      - "127.0.0.1:28256:80" # For testing
-
 
   native_actor_user:
     container_name: native_actor_user
@@ -154,22 +66,6 @@ services:
       - system_db
       - system_cache
       - system_telemetry
-      - native_iam_identity
+      - native_iam
     ports:
       - "127.0.0.1:28257:80" # For testing
-
-  native_iam_authentication:
-    container_name: native_iam_authentication
-    restart: always
-    build:
-      context: .
-      dockerfile: modules/native/services/iam/authentication/Dockerfile
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
-      OTEL_SERVICE_NAME: "native_iam_authentication"
-    depends_on:
-      - system_db
-      - system_telemetry
-      - native_namespace
-    ports:
-      - "127.0.0.1:28258:80" # For testing

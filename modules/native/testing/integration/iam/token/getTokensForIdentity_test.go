@@ -24,7 +24,7 @@ type GetTokensForIdentityTestSuite struct {
 }
 
 func (suite *GetTokensForIdentityTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMTokenService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -44,11 +44,11 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromGlobalNamespace() {
 	identities := []string{}
 	defer func() {
 		for _, uuid := range identities {
-			s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: uuid})
+			s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: "", Uuid: uuid})
 		}
 	}()
 	for i := 0; i < 5; i++ {
-		identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       "",
 			Name:            tools.GetRandomString(20),
 			InitiallyActive: true,
@@ -61,12 +61,12 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromGlobalNamespace() {
 	tokens := []string{}
 	defer func() {
 		for _, uuid := range tokens {
-			s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{Namespace: "", Uuid: uuid})
+			s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{Namespace: "", Uuid: uuid})
 		}
 	}()
 	for _, identityUUID := range identities {
 		for i := 0; i < 5; i++ {
-			tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+			tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 				Namespace: "",
 				Identity:  identityUUID,
 				Scopes:    []*token.Scope{},
@@ -77,7 +77,7 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromGlobalNamespace() {
 		}
 	}
 
-	tokensForIdentityResponse, err := s.nativeStub.Services.IamToken.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
+	tokensForIdentityResponse, err := s.nativeStub.Services.IAM.Token.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
 		Namespace:    "",
 		Identity:     identities[1],
 		ActiveFilter: token.GetTokensForIdentityRequest_ALL,
@@ -97,7 +97,7 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromGlobalNamespace() {
 	}
 	require.ElementsMatch(s.T(), tokens[5:10], receivedTokenUUIDs)
 
-	tokensForIdentityResponse, err = s.nativeStub.Services.IamToken.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
+	tokensForIdentityResponse, err = s.nativeStub.Services.IAM.Token.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
 		Namespace:    "",
 		Identity:     identities[1],
 		ActiveFilter: token.GetTokensForIdentityRequest_ALL,
@@ -134,11 +134,11 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromNamespace() {
 	identities := []string{}
 	defer func() {
 		for _, uuid := range identities {
-			s.nativeStub.Services.IamIdentity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: uuid})
+			s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: uuid})
 		}
 	}()
 	for i := 0; i < 5; i++ {
-		identityCreateResponse, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		identityCreateResponse, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       namespaceName,
 			Name:            tools.GetRandomString(20),
 			InitiallyActive: true,
@@ -151,12 +151,12 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromNamespace() {
 	tokens := []string{}
 	defer func() {
 		for _, uuid := range tokens {
-			s.nativeStub.Services.IamToken.Delete(ctx, &token.DeleteRequest{Namespace: namespaceName, Uuid: uuid})
+			s.nativeStub.Services.IAM.Token.Delete(ctx, &token.DeleteRequest{Namespace: namespaceName, Uuid: uuid})
 		}
 	}()
 	for _, identityUUID := range identities {
 		for i := 0; i < 5; i++ {
-			tokenCreateResponse, err := s.nativeStub.Services.IamToken.Create(ctx, &token.CreateRequest{
+			tokenCreateResponse, err := s.nativeStub.Services.IAM.Token.Create(ctx, &token.CreateRequest{
 				Namespace: namespaceName,
 				Identity:  identityUUID,
 				Scopes:    []*token.Scope{},
@@ -167,7 +167,7 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromNamespace() {
 		}
 	}
 
-	tokensForIdentityResponse, err := s.nativeStub.Services.IamToken.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
+	tokensForIdentityResponse, err := s.nativeStub.Services.IAM.Token.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
 		Namespace:    namespaceName,
 		Identity:     identities[1],
 		ActiveFilter: token.GetTokensForIdentityRequest_ALL,
@@ -187,7 +187,7 @@ func (s *GetTokensForIdentityTestSuite) TestGetsFromNamespace() {
 	}
 	require.ElementsMatch(s.T(), tokens[5:10], receivedTokenUUIDs)
 
-	tokensForIdentityResponse, err = s.nativeStub.Services.IamToken.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
+	tokensForIdentityResponse, err = s.nativeStub.Services.IAM.Token.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
 		Namespace:    namespaceName,
 		Identity:     identities[1],
 		ActiveFilter: token.GetTokensForIdentityRequest_ALL,
@@ -212,7 +212,7 @@ func (s *GetTokensForIdentityTestSuite) TestGetForNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	_, err := s.nativeStub.Services.IamToken.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
+	_, err := s.nativeStub.Services.IAM.Token.GetTokensForIdentity(ctx, &token.GetTokensForIdentityRequest{
 		Namespace:    tools.GetRandomString(20),
 		Identity:     primitive.NewObjectID().Hex(),
 		ActiveFilter: token.GetTokensForIdentityRequest_ALL,

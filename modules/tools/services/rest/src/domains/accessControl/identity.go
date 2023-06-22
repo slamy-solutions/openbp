@@ -129,7 +129,7 @@ func (r *IdentityRouter) List(ctx *gin.Context) {
 		return
 	}
 
-	listStream, err := r.nativeStub.Services.IamIdentity.List(ctx.Request.Context(), &identity.ListIdentityRequest{
+	listStream, err := r.nativeStub.Services.IAM.Identity.List(ctx.Request.Context(), &identity.ListIdentityRequest{
 		Namespace: requestData.Namespace,
 		Skip:      uint64(requestData.Skip),
 		Limit:     uint64(requestData.Limit),
@@ -159,7 +159,7 @@ func (r *IdentityRouter) List(ctx *gin.Context) {
 		identities = append(identities, FormatIdentity(response.Identity))
 	}
 
-	countResponse, err := r.nativeStub.Services.IamIdentity.Count(ctx.Request.Context(), &identity.CountIdentityRequest{
+	countResponse, err := r.nativeStub.Services.IAM.Identity.Count(ctx.Request.Context(), &identity.CountIdentityRequest{
 		Namespace: requestData.Namespace, UseCache: true,
 	})
 	if err != nil {
@@ -205,7 +205,7 @@ func (r *IdentityRouter) Create(ctx *gin.Context) {
 		return
 	}
 
-	response, err := r.nativeStub.Services.IamIdentity.Create(ctx.Request.Context(), &identity.CreateIdentityRequest{
+	response, err := r.nativeStub.Services.IAM.Identity.Create(ctx.Request.Context(), &identity.CreateIdentityRequest{
 		Namespace:       requestData.Namespace,
 		Name:            requestData.Name,
 		InitiallyActive: requestData.InitiallyActive,
@@ -259,7 +259,7 @@ func (r *IdentityRouter) Get(ctx *gin.Context) {
 	}
 
 	// Get identity
-	identityResponse, err := r.nativeStub.Services.IamIdentity.Get(ctx.Request.Context(), &identity.GetIdentityRequest{
+	identityResponse, err := r.nativeStub.Services.IAM.Identity.Get(ctx.Request.Context(), &identity.GetIdentityRequest{
 		Namespace: requestData.Namespace,
 		Uuid:      requestData.UUID,
 		UseCache:  true,
@@ -314,7 +314,7 @@ func (r *IdentityRouter) Delete(ctx *gin.Context) {
 	}
 
 	// Delete identity
-	_, err = r.nativeStub.Services.IamIdentity.Delete(ctx.Request.Context(), &identity.DeleteIdentityRequest{
+	_, err = r.nativeStub.Services.IAM.Identity.Delete(ctx.Request.Context(), &identity.DeleteIdentityRequest{
 		Namespace: requestData.Namespace,
 		Uuid:      requestData.UUID,
 	})

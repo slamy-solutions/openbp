@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package iot_core_device;
+
+option go_package = "slamy/openERP/iot/core/device;device";
+
+
+service DeviceService {
+    rpc Create() returns ();
+    rpc Get() returns ();
+    rpc List() returns ();
+    rpc Update() returns ();
+    rpc Delete() returns ();
+}

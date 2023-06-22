@@ -1,15 +1,9 @@
-go 1.18
+go 1.20
 
 use (
 	./modules/native/libs/golang
 	./modules/native/services/actor/user
-	./modules/native/services/iam/auth
-	./modules/native/services/iam/authentication
-	./modules/native/services/iam/config
-	./modules/native/services/iam/identity
-	./modules/native/services/iam/policy
-	./modules/native/services/iam/role
-	./modules/native/services/iam/token
+	./modules/native/services/iam
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/namespace
 	./modules/native/testing

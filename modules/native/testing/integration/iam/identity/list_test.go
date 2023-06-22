@@ -22,7 +22,7 @@ type ListTestSuite struct {
 }
 
 func (suite *ListTestSuite) SetupSuite() {
-	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMIdentityService())
+	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
 		panic(err)
@@ -42,11 +42,11 @@ func (s *ListTestSuite) TestListsDataInGlobalNamespace() {
 	created := []string{}
 	defer func() {
 		for _, identityUUID := range created {
-			s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityUUID})
+			s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: "", Uuid: identityUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		r, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       "",
 			Name:            "",
 			InitiallyActive: true,
@@ -56,7 +56,7 @@ func (s *ListTestSuite) TestListsDataInGlobalNamespace() {
 		created = append(created, r.Identity.Uuid)
 	}
 
-	listStream, err := s.nativeStub.Services.IamIdentity.List(ctx, &identity.ListIdentityRequest{
+	listStream, err := s.nativeStub.Services.IAM.Identity.List(ctx, &identity.ListIdentityRequest{
 		Namespace: "",
 		Skip:      0,
 		Limit:     0,
@@ -96,11 +96,11 @@ func (s *ListTestSuite) TestListsDataInNamespace() {
 	created := []string{}
 	defer func() {
 		for _, identityUUID := range created {
-			s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityUUID})
+			s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		r, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       namespaceName,
 			Name:            "",
 			InitiallyActive: true,
@@ -110,7 +110,7 @@ func (s *ListTestSuite) TestListsDataInNamespace() {
 		created = append(created, r.Identity.Uuid)
 	}
 
-	listStream, err := s.nativeStub.Services.IamIdentity.List(ctx, &identity.ListIdentityRequest{
+	listStream, err := s.nativeStub.Services.IAM.Identity.List(ctx, &identity.ListIdentityRequest{
 		Namespace: namespaceName,
 		Skip:      0,
 		Limit:     0,
@@ -150,11 +150,11 @@ func (s *ListTestSuite) TestListSkipAndLimit() {
 	created := []string{}
 	defer func() {
 		for _, identityUUID := range created {
-			s.nativeStub.Services.IamIdentity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityUUID})
+			s.nativeStub.Services.IAM.Identity.Delete(context.Background(), &identity.DeleteIdentityRequest{Namespace: namespaceName, Uuid: identityUUID})
 		}
 	}()
 	for i := 0; i < 10; i++ {
-		r, err := s.nativeStub.Services.IamIdentity.Create(ctx, &identity.CreateIdentityRequest{
+		r, err := s.nativeStub.Services.IAM.Identity.Create(ctx, &identity.CreateIdentityRequest{
 			Namespace:       namespaceName,
 			Name:            "",
 			InitiallyActive: true,
@@ -164,7 +164,7 @@ func (s *ListTestSuite) TestListSkipAndLimit() {
 		created = append(created, r.Identity.Uuid)
 	}
 
-	listStream, err := s.nativeStub.Services.IamIdentity.List(ctx, &identity.ListIdentityRequest{
+	listStream, err := s.nativeStub.Services.IAM.Identity.List(ctx, &identity.ListIdentityRequest{
 		Namespace: namespaceName,
 		Skip:      3,
 		Limit:     2,
@@ -191,7 +191,7 @@ func (s *ListTestSuite) TestListInNonExistingNamespaceIsOk() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	listStream, err := s.nativeStub.Services.IamIdentity.List(ctx, &identity.ListIdentityRequest{
+	listStream, err := s.nativeStub.Services.IAM.Identity.List(ctx, &identity.ListIdentityRequest{
 		Namespace: tools.GetRandomString(20),
 		Skip:      3,
 		Limit:     2,

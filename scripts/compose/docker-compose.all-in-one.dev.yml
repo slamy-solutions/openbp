@@ -125,97 +125,21 @@ services:
     ports:
       - "127.0.0.1:28251:80"
 
-  native_iam_policy:
-    image: openbp/obp-native-iam-policy:${OPENBP_VERSION:-latest}
-    container_name: native_iam_policy
+  native_iam:
+    image: openbp/obp-native-iam:${OPENBP_VERSION:-latest}
+    container_name: native_iam
     restart: always
     depends_on:
       - system_db
       - system_cache
       - system_nats
+      - system_vault
       - native_namespace
     networks:
       - internal
     ports:
       - "127.0.0.1:28252:80"
 
-  native_iam_role:
-    image: openbp/obp-native-iam-role:${OPENBP_VERSION:-latest}
-    container_name: native_iam_role
-    restart: always
-    depends_on:
-      - system_db
-      - system_cache
-      - system_nats
-      - native_namespace
-      - native_iam_policy
-    networks:
-      - internal
-    ports:
-      - "127.0.0.1:28253:80"
-
-  native_iam_identity:
-    image: openbp/obp-native-iam-identity:${OPENBP_VERSION:-latest}
-    container_name: native_iam_identity
-    restart: always
-    depends_on:
-      - system_db
-      - system_cache
-      - system_nats
-      - native_namespace
-      - native_iam_policy
-      - native_iam_role
-    networks:
-      - internal
-    ports:
-      - "127.0.0.1:28254:80"
-
-  native_iam_token:
-    image: openbp/obp-native-iam-token:${OPENBP_VERSION:-latest}
-    container_name: native_iam_token
-    restart: always
-    depends_on:
-      - system_db
-      - system_cache
-      - system_nats
-      - native_namespace
-    networks:
-      - internal
-    ports:
-      - "127.0.0.1:28255:80"
-
-  native_iam_auth:
-    image: openbp/obp-native-iam-auth:${OPENBP_VERSION:-latest}
-    container_name: native_iam_auth
-    restart: always
-    depends_on:
-      - system_db
-      - system_cache
-      - system_nats
-      - native_namespace
-      - native_iam_policy
-      - native_iam_role
-      - native_iam_identity
-      - native_iam_token
-      - native_iam_authentication
-    networks:
-      - internal
-    ports:
-      - "127.0.0.1:28256:80"
-
-  native_iam_authentication:
-    image: openbp/obp-native-iam-authentication:${OPENBP_VERSION:-latest}
-    container_name: native_iam_authentication
-    restart: always
-    depends_on:
-      - system_db
-      - system_cache
-      - system_nats
-      - native_namespace
-    networks:
-      - internal
-    ports:
-      - "127.0.0.1:28258:80"
 
   native_actor_user:
     image: openbp/obp-native-actor-user:${OPENBP_VERSION:-latest}
@@ -225,7 +149,7 @@ services:
       - system_db
       - system_cache
       - system_nats
-      - native_iam_identity
+      - native_iam
     networks:
       - internal
     ports:
@@ -245,10 +169,7 @@ services:
     depends_on:
       - native_namespace
       - native_actor_user
-      - native_iam_auth
-      - native_iam_policy
-      - native_iam_identity
-      - native_iam_authentication
+      - native_iam
       - native_keyvaluestorage
       - system_telemetry
     networks:

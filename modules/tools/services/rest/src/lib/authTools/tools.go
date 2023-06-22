@@ -32,7 +32,7 @@ func CheckAuth(ctx *gin.Context, nativeStub *native.NativeStub, scopes []*auth.S
 		return &CheckAuthData{AccessGranted: false, StatusCode: 401, ErrorMessage: "Auth header has invalid format"}, nil
 	}
 
-	authResponse, err := nativeStub.Services.IamAuth.CheckAccessWithToken(ctx.Request.Context(), &auth.CheckAccessWithTokenRequest{
+	authResponse, err := nativeStub.Services.IAM.Auth.CheckAccessWithToken(ctx.Request.Context(), &auth.CheckAccessWithTokenRequest{
 		AccessToken: splitedHeader[1],
 		Scopes:      scopes,
 	})

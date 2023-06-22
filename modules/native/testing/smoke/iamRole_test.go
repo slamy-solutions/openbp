@@ -15,7 +15,7 @@ import (
 )
 
 func TestIAMRole(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMPolicyService().WithIAMRoleService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -26,19 +26,19 @@ func TestIAMRole(t *testing.T) {
 	name := tools.GetRandomString(20)
 	description := tools.GetRandomString(20)
 
-	roleCreateResponse, err := nativeStub.Services.IamRole.Create(ctx, &role.CreateRoleRequest{
+	roleCreateResponse, err := nativeStub.Services.IAM.Role.Create(ctx, &role.CreateRoleRequest{
 		Namespace:   "",
 		Name:        name,
 		Description: description,
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamRole.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
+	defer nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: roleCreateResponse.Role.Uuid})
 	assert.Equal(t, name, roleCreateResponse.Role.Name)
 	assert.Equal(t, description, roleCreateResponse.Role.Description)
 
 	// Create policy and add it to the role
-	policyCreateResponse, err := nativeStub.Services.IamPolicy.Create(ctx, &policy.CreatePolicyRequest{
+	policyCreateResponse, err := nativeStub.Services.IAM.Policy.Create(ctx, &policy.CreatePolicyRequest{
 		Namespace:            "",
 		Name:                 tools.GetRandomString(20),
 		Description:          tools.GetRandomString(20),
@@ -48,9 +48,9 @@ func TestIAMRole(t *testing.T) {
 		Actions:              []string{},
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.IamPolicy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: policyCreateResponse.Policy.Uuid})
+	defer nativeStub.Services.IAM.Policy.Delete(context.Background(), &policy.DeletePolicyRequest{Namespace: "", Uuid: policyCreateResponse.Policy.Uuid})
 
-	_, err = nativeStub.Services.IamRole.AddPolicy(ctx, &role.AddPolicyRequest{
+	_, err = nativeStub.Services.IAM.Role.AddPolicy(ctx, &role.AddPolicyRequest{
 		RoleNamespace:   "",
 		RoleUUID:        roleCreateResponse.Role.Uuid,
 		PolicyNamespace: "",
@@ -59,7 +59,7 @@ func TestIAMRole(t *testing.T) {
 	require.Nil(t, err)
 
 	// Get role and check if information is actual
-	roleGetResponse, err := nativeStub.Services.IamRole.Get(ctx, &role.GetRoleRequest{
+	roleGetResponse, err := nativeStub.Services.IAM.Role.Get(ctx, &role.GetRoleRequest{
 		Namespace: "",
 		Uuid:      roleCreateResponse.Role.Uuid,
 		UseCache:  true,
@@ -72,7 +72,7 @@ func TestIAMRole(t *testing.T) {
 	assert.Equal(t, "", roleGetResponse.Role.Policies[0].Namespace)
 
 	// Delete role
-	roleDeleteResponse, err := nativeStub.Services.IamRole.Delete(ctx, &role.DeleteRoleRequest{
+	roleDeleteResponse, err := nativeStub.Services.IAM.Role.Delete(ctx, &role.DeleteRoleRequest{
 		Namespace: "",
 		Uuid:      roleCreateResponse.Role.Uuid,
 	})
