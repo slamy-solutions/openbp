@@ -8,7 +8,7 @@ go 1.20
 
 require (
 	github.com/golang/protobuf v1.5.3
-	github.com/nats-io/nats.go v1.27.0
+	github.com/nats-io/nats.go v1.27.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slamy-solutions/openbp/modules/native/libs/golang v0.0.0-20230115172437-fcc177ae9cff
 	github.com/slamy-solutions/openbp/modules/system/libs/golang v0.0.0-20230115172437-fcc177ae9cff

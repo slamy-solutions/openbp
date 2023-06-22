@@ -8,9 +8,11 @@ replace github.com/slamy-solutions/openbp/modules/system/libs/golang => ../../sy
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/nats-io/nats.go v1.27.0
+	github.com/nats-io/nats.go v1.27.1
 	github.com/slamy-solutions/openbp/modules/native/libs/golang v0.0.0-20230115172437-fcc177ae9cff
+	github.com/slamy-solutions/openbp/modules/native/services/iam v0.0.0-20230622162125-6e1e53896cf0
 	github.com/slamy-solutions/openbp/modules/system/libs/golang v0.0.0-20230115172437-fcc177ae9cff
+	github.com/slamy-solutions/openbp/modules/system/testing v0.0.0-20230622162125-6e1e53896cf0
 	github.com/stretchr/testify v1.8.3
 	go.mongodb.org/mongo-driver v1.12.0
 	google.golang.org/grpc v1.56.1
@@ -28,17 +30,13 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/klauspost/compress v1.16.6 // indirect
-	github.com/kr/text v0.2.0 // indirect
-	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/nats-io/jwt/v2 v2.4.1 // indirect
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5 // indirect
 	github.com/redis/go-redis/v9 v9.0.5 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
@@ -60,7 +58,6 @@ require (
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

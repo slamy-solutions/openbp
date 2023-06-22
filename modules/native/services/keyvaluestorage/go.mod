@@ -7,7 +7,7 @@ replace github.com/slamy-solutions/openbp/modules/system/libs/golang => ../../..
 replace github.com/slamy-solutions/openbp/modules/native/libs/golang => ../../libs/golang
 
 require (
-	github.com/nats-io/nats.go v1.27.0
+	github.com/nats-io/nats.go v1.27.1
 	github.com/slamy-solutions/openbp/modules/native/libs/golang v0.0.0-20230115172437-fcc177ae9cff
 	github.com/slamy-solutions/openbp/modules/system/libs/golang v0.0.0-20230115172437-fcc177ae9cff
 	go.mongodb.org/mongo-driver v1.12.0

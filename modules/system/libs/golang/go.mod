@@ -3,7 +3,7 @@ module github.com/slamy-solutions/openbp/modules/system/libs/golang
 go 1.20
 
 require (
-	github.com/nats-io/nats.go v1.27.0
+	github.com/nats-io/nats.go v1.27.1
 	github.com/redis/go-redis/v9 v9.0.5
 	go.mongodb.org/mongo-driver v1.12.0
 	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo v0.42.0
