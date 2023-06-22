@@ -18,6 +18,8 @@ export default boot(({ app }) => {
 
   if (process.env.DEV) {
     APIModuleBase.setBaseURL("http://127.0.0.1:80/api")
+  } else {
+    APIModuleBase.setBaseURL("/api")
   }
 });
 

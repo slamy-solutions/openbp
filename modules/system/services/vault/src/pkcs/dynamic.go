@@ -11,13 +11,14 @@ import (
 	"sync"
 
 	pkcs11 "github.com/miekg/pkcs11"
+	log "github.com/sirupsen/logrus"
 )
 
-const defaultHMACKeyName = "default_hmac_secret"
-const defaultEncryptionKeyName = "default_encrypt_secret"
+const defaultHMACKeyName = "openbp_default_hmac_secret"
+const defaultEncryptionKeyName = "openbp_default_encrypt_secret"
 
 /*
-	Dynamic PKCS handler that can load other PKCS libraries (based on softhsm2 compatibility)
+Dynamic PKCS handler that can load other PKCS libraries (based on softhsm2 compatibility)
 */
 type DynamicPKCSHandle struct {
 	PKCS11Ctx *pkcs11.Ctx
@@ -140,8 +141,7 @@ func (h *DynamicPKCSHandle) ensureDefaults() error {
 	{
 		searchTemplate := []*pkcs11.Attribute{
 			pkcs11.NewAttribute(pkcs11.CKA_LABEL, defaultHMACKeyName),
-			pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PRIVATE_KEY),
-			pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_RSA),
+			pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
 		}
 		err := h.PKCS11Ctx.FindObjectsInit(h.session, searchTemplate)
 		if err != nil {
@@ -155,6 +155,7 @@ func (h *DynamicPKCSHandle) ensureDefaults() error {
 		}
 
 		if len(objs) == 0 {
+			log.Infof("[%s PKCS] Cant find default HMAC secret. Generating new one.", h.GetProviderName())
 			attrs := []*pkcs11.Attribute{
 				pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
 				pkcs11.NewAttribute(pkcs11.CKA_LABEL, defaultHMACKeyName),
@@ -171,6 +172,7 @@ func (h *DynamicPKCSHandle) ensureDefaults() error {
 			if err != nil {
 				return errors.New("failed to create default HMAC key: " + err.Error())
 			}
+			log.Infof("[%s PKCS] Successfully generate HMAC secret", h.GetProviderName())
 		}
 	}
 

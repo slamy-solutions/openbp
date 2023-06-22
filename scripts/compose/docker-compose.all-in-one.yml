@@ -144,6 +144,7 @@ services:
       - "traefik.http.routers.tools_rest.rule=PathPrefix(`/api`)"
       - "traefik.http.routers.tools_rest.entrypoints=web"
     environment:
+      GIN_MODE: release
       ALLOW_ROOT_USER_INIT: "true"
     depends_on:
       - native_namespace

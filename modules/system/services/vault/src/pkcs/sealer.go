@@ -52,19 +52,19 @@ func (s *Sealer) Start() {
 				if err != nil {
 					if err == ErrPKCSBadLoginPassword {
 						s.savedPassword = ""
-						log.Info("[PKSC sealer] Tried unseal with saved password. Bad password. Forgetting it.")
+						log.Info("[PKCS sealer] Tried unseal with saved password. Bad password. Forgetting it.")
 					}
-					log.Error("[PKSC sealer] Error while unsealing pkcs: " + err.Error())
+					log.Error("[PKCS sealer] Error while unsealing pkcs: " + err.Error())
 				} else {
-					log.Info("[PKSC sealer] Successfully created/recreated pkcs session and logged in.")
+					log.Info("[PKCS sealer] Successfully created/recreated pkcs session and logged in.")
 				}
 			}
 		}
 
-		log.Info("[PKSC sealer] Successfully closed update worker.")
+		log.Info("[PKCS sealer] Successfully closed update worker.")
 	}()
 
-	log.Info("[PKSC sealer] Started worker. Submitting default password for unsealing.")
+	log.Info("[PKCS sealer] Started worker. Submitting default password for unsealing.")
 
 	s.savedPassword = _default_seal_password
 	s.updatesChan <- struct{}{}
@@ -83,11 +83,11 @@ func (s *Sealer) Unseal(newPassword string) (bool, error) {
 		if err == ErrPKCSBadLoginPassword {
 			return false, nil
 		}
-		log.Error("[PKSC sealer] Error while unsealing pkcs: " + err.Error())
+		log.Error("[PKCS sealer] Error while unsealing pkcs: " + err.Error())
 		return false, errors.New("error while ensuring session and loggin in to the PKCS: " + err.Error())
 	}
 
-	log.Info("[PKSC sealer] Successfully created/recreated pkcs session and logged in.")
+	log.Info("[PKCS sealer] Successfully created/recreated pkcs session and logged in.")
 	s.savedPassword = newPassword
 	return true, nil
 }
@@ -99,7 +99,7 @@ func (s *Sealer) Seal() {
 	s.savedPassword = ""
 	err := s.pkcsProvider.LogOutAndCloseSession()
 	if err != nil {
-		log.Error("[PKSC sealer] Error while sealing: " + err.Error())
+		log.Error("[PKCS sealer] Error while sealing: " + err.Error())
 	}
 }
 
@@ -107,7 +107,7 @@ func (s *Sealer) Stop() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	log.Info("[PKSC sealer] Raised closing event.")
+	log.Info("[PKCS sealer] Raised closing event.")
 
 	s.savedPassword = ""
 	close(s.updatesChan)
