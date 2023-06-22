@@ -88,6 +88,7 @@ jobs:
 
   github-release:
     needs:
+      - publish-system-vault
       - publish-native-namespace
       - publish-native-keyvaluestorage
       - publish-native-iam
