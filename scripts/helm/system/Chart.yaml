@@ -6,7 +6,7 @@ keywords:
 annotations:
   category: Infrastructure
 type: application
-appVersion: 0.0.9
+appVersion: 0.1.0
 dependencies:
   - name: nats
     repository: https://nats-io.github.io/k8s/helm/charts/
@@ -29,4 +29,4 @@ maintainers:
     url: https://github.com/slamy-solutions/openbp
 sources:
   - https://github.com/slamy-solutions/openbp/modules/system
-version: 0.0.9
+version: 0.1.0
