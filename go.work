@@ -14,4 +14,6 @@ use (
 	./modules/tools/services/rest
 	./modules/tools/services/sdk
 	./modules/tools/testing
+	./modules/crm/libs/golang
+	./modules/crm/services/core
 )

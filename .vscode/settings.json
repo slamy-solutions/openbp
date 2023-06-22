@@ -13,6 +13,8 @@
         "NATIVE_IAM_URL": "127.0.0.1:28252",
         "NATIVE_ACTOR_USER_URL": "127.0.0.1:28257",
 
+        "CRM_CORE": "127.0.0.1:28280",
+
         "TOOLS_REST_URL": "127.0.0.1:28300"
     }
 }

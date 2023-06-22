@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package crm_core_ticket;
+
+option go_package = "slamy/openbp/crm/core/ticket;ticket";
+
+message Ticket {
+    // Namespace name where the ticket is located
+    string namespace = 1;
+    // Unique identifier of the ticket
+    string uuid = 2;
+    // Public title
+    string title = 3;
+    // Main ticket description / body
+    string description = 4;
+
+
+    // When the ticket was created
+    google.protobuf.Timestamp created = 50;
+    // Last time when the ticket information was updated.
+    google.protobuf.Timestamp updated = 51;
+    // Counter that increases after every update of the ticket
+    uint64 version = 52;
+}
+
+message CreateTicketRequest {
+    // Namespace where to create ticket
+    string namespace = 1;
+    // Public title
+    string title = 2;
+    // Main ticket description / body
+    string description = 3;
+}
+message CreateTicketResponse {
+    // Created ticket
+    Ticket ticket = 1;
+}
+
+message GetTicketRequest {
+    // Namespace where to search for ticket
+    string namespace = 1;
+    // Unique identifier of the ticket to get
+    string uuid = 2;
+    // Should service try to retrieve value from the cache. Cache may not be valid under rare conditions and automatically cleares after short period of time.
+    bool useCache = 3;
+}
+message GetTicketresponse {
+    // Founded ticket
+    Ticket ticket = 1;
+}
+
+service TicketService {
+    rpc Create(CreateTicketRequest) returns (CreateTicketResponse) {};
+    rpc Get(GetTicketRequest) returns (GetTicketresponse) {};
+}

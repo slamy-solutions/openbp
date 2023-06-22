@@ -1,0 +1,19 @@
+version: "3.4"
+services:
+  crm_core:
+    container_name: crm_core
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/crm/services/core/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "crm_core"
+    depends_on:
+      - native_namespace
+      - system_telemetry
+      - system_nats
+      - system_cache
+      - system_db
+    ports:
+      - "127.0.0.1:28280:80" # For testing

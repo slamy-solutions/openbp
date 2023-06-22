@@ -86,6 +86,16 @@ jobs:
       tags: openbp/obp-tools-gui:latest,openbp/obp-tools-gui:${{ needs.setup.outputs.tag }}
     secrets: inherit
 
+  # CRM
+  publish-crm-core:
+    needs: [tests,setup]
+    name: Publish crm_core docker image
+    uses: ./.github/workflows/publish-service.yml
+    with:
+      dockerfile: modules/crm/services/core/Dockerfile
+      tags: openbp/obp-crm-core:latest,openbp/obp-crm-core:${{ needs.setup.outputs.tag }}
+    secrets: inherit
+
   github-release:
     needs:
       - publish-system-vault
@@ -95,6 +105,7 @@ jobs:
       - publish-native-actor-user
       - publish-tools-rest
       - publish-tools-gui
+      - publish-crm-core
     name: Create github release
     runs-on: ubuntu-latest
     steps:
