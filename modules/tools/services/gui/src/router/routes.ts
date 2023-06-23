@@ -38,6 +38,15 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: [bootstrapGuard, loginGuard]
   },
 
+  {
+    path: '/crm',
+    component: () => import('layouts/CRMLayout.vue'),
+    children: [
+      { path: '', name: 'crm_home', component: () => import('../modules/crm/IndexPage.vue') }
+    ],
+    beforeEnter: [bootstrapGuard, loginGuard]
+  },
+
   // Always leave this as last one,
   // but you can also remove it
   {

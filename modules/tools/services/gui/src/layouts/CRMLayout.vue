@@ -1,62 +1,62 @@
 <template>
-  <q-layout view="hHh Lpr lFf">
+<q-layout view="hHh Lpr lFf">
     <q-header elevated style="background: #333333;">
-      <q-toolbar>
+    <q-toolbar>
         <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
+        flat
+        dense
+        round
+        icon="menu"
+        aria-label="Menu"
+        @click="toggleLeftDrawer"
         />
 
         <q-toolbar-title class="text-bold">
-          OpenBP
+        OpenBP
         </q-toolbar-title>
 
         <div>v0.0.3</div>
         <LayoutChangePopUpComponet class="q-ml-md"/>
         <q-btn icon="logout" dense class="q-ml-md" @click="goToLogout()"></q-btn>
-      </q-toolbar>
+    </q-toolbar>
     </q-header>
 
     <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
+    v-model="leftDrawerOpen"
+    show-if-above
+    bordered
     >
-      <q-list>
+    <q-list>
         <q-item-label
-          header
+        header
         >
-          Modules
+        Tools
         </q-item-label>
 
         <q-item v-for="m in modules" :key="m.name" clickable v-ripple @click="goToModule(m.routerPathName)">
-          <q-item-section avatar>
+        <q-item-section avatar>
             <q-icon :name="m.icon" size="md"></q-icon>
-          </q-item-section>
+        </q-item-section>
 
-          <q-item-section>
+        <q-item-section>
             <q-item-label>{{ $t(m.name) }}</q-item-label>
             <q-item-label caption lines="1">{{ $t(m.description) }}</q-item-label>
-          </q-item-section>
+        </q-item-section>
         </q-item>
         
 
         <!-- <EssentialLink
-          v-for="link in essentialLinks"
-          :key="link.title"
-          v-bind="link"
+        v-for="link in essentialLinks"
+        :key="link.title"
+        v-bind="link"
         /> -->
-      </q-list>
+    </q-list>
     </q-drawer>
 
     <q-page-container class="bg-primary">
-      <router-view />
+    <router-view />
     </q-page-container>
-  </q-layout>
+</q-layout>
 </template>
 
 <script setup lang="ts">
@@ -66,40 +66,27 @@ import { useRouter } from 'vue-router';
 import LayoutChangePopUpComponet from './LayoutChangePopUpComponet.vue';
 
 interface ModuleInfo {
-  name: string
-  description: string
-  routerPathName: string
-  icon: string
+name: string
+description: string
+routerPathName: string
+icon: string
 }
 
 const $router = useRouter()
 
 const leftDrawerOpen = ref(false)
-const modules = [
-  {
-    name: 'layout.main.modules.namespace.name',
-    description: 'layout.main.modules.namespace.description',
-    routerPathName: 'namespaceList',
-    icon: 'grid_view'
-  },
-  {
-    name: 'layout.main.modules.accessControl.name',
-    description: 'layout.main.modules.accessControl.description',
-    routerPathName: 'accessControl_iam_identity_list',
-    icon: 'fingerprint'
-  }
-] as ModuleInfo[]
+const modules = [] as ModuleInfo[]
 
 function toggleLeftDrawer() {
-  leftDrawerOpen.value = !leftDrawerOpen.value
+leftDrawerOpen.value = !leftDrawerOpen.value
 }
 
 async function goToModule(pathName: string) {
-  await $router.push({name: pathName})
+await $router.push({name: pathName})
 }
 
 async function goToLogout() {
-  await $router.push({name: "logout"})
+await $router.push({name: "logout"})
 }
 
 </script>
