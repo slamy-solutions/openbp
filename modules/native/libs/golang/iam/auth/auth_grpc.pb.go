@@ -31,6 +31,10 @@ type IAMAuthServiceClient interface {
 	CheckAccessWithToken(ctx context.Context, in *CheckAccessWithTokenRequest, opts ...grpc.CallOption) (*CheckAccessWithTokenResponse, error)
 	// Basic Auth. Check if provided identity with proposed password is allowed to perform actions from the provided scopes
 	CheckAccessWithPassword(ctx context.Context, in *CheckAccessWithPasswordRequest, opts ...grpc.CallOption) (*CheckAccessWithPasswordResponse, error)
+	// Authorization with X509 certificates. Check if provided identity identified by proposed certificate is allowed to perform actions from the provided scopes
+	CheckAccessWithX509(ctx context.Context, in *CheckAccessWithX509Request, opts ...grpc.CallOption) (*CheckAccessWithX509Response, error)
+	// Check if provided identity is allowed to perform actions from the provided scopes
+	CheckAccess(ctx context.Context, in *CheckAccessRequest, opts ...grpc.CallOption) (*CheckAccessResponse, error)
 }
 
 type iAMAuthServiceClient struct {
@@ -77,6 +81,24 @@ func (c *iAMAuthServiceClient) CheckAccessWithPassword(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *iAMAuthServiceClient) CheckAccessWithX509(ctx context.Context, in *CheckAccessWithX509Request, opts ...grpc.CallOption) (*CheckAccessWithX509Response, error) {
+	out := new(CheckAccessWithX509Response)
+	err := c.cc.Invoke(ctx, "/native_iam_auth.IAMAuthService/CheckAccessWithX509", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMAuthServiceClient) CheckAccess(ctx context.Context, in *CheckAccessRequest, opts ...grpc.CallOption) (*CheckAccessResponse, error) {
+	out := new(CheckAccessResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_auth.IAMAuthService/CheckAccess", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IAMAuthServiceServer is the server API for IAMAuthService service.
 // All implementations must embed UnimplementedIAMAuthServiceServer
 // for forward compatibility
@@ -90,6 +112,10 @@ type IAMAuthServiceServer interface {
 	CheckAccessWithToken(context.Context, *CheckAccessWithTokenRequest) (*CheckAccessWithTokenResponse, error)
 	// Basic Auth. Check if provided identity with proposed password is allowed to perform actions from the provided scopes
 	CheckAccessWithPassword(context.Context, *CheckAccessWithPasswordRequest) (*CheckAccessWithPasswordResponse, error)
+	// Authorization with X509 certificates. Check if provided identity identified by proposed certificate is allowed to perform actions from the provided scopes
+	CheckAccessWithX509(context.Context, *CheckAccessWithX509Request) (*CheckAccessWithX509Response, error)
+	// Check if provided identity is allowed to perform actions from the provided scopes
+	CheckAccess(context.Context, *CheckAccessRequest) (*CheckAccessResponse, error)
 	mustEmbedUnimplementedIAMAuthServiceServer()
 }
 
@@ -108,6 +134,12 @@ func (UnimplementedIAMAuthServiceServer) CheckAccessWithToken(context.Context, *
 }
 func (UnimplementedIAMAuthServiceServer) CheckAccessWithPassword(context.Context, *CheckAccessWithPasswordRequest) (*CheckAccessWithPasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckAccessWithPassword not implemented")
+}
+func (UnimplementedIAMAuthServiceServer) CheckAccessWithX509(context.Context, *CheckAccessWithX509Request) (*CheckAccessWithX509Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckAccessWithX509 not implemented")
+}
+func (UnimplementedIAMAuthServiceServer) CheckAccess(context.Context, *CheckAccessRequest) (*CheckAccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckAccess not implemented")
 }
 func (UnimplementedIAMAuthServiceServer) mustEmbedUnimplementedIAMAuthServiceServer() {}
 
@@ -194,6 +226,42 @@ func _IAMAuthService_CheckAccessWithPassword_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IAMAuthService_CheckAccessWithX509_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckAccessWithX509Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMAuthServiceServer).CheckAccessWithX509(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_auth.IAMAuthService/CheckAccessWithX509",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMAuthServiceServer).CheckAccessWithX509(ctx, req.(*CheckAccessWithX509Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMAuthService_CheckAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMAuthServiceServer).CheckAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_auth.IAMAuthService/CheckAccess",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMAuthServiceServer).CheckAccess(ctx, req.(*CheckAccessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IAMAuthService_ServiceDesc is the grpc.ServiceDesc for IAMAuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -216,6 +284,14 @@ var IAMAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckAccessWithPassword",
 			Handler:    _IAMAuthService_CheckAccessWithPassword_Handler,
+		},
+		{
+			MethodName: "CheckAccessWithX509",
+			Handler:    _IAMAuthService_CheckAccessWithX509_Handler,
+		},
+		{
+			MethodName: "CheckAccess",
+			Handler:    _IAMAuthService_CheckAccess_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

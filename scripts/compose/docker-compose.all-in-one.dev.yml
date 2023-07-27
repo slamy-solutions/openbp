@@ -140,21 +140,6 @@ services:
     ports:
       - "127.0.0.1:28252:80"
 
-
-  native_actor_user:
-    image: openbp/obp-native-actor-user:${OPENBP_VERSION:-latest}
-    container_name: native_actor_user
-    restart: always
-    depends_on:
-      - system_db
-      - system_cache
-      - system_nats
-      - native_iam
-    networks:
-      - internal
-    ports:
-      - "127.0.0.1:28257:80"
-
   # --- Tools module
   tools_rest:
     image: openbp/obp-tools-rest:${OPENBP_VERSION:-latest}
@@ -168,7 +153,6 @@ services:
       ALLOW_ROOT_USER_INIT: "true"
     depends_on:
       - native_namespace
-      - native_actor_user
       - native_iam
       - native_keyvaluestorage
       - system_telemetry

@@ -22,37 +22,38 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VaultServiceClient interface {
-	// Closes and encrypts vault. After sealing, most of the operations will not be accessible.
+	// Close and encrypt vault. After sealing, most of the operations will not be accessible.
 	Seal(ctx context.Context, in *SealRequest, opts ...grpc.CallOption) (*SealResponse, error)
-	// Decrypts and opens vault. Must be done before most of the operations with vault secrets.
+	// Decrypt and open vault. Must be done before most of the operations with vault secrets.
 	Unseal(ctx context.Context, in *UnsealRequest, opts ...grpc.CallOption) (*UnsealResponse, error)
-	// Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation.
+	// Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation. You don't need to unseal vault after this operation.
+	// This operation requires you to have administrator access to the HSM. Check PKCS11 spec. If you are using emulated HSM (by default) this will be the same as the seal/unseal secret by default ("12345678"). Change it.
 	UpdateSealSecret(ctx context.Context, in *UpdateSealSecretRequest, opts ...grpc.CallOption) (*UpdateSealSecretResponse, error)
-	// Returns current status of the vault.
+	// Get current status of the vault.
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 	// Creates RSA key pair if it doesnt exist. Private key never leaves the HSM (hardware security module).
 	EnsureRSAKeyPair(ctx context.Context, in *EnsureRSAKeyPairRequest, opts ...grpc.CallOption) (*EnsureRSAKeyPairResponse, error)
 	// Get public key of the RSA keypair.
 	GetRSAPublicKey(ctx context.Context, in *GetRSAPublicKeyRequest, opts ...grpc.CallOption) (*GetRSAPublicKeyResponse, error)
-	// Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	// Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sign the message.
 	RSASignStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSASignStreamClient, error)
 	// Validate signature of the message stream using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
 	RSAVerifyStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_RSAVerifyStreamClient, error)
-	// Sign message with RSA. Message should be short (max several kylobytes). If data is longer - use `RSASignStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	// Sign message with RSA. The data must be short (max several kilobytes). If i is longer - use `RSASignStream` instead. It will use SHA512_RSA_PKCS (RS512) algorithm to sign the message.
 	RSASign(ctx context.Context, in *RSASignRequest, opts ...grpc.CallOption) (*RSASignResponse, error)
-	// Validate signature of the message using RSA key-pairs public key. Message should be short (max several kylobytes). If data is longer - use `RSAVerifyStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+	// Validate signature of the message using RSA key-pairs public key. The data must be short (max several kilobytes). If i is longer - use `RSAVerifyStream` instead. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
 	RSAVerify(ctx context.Context, in *RSAVerifyRequest, opts ...grpc.CallOption) (*RSAVerifyResponse, error)
-	// Calculates HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	// Calculate HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
 	HMACSignStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACSignStreamClient, error)
-	// Verifies HMAC signature of the data stream.
+	// Verify HMAC signature of the data stream.
 	HMACVerifyStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_HMACVerifyStreamClient, error)
-	// Calculates HMAC signature for input data. Data should be short (max several kylobytes). If data is longer - use `HMACSignStream`. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	// Calculate HMAC signature for input data. The data must be short (max several kilobytes). If it is longer - use `HMACSignStream` instead. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
 	HMACSign(ctx context.Context, in *HMACSignRequest, opts ...grpc.CallOption) (*HMACSignResponse, error)
-	// Verifies HMAC signature of the data. Data should be short (max several kylobytes). If data is longer - use `HMACVerifyStream`.
+	// Verify HMAC signature of the data. The data must be short (max several kilobytes). If it is longer - use `HMACVerifyStream` instead.
 	HMACVerify(ctx context.Context, in *HMACVerifyRequest, opts ...grpc.CallOption) (*HMACVerifyResponse, error)
-	// Encrypts message stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
+	// Encrypt data stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable of decrypting from the middle of the whole data (partial decryption).
 	EncryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_EncryptStreamClient, error)
-	// Decrypts message stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
+	// Decrypt data stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
 	DecryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_DecryptStreamClient, error)
 }
 
@@ -356,37 +357,38 @@ func (x *vaultServiceDecryptStreamClient) Recv() (*DecryptStreamResponse, error)
 // All implementations must embed UnimplementedVaultServiceServer
 // for forward compatibility
 type VaultServiceServer interface {
-	// Closes and encrypts vault. After sealing, most of the operations will not be accessible.
+	// Close and encrypt vault. After sealing, most of the operations will not be accessible.
 	Seal(context.Context, *SealRequest) (*SealResponse, error)
-	// Decrypts and opens vault. Must be done before most of the operations with vault secrets.
+	// Decrypt and open vault. Must be done before most of the operations with vault secrets.
 	Unseal(context.Context, *UnsealRequest) (*UnsealResponse, error)
-	// Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation.
+	// Set up new seal secret and reincrypt vault. The vault must be unsealed before this operation. You don't need to unseal vault after this operation.
+	// This operation requires you to have administrator access to the HSM. Check PKCS11 spec. If you are using emulated HSM (by default) this will be the same as the seal/unseal secret by default ("12345678"). Change it.
 	UpdateSealSecret(context.Context, *UpdateSealSecretRequest) (*UpdateSealSecretResponse, error)
-	// Returns current status of the vault.
+	// Get current status of the vault.
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	// Creates RSA key pair if it doesnt exist. Private key never leaves the HSM (hardware security module).
 	EnsureRSAKeyPair(context.Context, *EnsureRSAKeyPairRequest) (*EnsureRSAKeyPairResponse, error)
 	// Get public key of the RSA keypair.
 	GetRSAPublicKey(context.Context, *GetRSAPublicKeyRequest) (*GetRSAPublicKeyResponse, error)
-	// Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	// Sign message stream with RSA. It will use SHA512_RSA_PKCS (RS512) algorithm to sign the message.
 	RSASignStream(VaultService_RSASignStreamServer) error
 	// Validate signature of the message stream using RSA key-pairs public key. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
 	RSAVerifyStream(VaultService_RSAVerifyStreamServer) error
-	// Sign message with RSA. Message should be short (max several kylobytes). If data is longer - use `RSASignStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to sing the message.
+	// Sign message with RSA. The data must be short (max several kilobytes). If i is longer - use `RSASignStream` instead. It will use SHA512_RSA_PKCS (RS512) algorithm to sign the message.
 	RSASign(context.Context, *RSASignRequest) (*RSASignResponse, error)
-	// Validate signature of the message using RSA key-pairs public key. Message should be short (max several kylobytes). If data is longer - use `RSAVerifyStream`. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
+	// Validate signature of the message using RSA key-pairs public key. The data must be short (max several kilobytes). If i is longer - use `RSAVerifyStream` instead. It will use SHA512_RSA_PKCS (RS512) algorithm to verify the message.
 	RSAVerify(context.Context, *RSAVerifyRequest) (*RSAVerifyResponse, error)
-	// Calculates HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	// Calculate HMAC signature for input data stream. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
 	HMACSignStream(VaultService_HMACSignStreamServer) error
-	// Verifies HMAC signature of the data stream.
+	// Verify HMAC signature of the data stream.
 	HMACVerifyStream(VaultService_HMACVerifyStreamServer) error
-	// Calculates HMAC signature for input data. Data should be short (max several kylobytes). If data is longer - use `HMACSignStream`. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
+	// Calculate HMAC signature for input data. The data must be short (max several kilobytes). If it is longer - use `HMACSignStream` instead. HMAC secret never leaves the HSM (hardware security module). It automatically uses the best available HMAC algorithm for currently used HSM.
 	HMACSign(context.Context, *HMACSignRequest) (*HMACSignResponse, error)
-	// Verifies HMAC signature of the data. Data should be short (max several kylobytes). If data is longer - use `HMACVerifyStream`.
+	// Verify HMAC signature of the data. The data must be short (max several kilobytes). If it is longer - use `HMACVerifyStream` instead.
 	HMACVerify(context.Context, *HMACVerifyRequest) (*HMACVerifyResponse, error)
-	// Encrypts message stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable ofdecrypting from the middle of the whole data (partial decryption).
+	// Encrypt data stream. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable of decrypting from the middle of the whole data (partial decryption).
 	EncryptStream(VaultService_EncryptStreamServer) error
-	// Decrypts message stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
+	// Decrypt data stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
 	DecryptStream(VaultService_DecryptStreamServer) error
 	mustEmbedUnimplementedVaultServiceServer()
 }

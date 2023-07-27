@@ -325,3 +325,410 @@ func (r *IdentityRouter) Delete(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{})
 }
+
+type setActiveIdentityRequest struct {
+	Namespace string `json:"namespace" binding:"lte=32"`
+	UUID      string `json:"uuid" binding:"required,lte=64"`
+	Active    bool   `json:"active"`
+}
+
+type setActiveIdentityResponse struct {
+	Identity *formatedIdentity `json:"identity"`
+}
+
+func (r *IdentityRouter) SetActive(ctx *gin.Context) {
+	var requestData setActiveIdentityRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	requiredAction := "native.iam.identity.disable"
+	if !requestData.Active {
+		requiredAction = "native.iam.identity.enable"
+	}
+
+	// Check auth
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, []*auth.Scope{
+		{
+			Namespace:            requestData.Namespace,
+			Resources:            []string{"native.iam.identity." + requestData.UUID},
+			Actions:              []string{requiredAction},
+			NamespaceIndependent: false,
+		},
+	})
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+
+	re, err := r.nativeStub.Services.IAM.Identity.SetActive(ctx.Request.Context(), &identity.SetIdentityActiveRequest{
+		Namespace: requestData.Namespace,
+		Uuid:      requestData.UUID,
+		Active:    requestData.Active,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.InvalidArgument {
+				ctx.AbortWithStatusJSON(422, gin.H{"message": "Invalid identity UUID."})
+				return
+			}
+			if st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(404, gin.H{"message": "Identity not found"})
+				return
+			}
+		}
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(200, setActiveIdentityResponse{Identity: FormatIdentity(re.Identity)})
+}
+
+type updateIdentityRequest struct {
+	Namespace string `json:"namespace" binding:"lte=32"`
+	UUID      string `json:"uuid" binding:"required,lte=64"`
+	NewName   string `json:"newName" binding:"required,lte=64"`
+}
+
+type updateIdentityResponse struct {
+	Identity *formatedIdentity `json:"identity"`
+}
+
+func (r *IdentityRouter) Update(ctx *gin.Context) {
+	var requestData updateIdentityRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Check auth
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, []*auth.Scope{
+		{
+			Namespace:            requestData.Namespace,
+			Resources:            []string{"native.iam.identity." + requestData.UUID},
+			Actions:              []string{"native.iam.identity.update"},
+			NamespaceIndependent: false,
+		},
+	})
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+
+	updateResponse, err := r.nativeStub.Services.IAM.Identity.Update(ctx.Request.Context(), &identity.UpdateIdentityRequest{
+		Namespace: requestData.Namespace,
+		Uuid:      requestData.UUID,
+		NewName:   requestData.NewName,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.InvalidArgument {
+				ctx.AbortWithStatusJSON(422, gin.H{"message": "Invalid identity UUID."})
+				return
+			}
+			if st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(404, gin.H{"message": "Identity not found"})
+				return
+			}
+		}
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(200, &updateIdentityResponse{Identity: FormatIdentity(updateResponse.Identity)})
+}
+
+type addPolicyToIdentityRequest struct {
+	PolicyNamespace   string `json:"policyNamespace" binding:"lte=32"`
+	PolicyUUID        string `json:"policyUUID" binding:"required,lte=64"`
+	IdentityNamespace string `json:"identityNamespace" binding:"lte=64"`
+	IdentityUUID      string `json:"identityUUID" binding:"required,lte=64"`
+}
+
+type addPolicyToIdentityResponse struct {
+	Identity *formatedIdentity `json:"identity"`
+}
+
+func (r *IdentityRouter) AddPolicy(ctx *gin.Context) {
+	var requestData addPolicyToIdentityRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Check auth
+	scopes := []*auth.Scope{
+		{
+			Namespace:            requestData.IdentityNamespace,
+			Resources:            []string{"native.iam.role." + requestData.IdentityUUID},
+			Actions:              []string{"native.iam.role.update"},
+			NamespaceIndependent: false,
+		},
+	}
+	if requestData.PolicyNamespace != requestData.IdentityNamespace {
+		scopes = append(scopes, &auth.Scope{
+			Namespace:            requestData.PolicyNamespace,
+			Resources:            []string{"native.iam.policy." + requestData.PolicyUUID},
+			Actions:              []string{"native.iam.policy.useInOtherNamespace"},
+			NamespaceIndependent: false,
+		})
+	}
+
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, scopes)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+
+	addPolicyResponse, err := r.nativeStub.Services.IAM.Identity.AddPolicy(ctx.Request.Context(), &identity.AddPolicyRequest{
+		IdentityNamespace: requestData.IdentityNamespace,
+		IdentityUUID:      requestData.IdentityUUID,
+		PolicyNamespace:   requestData.PolicyNamespace,
+		PolicyUUID:        requestData.PolicyUUID,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.InvalidArgument {
+				ctx.AbortWithStatusJSON(422, gin.H{"message": "Invalid identity or policy UUID."})
+				return
+			}
+			if st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(404, gin.H{"message": "Identity or policy not found"})
+				return
+			}
+		}
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(200, &addPolicyToIdentityResponse{Identity: FormatIdentity(addPolicyResponse.Identity)})
+}
+
+type removePolicyFromIdentityRequest struct {
+	PolicyNamespace   string `json:"policyNamespace" binding:"lte=32"`
+	PolicyUUID        string `json:"policyUUID" binding:"required,lte=64"`
+	IdentityNamespace string `json:"identityNamespace" binding:"lte=64"`
+	IdentityUUID      string `json:"identityUUID" binding:"required,lte=64"`
+}
+
+type removePolicyFromIdentityResponse struct {
+	Identity *formatedIdentity `json:"identity"`
+}
+
+func (r *IdentityRouter) RemovePolicy(ctx *gin.Context) {
+	var requestData removePolicyFromIdentityRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Check auth
+	scopes := []*auth.Scope{
+		{
+			Namespace:            requestData.IdentityNamespace,
+			Resources:            []string{"native.iam.role." + requestData.IdentityUUID},
+			Actions:              []string{"native.iam.role.update"},
+			NamespaceIndependent: false,
+		},
+	}
+	if requestData.PolicyNamespace != requestData.IdentityNamespace {
+		scopes = append(scopes, &auth.Scope{
+			Namespace:            requestData.PolicyNamespace,
+			Resources:            []string{"native.iam.policy." + requestData.PolicyUUID},
+			Actions:              []string{"native.iam.policy.useInOtherNamespace"},
+			NamespaceIndependent: false,
+		})
+	}
+
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, scopes)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+
+	removePolicyResponse, err := r.nativeStub.Services.IAM.Identity.RemovePolicy(ctx.Request.Context(), &identity.RemovePolicyRequest{
+		IdentityNamespace: requestData.IdentityNamespace,
+		IdentityUUID:      requestData.IdentityUUID,
+		PolicyNamespace:   requestData.PolicyNamespace,
+		PolicyUUID:        requestData.PolicyUUID,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.InvalidArgument {
+				ctx.AbortWithStatusJSON(422, gin.H{"message": "Invalid identity or policy UUID."})
+				return
+			}
+			if st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(404, gin.H{"message": "Identity or policy not found"})
+				return
+			}
+		}
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(200, &removePolicyFromIdentityResponse{Identity: FormatIdentity(removePolicyResponse.Identity)})
+}
+
+type addRoleToIdentityRequest struct {
+	RoleNamespace     string `json:"roleNamespace" binding:"lte=32"`
+	RoleUUID          string `json:"roleUUID" binding:"required,lte=64"`
+	IdentityNamespace string `json:"identityNamespace" binding:"lte=64"`
+	IdentityUUID      string `json:"identityUUID" binding:"required,lte=64"`
+}
+
+type addRoleToIdentityResponse struct {
+	Identity *formatedIdentity `json:"identity"`
+}
+
+func (r *IdentityRouter) AddRole(ctx *gin.Context) {
+	var requestData addRoleToIdentityRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Check auth
+	scopes := []*auth.Scope{
+		{
+			Namespace:            requestData.IdentityNamespace,
+			Resources:            []string{"native.iam.role." + requestData.IdentityUUID},
+			Actions:              []string{"native.iam.role.update"},
+			NamespaceIndependent: false,
+		},
+	}
+	if requestData.RoleNamespace != requestData.IdentityNamespace {
+		scopes = append(scopes, &auth.Scope{
+			Namespace:            requestData.RoleNamespace,
+			Resources:            []string{"native.iam.policy." + requestData.RoleUUID},
+			Actions:              []string{"native.iam.policy.useInOtherNamespace"},
+			NamespaceIndependent: false,
+		})
+	}
+
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, scopes)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+
+	addRoleyResponse, err := r.nativeStub.Services.IAM.Identity.AddRole(ctx.Request.Context(), &identity.AddRoleRequest{
+		IdentityNamespace: requestData.IdentityNamespace,
+		IdentityUUID:      requestData.IdentityUUID,
+		RoleNamespace:     requestData.RoleNamespace,
+		RoleUUID:          requestData.RoleUUID,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.InvalidArgument {
+				ctx.AbortWithStatusJSON(422, gin.H{"message": "Invalid identity or role UUID."})
+				return
+			}
+			if st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(404, gin.H{"message": "Identity or role not found"})
+				return
+			}
+		}
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(200, &addRoleToIdentityResponse{Identity: FormatIdentity(addRoleyResponse.Identity)})
+}
+
+type removeRoleFromIdentityRequest struct {
+	RoleNamespace     string `json:"roleNamespace" binding:"lte=32"`
+	RoleUUID          string `json:"roleUUID" binding:"required,lte=64"`
+	IdentityNamespace string `json:"identityNamespace" binding:"lte=64"`
+	IdentityUUID      string `json:"identityUUID" binding:"required,lte=64"`
+}
+
+type removeRoleFromIdentityResponse struct {
+	Identity *formatedIdentity `json:"identity"`
+}
+
+func (r *IdentityRouter) RemoveRole(ctx *gin.Context) {
+	var requestData removeRoleFromIdentityRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Check auth
+	scopes := []*auth.Scope{
+		{
+			Namespace:            requestData.IdentityNamespace,
+			Resources:            []string{"native.iam.role." + requestData.IdentityUUID},
+			Actions:              []string{"native.iam.role.update"},
+			NamespaceIndependent: false,
+		},
+	}
+	if requestData.RoleNamespace != requestData.IdentityNamespace {
+		scopes = append(scopes, &auth.Scope{
+			Namespace:            requestData.RoleNamespace,
+			Resources:            []string{"native.iam.policy." + requestData.RoleUUID},
+			Actions:              []string{"native.iam.policy.useInOtherNamespace"},
+			NamespaceIndependent: false,
+		})
+	}
+
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, scopes)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+
+	removeRoleyResponse, err := r.nativeStub.Services.IAM.Identity.RemoveRole(ctx.Request.Context(), &identity.RemoveRoleRequest{
+		IdentityNamespace: requestData.IdentityNamespace,
+		IdentityUUID:      requestData.IdentityUUID,
+		RoleNamespace:     requestData.RoleNamespace,
+		RoleUUID:          requestData.RoleUUID,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.InvalidArgument {
+				ctx.AbortWithStatusJSON(422, gin.H{"message": "Invalid identity or role UUID."})
+				return
+			}
+			if st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(404, gin.H{"message": "Identity or role not found"})
+				return
+			}
+		}
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(200, &removeRoleFromIdentityResponse{Identity: FormatIdentity(removeRoleyResponse.Identity)})
+}

@@ -111,6 +111,73 @@ export default {
     },
     accessControl: {
       iam: {
+        actor: {
+          user: {
+            list: {
+              header: "Users",
+              uuidColumn: "UUID",
+              loginColumn: "Login",
+              fullNameColumn: "Full name",
+              identityColumn: "Identity",
+              actionsColumn: "Actions",
+              actionsMenu: {
+                delete: "Delete"
+              },
+  
+              noData: "There are no users in this namespace",
+              failedToLoad: "Failed to load users list: {error}",
+              createButton: "Create",
+  
+              loadOperationNotify: 'Trying to load users list ...',
+              loadFailNotify: 'Failed to load users list. Error: {error}'
+            }
+          }
+        },
+        auth: {
+          password: {
+            loadingError: "Failed to load password information. Error: {error}",
+            header: {
+              enabled: "Password enabled",
+              disabled: "Password disabled"
+            },
+            caption: {
+              enabled: "Identity has password setted up and can authenticate with it",
+              disabled: "Identity password not setted up. Authentication with password is not possible"
+            },
+            newPasswordInput: "New password",
+            disableButton: "Disable",
+            setOrUpdateButton: "Set/Update password",
+
+            loadingOperationNotify: "Loading identity password information...",
+            loadingFailNotify: "Failed to load identity password information. Error: {error}",
+            
+            updateOperationNotify: "Loading identity password information...",
+            updateFailNotify: "Failed to load identity password information. Error: {error}",
+            updateSuccessNotify: "Successfully updated password for identity",
+            
+            disableOperationNotify: "Loading identity password information...",
+            disableFailNotify: "Failed to load identity password information. Error: {error}",
+            disableSuccessNotify: "Successfully disabled password for identity"
+          },
+          certificate: {
+            register: {
+              header: "Register public key and generate certificate",
+              namespaceInput: "Namespace",
+              identityInput: "Identity",
+              descriptionInput: "Description",
+              publicKeyInfo: "Select public key file in PEM format. Currently only RSA keys are supported. You can also generate key-pair and it will be created on the client and will never leave your machine.",
+              fileInput: "Public Key",
+              fileRequired: "Public key file is required",
+              generateKeyPairButton: "Generate key pair",
+              registerAndGenerateButton: "Register key and generate certificate",
+              registerHint: "After registration, the public key will be saved in the system and identity will be able to authenticate using generated X509 certificate",
+
+              registerOperationNotify: "Registering public key and generating certificate ...",
+              registerSuccessNotify: "Successfully registered public key",
+              registerFailNotify: "Failed to register public key. Error: {error}"
+            }
+          }
+        },
         identity: {
           list: {
             header: "Identities",
@@ -157,6 +224,78 @@ export default {
             deleteOperationNotify: 'Trying to delete identity ...',
             deleteSuccessNotify: 'Successfully deleted identity',
             deleteFailNotify: 'Failed to delete identity. Error: {error}'
+          },
+          view: {
+            header: "Identity view",
+            notSelected: "Identity to view is not selected.",
+            loading: "Loading identity information ...",
+            error: "Failed to load identity. Error: {error}",
+            namespace: "Namespace",
+            uuid: "UUID",
+            name: "Name",
+            disabled: "Disabled",
+            managedBy: "Managed by",
+            created: "Created",
+            updated: "Updated",
+            version: "Version",
+            policies: "Policies",
+            policiesCaption: "List of the policies assigned to the identity",
+            roles: "Roles",
+            rolesCaption: "List of the roles assigned to the identity",
+            loadOperationNotify: 'Trying to load identity information ...',
+            loadFailNotify: 'Failed to load identity information. Error: {error}',
+            updateOperationNotify: "Updating identity information",
+            updateSuccessfullNotify: "Successfully updated identity information",
+            updateFailNotify: "Failed to update identity. Error: {error}",
+            activeOperationNotify: "Updating identity state",
+            activeSuccessfullNotify: "Successfully updated identity state",
+            activeFailNotify: "Failed to update identity state. Error: {error}",
+
+            addPolicyOperationNotify: "Adding policy to the identity ...",
+            addPolicySuccessNotify: "Successfully added policy to the identity",
+            addPolicyFailNotify: "Failed to add policy to the identity. Error: {error}",
+            removePolicyOperationNotify: "Removing policy from the identity ...",
+            removePolicySuccessNotify: "Successfully removed policy from the identity",
+            removePolicyFailNotify: "Failed to remove policy from the identity. Error: {error}",
+            addRoleOperationNotify: "Adding role to the identity ...",
+            addRoleSuccessNotify: "Successfully added role to the identity",
+            addRoleFailNotify: "Failed to add role to the identity. Error: {error}",
+            removeRoleOperationNotify: "Removing role from the identity ...",
+            removeRoleSuccessNotify: "Successfully removed role from the identity",
+            removeRoleFailNotify: "Failed to remove role from the identity. Error: {error}",
+
+            tabs: {
+              privileges: "Privileges",
+              password: "Password",
+              oauth: "OAuth",
+              tokens: "Tokens",
+              "2fa": "2FA",
+              certificates: "Certificates"
+            },
+            certificatesList: {
+              uuidColumn: "UUID",
+              descriptionColumn: "Description",
+              disabledColumn: "Disabled",
+              actionsColumn: "Actions",
+              noData: "Identity hasn't registered keys",
+              failedToLoad: "Failed to load certificates: Error: {error}",
+
+              registerAndGenerateButton: "Register public key and generate certificate",
+
+              loadOperationNotify: "Loding identity certificates ...",
+              loadFailNotify: "Failed to load identity certificates. Error: {error}",
+              deleteOperationNotify: "Deleting certificate ...",
+              deleteSuccessNotify: "Successfully deleted certificate",
+              deleteFailNotify: "Failed to delete certificate. Error: {error}",
+              disableOperationNotify: "Disabling certificate ...",
+              disableSuccessNotify: "Successfully disabled certificate",
+              disableFailNotify: "Failed to disable certificate. Error: {error}",
+              
+              actionsMenu: {
+                delete: "Delete",
+                disable: "Disable"
+              }
+            }
           }
         },
         policy: {
@@ -239,6 +378,16 @@ export default {
             actionsCaption: "Actions that can be performed using this policy on accessible resources.",
             loadOperationNotify: 'Trying to load policy information ...',
             loadFailNotify: 'Failed to load policy information. Error: {error}'
+          },
+          select: {
+            header: "Select policy",
+            cancelButton: "Cancel",
+            selectButton: "Select",
+            noData: "There are no policies yet.",
+            failedToLoad: "Failed to load policies list: {error}",
+
+            loadOperationNotify: "Loading policies list ...",
+            loadFailedNotify: "Failed to load policies list: {error}",
           }
         },
         role: {
@@ -260,6 +409,30 @@ export default {
             loadOperationNotify: "Trying to load roles list ...",
             loadFailNotify: "Failed to load roles list. Error: {error}"
           },
+          delete: {
+            header: 'Delete role?',
+            bodyText: 'You are about to delete "{uuid}" role from the "{namespace}" namespace. This action can not be undone - all the data related to the role will be lost. This process is asynchronous, so you will have to wait for all the services will recognize the change (most probably up to several seconds).',
+          
+            deleteButton: 'Delete',
+    
+            deleteOperationNotify: 'Trying to delete role ...',
+            deleteSuccessNotify: 'Successfully deleted role',
+            deleteFailNotify: 'Failed to delete role. Error: {error}'
+          },
+          create: {
+            header: "Create role",
+    
+            namespaceInput: "Namespace",
+            nameInput: "Name",
+            descriptionInput: "Description",
+
+            createButton: "Create",
+            createHint: "System will create role and mark it as managed by you (active user).",
+    
+            createOperationNotify: 'Trying to create new role ...',
+            createSuccessNotify: 'Successfully created new role',
+            createFailNotify: 'Failed to create role. Error: {error}'
+          },
           view: {
             header: "Role view",
             notSelected: "Role to view is not selected.",
@@ -269,11 +442,38 @@ export default {
             uuid: "UUID",
             name: "Name",
             description: "Description",
+            managedBy: "Managed by",
             created: "Created",
             updated: "Updated",
             version: "Version",
+            policies: "Policies",
+            updateButton: "Update",
+            policiesCaption: "List of the policies assigned to the role",
             loadOperationNotify: 'Trying to load role information ...',
-            loadFailNotify: 'Failed to load role information. Error: {error}'
+            loadFailNotify: 'Failed to load role information. Error: {error}',
+            updateOperationNotify: "Updating role information",
+            updateSuccessfullNotify: "Successfully updated role information",
+            updateFailNotify: "Failed to update role. Error: {error}",
+            addPolicyOperationNotify: "Adding policy to the role ...",
+            addPolicySuccessNotify: "Successfully added policy to the role",
+            addPolicyFailNotify: "Failed to add policy to the role. Error: {error}",
+            removePolicyOperationNotify: "Removing policy from the role ...",
+            removePolicySuccessNotify: "Successfully removed policy from the role",
+            removePolicyFailNotify: "Failed to remove policy from the role. Error: {error}"
+          },
+          select: {
+            header: "Select role",
+            cancelButton: "Cancel",
+            selectButton: "Select",
+            noData: "There are no roles yet.",
+            failedToLoad: "Failed to load roles list: {error}",
+            uuidColumn: "UUID",
+            nameColumn: "Name",
+            descriptionColumn: "Description",
+            managedColumn: "Managed by",
+
+            loadOperationNotify: "Loading roles list ...",
+            loadFailedNotify: "Failed to load roles list: {error}",
           }
         }
       }

@@ -76,7 +76,7 @@ func (s *DeleteTestSuite) TestDeleteFromNamespace() {
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: createResponse.Role.Uuid})
 
 	deleteResponse, err := s.nativeStub.Services.IAM.Role.Delete(ctx, &role.DeleteRoleRequest{
 		Namespace: namespaceName,
@@ -127,7 +127,7 @@ func (s *DeleteTestSuite) TestDeleteNonExistingRoleFromNamespace() {
 		Managed:     &role.CreateRoleRequest_No{No: &role.NotManagedData{}},
 	})
 	require.Nil(s.T(), err)
-	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: "", Uuid: createResponse.Role.Uuid})
+	defer s.nativeStub.Services.IAM.Role.Delete(context.Background(), &role.DeleteRoleRequest{Namespace: namespaceName, Uuid: createResponse.Role.Uuid})
 
 	deleteResponse, err := s.nativeStub.Services.IAM.Role.Delete(ctx, &role.DeleteRoleRequest{
 		Namespace: namespaceName,

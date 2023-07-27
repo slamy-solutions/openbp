@@ -13,14 +13,18 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	native_iam_actor_user_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	native_iam_auth_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	native_iam_authentication_password_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
+	native_iam_authentication_x509_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/x509"
 	native_iam_identity_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 	native_iam_policy_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
 	native_iam_role_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
 	native_iam_token_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/actor/user"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/auth"
-	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/password"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/x509"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/identity"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/policy"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/role"
@@ -47,6 +51,7 @@ func main() {
 			WithCache().
 			WithDB().
 			WithNats().
+			WithRedis().
 			WithVault(),
 	)
 	systemConnectionContext, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -93,11 +98,26 @@ func main() {
 	tokenServer := token.NewIAmTokenServer(systemStub, nativeStub)
 	native_iam_token_grpc.RegisterIAMTokenServiceServer(grpcServer, tokenServer)
 
-	authenticationPasswordServer := authentication.NewPasswordIdentificationService(systemStub, nativeStub)
+	authenticationPasswordServer, err := password.NewPasswordIdentificationService(context.Background(), systemStub, nativeStub)
+	if err != nil {
+		panic("Failed to startup authentication_password server: " + err.Error())
+	}
 	native_iam_authentication_password_grpc.RegisterIAMAuthenticationPasswordServiceServer(grpcServer, authenticationPasswordServer)
 
-	iamAuthServer := auth.NewIAmAuthServer(systemStub, authenticationPasswordServer, identityServer, policyServer, roleServer, tokenServer)
+	authenticationX509Server, err := x509.NewX509IdentificationService(context.Background(), systemStub, nativeStub)
+	if err != nil {
+		panic("Failed to startup authentication_x509 server: " + err.Error())
+	}
+	native_iam_authentication_x509_grpc.RegisterIAMAuthenticationX509ServiceServer(grpcServer, authenticationX509Server)
+
+	iamAuthServer := auth.NewIAmAuthServer(systemStub, authenticationPasswordServer, authenticationX509Server, identityServer, policyServer, roleServer, tokenServer)
 	native_iam_auth_grpc.RegisterIAMAuthServiceServer(grpcServer, iamAuthServer)
+
+	iamActorUserServer, err := user.NewActorUserServer(context.Background(), systemStub, identityServer)
+	if err != nil {
+		panic("Failed to startup actor_user server: " + err.Error())
+	}
+	native_iam_actor_user_grpc.RegisterActorUserServiceServer(grpcServer, iamActorUserServer)
 
 	eventHandler, err := NewEventHandlerService(systemStub, nativeStub, policyServer, roleServer)
 	if err != nil {

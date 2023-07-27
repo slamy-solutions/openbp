@@ -172,6 +172,82 @@ message CheckAccessWithPasswordResponse {
     string message = 2;
 }
 
+message CheckAccessWithX509Request {
+    // X509 certificate in DER format
+    bytes certificate = 1;
+    // Scopes to check
+    repeated Scope scopes = 2;
+}
+message CheckAccessWithX509Response {
+    enum Status {
+        // Provided identity with provided certificate is allows to access scopes
+        OK = 0;
+
+        // Certificate corrupted or was supplied not in the DER format
+        CERTIFICATE_INVALID_FORMAT = 1;
+        // Signature or other aspects of the certificate are invalid
+        CERTIFICATE_INVALID = 2;
+        // Certificate wasnt founded. Most probably certificate or entire namespace was deleted
+        CERTIFICATE_NOT_FOUND = 3;
+        // Certificate was manually disable and cont be used in auth mechanisms
+        CERTIFICATE_DISABLED = 4;
+
+        // Identity wasnt founded. Most probably it was deleted and certificate will be deleted soon
+        IDENTITY_NOT_FOUND = 5;
+        // Identity was manually disabled.
+        IDENTITY_NOT_ACTIVE = 6;
+
+        // Certificate is valid, but identity dont have enought priviliges to perform actions from provided scopes
+        UNAUTHORIZED = 7;
+    }
+
+    // Detailed information about certificate
+    message CertificateInfo {
+        // Namespace where certificate and identity are located
+        string namespace = 1;
+        // Unique identifier of the certificate
+        string uuid = 2;
+        // Unique identifier of the identity
+        string identity = 3;
+    }
+
+    // Status of the check
+    Status status = 1;
+    // Details of the status, that can be safelly returned and displayed to the requester
+    string message = 2;
+    // Certificate information. Only available if status is one of the {OK; CERTIFICATE_DISABLED; IDENTITY_NOT_FOUND; IDENTITY_NOT_ACTIVE; UNAUTHORIZED}
+    CertificateInfo certificateInfo = 3;
+
+}
+
+message CheckAccessRequest {
+    // Namespace where identity is located
+    string namespace = 1;
+    // Unique identifier of the identity
+    string identity = 2;
+    // Scopes to check
+    repeated Scope scopes = 3;
+}
+message CheckAccessResponse {
+    enum Status {
+        // Provided identity with provided certificate is allows to access scopes
+        OK = 0;
+
+        // Identity wasnt founded.
+        IDENTITY_NOT_FOUND = 1;
+        // Identity was manually disabled.
+        IDENTITY_NOT_ACTIVE = 2;
+
+        // Identity dont have enought priviliges to perform actions from provided scopes
+        UNAUTHORIZED = 3;
+    }
+
+    // Status of the check
+    Status status = 1;
+    // Details of the status, that can be safelly returned and displayed to the requester
+    string message = 2;
+}
+
 // Provides API for Basic, X509 and OAuth ("Open Authorization") style access control
 service IAMAuthService {
     // OAuth. Create access token and refresh token using password
@@ -195,4 +271,10 @@ service IAMAuthService {
 
     // Basic Auth. Check if provided identity with proposed password is allowed to perform actions from the provided scopes
     rpc CheckAccessWithPassword(CheckAccessWithPasswordRequest) returns (CheckAccessWithPasswordResponse);
+
+    // Authorization with X509 certificates. Check if provided identity identified by proposed certificate is allowed to perform actions from the provided scopes
+    rpc CheckAccessWithX509(CheckAccessWithX509Request) returns (CheckAccessWithX509Response);
+
+    // Check if provided identity is allowed to perform actions from the provided scopes
+    rpc CheckAccess(CheckAccessRequest) returns (CheckAccessResponse);
 }

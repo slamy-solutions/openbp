@@ -1,0 +1,13 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: OpenBP tools REST API
+  description: Specification for the OpenBP tools interface
+paths:
+components:
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+    UnauthenticatedError:
+      description: There is not enought privileges
+    

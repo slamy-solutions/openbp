@@ -6,8 +6,14 @@ replace github.com/slamy-solutions/openbp/modules/system/libs/golang => ../../..
 
 replace github.com/slamy-solutions/openbp/modules/native/libs/golang => ../../../native/libs/golang
 
+replace github.com/slamy-solutions/openbp/modules/iot/libs/golang => ../../../iot/libs/golang
+
 require (
 	github.com/gin-gonic/gin v1.8.1
+	github.com/golang/protobuf v1.5.3
+	github.com/nats-io/nats.go v1.27.1
+	github.com/sirupsen/logrus v1.9.3
+	github.com/slamy-solutions/openbp/modules/iot/libs/golang v0.0.0-00010101000000-000000000000
 	github.com/slamy-solutions/openbp/modules/native/libs/golang v0.0.0-20221205192151-dac4702c21de
 	google.golang.org/grpc v1.56.1
 )
@@ -18,21 +24,18 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/klauspost/compress v1.16.6 // indirect
 	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/nats-io/jwt/v2 v2.4.1 // indirect
-	github.com/nats-io/nats.go v1.27.1 // indirect
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5 // indirect
 	github.com/redis/go-redis/v9 v9.0.5 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
@@ -63,6 +66,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
+	github.com/gorilla/websocket v1.5.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect

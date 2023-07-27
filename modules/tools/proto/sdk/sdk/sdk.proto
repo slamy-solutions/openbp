@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package tools_sdk_sdk;
+
+option go_package = "slamy/openBP/tools/sdk/sdk;tools_sdk_nsdk_grpc";
+
+
+message DownloadTLSResourcesRequest {}
+message DownloadTLSResourcesResponse {
+    // Returns TLS public key in DER format 
+    bytes publicKey = 1;
+    // Returns TLS certificate in DER format
+    bytes certificate = 2;
+}
+
+message PingRequest {}
+message PingResponse {}
+
+message RegisterPublicKeyAsUserRequest {
+    // Namespace where to search for user
+    string namespace = 1;
+    // User login
+    string user = 2;
+    // User password (password attached to user identity)
+    string password = 3;
+    // Users public key in DER format
+    bytes publicKey = 4;
+}
+message RegisterPublicKeyAsUserResponse {
+    // X509 certificate in DER format
+    bytes certificate = 1;
+}
+
+/*
+Provides helpfull set of tools to efectivelly use SDK
+*/
+service SDKService {
+    rpc DownloadTLSResources(DownloadTLSResourcesRequest) returns (DownloadTLSResourcesResponse);
+    rpc Ping(PingRequest) returns (PingResponse);
+    rpc RegisterPublicKeyAsUser(RegisterPublicKeyAsUserRequest) returns (RegisterPublicKeyAsUserResponse);
+}

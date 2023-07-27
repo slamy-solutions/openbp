@@ -3,12 +3,11 @@ package bootstrap
 import (
 	"context"
 	"errors"
-	"io"
 	"os"
 	"strconv"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/system/libs/golang/vault"
 )
@@ -55,18 +54,10 @@ func isRootUserCreationBlocked() bool {
 }
 
 func isRootUserCreated(ctx context.Context, nativeStub *native.NativeStub) (bool, error) {
-	searchClient, err := nativeStub.Services.ActorUser.List(ctx, &user.ListRequest{Namespace: ""})
+	countResponse, err := nativeStub.Services.IAM.Actor.User.Count(ctx, &user.CountRequest{Namespace: ""})
 	if err != nil {
-		return false, err
-	}
-	defer searchClient.CloseSend()
-	_, err = searchClient.Recv()
-	if err != nil {
-		if err == io.EOF {
-			return false, nil
-		}
 		return false, err
 	}
 
-	return true, nil
+	return countResponse.Count != 0, nil
 }

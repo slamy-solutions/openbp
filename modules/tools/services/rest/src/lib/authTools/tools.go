@@ -1,10 +1,12 @@
 package authTools
 
 import (
+	"errors"
 	"net/textproto"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 )
@@ -37,7 +39,7 @@ func CheckAuth(ctx *gin.Context, nativeStub *native.NativeStub, scopes []*auth.S
 		Scopes:      scopes,
 	})
 	if err != nil {
-		return &CheckAuthData{AccessGranted: false, StatusCode: 500, ErrorMessage: "Internal server error"}, err
+		return &CheckAuthData{AccessGranted: false, StatusCode: 500, ErrorMessage: "Internal server error"}, errors.New("failed to check access with token: " + err.Error())
 	}
 
 	accessGranted := authResponse.Status == auth.CheckAccessWithTokenResponse_OK
@@ -59,4 +61,21 @@ func CheckAuth(ctx *gin.Context, nativeStub *native.NativeStub, scopes []*auth.S
 		TokenUUID:     authResponse.GetTokenUUID(),
 		IdentityUUID:  authResponse.GetIdentityUUID(),
 	}, nil
+}
+
+func FillLoggerWithAuthMetadata(logger *logrus.Entry, authData *CheckAuthData) *logrus.Entry {
+	logger = logger.WithFields(logrus.Fields{
+		"auth.namespace":    authData.Namespace,
+		"auth.tokenUUID":    authData.TokenUUID,
+		"auth.identityUUID": authData.IdentityUUID,
+	})
+
+	if authData.StatusCode != 200 {
+		logger = logger.WithFields(logrus.Fields{
+			"auth.statusCode": authData.StatusCode,
+			"auth.message":    authData.ErrorMessage,
+		})
+	}
+
+	return logger
 }

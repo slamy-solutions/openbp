@@ -290,7 +290,7 @@ func (h *DynamicPKCSHandle) GetRSAPublicKey(ctx context.Context, name string) ([
 	return x509.MarshalPKCS1PublicKey(publicKey), nil
 }
 
-func (h *DynamicPKCSHandle) SignRSAStream(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
+func (h *DynamicPKCSHandle) SignRSAStream(ctx context.Context, name string, message *io.PipeReader, mechanism uint) ([]byte, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -299,8 +299,8 @@ func (h *DynamicPKCSHandle) SignRSAStream(ctx context.Context, name string, mess
 		return []byte{}, err
 	}
 
-	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
-	err = h.PKCS11Ctx.SignInit(h.session, mechanism, privateKey)
+	m := []*pkcs11.Mechanism{pkcs11.NewMechanism(mechanism, nil)}
+	err = h.PKCS11Ctx.SignInit(h.session, m, privateKey)
 	if err != nil {
 		go h.LogOutAndCloseSession()
 		return []byte{}, errors.New("error while initializing RSA signing algorithm: " + err.Error())
@@ -335,7 +335,7 @@ func (h *DynamicPKCSHandle) SignRSAStream(ctx context.Context, name string, mess
 		}
 	}
 }
-func (h *DynamicPKCSHandle) VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
+func (h *DynamicPKCSHandle) VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte, mechanism uint) (bool, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -344,8 +344,8 @@ func (h *DynamicPKCSHandle) VerifyRSAStream(ctx context.Context, name string, me
 		return false, err
 	}
 
-	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
-	err = h.PKCS11Ctx.VerifyInit(h.session, mechanism, publicKey)
+	m := []*pkcs11.Mechanism{pkcs11.NewMechanism(mechanism, nil)}
+	err = h.PKCS11Ctx.VerifyInit(h.session, m, publicKey)
 	if err != nil {
 		go h.LogOutAndCloseSession()
 		return false, errors.New("error while initializing RSA verification algorithm: " + err.Error())
@@ -376,7 +376,7 @@ func (h *DynamicPKCSHandle) VerifyRSAStream(ctx context.Context, name string, me
 	}
 }
 
-func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message []byte) ([]byte, error) {
+func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message []byte, mechanism uint) ([]byte, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -385,8 +385,8 @@ func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message []
 		return []byte{}, err
 	}
 
-	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
-	err = h.PKCS11Ctx.SignInit(h.session, mechanism, privateKey)
+	m := []*pkcs11.Mechanism{pkcs11.NewMechanism(mechanism, nil)}
+	err = h.PKCS11Ctx.SignInit(h.session, m, privateKey)
 	if err != nil {
 		go h.LogOutAndCloseSession()
 		return []byte{}, errors.New("error while initializing RSA signing algorithm: " + err.Error())
@@ -399,7 +399,7 @@ func (h *DynamicPKCSHandle) SignRSA(ctx context.Context, name string, message []
 
 	return signature, nil
 }
-func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message []byte, signature []byte) (bool, error) {
+func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message []byte, signature []byte, mechanism uint) (bool, error) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
@@ -408,8 +408,8 @@ func (h *DynamicPKCSHandle) VerifyRSA(ctx context.Context, name string, message 
 		return false, err
 	}
 
-	mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_SHA512_RSA_PKCS, nil)}
-	err = h.PKCS11Ctx.VerifyInit(h.session, mechanism, publicKey)
+	m := []*pkcs11.Mechanism{pkcs11.NewMechanism(mechanism, nil)}
+	err = h.PKCS11Ctx.VerifyInit(h.session, m, publicKey)
 	if err != nil {
 		go h.LogOutAndCloseSession()
 		return false, errors.New("error while initializing RSA verification algorithm: " + err.Error())

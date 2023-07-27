@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
@@ -61,7 +61,7 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 	}
 
 	// Create user
-	userResponse, err := r.nativeStub.Services.ActorUser.Create(ctx.Request.Context(), &user.CreateRequest{
+	userResponse, err := r.nativeStub.Services.IAM.Actor.User.Create(ctx.Request.Context(), &user.CreateRequest{
 		Login:    requestData.Login,
 		FullName: "Root",
 		Avatar:   "",
@@ -79,7 +79,7 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 		Password:  requestData.Password,
 	})
 	if err != nil {
-		r.nativeStub.Services.ActorUser.Delete(ctx.Request.Context(), &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
+		r.nativeStub.Services.IAM.Actor.User.Delete(ctx.Request.Context(), &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -91,7 +91,7 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 	})
 	if err != nil {
 		r.nativeStub.Services.IAM.Authentication.Password.Delete(ctx.Request.Context(), &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
-		r.nativeStub.Services.ActorUser.Delete(ctx.Request.Context(), &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
+		r.nativeStub.Services.IAM.Actor.User.Delete(ctx.Request.Context(), &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -105,7 +105,7 @@ func (r *RootUserRouter) InitRootUser(ctx *gin.Context) {
 	})
 	if err != nil {
 		r.nativeStub.Services.IAM.Authentication.Password.Delete(ctx, &password.DeleteRequest{Namespace: "", Identity: userResponse.User.Identity})
-		r.nativeStub.Services.ActorUser.Delete(ctx, &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
+		r.nativeStub.Services.IAM.Actor.User.Delete(ctx, &user.DeleteRequest{Namespace: "", Uuid: userResponse.User.Uuid})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

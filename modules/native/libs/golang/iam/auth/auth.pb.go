@@ -268,6 +268,134 @@ func (CheckAccessWithPasswordResponse_Status) EnumDescriptor() ([]byte, []int) {
 	return file_auth_proto_rawDescGZIP(), []int{10, 0}
 }
 
+type CheckAccessWithX509Response_Status int32
+
+const (
+	// Provided identity with provided certificate is allows to access scopes
+	CheckAccessWithX509Response_OK CheckAccessWithX509Response_Status = 0
+	// Certificate corrupted or was supplied not in the DER format
+	CheckAccessWithX509Response_CERTIFICATE_INVALID_FORMAT CheckAccessWithX509Response_Status = 1
+	// Signature or other aspects of the certificate are invalid
+	CheckAccessWithX509Response_CERTIFICATE_INVALID CheckAccessWithX509Response_Status = 2
+	// Certificate wasnt founded. Most probably certificate or entire namespace was deleted
+	CheckAccessWithX509Response_CERTIFICATE_NOT_FOUND CheckAccessWithX509Response_Status = 3
+	// Certificate was manually disable and cont be used in auth mechanisms
+	CheckAccessWithX509Response_CERTIFICATE_DISABLED CheckAccessWithX509Response_Status = 4
+	// Identity wasnt founded. Most probably it was deleted and certificate will be deleted soon
+	CheckAccessWithX509Response_IDENTITY_NOT_FOUND CheckAccessWithX509Response_Status = 5
+	// Identity was manually disabled.
+	CheckAccessWithX509Response_IDENTITY_NOT_ACTIVE CheckAccessWithX509Response_Status = 6
+	// Certificate is valid, but identity dont have enought priviliges to perform actions from provided scopes
+	CheckAccessWithX509Response_UNAUTHORIZED CheckAccessWithX509Response_Status = 7
+)
+
+// Enum value maps for CheckAccessWithX509Response_Status.
+var (
+	CheckAccessWithX509Response_Status_name = map[int32]string{
+		0: "OK",
+		1: "CERTIFICATE_INVALID_FORMAT",
+		2: "CERTIFICATE_INVALID",
+		3: "CERTIFICATE_NOT_FOUND",
+		4: "CERTIFICATE_DISABLED",
+		5: "IDENTITY_NOT_FOUND",
+		6: "IDENTITY_NOT_ACTIVE",
+		7: "UNAUTHORIZED",
+	}
+	CheckAccessWithX509Response_Status_value = map[string]int32{
+		"OK":                         0,
+		"CERTIFICATE_INVALID_FORMAT": 1,
+		"CERTIFICATE_INVALID":        2,
+		"CERTIFICATE_NOT_FOUND":      3,
+		"CERTIFICATE_DISABLED":       4,
+		"IDENTITY_NOT_FOUND":         5,
+		"IDENTITY_NOT_ACTIVE":        6,
+		"UNAUTHORIZED":               7,
+	}
+)
+
+func (x CheckAccessWithX509Response_Status) Enum() *CheckAccessWithX509Response_Status {
+	p := new(CheckAccessWithX509Response_Status)
+	*p = x
+	return p
+}
+
+func (x CheckAccessWithX509Response_Status) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CheckAccessWithX509Response_Status) Descriptor() protoreflect.EnumDescriptor {
+	return file_auth_proto_enumTypes[4].Descriptor()
+}
+
+func (CheckAccessWithX509Response_Status) Type() protoreflect.EnumType {
+	return &file_auth_proto_enumTypes[4]
+}
+
+func (x CheckAccessWithX509Response_Status) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CheckAccessWithX509Response_Status.Descriptor instead.
+func (CheckAccessWithX509Response_Status) EnumDescriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{12, 0}
+}
+
+type CheckAccessResponse_Status int32
+
+const (
+	// Provided identity with provided certificate is allows to access scopes
+	CheckAccessResponse_OK CheckAccessResponse_Status = 0
+	// Identity wasnt founded.
+	CheckAccessResponse_IDENTITY_NOT_FOUND CheckAccessResponse_Status = 1
+	// Identity was manually disabled.
+	CheckAccessResponse_IDENTITY_NOT_ACTIVE CheckAccessResponse_Status = 2
+	// Identity dont have enought priviliges to perform actions from provided scopes
+	CheckAccessResponse_UNAUTHORIZED CheckAccessResponse_Status = 3
+)
+
+// Enum value maps for CheckAccessResponse_Status.
+var (
+	CheckAccessResponse_Status_name = map[int32]string{
+		0: "OK",
+		1: "IDENTITY_NOT_FOUND",
+		2: "IDENTITY_NOT_ACTIVE",
+		3: "UNAUTHORIZED",
+	}
+	CheckAccessResponse_Status_value = map[string]int32{
+		"OK":                  0,
+		"IDENTITY_NOT_FOUND":  1,
+		"IDENTITY_NOT_ACTIVE": 2,
+		"UNAUTHORIZED":        3,
+	}
+)
+
+func (x CheckAccessResponse_Status) Enum() *CheckAccessResponse_Status {
+	p := new(CheckAccessResponse_Status)
+	*p = x
+	return p
+}
+
+func (x CheckAccessResponse_Status) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CheckAccessResponse_Status) Descriptor() protoreflect.EnumDescriptor {
+	return file_auth_proto_enumTypes[5].Descriptor()
+}
+
+func (CheckAccessResponse_Status) Type() protoreflect.EnumType {
+	return &file_auth_proto_enumTypes[5]
+}
+
+func (x CheckAccessResponse_Status) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CheckAccessResponse_Status.Descriptor instead.
+func (CheckAccessResponse_Status) EnumDescriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{14, 0}
+}
+
 // Scope of the requested access. Check native_iam_policy for more information.
 type Scope struct {
 	state         protoimpl.MessageState
@@ -1003,6 +1131,319 @@ func (x *CheckAccessWithPasswordResponse) GetMessage() string {
 	return ""
 }
 
+type CheckAccessWithX509Request struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// X509 certificate in DER format
+	Certificate []byte `protobuf:"bytes,1,opt,name=certificate,proto3" json:"certificate,omitempty"`
+	// Scopes to check
+	Scopes []*Scope `protobuf:"bytes,2,rep,name=scopes,proto3" json:"scopes,omitempty"`
+}
+
+func (x *CheckAccessWithX509Request) Reset() {
+	*x = CheckAccessWithX509Request{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_auth_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckAccessWithX509Request) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckAccessWithX509Request) ProtoMessage() {}
+
+func (x *CheckAccessWithX509Request) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckAccessWithX509Request.ProtoReflect.Descriptor instead.
+func (*CheckAccessWithX509Request) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CheckAccessWithX509Request) GetCertificate() []byte {
+	if x != nil {
+		return x.Certificate
+	}
+	return nil
+}
+
+func (x *CheckAccessWithX509Request) GetScopes() []*Scope {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
+type CheckAccessWithX509Response struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Status of the check
+	Status CheckAccessWithX509Response_Status `protobuf:"varint,1,opt,name=status,proto3,enum=native_iam_auth.CheckAccessWithX509Response_Status" json:"status,omitempty"`
+	// Details of the status, that can be safelly returned and displayed to the requester
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// Certificate information. Only available if status is one of the {OK; CERTIFICATE_DISABLED; IDENTITY_NOT_FOUND; IDENTITY_NOT_ACTIVE; UNAUTHORIZED}
+	CertificateInfo *CheckAccessWithX509Response_CertificateInfo `protobuf:"bytes,3,opt,name=certificateInfo,proto3" json:"certificateInfo,omitempty"`
+}
+
+func (x *CheckAccessWithX509Response) Reset() {
+	*x = CheckAccessWithX509Response{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_auth_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckAccessWithX509Response) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckAccessWithX509Response) ProtoMessage() {}
+
+func (x *CheckAccessWithX509Response) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckAccessWithX509Response.ProtoReflect.Descriptor instead.
+func (*CheckAccessWithX509Response) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CheckAccessWithX509Response) GetStatus() CheckAccessWithX509Response_Status {
+	if x != nil {
+		return x.Status
+	}
+	return CheckAccessWithX509Response_OK
+}
+
+func (x *CheckAccessWithX509Response) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *CheckAccessWithX509Response) GetCertificateInfo() *CheckAccessWithX509Response_CertificateInfo {
+	if x != nil {
+		return x.CertificateInfo
+	}
+	return nil
+}
+
+type CheckAccessRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Namespace where identity is located
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Unique identifier of the identity
+	Identity string `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
+	// Scopes to check
+	Scopes []*Scope `protobuf:"bytes,3,rep,name=scopes,proto3" json:"scopes,omitempty"`
+}
+
+func (x *CheckAccessRequest) Reset() {
+	*x = CheckAccessRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_auth_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckAccessRequest) ProtoMessage() {}
+
+func (x *CheckAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckAccessRequest.ProtoReflect.Descriptor instead.
+func (*CheckAccessRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *CheckAccessRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *CheckAccessRequest) GetIdentity() string {
+	if x != nil {
+		return x.Identity
+	}
+	return ""
+}
+
+func (x *CheckAccessRequest) GetScopes() []*Scope {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
+type CheckAccessResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Status of the check
+	Status CheckAccessResponse_Status `protobuf:"varint,1,opt,name=status,proto3,enum=native_iam_auth.CheckAccessResponse_Status" json:"status,omitempty"`
+	// Details of the status, that can be safelly returned and displayed to the requester
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+}
+
+func (x *CheckAccessResponse) Reset() {
+	*x = CheckAccessResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_auth_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckAccessResponse) ProtoMessage() {}
+
+func (x *CheckAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckAccessResponse.ProtoReflect.Descriptor instead.
+func (*CheckAccessResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *CheckAccessResponse) GetStatus() CheckAccessResponse_Status {
+	if x != nil {
+		return x.Status
+	}
+	return CheckAccessResponse_OK
+}
+
+func (x *CheckAccessResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// Detailed information about certificate
+type CheckAccessWithX509Response_CertificateInfo struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Namespace where certificate and identity are located
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Unique identifier of the certificate
+	Uuid string `protobuf:"bytes,2,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	// Unique identifier of the identity
+	Identity string `protobuf:"bytes,3,opt,name=identity,proto3" json:"identity,omitempty"`
+}
+
+func (x *CheckAccessWithX509Response_CertificateInfo) Reset() {
+	*x = CheckAccessWithX509Response_CertificateInfo{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_auth_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckAccessWithX509Response_CertificateInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckAccessWithX509Response_CertificateInfo) ProtoMessage() {}
+
+func (x *CheckAccessWithX509Response_CertificateInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckAccessWithX509Response_CertificateInfo.ProtoReflect.Descriptor instead.
+func (*CheckAccessWithX509Response_CertificateInfo) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{12, 0}
+}
+
+func (x *CheckAccessWithX509Response_CertificateInfo) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *CheckAccessWithX509Response_CertificateInfo) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
+func (x *CheckAccessWithX509Response_CertificateInfo) GetIdentity() string {
+	if x != nil {
+		return x.Identity
+	}
+	return ""
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 var file_auth_proto_rawDesc = []byte{
@@ -1138,7 +1579,68 @@ var file_auth_proto_rawDesc = []byte{
 	0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10, 0x00, 0x12, 0x13, 0x0a,
 	0x0f, 0x55, 0x4e, 0x41, 0x55, 0x54, 0x48, 0x45, 0x4e, 0x54, 0x49, 0x43, 0x41, 0x54, 0x45, 0x44,
 	0x10, 0x01, 0x12, 0x10, 0x0a, 0x0c, 0x55, 0x4e, 0x41, 0x55, 0x54, 0x48, 0x4f, 0x52, 0x49, 0x5a,
-	0x45, 0x44, 0x10, 0x05, 0x32, 0xde, 0x03, 0x0a, 0x0e, 0x49, 0x41, 0x4d, 0x41, 0x75, 0x74, 0x68,
+	0x45, 0x44, 0x10, 0x05, 0x22, 0x6e, 0x0a, 0x1a, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63, 0x63,
+	0x65, 0x73, 0x73, 0x57, 0x69, 0x74, 0x68, 0x58, 0x35, 0x30, 0x39, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x20, 0x0a, 0x0b, 0x63, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0b, 0x63, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69,
+	0x63, 0x61, 0x74, 0x65, 0x12, 0x2e, 0x0a, 0x06, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x73, 0x18, 0x02,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61,
+	0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x53, 0x63, 0x6f, 0x70, 0x65, 0x52, 0x06, 0x73, 0x63,
+	0x6f, 0x70, 0x65, 0x73, 0x22, 0x91, 0x04, 0x0a, 0x1b, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63,
+	0x63, 0x65, 0x73, 0x73, 0x57, 0x69, 0x74, 0x68, 0x58, 0x35, 0x30, 0x39, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x33, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61,
+	0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63, 0x63, 0x65,
+	0x73, 0x73, 0x57, 0x69, 0x74, 0x68, 0x58, 0x35, 0x30, 0x39, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x66, 0x0a, 0x0f, 0x63,
+	0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x3c, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61,
+	0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63, 0x63, 0x65,
+	0x73, 0x73, 0x57, 0x69, 0x74, 0x68, 0x58, 0x35, 0x30, 0x39, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x2e, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x49, 0x6e,
+	0x66, 0x6f, 0x52, 0x0f, 0x63, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x49,
+	0x6e, 0x66, 0x6f, 0x1a, 0x5f, 0x0a, 0x0f, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61,
+	0x74, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70,
+	0x61, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x75, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x75, 0x75, 0x69, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x69, 0x64, 0x65, 0x6e,
+	0x74, 0x69, 0x74, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x69, 0x64, 0x65, 0x6e,
+	0x74, 0x69, 0x74, 0x79, 0x22, 0xc1, 0x01, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
+	0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10, 0x00, 0x12, 0x1e, 0x0a, 0x1a, 0x43, 0x45, 0x52, 0x54, 0x49,
+	0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x5f, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x46,
+	0x4f, 0x52, 0x4d, 0x41, 0x54, 0x10, 0x01, 0x12, 0x17, 0x0a, 0x13, 0x43, 0x45, 0x52, 0x54, 0x49,
+	0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x5f, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x10, 0x02,
+	0x12, 0x19, 0x0a, 0x15, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x5f,
+	0x4e, 0x4f, 0x54, 0x5f, 0x46, 0x4f, 0x55, 0x4e, 0x44, 0x10, 0x03, 0x12, 0x18, 0x0a, 0x14, 0x43,
+	0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x5f, 0x44, 0x49, 0x53, 0x41, 0x42,
+	0x4c, 0x45, 0x44, 0x10, 0x04, 0x12, 0x16, 0x0a, 0x12, 0x49, 0x44, 0x45, 0x4e, 0x54, 0x49, 0x54,
+	0x59, 0x5f, 0x4e, 0x4f, 0x54, 0x5f, 0x46, 0x4f, 0x55, 0x4e, 0x44, 0x10, 0x05, 0x12, 0x17, 0x0a,
+	0x13, 0x49, 0x44, 0x45, 0x4e, 0x54, 0x49, 0x54, 0x59, 0x5f, 0x4e, 0x4f, 0x54, 0x5f, 0x41, 0x43,
+	0x54, 0x49, 0x56, 0x45, 0x10, 0x06, 0x12, 0x10, 0x0a, 0x0c, 0x55, 0x4e, 0x41, 0x55, 0x54, 0x48,
+	0x4f, 0x52, 0x49, 0x5a, 0x45, 0x44, 0x10, 0x07, 0x22, 0x7e, 0x0a, 0x12, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c,
+	0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x1a, 0x0a, 0x08,
+	0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
+	0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x12, 0x2e, 0x0a, 0x06, 0x73, 0x63, 0x6f, 0x70,
+	0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76,
+	0x65, 0x5f, 0x69, 0x61, 0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x53, 0x63, 0x6f, 0x70, 0x65,
+	0x52, 0x06, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x73, 0x22, 0xc9, 0x01, 0x0a, 0x13, 0x43, 0x68, 0x65,
+	0x63, 0x6b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x43, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x2b, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61, 0x6d, 0x5f, 0x61, 0x75,
+	0x74, 0x68, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22,
+	0x53, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10,
+	0x00, 0x12, 0x16, 0x0a, 0x12, 0x49, 0x44, 0x45, 0x4e, 0x54, 0x49, 0x54, 0x59, 0x5f, 0x4e, 0x4f,
+	0x54, 0x5f, 0x46, 0x4f, 0x55, 0x4e, 0x44, 0x10, 0x01, 0x12, 0x17, 0x0a, 0x13, 0x49, 0x44, 0x45,
+	0x4e, 0x54, 0x49, 0x54, 0x59, 0x5f, 0x4e, 0x4f, 0x54, 0x5f, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45,
+	0x10, 0x02, 0x12, 0x10, 0x0a, 0x0c, 0x55, 0x4e, 0x41, 0x55, 0x54, 0x48, 0x4f, 0x52, 0x49, 0x5a,
+	0x45, 0x44, 0x10, 0x03, 0x32, 0xaa, 0x05, 0x0a, 0x0e, 0x49, 0x41, 0x4d, 0x41, 0x75, 0x74, 0x68,
 	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x7c, 0x0a, 0x17, 0x43, 0x72, 0x65, 0x61, 0x74,
 	0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x57, 0x69, 0x74, 0x68, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6f,
 	0x72, 0x64, 0x12, 0x2f, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61, 0x6d, 0x5f,
@@ -1168,10 +1670,22 @@ var file_auth_proto_rawDesc = []byte{
 	0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61, 0x6d,
 	0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63, 0x63, 0x65, 0x73,
 	0x73, 0x57, 0x69, 0x74, 0x68, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x23, 0x5a, 0x21, 0x73, 0x6c, 0x61, 0x6d, 0x79, 0x2f, 0x6f,
-	0x70, 0x65, 0x6e, 0x42, 0x50, 0x2f, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x2f, 0x69, 0x61, 0x6d,
-	0x2f, 0x61, 0x75, 0x74, 0x68, 0x3b, 0x61, 0x75, 0x74, 0x68, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x70, 0x0a, 0x13, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63,
+	0x63, 0x65, 0x73, 0x73, 0x57, 0x69, 0x74, 0x68, 0x58, 0x35, 0x30, 0x39, 0x12, 0x2b, 0x2e, 0x6e,
+	0x61, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61, 0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x43,
+	0x68, 0x65, 0x63, 0x6b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x57, 0x69, 0x74, 0x68, 0x58, 0x35,
+	0x30, 0x39, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x6e, 0x61, 0x74, 0x69,
+	0x76, 0x65, 0x5f, 0x69, 0x61, 0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x57, 0x69, 0x74, 0x68, 0x58, 0x35, 0x30, 0x39, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x0b, 0x43, 0x68, 0x65, 0x63, 0x6b,
+	0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x23, 0x2e, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f,
+	0x69, 0x61, 0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x63,
+	0x63, 0x65, 0x73, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x6e, 0x61,
+	0x74, 0x69, 0x76, 0x65, 0x5f, 0x69, 0x61, 0x6d, 0x5f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x43, 0x68,
+	0x65, 0x63, 0x6b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x42, 0x23, 0x5a, 0x21, 0x73, 0x6c, 0x61, 0x6d, 0x79, 0x2f, 0x6f, 0x70, 0x65, 0x6e, 0x42,
+	0x50, 0x2f, 0x6e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x2f, 0x69, 0x61, 0x6d, 0x2f, 0x61, 0x75, 0x74,
+	0x68, 0x3b, 0x61, 0x75, 0x74, 0x68, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1186,46 +1700,62 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_auth_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_auth_proto_goTypes = []interface{}{
-	(CreateTokenWithPasswordResponse_Status)(0), // 0: native_iam_auth.CreateTokenWithPasswordResponse.Status
-	(RefreshTokenResponse_Status)(0),            // 1: native_iam_auth.RefreshTokenResponse.Status
-	(CheckAccessWithTokenResponse_Status)(0),    // 2: native_iam_auth.CheckAccessWithTokenResponse.Status
-	(CheckAccessWithPasswordResponse_Status)(0), // 3: native_iam_auth.CheckAccessWithPasswordResponse.Status
-	(*Scope)(nil),                           // 4: native_iam_auth.Scope
-	(*CreateTokenWithPasswordRequest)(nil),  // 5: native_iam_auth.CreateTokenWithPasswordRequest
-	(*CreateTokenWithPasswordResponse)(nil), // 6: native_iam_auth.CreateTokenWithPasswordResponse
-	(*CreateTokenWithOAuth2Request)(nil),    // 7: native_iam_auth.CreateTokenWithOAuth2Request
-	(*CreateTokenWithOAuth2Response)(nil),   // 8: native_iam_auth.CreateTokenWithOAuth2Response
-	(*RefreshTokenRequest)(nil),             // 9: native_iam_auth.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),            // 10: native_iam_auth.RefreshTokenResponse
-	(*CheckAccessWithTokenRequest)(nil),     // 11: native_iam_auth.CheckAccessWithTokenRequest
-	(*CheckAccessWithTokenResponse)(nil),    // 12: native_iam_auth.CheckAccessWithTokenResponse
-	(*CheckAccessWithPasswordRequest)(nil),  // 13: native_iam_auth.CheckAccessWithPasswordRequest
-	(*CheckAccessWithPasswordResponse)(nil), // 14: native_iam_auth.CheckAccessWithPasswordResponse
+	(CreateTokenWithPasswordResponse_Status)(0),         // 0: native_iam_auth.CreateTokenWithPasswordResponse.Status
+	(RefreshTokenResponse_Status)(0),                    // 1: native_iam_auth.RefreshTokenResponse.Status
+	(CheckAccessWithTokenResponse_Status)(0),            // 2: native_iam_auth.CheckAccessWithTokenResponse.Status
+	(CheckAccessWithPasswordResponse_Status)(0),         // 3: native_iam_auth.CheckAccessWithPasswordResponse.Status
+	(CheckAccessWithX509Response_Status)(0),             // 4: native_iam_auth.CheckAccessWithX509Response.Status
+	(CheckAccessResponse_Status)(0),                     // 5: native_iam_auth.CheckAccessResponse.Status
+	(*Scope)(nil),                                       // 6: native_iam_auth.Scope
+	(*CreateTokenWithPasswordRequest)(nil),              // 7: native_iam_auth.CreateTokenWithPasswordRequest
+	(*CreateTokenWithPasswordResponse)(nil),             // 8: native_iam_auth.CreateTokenWithPasswordResponse
+	(*CreateTokenWithOAuth2Request)(nil),                // 9: native_iam_auth.CreateTokenWithOAuth2Request
+	(*CreateTokenWithOAuth2Response)(nil),               // 10: native_iam_auth.CreateTokenWithOAuth2Response
+	(*RefreshTokenRequest)(nil),                         // 11: native_iam_auth.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),                        // 12: native_iam_auth.RefreshTokenResponse
+	(*CheckAccessWithTokenRequest)(nil),                 // 13: native_iam_auth.CheckAccessWithTokenRequest
+	(*CheckAccessWithTokenResponse)(nil),                // 14: native_iam_auth.CheckAccessWithTokenResponse
+	(*CheckAccessWithPasswordRequest)(nil),              // 15: native_iam_auth.CheckAccessWithPasswordRequest
+	(*CheckAccessWithPasswordResponse)(nil),             // 16: native_iam_auth.CheckAccessWithPasswordResponse
+	(*CheckAccessWithX509Request)(nil),                  // 17: native_iam_auth.CheckAccessWithX509Request
+	(*CheckAccessWithX509Response)(nil),                 // 18: native_iam_auth.CheckAccessWithX509Response
+	(*CheckAccessRequest)(nil),                          // 19: native_iam_auth.CheckAccessRequest
+	(*CheckAccessResponse)(nil),                         // 20: native_iam_auth.CheckAccessResponse
+	(*CheckAccessWithX509Response_CertificateInfo)(nil), // 21: native_iam_auth.CheckAccessWithX509Response.CertificateInfo
 }
 var file_auth_proto_depIdxs = []int32{
-	4,  // 0: native_iam_auth.CreateTokenWithPasswordRequest.scopes:type_name -> native_iam_auth.Scope
+	6,  // 0: native_iam_auth.CreateTokenWithPasswordRequest.scopes:type_name -> native_iam_auth.Scope
 	0,  // 1: native_iam_auth.CreateTokenWithPasswordResponse.status:type_name -> native_iam_auth.CreateTokenWithPasswordResponse.Status
 	1,  // 2: native_iam_auth.RefreshTokenResponse.status:type_name -> native_iam_auth.RefreshTokenResponse.Status
-	4,  // 3: native_iam_auth.CheckAccessWithTokenRequest.scopes:type_name -> native_iam_auth.Scope
+	6,  // 3: native_iam_auth.CheckAccessWithTokenRequest.scopes:type_name -> native_iam_auth.Scope
 	2,  // 4: native_iam_auth.CheckAccessWithTokenResponse.status:type_name -> native_iam_auth.CheckAccessWithTokenResponse.Status
-	4,  // 5: native_iam_auth.CheckAccessWithPasswordRequest.scopes:type_name -> native_iam_auth.Scope
+	6,  // 5: native_iam_auth.CheckAccessWithPasswordRequest.scopes:type_name -> native_iam_auth.Scope
 	3,  // 6: native_iam_auth.CheckAccessWithPasswordResponse.status:type_name -> native_iam_auth.CheckAccessWithPasswordResponse.Status
-	5,  // 7: native_iam_auth.IAMAuthService.CreateTokenWithPassword:input_type -> native_iam_auth.CreateTokenWithPasswordRequest
-	9,  // 8: native_iam_auth.IAMAuthService.RefreshToken:input_type -> native_iam_auth.RefreshTokenRequest
-	11, // 9: native_iam_auth.IAMAuthService.CheckAccessWithToken:input_type -> native_iam_auth.CheckAccessWithTokenRequest
-	13, // 10: native_iam_auth.IAMAuthService.CheckAccessWithPassword:input_type -> native_iam_auth.CheckAccessWithPasswordRequest
-	6,  // 11: native_iam_auth.IAMAuthService.CreateTokenWithPassword:output_type -> native_iam_auth.CreateTokenWithPasswordResponse
-	10, // 12: native_iam_auth.IAMAuthService.RefreshToken:output_type -> native_iam_auth.RefreshTokenResponse
-	12, // 13: native_iam_auth.IAMAuthService.CheckAccessWithToken:output_type -> native_iam_auth.CheckAccessWithTokenResponse
-	14, // 14: native_iam_auth.IAMAuthService.CheckAccessWithPassword:output_type -> native_iam_auth.CheckAccessWithPasswordResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	6,  // 7: native_iam_auth.CheckAccessWithX509Request.scopes:type_name -> native_iam_auth.Scope
+	4,  // 8: native_iam_auth.CheckAccessWithX509Response.status:type_name -> native_iam_auth.CheckAccessWithX509Response.Status
+	21, // 9: native_iam_auth.CheckAccessWithX509Response.certificateInfo:type_name -> native_iam_auth.CheckAccessWithX509Response.CertificateInfo
+	6,  // 10: native_iam_auth.CheckAccessRequest.scopes:type_name -> native_iam_auth.Scope
+	5,  // 11: native_iam_auth.CheckAccessResponse.status:type_name -> native_iam_auth.CheckAccessResponse.Status
+	7,  // 12: native_iam_auth.IAMAuthService.CreateTokenWithPassword:input_type -> native_iam_auth.CreateTokenWithPasswordRequest
+	11, // 13: native_iam_auth.IAMAuthService.RefreshToken:input_type -> native_iam_auth.RefreshTokenRequest
+	13, // 14: native_iam_auth.IAMAuthService.CheckAccessWithToken:input_type -> native_iam_auth.CheckAccessWithTokenRequest
+	15, // 15: native_iam_auth.IAMAuthService.CheckAccessWithPassword:input_type -> native_iam_auth.CheckAccessWithPasswordRequest
+	17, // 16: native_iam_auth.IAMAuthService.CheckAccessWithX509:input_type -> native_iam_auth.CheckAccessWithX509Request
+	19, // 17: native_iam_auth.IAMAuthService.CheckAccess:input_type -> native_iam_auth.CheckAccessRequest
+	8,  // 18: native_iam_auth.IAMAuthService.CreateTokenWithPassword:output_type -> native_iam_auth.CreateTokenWithPasswordResponse
+	12, // 19: native_iam_auth.IAMAuthService.RefreshToken:output_type -> native_iam_auth.RefreshTokenResponse
+	14, // 20: native_iam_auth.IAMAuthService.CheckAccessWithToken:output_type -> native_iam_auth.CheckAccessWithTokenResponse
+	16, // 21: native_iam_auth.IAMAuthService.CheckAccessWithPassword:output_type -> native_iam_auth.CheckAccessWithPasswordResponse
+	18, // 22: native_iam_auth.IAMAuthService.CheckAccessWithX509:output_type -> native_iam_auth.CheckAccessWithX509Response
+	20, // 23: native_iam_auth.IAMAuthService.CheckAccess:output_type -> native_iam_auth.CheckAccessResponse
+	18, // [18:24] is the sub-list for method output_type
+	12, // [12:18] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_auth_proto_init() }
@@ -1366,14 +1896,74 @@ func file_auth_proto_init() {
 				return nil
 			}
 		}
+		file_auth_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckAccessWithX509Request); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_auth_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckAccessWithX509Response); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_auth_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckAccessRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_auth_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckAccessResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_auth_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckAccessWithX509Response_CertificateInfo); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_auth_proto_rawDesc,
-			NumEnums:      4,
-			NumMessages:   11,
+			NumEnums:      6,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

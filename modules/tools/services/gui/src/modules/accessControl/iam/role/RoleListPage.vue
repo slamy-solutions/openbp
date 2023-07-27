@@ -50,7 +50,7 @@
             <q-btn color="dark" outline label="" icon="menu">
               <q-menu>
                 <q-list style="">
-                  <q-item clickable v-close-popup @click="identityUUIDToDelete = props.row.uuid; deletionDialog = true;">
+                  <q-item clickable v-close-popup @click="roleUUIDToDelete = props.row.uuid; deletionDialog = true;">
                     <q-item-section class="text-negative">{{ $t('modules.accessControl.iam.role.list.actionsMenu.delete') }}</q-item-section>
                   </q-item>
                 </q-list>
@@ -65,6 +65,14 @@
           </q-td>
         </template>
         </q-table>
+
+        <q-dialog v-model="creationDialog">
+          <RoleCreateModal :namespace="displayableNamespace" @created="onRoleCreated" />
+        </q-dialog>
+
+        <q-dialog v-model="deletionDialog">
+          <RoleDeleteModal :namespace="displayableNamespace" :uuid="roleUUIDToDelete" @deleted="onRoleDeleted" />
+        </q-dialog>
 
         <q-card class="col-12 q-mt-md">
           <RoleViewComponent :namespace="displayableNamespace" :uuid="selectedUUID" update-possible />
@@ -81,7 +89,10 @@ import { useI18n } from 'vue-i18n';
 import MenuComponent from '../../MenuComponent.vue'
 import api from '../../../../boot/api';
 
+import ManagedByComponent from 'src/components/managedItem/ManagedByComponent.vue'
 import RoleViewComponent from './RoleViewComponent.vue'
+import RoleCreateModal from './RoleCreateModal.vue'
+import RoleDeleteModal from './RoleDeleteModal.vue'
 
   const $i18n = useI18n()
   const $q = useQuasar()
@@ -107,7 +118,7 @@ import RoleViewComponent from './RoleViewComponent.vue'
   })
   
   const creationDialog = ref(false)
-  const identityUUIDToDelete = ref('')
+  const roleUUIDToDelete = ref('')
   const deletionDialog = ref(false)
   
   const selectedUUID = ref('')
@@ -149,12 +160,12 @@ import RoleViewComponent from './RoleViewComponent.vue'
       }
   }
   
-  async function onIdentityCreated() {
+  async function onRoleCreated() {
     creationDialog.value = false
     tableRef.value.requestServerInteraction()
   }
   
-  async function onIdentityDeleted() {
+  async function onRoleDeleted() {
     deletionDialog.value = false
     tableRef.value.requestServerInteraction()
   }

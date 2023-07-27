@@ -31,7 +31,8 @@ const routes: RouteRecordRaw[] = [
 
       { path: 'namespace/list', name: 'namespaceList', component: () => import('../modules/namespace/NamespaceListPage.vue')},
 
-      { path: 'accessControl/iam/identity/list', name: 'accessControl_iam_identity_list', component: () => import('../modules/accessControl/IdentityListPage.vue')},
+      { path: 'accessControl/actor/user/list', name: 'accessControl_actor_user_list', component: () => import('../modules/accessControl/actor/user/UserListPage.vue')},
+      { path: 'accessControl/iam/identity/list', name: 'accessControl_iam_identity_list', component: () => import('../modules/accessControl/iam/identity/IdentityListPage.vue')},
       { path: 'accessControl/iam/policy/list', name: 'accessControl_iam_policy_list', component: () => import('../modules/accessControl/iam/policy/PolicyListPage.vue')},
       { path: 'accessControl/iam/role/list', name: 'accessControl_iam_role_list', component: () => import('../modules/accessControl/iam/role/RoleListPage.vue')},
     ],

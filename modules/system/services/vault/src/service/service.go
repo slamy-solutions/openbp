@@ -78,6 +78,21 @@ func (s *VaultService) GetRSAPublicKey(ctx context.Context, in *vault.GetRSAPubl
 	}, nil
 }
 
+func rsaSignMechanismFromGRPC(in vault.RSASignMechanism) uint {
+	switch in {
+	case vault.RSASignMechanism_DEFAULT:
+		return pkcs.RSASignAlgoDefault
+	case vault.RSASignMechanism_SHA512_RSA:
+		return pkcs.RSASignAlgoSHA512
+	case vault.RSASignMechanism_RSA_PKCS:
+		return pkcs.RSASignAlgoRSAPKCS
+	case vault.RSASignMechanism_SHA256_RSA:
+		return pkcs.RSASignAlgoSHA256
+	}
+
+	return pkcs.RSASignAlgoDefault
+}
+
 func (s *VaultService) RSASignStream(srv vault.VaultService_RSASignStreamServer) error {
 	ctx := srv.Context()
 
@@ -86,8 +101,9 @@ func (s *VaultService) RSASignStream(srv vault.VaultService_RSASignStreamServer)
 	defer dataReader.Close()
 
 	keyPairNameChanel := make(chan struct {
-		name string
-		err  error
+		name      string
+		mechanism vault.RSASignMechanism
+		err       error
 	})
 	defer close(keyPairNameChanel)
 
@@ -98,8 +114,9 @@ func (s *VaultService) RSASignStream(srv vault.VaultService_RSASignStreamServer)
 			if err != nil {
 				if !nameSended {
 					keyPairNameChanel <- struct {
-						name string
-						err  error
+						name      string
+						mechanism vault.RSASignMechanism
+						err       error
 					}{name: "", err: errors.New("failed to receive first chunk of data from grpc stream: " + err.Error())}
 				}
 				if err == io.EOF {
@@ -111,9 +128,10 @@ func (s *VaultService) RSASignStream(srv vault.VaultService_RSASignStreamServer)
 			}
 			if !nameSended {
 				keyPairNameChanel <- struct {
-					name string
-					err  error
-				}{name: message.KeyName, err: nil}
+					name      string
+					mechanism vault.RSASignMechanism
+					err       error
+				}{name: message.KeyName, err: nil, mechanism: message.Mechanism}
 				nameSended = true
 			}
 			_, err = dataWriter.Write(message.Data)
@@ -123,13 +141,13 @@ func (s *VaultService) RSASignStream(srv vault.VaultService_RSASignStreamServer)
 		}
 	}()
 
-	nameData := <-keyPairNameChanel
-	if nameData.err != nil {
-		log.Error("[GRPC Vault Service]-(RSASignStream) Internal error while reading RSA keypair name: " + nameData.err.Error())
-		return status.Error(codes.Internal, "error while reading RSA keypair name: "+nameData.err.Error())
+	metadata := <-keyPairNameChanel
+	if metadata.err != nil {
+		log.Error("[GRPC Vault Service]-(RSASignStream) Internal error while reading RSA keypair name: " + metadata.err.Error())
+		return status.Error(codes.Internal, "error while reading RSA keypair name: "+metadata.err.Error())
 	}
 
-	signature, err := s.pkcsHandle.SignRSAStream(ctx, nameData.name, dataReader)
+	signature, err := s.pkcsHandle.SignRSAStream(ctx, metadata.name, dataReader, rsaSignMechanismFromGRPC(metadata.mechanism))
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {
@@ -159,6 +177,7 @@ func (s *VaultService) RSAVerifyStream(srv vault.VaultService_RSAVerifyStreamSer
 	metadataChanel := make(chan struct {
 		name      string
 		signature []byte
+		mechanism vault.RSASignMechanism
 		err       error
 	})
 	defer close(metadataChanel)
@@ -172,6 +191,7 @@ func (s *VaultService) RSAVerifyStream(srv vault.VaultService_RSAVerifyStreamSer
 					metadataChanel <- struct {
 						name      string
 						signature []byte
+						mechanism vault.RSASignMechanism
 						err       error
 					}{name: "", signature: []byte{}, err: errors.New("failed to receive first chunk of data from grpc stream: " + err.Error())}
 				}
@@ -186,8 +206,9 @@ func (s *VaultService) RSAVerifyStream(srv vault.VaultService_RSAVerifyStreamSer
 				metadataChanel <- struct {
 					name      string
 					signature []byte
+					mechanism vault.RSASignMechanism
 					err       error
-				}{name: message.KeyName, signature: message.Signature, err: nil}
+				}{name: message.KeyName, signature: message.Signature, err: nil, mechanism: message.Mechanism}
 				nameSended = true
 			}
 			_, err = dataWriter.Write(message.Data)
@@ -203,7 +224,7 @@ func (s *VaultService) RSAVerifyStream(srv vault.VaultService_RSAVerifyStreamSer
 		return status.Error(codes.Internal, "error while reading RSA keypair name: "+metadata.err.Error())
 	}
 
-	valid, err := s.pkcsHandle.VerifyRSAStream(ctx, metadata.name, dataReader, metadata.signature)
+	valid, err := s.pkcsHandle.VerifyRSAStream(ctx, metadata.name, dataReader, metadata.signature, rsaSignMechanismFromGRPC(metadata.mechanism))
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {
@@ -225,7 +246,7 @@ func (s *VaultService) RSAVerifyStream(srv vault.VaultService_RSAVerifyStreamSer
 }
 
 func (s *VaultService) RSASign(ctx context.Context, in *vault.RSASignRequest) (*vault.RSASignResponse, error) {
-	signature, err := s.pkcsHandle.SignRSA(ctx, in.KeyName, in.Data)
+	signature, err := s.pkcsHandle.SignRSA(ctx, in.KeyName, in.Data, rsaSignMechanismFromGRPC(in.Mechanism))
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {
@@ -246,7 +267,7 @@ func (s *VaultService) RSASign(ctx context.Context, in *vault.RSASignRequest) (*
 	}, status.Error(codes.OK, "")
 }
 func (s *VaultService) RSAVerify(ctx context.Context, in *vault.RSAVerifyRequest) (*vault.RSAVerifyResponse, error) {
-	valid, err := s.pkcsHandle.VerifyRSA(ctx, in.KeyName, in.Data, in.Signature)
+	valid, err := s.pkcsHandle.VerifyRSA(ctx, in.KeyName, in.Data, in.Signature, rsaSignMechanismFromGRPC(in.Mechanism))
 
 	if err != nil {
 		if err == pkcs.ErrPKCSNotLoggedIn {

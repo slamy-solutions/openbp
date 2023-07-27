@@ -2,7 +2,6 @@ go 1.20
 
 use (
 	./modules/native/libs/golang
-	./modules/native/services/actor/user
 	./modules/native/services/iam
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/namespace
@@ -10,10 +9,13 @@ use (
 	./modules/system/libs/golang
 	./modules/system/services/vault
 	./modules/system/testing
-	./modules/tools/libs/sdk/golang
+	./modules/tools/libs/golang
 	./modules/tools/services/rest
 	./modules/tools/services/sdk
 	./modules/tools/testing
 	./modules/crm/libs/golang
 	./modules/crm/services/core
+	./modules/iot/services/core
+	./modules/iot/libs/golang
+	./modules/iot/testing
 )

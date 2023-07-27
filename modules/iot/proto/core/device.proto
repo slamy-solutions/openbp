@@ -4,13 +4,131 @@ import "google/protobuf/timestamp.proto";
 
 package iot_core_device;
 
-option go_package = "slamy/openERP/iot/core/device;device";
+option go_package = "github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/device;device";
 
+message Device {
+    // Namesapce where device is located
+    string namespace = 1;
+    // Unique identifier of the device inside namespace
+    string uuid = 2;
+    // Unique device name
+    string name = 3;
+    // Arbitrary description
+    string description = 4;
+
+
+    // native_iam_identity
+    string identity = 5;
+
+
+    // When the device was created
+    google.protobuf.Timestamp created = 50;
+    // Last time when the device information was updated.
+    google.protobuf.Timestamp updated = 51;
+    // Counter that increases after every update of the device
+    uint64 version = 52;
+}
+
+message CreateRequest {
+    // Namesapce where to create device
+    string namespace = 1;
+    // Unique device name. Can't be changed in the future
+    string name = 2;
+    // Arbitrary description. Can be changed in the future
+    string description = 3;
+}
+message CreateResponse {
+    // Created device
+    Device device = 1;
+}
+
+message GetRequest {
+    // Namesapce where to search for device
+    string namespace = 1;
+    // Unique identifier of the device inside this namespace
+    string uuid = 2;
+}
+message GetResponse {
+    // Founded device
+    Device device = 1;
+}
+
+message GetByIdentityRequest {
+    // Namesapce where device is located
+    string namespace = 1;
+    // Identity of the device
+    string identity = 2;
+}
+message GetByIdentityResponse {
+    // Founded device
+    Device device = 1;
+}
+
+message ExistsRequest {
+    // Namesapce where to search for device
+    string namespace = 1;
+    // Unique identifier of the device inside this namespace
+    string uuid = 2;
+}
+message ExistsResponse {
+    // Indicates if device exists or not
+    bool exists = 1;
+}
+
+message CountRequest {
+    // Namesapce where to count devices
+    string namespace = 1; 
+}
+message CountResponse {
+    // Number of the devices inside namespace
+    uint64 count = 1;
+}
+
+message ListRequest {
+    // Namespace where search for devices
+    string namespace = 1;
+
+    // How much devices to skip before returning the result
+    uint64 skip = 2;
+    // Return at most 'limit' devices
+    uint64 limit = 3;
+}
+message ListResponse {
+    // One of the devices
+    Device device = 1;
+}
+
+message UpdateRequest {
+    // Namesapce where device is located
+    string namespace = 1;
+    // Unique identifier of the device inside namespace
+    string uuid = 2;
+    // New description
+    string description = 3;
+}
+message UpdateResponse {
+    // Device after update
+    Device device = 1;
+}
+
+message DeleteRequest {
+    // Namesapce where device is located
+    string namespace = 1;
+    // Unique identifier of the device inside namespace
+    string uuid = 2;
+}
+message DeleteResponse {
+    // Indicates if device existed before this operation
+    bool existed = 1;
+}
 
 service DeviceService {
-    rpc Create() returns ();
-    rpc Get() returns ();
-    rpc List() returns ();
-    rpc Update() returns ();
-    rpc Delete() returns ();
+    rpc Create(CreateRequest) returns (CreateResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByIdentity(GetByIdentityRequest) returns (GetByIdentityResponse);
+    rpc Exists(ExistsRequest) returns (ExistsResponse);
+    rpc Count(CountRequest) returns (CountResponse);
+    rpc List(ListRequest) returns (stream ListResponse);
+    rpc Update(UpdateRequest) returns (UpdateResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
 }

@@ -201,6 +201,20 @@ message GetServiceManagedIdentityResponse {
     Identity identity = 1;
 }
 
+message UpdateIdentityRequest {
+    // Namespace where identity is located
+    string namespace = 1;
+    // Unique identifier of the identity
+    string uuid = 2;
+
+    // New name
+    string newName = 3;
+}
+message UpdateIdentityResponse {
+    // Identity information after update
+    Identity identity = 1;
+}
+
 message AddPolicyRequest {
     // Identity namespace
     string identityNamespace = 1;
@@ -291,6 +305,9 @@ service IAMIdentityService {
 
     // Get policy that is managed by service
     rpc GetServiceManagedIdentity(GetServiceManagedIdentityRequest) returns (GetServiceManagedIdentityResponse);
+
+    // Update identity information
+    rpc Update(UpdateIdentityRequest) returns (UpdateIdentityResponse);
 
     // Add policy to the identity. If policy was already added - does nothing.
     rpc AddPolicy(AddPolicyRequest) returns (AddPolicyResponse);

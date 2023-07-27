@@ -34,8 +34,6 @@ spec:
           value: "{{ .Release.Name }}-native-namespace:80"
         - name: NATIVE_KEYVALUESTORAGE_URL
           value: "{{ .Release.Name }}-native-keyvaluestorage:80"
-        - name: NATIVE_ACTOR_USER_URL
-          value: "{{ .Release.Name }}-native-actor-user:80"
         - name: NATIVE_IAM_URL
           value: "{{ .Release.Name }}-native-iam:80"
         resources:

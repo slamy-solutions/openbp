@@ -7,9 +7,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
-	actorUserGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	iamActorUserGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	iamAuthGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	iamAuthenticationPasswordGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
+	iamAuthenticationX509Grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/x509"
 	iamIdentityGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 	iamPolicyGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
 	iamRoleGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
@@ -25,11 +26,17 @@ func getConfigEnv(key string, fallback string) string {
 	return fallback
 }
 
+type IamActorServices struct {
+	User iamActorUserGrpc.ActorUserServiceClient
+}
+
 type IamAuthenticationServices struct {
 	Password iamAuthenticationPasswordGrpc.IAMAuthenticationPasswordServiceClient
+	X509     iamAuthenticationX509Grpc.IAMAuthenticationX509ServiceClient
 }
 
 type IAMService struct {
+	Actor          *IamActorServices
 	Authentication *IamAuthenticationServices
 	Identity       iamIdentityGrpc.IAMIdentityServiceClient
 	Auth           iamAuthGrpc.IAMAuthServiceClient
@@ -39,7 +46,6 @@ type IAMService struct {
 }
 
 type services struct {
-	ActorUser       actorUserGrpc.ActorUserServiceClient
 	IAM             *IAMService
 	Keyvaluestorage keyvaluestorageGrpc.KeyValueStorageServiceClient
 	Namespace       namespaceGrpc.NamespaceServiceClient
@@ -55,7 +61,6 @@ type StubConfig struct {
 
 	namespace       GrpcServiceConfig
 	keyValueStorage GrpcServiceConfig
-	actorUser       GrpcServiceConfig
 
 	iam GrpcServiceConfig
 }
@@ -63,11 +68,15 @@ type StubConfig struct {
 func NewStubConfig() *StubConfig {
 	return &StubConfig{
 		logger: log.StandardLogger(),
-		actorUser: GrpcServiceConfig{
+		namespace: GrpcServiceConfig{
 			enabled: false,
 			url:     "",
 		},
-		namespace: GrpcServiceConfig{
+		keyValueStorage: GrpcServiceConfig{
+			enabled: false,
+			url:     "",
+		},
+		iam: GrpcServiceConfig{
 			enabled: false,
 			url:     "",
 		},
@@ -76,18 +85,6 @@ func NewStubConfig() *StubConfig {
 
 func (sc *StubConfig) WithLogger(logger *log.Logger) *StubConfig {
 	sc.logger = logger
-	return sc
-}
-
-func (sc *StubConfig) WithActorUserService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.actorUser = conf[0]
-	} else {
-		sc.actorUser = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_ACTOR_USER_URL", "native_actor_user:80"),
-		}
-	}
 	return sc
 }
 
@@ -165,18 +162,6 @@ func (n *NativeStub) Connect() error {
 		n.log.Info("Successfully connected to the native_namespace service")
 		n.dials = append(n.dials, conn)
 		n.Services.Namespace = service
-	}
-
-	if n.config.actorUser.enabled {
-		conn, service, err := NewActorUserConnection(n.config.actorUser.url)
-		if err != nil {
-			n.log.Error("Error while connecting to the native_actor_user service: " + err.Error())
-			n.closeConnections()
-			return err
-		}
-		n.log.Info("Successfully connected to the native_actor_user service")
-		n.dials = append(n.dials, conn)
-		n.Services.ActorUser = service
 	}
 
 	if n.config.keyValueStorage.enabled {

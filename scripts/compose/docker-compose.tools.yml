@@ -14,7 +14,6 @@ services:
       ALLOW_ROOT_USER_INIT: true
     depends_on:
       - native_namespace
-      - native_actor_user
       - native_iam
       - native_keyvaluestorage
       - system_telemetry

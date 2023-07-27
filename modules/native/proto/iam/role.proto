@@ -188,6 +188,20 @@ message CountRolesResponse {
     uint64 count = 1;
 }
 
+message UpdateRoleRequest {
+    // Namespace where the role is located
+    string namespace = 1;
+    // Unique identifier of the role to update
+    string uuid = 2;
+
+    string newName = 3;
+    string newDescription = 4;
+}
+message UpdateRoleResponse {
+    // Updated role
+    Role role = 1;
+}
+
 message DeleteRoleRequest {
     // Namespace where to search for role. Leave empty for global role.
     string namespace = 1;
@@ -279,6 +293,8 @@ service IAMRoleService {
     rpc List(ListRolesRequest) returns (stream ListRolesResponse);
     // Count roles in the namespace
     rpc Count(CountRolesRequest) returns (CountRolesResponse);
+    // Update role information
+    rpc Update(UpdateRoleRequest) returns (UpdateRoleResponse);
     // Delete role
     rpc Delete(DeleteRoleRequest) returns (DeleteRoleResponse);
 

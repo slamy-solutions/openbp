@@ -67,7 +67,7 @@ func NewIAMRoleServer(ctx context.Context, systemStub *system.SystemStub, native
 	}, nil
 }
 
-//TODO: add cache
+// TODO: add cache
 const ROLE_CACHE_TIMEOUT = time.Second * 30
 
 func makeCountRoleCacheKey(namespace string) string {
@@ -354,6 +354,45 @@ func (s *IAMRoleServer) Count(ctx context.Context, in *nativeIAmRoleGRPC.CountRo
 	}
 
 	return &response, status.Error(codes.OK, "")
+}
+func (s *IAMRoleServer) Update(ctx context.Context, in *nativeIAmRoleGRPC.UpdateRoleRequest) (*nativeIAmRoleGRPC.UpdateRoleResponse, error) {
+	id, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "Role wasnt founded. Role UUID has bad format.")
+	}
+
+	collection := s.getCollectionByNamespace(in.Namespace)
+	var updatedRole roleInMongo
+	err = collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": id},
+		bson.M{
+			"$set": bson.M{
+				"name": in.NewName, "description": in.NewDescription,
+			},
+			"$currentDate": bson.M{"updated": bson.M{"$type": "timestamp"}},
+			"$inc":         bson.M{"version": 1},
+		},
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(&updatedRole)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(codes.NotFound, "")
+		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return nil, status.Error(codes.NotFound, "Role wasnt founded. Probably namespace doesnt exist")
+			}
+		}
+		return nil, status.Error(codes.Internal, "Error while updating role in database. "+err.Error())
+	}
+
+	log.Infof("Updated role with UUID [%s] from the [%s] namespace", in.Uuid, in.Namespace)
+	// s.systemStub.Cache.Remove(ctx, makeCountRoleCacheKey(in.Namespace))
+
+	return &nativeIAmRoleGRPC.UpdateRoleResponse{
+		Role: updatedRole.ToGRPCRole(in.Namespace),
+	}, status.Error(codes.OK, "")
 }
 func (s *IAMRoleServer) Delete(ctx context.Context, in *nativeIAmRoleGRPC.DeleteRoleRequest) (*nativeIAmRoleGRPC.DeleteRoleResponse, error) {
 	id, err := primitive.ObjectIDFromHex(in.Uuid)

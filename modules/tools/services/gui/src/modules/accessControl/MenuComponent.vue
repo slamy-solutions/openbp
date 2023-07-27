@@ -60,7 +60,7 @@ const actorViews = [
         name: 'users',
         icon: 'person',
         title: 'Users',
-        routerPageName: ''
+        routerPageName: 'accessControl_actor_user_list'
     },
     {
         name: 'application',

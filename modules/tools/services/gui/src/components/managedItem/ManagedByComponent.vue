@@ -1,8 +1,8 @@
 <template>
     <ServiceManaged v-if="props.managedBy.type === 'service'" :manage-data="props.managedBy" :dense="props.dense"/>
     <IdentityManaged v-if="props.managedBy.type === 'identity'" :manage-data="props.managedBy" :dense="props.dense"/>
-    <BuiltInManaged v-if="props.managedBy.type === 'builtIn'" />
-    <NotManaged v-if="props.managedBy.type === 'none'" />
+    <BuiltInManaged v-if="props.managedBy.type === 'builtIn'" :manage-data="props.managedBy" :dense="props.dense"/>
+    <NotManaged v-if="props.managedBy.type === 'none'" :dense="props.dense"/>
 </template>
 
 <script setup lang="ts">

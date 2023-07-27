@@ -342,7 +342,7 @@ func (r *RoleRouter) AddPolicy(ctx *gin.Context) {
 		{
 			Namespace:            requestData.RoleNamespace,
 			Resources:            []string{"native.iam.role." + requestData.RoleUUID},
-			Actions:              []string{"native.iam.role.policy"},
+			Actions:              []string{"native.iam.role.update"},
 			NamespaceIndependent: false,
 		},
 	}
@@ -397,7 +397,7 @@ type removePolicyFromRoleRequest struct {
 	PolicyUUID     string `json:"policyUUID" binding:"required,lte=64"`
 }
 
-type removePolicyFromResponse struct {
+type removePolicyFromRoleResponse struct {
 	Role *formatedRole `json:"role"`
 }
 
@@ -413,7 +413,7 @@ func (r *RoleRouter) RemovePolicy(ctx *gin.Context) {
 		{
 			Namespace:            requestData.RoleNamespace,
 			Resources:            []string{"native.iam.role." + requestData.RoleUUID},
-			Actions:              []string{"native.iam.role.policy"},
+			Actions:              []string{"native.iam.role.update"},
 			NamespaceIndependent: false,
 		},
 	}
@@ -458,7 +458,64 @@ func (r *RoleRouter) RemovePolicy(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, removePolicyFromResponse{Role: FormatRole(response.Role)})
+	ctx.JSON(http.StatusOK, removePolicyFromRoleResponse{Role: FormatRole(response.Role)})
+}
+
+type updateRoleRequest struct {
+	Namespace      string `json:"namespace" binding:"lte=32"`
+	UUID           string `json:"uuid" binding:"required,lte=64"`
+	NewName        string `json:"newName" binding:"required,lte=64"`
+	NewDescription string `json:"newDescription" binding:"required,lte=256"`
+}
+
+type updateRoleResponse struct {
+	Role *formatedRole `json:"role"`
+}
+
+func (r *RoleRouter) Update(ctx *gin.Context) {
+	var requestData updateRoleRequest
+	if err := ctx.ShouldBind(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Check auth
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, []*auth.Scope{
+		{
+			Namespace:            requestData.Namespace,
+			Resources:            []string{"native.iam.role." + requestData.UUID},
+			Actions:              []string{"native.iam.role.update"},
+			NamespaceIndependent: false,
+		},
+	})
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+
+	updateResponse, err := r.nativeStub.Services.IAM.Role.Update(ctx.Request.Context(), &role.UpdateRoleRequest{
+		Namespace:      requestData.Namespace,
+		Uuid:           requestData.UUID,
+		NewName:        requestData.NewName,
+		NewDescription: requestData.NewDescription,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Role not found"})
+				return
+			}
+		}
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, updateRoleResponse{Role: FormatRole(updateResponse.Role)})
 }
 
 type deleteRoleRequest struct {

@@ -2,7 +2,6 @@
 <h6 class="row q-ma-md" v-if="policySelected">
     <h6 class="col-6 q-mt-none q-mb-none">{{ $t('modules.accessControl.iam.role.view.header') }}</h6>
     <div class="col-6 text-right">
-        <q-btn label="UPDATE"  outline color="positive" size="md" class="q-mr-md" v-if="updatesEnabled" @click="update"></q-btn>
         <q-btn color="dark" outline label="" icon="menu">
               <q-menu>
                 <q-list>
@@ -33,7 +32,7 @@
 >
 
     <div
-        class="col-4 q-pl-md q-pr-md q-pb-md"
+        class="col-sm-12 col-md-6 q-pl-md q-pr-md q-pb-md"
     >
     <q-list dense>
         <q-item>
@@ -67,8 +66,12 @@
                 </template>
             </q-input>
         </q-item>
-        <q-item>
-            <ManagedByComponent :managed-by="managed" />
+        <q-btn :label="$t('modules.accessControl.iam.role.view.updateButton')" color="dark" size="md" class="q-ma-sm full-width" v-if="updatesEnabled" @click="update"></q-btn>
+        <q-item disabled>
+            <div class="row full-width items-center">
+                <div class="col-3 text-h6">{{ $t('modules.accessControl.iam.role.view.managedBy') }}:</div>
+                <ManagedByComponent class="col-9" :managed-by="managed" />
+            </div>
         </q-item>
 
         <q-separator class="q-mt-md q-mb-md"></q-separator>
@@ -99,11 +102,20 @@
     
     </div>
 
-    <div class="col-4 q-pl-md q-pr-md q-pb-md">
-        
-    </div>
-
-    <div class="col-4 q-pl-md q-pr-md q-pb-md">
+    <div class="col-sm-12 col-md-6 q-pl-md q-pr-md q-pb-md">
+        <h6 class="q-ma-sm text-uppercase q-pa-none">
+            {{ $t('modules.accessControl.iam.role.view.policies') }}
+            <q-icon name="help" size="20px" class="q-mb-xs" >
+                <q-tooltip>{{ $t('modules.accessControl.iam.role.view.policiesCaption') }}</q-tooltip>
+            </q-icon>
+        </h6>
+        <PolicyListComponent
+            :namespace="props.namespace"
+            :policies="policies"
+            :editable="updatesEnabled"
+            @added="onPolicyAdded"
+            @removed="onPolicyRemoved"
+        />
     </div>
 
     <q-inner-loading :showing="loading">
@@ -121,6 +133,7 @@ import { Role } from 'src/boot/api/accessControl/role';
 import { onMounted,computed, Ref, ref, watch, PropType, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
   import StringListInputComponent from './StringListInputComponent.vue'
+  import PolicyListComponent from '../policy/PolicyListComponent.vue';
 import ManagedByComponent from '../../../../components/managedItem/ManagedByComponent.vue'
 import { ManagedBy } from '../../../../components/managedItem/model'
 
@@ -150,15 +163,66 @@ const created = ref('')
 const updated = ref('')
 const version = ref('')
 
-const resources = ref([] as Array<{
-    id: string
-    value: string   
-}>)
-const actions = ref([] as Array<{
-    id: string
-    value: string   
-}>)
-const namespaceIndependent = ref(false)
+const policies = ref([] as Array<{namespace: string, uuid: string}>)
+
+async function onPolicyAdded(namespace: string, uuid: string) {
+    loading.value = true
+    const notif = $q.notify({
+        type: 'ongoing',
+        message: $i18n.t('modules.accessControl.iam.role.view.addPolicyOperationNotify')
+    })
+    try {
+        const role = await api.accessControl.role.addPolicy({
+            roleNamespace: props.namespace,
+            roleUUID: props.uuid,
+            policyNamespace: namespace,
+            policyUUID: uuid
+        })
+        applyRoleData(role)
+        notif({
+            type: 'positive',
+            message: $i18n.t('modules.accessControl.iam.role.view.addPolicySuccessNotify')
+        })
+    } catch (error) {
+        notif({
+            type: 'negative',
+            timeout: 5000,
+            message: $i18n.t('modules.accessControl.iam.role.view.addPolicyFailNotify', { error })
+        })
+    } finally {
+        loading.value = false
+    }
+}
+async function onPolicyRemoved(namespace: string, uuid: string) {
+    loading.value = true
+    const notif = $q.notify({
+        type: 'ongoing',
+        message: $i18n.t('modules.accessControl.iam.role.view.removePolicyOperationNotify')
+    })
+    try {
+        const role = await api.accessControl.role.removePolicy({
+            roleNamespace: props.namespace,
+            roleUUID: props.uuid,
+            policyNamespace: namespace,
+            policyUUID: uuid
+        })
+        applyRoleData(role)
+        notif({
+            type: 'positive',
+            message: $i18n.t('modules.accessControl.iam.role.view.removePolicySuccessNotify')
+        })
+    } catch (error) {
+        notif({
+            type: 'negative',
+            timeout: 5000,
+            message: $i18n.t('modules.accessControl.iam.role.view.removePolicyFailNotify', { error })
+        })
+    } finally {
+        loading.value = false
+    }
+}
+
+// const namespaceIndependent = ref(false)
 
 async function loadData() {
     loading.value = true
@@ -173,7 +237,7 @@ async function loadData() {
             namespace: props.namespace,
             uuid: props.uuid
         })
-        applyPolicyData(role)
+        applyRoleData(role)
         notif()
         loadingError.value = ""
     } catch (error) {
@@ -188,49 +252,55 @@ async function loadData() {
 }
 
 async function update() {
-    /*loading.value = true
+    loading.value = true
+
+    const notif = $q.notify({
+        type: 'ongoing',
+        message: $i18n.t('modules.accessControl.iam.role.view.updateOperationNotify')
+    })
+
     try {
-        const policy = await api.accessControl.policy.update({
+        const updateResponse = await api.accessControl.role.update({
             namespace: props.namespace,
-            uuid: props.uuid,
-            name: name.value,
-            description: description.value,
-            actions: actions.value.map((v) => v.value),
-            resources: resources.value.map((v) => v.value),
-            namespaceIndependent: namespaceIndependent.value
+            newDescription: description.value,
+            newName: name.value,
+            uuid: props.uuid
         })
-        applyPolicyData(policy)
+        applyRoleData(updateResponse.role)
+
+        notif({
+            type: 'positive',
+            message: $i18n.t('modules.accessControl.iam.role.view.updateSuccessfullNotify')
+        })
+    } catch(error) {
+        notif({
+            type: 'negative',
+            timeout: 5000,
+            message: $i18n.t('modules.accessControl.iam.role.view.updateFailNotify', { error })
+        })
     } finally {
         loading.value = false
-    }*/
+    }
 }
 
-function applyPolicyData(role: Role) {
+function applyRoleData(role: Role) {
     name.value = role.name
     description.value = role.description
+    policies.value = role.policies
     managed.value = role.managed
     created.value = role.created.toISOString()
     updated.value = role.updated.toISOString()
     version.value = role.version.toString()
-
-    /*resources.value = role.resources.map((r) => {
-        return {
-            id: Math.random().toString(),
-            value: r
-        }
-    })
-
-    actions.value = role.actions.map((r) => {
-        return {
-            id: Math.random().toString(),
-            value: r
-        }
-    })*/
 }
 
 watch(props, async (newProps)=>{
     if (newProps.uuid !== '') {
-        console.log("Change")
+        await loadData()
+    }
+})
+
+onMounted(async () => {
+    if (props.uuid !== '') {
         await loadData()
     }
 })

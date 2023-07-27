@@ -8,15 +8,18 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
+	iot "github.com/slamy-solutions/openbp/modules/iot/libs/golang"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 
 	accesscontrol "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/accessControl"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/auth"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/bootstrap"
+	iotDomain "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/iot"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/namespace"
 )
 
@@ -42,8 +45,14 @@ func main() {
 		panic(err)
 	}
 
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithActorUserService().WithNamespaceService().WithIAMService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err = nativeStub.Connect()
+	if err != nil {
+		panic(err)
+	}
+
+	iotStub := iot.NewIOTStub(iot.NewStubConfig().WithCoreService())
+	err = iotStub.Connect()
 	if err != nil {
 		panic(err)
 	}
@@ -59,10 +68,13 @@ func main() {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(otelgin.Middleware("tools_rest"))
 
+	logger := logrus.StandardLogger()
+
 	auth.FillRouterGroup(r.Group("/api/auth"), systemStub, nativeStub)
 	bootstrap.FillRouterGroup(r.Group("/api/bootstrap"), systemStub, nativeStub)
 	namespace.FillRouterGroup(r.Group("/api/namespace"), nativeStub)
 	accesscontrol.FillRouterGroup(r.Group("/api/accessControl"), nativeStub)
+	iotDomain.FillRouterGroup(logger.WithField("domain.name", "iot"), r.Group("/api/iot"), systemStub, nativeStub, iotStub)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

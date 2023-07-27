@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"strconv"
+
+	"github.com/miekg/pkcs11"
 )
 
 var ErrPKCSNotLoggedIn = errors.New("pkcs is not logged in")
@@ -14,6 +16,13 @@ var ErrPKCSBadLoginPassword = errors.New("bad pkcs password")
 var ErrRSAKeyDoesntExist = errors.New("RSA key doesnt exist")
 var ErrHMACKeyDoesntExist = errors.New("HMAC key doesnt exist")
 var ErrEncryptionKeyDoesntExist = errors.New("encryption key doesnt exist")
+
+const (
+	RSASignAlgoDefault = pkcs11.CKM_SHA512_RSA_PKCS
+	RSASignAlgoSHA512  = pkcs11.CKM_SHA512_RSA_PKCS
+	RSASignAlgoSHA256  = pkcs11.CKM_SHA256_RSA_PKCS
+	RSASignAlgoRSAPKCS = pkcs11.CKM_RSA_PKCS
+)
 
 type PKCS interface {
 	Initialize() error
@@ -30,13 +39,13 @@ type PKCS interface {
 	// Returns RSA public key if it exists
 	GetRSAPublicKey(ctx context.Context, name string) ([]byte, error)
 	// Signs message stream using RSA private key
-	SignRSAStream(ctx context.Context, name string, message *io.PipeReader) ([]byte, error)
+	SignRSAStream(ctx context.Context, name string, message *io.PipeReader, mechanism uint) ([]byte, error)
 	// Verifies message stream using RSA public key
-	VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error)
+	VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte, mechanism uint) (bool, error)
 	// Signs message using RSA private key
-	SignRSA(ctx context.Context, name string, message []byte) ([]byte, error)
+	SignRSA(ctx context.Context, name string, message []byte, mechanism uint) ([]byte, error)
 	// Verifies message using RSA public key
-	VerifyRSA(ctx context.Context, name string, message []byte, signature []byte) (bool, error)
+	VerifyRSA(ctx context.Context, name string, message []byte, signature []byte, mechanism uint) (bool, error)
 
 	// Create HMAC based on message stream
 	SignHMACStream(ctx context.Context, message *io.PipeReader) ([]byte, error)

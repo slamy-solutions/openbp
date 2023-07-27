@@ -1,0 +1,179 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "device.proto";
+
+package iot_core_fleet;
+
+option go_package = "slamy/openERP/iot/core/fleet;fleet";
+
+message Fleet {
+    // Namesapce where fleet is located
+    string namespace = 1;
+    // Unique identifier of the fleet
+    string uuid = 2;
+    // Displayable name
+    string name = 3;
+    // Arbitrary description
+    string description = 4;
+
+    // When the fleet was created
+    google.protobuf.Timestamp created = 50;
+    // Last time when the fleet information was updated.
+    google.protobuf.Timestamp updated = 51;
+    // Counter that increases after every update of the fleet
+    uint64 version = 52;
+}
+
+message CreateRequest {
+    // Namesapce where to create fleet
+    string namespace = 1;
+    // Displayable name
+    string name = 3;
+    // Arbitrary description
+    string description = 4;
+}
+message CreateResponse {
+    // Created fleet
+    Fleet fleet = 1;
+}
+
+message GetRequest {
+    // Namesapce where to search for fleet
+    string namespace = 1;
+    // Unique identifier of the fleet to search
+    string uuid = 2;
+}
+message GetResponse {
+    // Founded fleet
+    Fleet fleet = 1;
+}
+
+message ExistsRequest {
+    // Namesapce where to search for fleet
+    string namespace = 1;
+    // Unique identifier of the fleet to search
+    string uuid = 2;
+}
+message ExistsResponse {
+    // Indicates if fleet exists or not
+    bool exists = 1;
+}
+
+message UpdateRequest {
+    // Namesapce where fleet is located
+    string namespace = 1;
+    // Unique identifier of the fleet
+    string uuid = 2;
+    // New description
+    string description = 3;
+}
+message UpdateResponse {
+    // Updated fleet information
+    Fleet fleet = 1;
+}
+
+message DeleteRequest {
+    // Namesapce where fleet is located
+    string namespace = 1;
+    // Unique identifier of the fleet
+    string uuid = 2;
+}
+message DeleteResponse {
+    // Indicates if fleet existed before this delete operation
+    bool existed = 1;
+}
+
+message CountRequest {
+    // Namespace where to count fleets
+    string namespace = 1;
+}
+message CountResponse {
+    // Current number of the fleets inside namespace
+    uint64 count = 1;
+}
+
+message ListRequest {
+    // Namespace where to list fleets
+    string namespace = 1;
+
+    // How much fleets to skip before returning the result
+    uint64 skip = 10;
+    // Limit result to specified nnumber of fleets
+    uint64 limit = 11;
+}
+message ListResponse {
+    // Fleet from the namespace
+    Fleet fleet = 1;
+}
+
+message CountDevicesRequest {
+    // Namespace where fleet is located
+    string namespace = 1;
+    // Unique identifier of the fleet
+    string uuid = 2;
+}
+message CountDevicesResponse {
+    // Current number of the devices inside fleet
+    uint64 count = 1;
+}
+
+message ListDevicesRequest {
+    // Namespace where fleet is located
+    string namespace = 1;
+    // Unique identifier of the fleet
+    string uuid = 2;
+
+    // How much devices to skip before returning the result
+    uint64 skip = 10;
+    // Limit result to specified nnumber of devices
+    uint64 limit = 11;
+}
+
+message ListDevicesResponse {
+    message FleetDevice {
+        // Device information
+        iot_core_device.Device device = 1;
+        // Where the device was added to the fleet
+        google.protobuf.Timestamp added = 2;
+    }
+
+    // One of the fleet devices
+    FleetDevice device = 1;
+}
+
+message AddDeviceRequest {
+    // Namespace where device and fleet are located
+    string namespace = 1;
+    // Unique identifier of the fleet
+    string fleetUUID = 2;
+    // Unique identifier of the device
+    string deviceUUID = 3;
+}
+message AddDeviceResponse {}
+
+message RemoveDeviceRequest {
+    // Namespace where device and fleet are located
+    string namespace = 1;
+    // Unique identifier of the fleet
+    string fleetUUID = 2;
+    // Unique identifier of the device
+    string deviceUUID = 3;
+}
+message RemoveDeviceResponse {}
+
+// Handles all the operations with devices fleet management
+service FleetService {
+    rpc Create(CreateRequest) returns (CreateResponse) {};
+    rpc Get(GetRequest) returns (GetResponse) {};
+    rpc Exists(ExistsRequest) returns (ExistsResponse) {};
+    rpc Update(UpdateRequest) returns (UpdateResponse) {};
+    rpc Delete(DeleteRequest) returns (DeleteResponse) {};
+    rpc Count(CountRequest) returns (CountResponse) {};
+    rpc List(ListRequest) returns (stream ListResponse) {};
+
+    rpc CountDevices(CountDevicesRequest) returns (CountDevicesResponse) {};
+    rpc ListDevices(ListDevicesRequest) returns (stream ListDevicesResponse) {};
+    rpc AddDevice(AddDeviceRequest) returns (AddDeviceResponse) {};
+    rpc RemoveDevice(RemoveDeviceRequest) returns (RemoveDeviceResponse) {};
+}

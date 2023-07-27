@@ -1,0 +1,20 @@
+version: "3.4"
+services:
+  iot_core:
+    container_name: iot_core
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/iot/services/core/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "iot_core"
+    depends_on:
+      - native_namespace
+      - native_iam
+      - system_telemetry
+      - system_nats
+      - system_cache
+      - system_db
+    ports:
+      - "127.0.0.1:28285:80" # For testing

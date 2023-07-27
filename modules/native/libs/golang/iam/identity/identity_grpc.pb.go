@@ -36,6 +36,8 @@ type IAMIdentityServiceClient interface {
 	Count(ctx context.Context, in *CountIdentityRequest, opts ...grpc.CallOption) (*CountIdentityResponse, error)
 	// Get policy that is managed by service
 	GetServiceManagedIdentity(ctx context.Context, in *GetServiceManagedIdentityRequest, opts ...grpc.CallOption) (*GetServiceManagedIdentityResponse, error)
+	// Update identity information
+	Update(ctx context.Context, in *UpdateIdentityRequest, opts ...grpc.CallOption) (*UpdateIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(ctx context.Context, in *AddPolicyRequest, opts ...grpc.CallOption) (*AddPolicyResponse, error)
 	// Remove policy from the identity. If policy was already removed - does nothing.
@@ -142,6 +144,15 @@ func (c *iAMIdentityServiceClient) GetServiceManagedIdentity(ctx context.Context
 	return out, nil
 }
 
+func (c *iAMIdentityServiceClient) Update(ctx context.Context, in *UpdateIdentityRequest, opts ...grpc.CallOption) (*UpdateIdentityResponse, error) {
+	out := new(UpdateIdentityResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMIdentityServiceClient) AddPolicy(ctx context.Context, in *AddPolicyRequest, opts ...grpc.CallOption) (*AddPolicyResponse, error) {
 	out := new(AddPolicyResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/AddPolicy", in, out, opts...)
@@ -205,6 +216,8 @@ type IAMIdentityServiceServer interface {
 	Count(context.Context, *CountIdentityRequest) (*CountIdentityResponse, error)
 	// Get policy that is managed by service
 	GetServiceManagedIdentity(context.Context, *GetServiceManagedIdentityRequest) (*GetServiceManagedIdentityResponse, error)
+	// Update identity information
+	Update(context.Context, *UpdateIdentityRequest) (*UpdateIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error)
 	// Remove policy from the identity. If policy was already removed - does nothing.
@@ -242,6 +255,9 @@ func (UnimplementedIAMIdentityServiceServer) Count(context.Context, *CountIdenti
 }
 func (UnimplementedIAMIdentityServiceServer) GetServiceManagedIdentity(context.Context, *GetServiceManagedIdentityRequest) (*GetServiceManagedIdentityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServiceManagedIdentity not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) Update(context.Context, *UpdateIdentityRequest) (*UpdateIdentityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedIAMIdentityServiceServer) AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPolicy not implemented")
@@ -400,6 +416,24 @@ func _IAMIdentityService_GetServiceManagedIdentity_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IAMIdentityService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).Update(ctx, req.(*UpdateIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IAMIdentityService_AddPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddPolicyRequest)
 	if err := dec(in); err != nil {
@@ -520,6 +554,10 @@ var IAMIdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetServiceManagedIdentity",
 			Handler:    _IAMIdentityService_GetServiceManagedIdentity_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _IAMIdentityService_Update_Handler,
 		},
 		{
 			MethodName: "AddPolicy",

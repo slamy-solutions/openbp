@@ -394,10 +394,46 @@ func (s *IAmIdentityServer) GetServiceManagedIdentity(ctx context.Context, in *n
 				return nil, status.Error(grpccodes.NotFound, "Identity wasnt founded. Probably namespace doesnt exist")
 			}
 		}
-		return nil, status.Error(grpccodes.Internal, "Error while searching for policy in database. "+err.Error())
+		return nil, status.Error(grpccodes.Internal, "Error while searching for identity in database. "+err.Error())
 	}
 
 	return &nativeIAmIdentityGRPC.GetServiceManagedIdentityResponse{Identity: identity.ToGRPCIdentity(in.Namespace)}, status.Error(grpccodes.OK, "")
+}
+
+func (s *IAmIdentityServer) Update(ctx context.Context, in *nativeIAmIdentityGRPC.UpdateIdentityRequest) (*nativeIAmIdentityGRPC.UpdateIdentityResponse, error) {
+	uuid, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(grpccodes.InvalidArgument, "Identity UUID has bad format")
+	}
+
+	collection := collectionByNamespace(s, in.Namespace)
+	var identity identityInMongo
+	err = collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": uuid},
+		bson.M{
+			"$set":         bson.M{"name": in.NewName},
+			"$currentDate": bson.M{"updated": bson.M{"$type": "timestamp"}},
+			"$inc":         bson.M{"version": 1},
+		},
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(&identity)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(grpccodes.NotFound, "")
+		}
+		if err, ok := err.(mongo.WriteException); ok {
+			if err.HasErrorLabel("InvalidNamespace") {
+				return nil, status.Error(grpccodes.NotFound, "Identity wasnt founded. Probably namespace doesnt exist")
+			}
+		}
+
+		return nil, status.Error(grpccodes.Internal, "Error while updating identity in the database. "+err.Error())
+	}
+
+	s.systemStub.Cache.Remove(ctx, makeIndetityCacheKey(in.Namespace, in.Uuid))
+
+	return &nativeIAmIdentityGRPC.UpdateIdentityResponse{Identity: identity.ToGRPCIdentity(in.Namespace)}, status.Error(codes.OK, "")
 }
 
 func (s *IAmIdentityServer) AddPolicy(ctx context.Context, in *nativeIAmIdentityGRPC.AddPolicyRequest) (*nativeIAmIdentityGRPC.AddPolicyResponse, error) {

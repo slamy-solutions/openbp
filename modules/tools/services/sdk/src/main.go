@@ -11,50 +11,48 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
+	sdkTools "github.com/slamy-solutions/openbp/modules/tools/services/sdk/src/tools"
+
+	"github.com/sirupsen/logrus"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-	otel "github.com/slamy-solutions/openbp/modules/system/libs/golang/otel"
+	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 
-	tools "github.com/slamy-solutions/openbp/modules/tools/services/sdk/src/tools"
-
-	"github.com/slamy-solutions/openbp/modules/tools/services/sdk/src/services"
+	"github.com/slamy-solutions/openbp/modules/tools/services/sdk/src/servers"
 )
 
 const (
 	VERSION = "1.0.0"
 )
 
-func getConfigEnv(key string, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
+func getHostname() string {
+	name, err := os.Hostname()
+	if err != nil {
+		return "unknown"
 	}
-	return fallback
+	return name
 }
 
 func main() {
-	SYSTEM_TELEMETRY_EXPORTER_ENDPOINT := getConfigEnv("SYSTEM_TELEMETRY_EXPORTER_ENDPOINT", "system_telemetry:55680")
-
-	ctx := context.Background()
-
-	// Setting up Telemetry
-	telemetryProvider, err := otel.Register(ctx, SYSTEM_TELEMETRY_EXPORTER_ENDPOINT, "native", "namespace", VERSION, "1")
+	// --- Setting up connection to the system services
+	systemStub := system.NewSystemStub(
+		system.NewSystemStubConfig().WithCache().WithDB().WithNats().WithOTel(system.NewOTelConfig("tools", "sdk", VERSION, getHostname())),
+	)
+	systemConnectionContext, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+	err := systemStub.Connect(systemConnectionContext)
 	if err != nil {
-		panic(err)
+		panic("Failed to connect to the system services: " + err.Error())
 	}
-	defer telemetryProvider.Shutdown(ctx)
-	fmt.Println("Initialized telemetry")
+	defer systemStub.Close(context.Background())
 
-	// Setting up connection to the native services
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService())
+	// --- Setting up connection to the native services
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err = nativeStub.Connect()
 	if err != nil {
 		panic("Failed to connect to the native services: " + err.Error())
 	}
 	defer nativeStub.Close()
 	fmt.Println("Connected to the native services")
-
-	modulesStub := &tools.ModulesStub{
-		Native: nativeStub,
-	}
 
 	// Creating grpc server
 	grpcServer := grpc.NewServer(
@@ -66,7 +64,14 @@ func main() {
 		}),
 	)
 
-	err = services.RegisterGRPCServices(modulesStub, grpcServer)
+	authHandler, err := sdkTools.NewAuthHandler(nativeStub, sdkTools.NewTraefikCertificateExtractor())
+	if err != nil {
+		panic("Failed to initialize  auth handler: " + err.Error())
+	}
+
+	logger := logrus.StandardLogger()
+
+	err = servers.RegisterGRPCServers(grpcServer, authHandler, logger.WithField("module", "server"), systemStub, nativeStub)
 	if err != nil {
 		panic("Failed register gRPC services: " + err.Error())
 	}

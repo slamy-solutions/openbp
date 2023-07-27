@@ -38,6 +38,16 @@ export interface CreateRequest {
     description: string
 }
 
+export interface UpdateRequest {
+    namespace: string
+    uuid: string
+    newName: string
+    newDescription: string
+}
+export interface UpdateResponse {
+    role: Role
+}
+
 export interface DeleteRequest {
     namespace: string
     uuid: string
@@ -85,6 +95,13 @@ export class RoleAPI extends APIModuleBase {
         role.created = new Date(role.created) // we are receiving string in ISO format
         role.updated = new Date(role.updated)
         return role
+    }
+
+    async update(params: UpdateRequest): Promise<UpdateResponse> {
+        const response = await RoleAPI._axios.patch<UpdateResponse>('/accessControl/iam/role', params)
+        response.data.role.created = new Date(response.data.role.created) // we are receiving string in ISO format
+        response.data.role.updated = new Date(response.data.role.updated)
+        return response.data
     }
 
     // Delete role

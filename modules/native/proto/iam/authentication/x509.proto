@@ -1,0 +1,215 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package native_iam_authentication_x509;
+
+option go_package = "slamy/openBP/native/iam/authentication/x509;x509";
+
+message Certificate {
+    // Namespace where indetity and its certificate are located
+    string namespace = 1;
+    // Unique identifier of the certificate
+    string uuid = 2;
+    // Unique identifier of the identity
+    string identity = 3;
+    // Indicates if certificate was manually disabled. Disabled certificate connot be used.
+    bool disabled = 4;
+    // Arbitrary, human-readable desription of the certificate
+    string description = 5;
+    // RSA public key in DER format
+    bytes publicKey = 6;
+
+
+    // When the certificate was created
+    google.protobuf.Timestamp created = 9;
+    // Last time when the certificate information was updated.
+    google.protobuf.Timestamp updated = 10;
+    // Counter that increases after every update of the certificate
+    uint64 version = 11;
+}
+
+message GetRootCAInfoRequest {}
+message GetRootCAInfoResponse {
+    // x509 certificate in the DER format
+    bytes certificate = 1;
+}
+
+message RegisterAndGenerateRequest {
+    // Namespace where identity is located and where to generate certificate
+    string namespace = 1;
+    // Identity unique identifier
+    string identity = 2;
+    // Public key of the identity in the PEN format. Should be generated externaly in order not to share the public key with service.
+    bytes publicKey = 3;
+    // Arbitrary, human-readable desription of the certificate
+    string description = 4;
+}
+message RegisterAndGenerateResponse {
+    // Certificate in DER format signed by CA of the service
+    bytes raw = 1;
+    // Certificate information
+    Certificate info = 2;
+}
+
+message RegenerateRequest {
+    // Namespace where certificate is located
+    string namespace = 1;
+    // Unique identifier of the certificate
+    string uuid = 2;
+}
+message RegenerateResponse {
+    // New X509 in DER format signed by CA of the service
+    bytes certificate = 1;
+}
+
+
+message ValidateAndGetFromRawX509Request {
+    // Certificate in DER format
+    bytes raw = 1;
+}
+message ValidateAndGetFromRawX509Response {
+    enum Status {
+        // Everything is ok
+        OK = 0;
+        // Certificate is corrupted or it wasnt supplied in DER format
+        INVALID_FORMAT = 1;
+        // Certificate has invalid signature. 
+        SIGNATURE_INVALID = 2;
+        // Cant find certificate.
+        NOT_FOUND = 3;
+    }
+
+    // Status of the validation and search
+    Status status = 1;
+    // Certificate information if status is OK
+    Certificate certificate = 2;
+}
+
+message GetRequest {
+    // Namespace where certificate is located
+    string namespace = 1;
+    // Unique identifier of the certificate
+    string uuid = 2;
+}
+message GetResponse {
+    Certificate certificate = 1;
+}
+
+message CountRequest {
+    // Namespace where to count certificates
+    string namespace = 1;
+}
+message CountResponse {
+    uint64 count = 1;
+}
+
+message ListRequest {
+    // Namespace where to list certificates
+    string namespace = 1;
+    // How much entries to skip before returning actual entries
+    uint64 skip = 2;
+    // Limit response to specified count of entries. Use 0 to ignore this and return all the possible entries.
+    uint64 limit = 3;
+}
+message ListResponse {
+    // One of the certificates
+    Certificate certificate = 1;
+}
+
+message CountForIdentityRequest {
+    // Namespace where to count certificates
+    string namespace = 1;
+    // Identity unique identifier for each to count certificates
+    string identity = 2;
+}
+message CountForIdentityResponse {
+    uint64 count = 1;
+}
+
+message ListForIdentityRequest {
+    // Namespace where to list certificates
+    string namespace = 1;
+    // Identity unique identifier for each to list certificates
+    string identity = 2;
+    // How much entries to skip before returning actual entries
+    uint64 skip = 3;
+    // Limit response to specified count of entries. Use 0 to ignore this and return all the possible entries.
+    uint64 limit = 4;
+}
+message ListForIdentityResponse {
+    // One of the certificates
+    Certificate certificate = 1;
+}
+
+message UpdateRequest {
+    // Namespace where certificate is located
+    string namespace = 1;
+    // Unique identifier of the certificate
+    string uuid = 2;
+    // New description
+    string newDescription = 5;
+}
+message UpdateResponse {
+    // Updated certificate information
+    Certificate certificate = 1;
+}
+
+message DeleteRequest {
+    // Namespace where certificate is located
+    string namespace = 1;
+    // Unique identifier of the certificate
+    string uuid = 2;
+}
+message DeleteResponse {
+    // indicates if certificate existed before this operation
+    bool existed = 1;
+}
+
+message DisableRequest {
+    // Namespace where certificate is located
+    string namespace = 1;
+    // Unique identifier of the certificate
+    string uuid = 2;
+}
+message DisableResponse {
+    // indicates if certificate was active before this operation
+    bool wasActive = 1;
+}
+
+// Provides API to authentificate identities using x509 certificates
+service IAMAuthenticationX509Service {
+    // Get root CA certificate and public key in DER format. It can be used to validate all the certificates created by this service
+    rpc GetRootCAInfo(GetRootCAInfoRequest) returns (GetRootCAInfoResponse);
+
+    
+    // Register public key for identity and generate x509 certificate for it. Sign certificate using internal CA.
+    rpc RegisterAndGenerate(RegisterAndGenerateRequest) returns (RegisterAndGenerateResponse);
+    // Regenerate x509 certificate. Return new x509 certificate signed with CA. 
+    rpc Regenerate(RegenerateRequest) returns (RegenerateResponse);
+    
+
+    // Get certificate information from RAW X509 certificate.
+    rpc ValidateAndGetFromRawX509(ValidateAndGetFromRawX509Request) returns (ValidateAndGetFromRawX509Response);
+    // Get certificate information using its unique identifier
+    rpc Get(GetRequest) returns (GetResponse);
+    // Count all the registered certificates in the namespace
+    rpc Count(CountRequest) returns (CountResponse);
+    // List all the registered certificates in the namespace
+    rpc List(ListRequest) returns (stream ListResponse);
+    // List all the registered certificates for specified identity
+    rpc CountForIdentity(CountForIdentityRequest) returns (CountForIdentityResponse);
+    // List all the registered certificates for specified identity
+    rpc ListForIdentity(ListForIdentityRequest) returns (stream ListForIdentityResponse);
+
+    // Update certificate information
+    rpc Update(UpdateRequest) returns (UpdateResponse);
+
+    // Delete certificate. Note, that previously generated X509 certificate is still valid. Thats why you have to check if they still exists and wasnt disabled.
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    // Mark certificate as manually disabled. Disabled certificated cant be used.
+    rpc Disable(DisableRequest) returns (DisableResponse);
+
+    // Validate provided certificate. Check if it was signed by CA owned by this service. If everything OK - return the namespace and identifier of the identity.
+    //rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+}

@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package iot_core_integration_balena;
+
+option go_package = "github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/integration/balena;balena";
+
+message ConnectionConfig {
+    // Indicates if integration is enabled or not
+    bool enabled = 1;
+    // URL of the service. For example https://api.balena.com
+    string url = 2;
+    // Access token
+    string token = 3;
+
+
+    // Last time when the config was updated.
+    google.protobuf.Timestamp updated = 50;
+    // Counter that increases after every update of the config
+    uint64 version = 51;
+}
+
+message SyncConfig {
+    // Interval in seconds between synchronizations
+    uint32 updateInterval = 1;
+    // Time to next synchronization will be calculated as "updateInterval + random(0, updateIntervalVariation)". This will ensure, that multiple workers make updates in different time
+    uint32 updateIntervalVariation = 2;
+
+    // Last time when the config was updated.
+    google.protobuf.Timestamp updated = 50;
+    // Counter that increases after every update of the config
+    uint64 version = 51;
+}
+
+message BalenaDevice {
+    // Namespace of the balena service integration
+    string balenaNamespace = 1;
+    // Device ID from the balena server
+    int32 balenaID = 2;
+    // Device UUID from the balena server
+    string balenaUUID = 3;
+
+    // Device namespace in the OpenBP
+    string deviceNamespace = 4;
+    // Device UUID in the OpenBP. If the device wasnt assigned - it will be empty.
+    string deviceUUID = 5;
+
+    // Time when the information about this balena device was loaded first time
+    google.protobuf.Timestamp created = 50;
+    // Last time when the information was updated.
+    google.protobuf.Timestamp updated = 51;
+    // Counter that increases after every update of the information
+    uint64 version = 52;
+}
+
+message SetConnectionConfigRequest {
+    // Indicates if integration is enabled or not
+    bool enabled = 1;
+    // URL of the service. For example https://api.balena.com
+    string url = 2;
+    // Access token
+    string token = 3;
+}
+message SetConnectionConfigResponse {
+    // Updated configuration
+    ConnectionConfig config = 1;
+}
+
+message GetConnectionConfigRequest {}
+message GetConnectionConfigResponse {
+    // Current configuration
+    ConnectionConfig config = 1;
+}
+
+message VerifyConnectionConfigRequest {
+    // URL of the service. For example https://api.balena.com
+    string url = 1;
+    // Access token
+    string token = 2;
+}
+message VerifyConnectionConfigResponse {
+    enum Status {
+        // Everything is ok
+        OK = 0;
+        // Server URL has bad format
+        BAD_URL = 1;
+        // Cant open connection to the server
+        SERVER_UNAVAILABLE = 2;
+        // Connection with server established, but it returns bad status code
+        SERVER_BAD_RESPONSE = 3;
+    }
+
+    // Status of the verification
+    Status status = 1;
+    // Human-friendly message with status explanation
+    string message = 2;
+}
+
+message SetSyncConfigRequest {
+    // Interval in seconds between synchronizations
+    uint32 updateInterval = 1;
+    // Time to next synchronization will be calculated as "updateInterval + random(0, updateIntervalVariation)". This will ensure, that multiple workers make updates in different time
+    uint32 updateIntervalVariation = 2;
+}
+message SetSyncConfigResponse {
+    // Updated configuration
+    SyncConfig config = 1;
+}
+
+message GetSyncConfigRequest {}
+message GetSyncConfigResponse {
+    // Current configuration
+    SyncConfig config = 1;
+}
+
+message SyncNowRequest {}
+message SyncNowResponse {}
+
+message BindRequest {
+    // Namespace of the balena service integration
+    string balenaNamespace = 1;
+    // Device ID from the balena server
+    int32 balenaID = 2;
+
+    // Device namespace in the OpenBP
+    string deviceNamespace = 3;
+    // Device UUID in the OpenBP.
+    string deviceUUID = 4;
+}
+message BindResponse {
+    // Updated balena device information
+    BalenaDevice device = 1;
+}
+
+message UnBindRequest {
+    // Namespace of the balena service integration
+    string balenaNamespace = 1;
+    // Device ID from the balena server
+    int32 balenaID = 2;
+}
+message UnBindResponse {
+    // Updated balena device information
+    BalenaDevice device = 1;
+}
+
+message ListRequest {
+    enum BindingFilter {
+        // Return all
+        ALL = 0;
+        // Return only binded
+        ONLY_BINDED = 1;
+        // Return only not binded
+        ONLY_UNBINDED = 2;
+    }
+
+    // Namespace of the balena service integration
+    string balenaNamespace = 1;
+
+    BindingFilter bindingFilter = 2;
+
+    uint64 skip = 3;
+    uint64 limit = 4;
+}
+message ListResponse {
+    BalenaDevice device = 1;
+}
+
+message CountRequest {
+    enum BindingFilter {
+        // Return all
+        ALL = 0;
+        // Return only binded
+        ONLY_BINDED = 1;
+        // Return only not binded
+        ONLY_UNBINDED = 2;
+    }
+
+    // Namespace of the balena service integration
+    string balenaNamespace = 1;
+    BindingFilter bindingFilter = 2;
+}
+message CountResponse {
+    uint64 count = 1;
+}
+
+service BalenaIntegrationService {
+    // Set connection configuration
+    rpc SetConnectionConfig(SetConnectionConfigRequest) returns (SetConnectionConfigResponse);
+    // Get current connection configuration
+    rpc GetConnectionConfig(GetConnectionConfigRequest) returns (GetConnectionConfigResponse);
+    // Perform request to the Balena server and check if sended configuration is valid. 
+    rpc VerifyConnectionConfig(VerifyConnectionConfigRequest) returns (VerifyConnectionConfigResponse);
+
+    // Set synchronization configuration
+    rpc SetSyncConfig(SetSyncConfigRequest) returns (SetSyncConfigResponse);
+    // Get current synchronization configuration
+    rpc GetSyncConfig(GetSyncConfigRequest) returns (GetSyncConfigResponse);
+
+
+    // Synchronize the state between Balena server and OpenBP. Start synchronization immediatelly
+    rpc SyncNow(SyncNowRequest) returns (SyncNowResponse);
+
+    // Bind Balena device to the OpenBP IoT device
+    rpc Bind(BindRequest) returns (BindResponse);
+    // Unbind OpenBP device from the Balena device
+    rpc UnBind(UnBindRequest) returns (UnBindResponse);
+    // List all the Balena devices
+    rpc List(ListRequest) returns (stream ListResponse);
+    // Count all the Balena devices
+    rpc Count(CountRequest) returns (CountResponse);
+}

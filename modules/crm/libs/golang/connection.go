@@ -31,7 +31,7 @@ func makeGrpcDial(address string, opts ...grpc.DialOption) (*grpc.ClientConn, er
 	return dial, nil
 }
 
-// Connect to IAM service
+// Connect to CRM core service
 func NewCoreConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *CoreService, error) {
 	dial, err := makeGrpcDial(address, opts...)
 	if err != nil {

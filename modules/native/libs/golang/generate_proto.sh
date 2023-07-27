@@ -9,11 +9,6 @@ echo "Generating proto for keyvaluestorage service"
 mkdir -p ./keyvaluestorage
 protoc --go_out=./keyvaluestorage --go_opt=paths=source_relative --go-grpc_out=./keyvaluestorage --go-grpc_opt=paths=source_relative -I ../../proto keyvaluestorage.proto
 
-# actor_user
-echo "Generating proto for actor_user service"
-mkdir -p ./actor/user
-protoc --go_out=./actor/user --go_opt=paths=source_relative --go-grpc_out=./actor/user --go-grpc_opt=paths=source_relative -I ../../proto/actor user.proto
-
 # iam_token
 echo "Generating proto for iam_token service"
 mkdir -p ./iam/token
@@ -38,7 +33,15 @@ protoc --go_out=./iam/config --go_opt=paths=source_relative --go-grpc_out=./iam/
 echo "Generating proto for iam_identity service"
 mkdir -p ./iam/identity
 protoc --go_out=./iam/identity --go_opt=paths=source_relative --go-grpc_out=./iam/identity --go-grpc_opt=paths=source_relative -I ../../proto/iam identity.proto
-# iam_authentication
-echo "Generating proto for iam_authentication service"
+# iam_authentication_password
+echo "Generating proto for iam_authentication_password service"
 mkdir -p ./iam/authentication/password
 protoc --go_out=./iam/authentication/password --go_opt=paths=source_relative --go-grpc_out=./iam/authentication/password --go-grpc_opt=paths=source_relative -I ../../proto/iam/authentication password.proto
+# iam_authentication_x509
+echo "Generating proto for iam_authentication_x509 service"
+mkdir -p ./iam/authentication/x509
+protoc --go_out=./iam/authentication/x509 --go_opt=paths=source_relative --go-grpc_out=./iam/authentication/x509 --go-grpc_opt=paths=source_relative -I ../../proto/iam/authentication x509.proto
+# iam_actor_user
+echo "Generating proto for iam_actor_user service"
+mkdir -p ./iam/actor/user
+protoc --go_out=./iam/actor/user --go_opt=paths=source_relative --go-grpc_out=./iam/actor/user --go-grpc_opt=paths=source_relative -I ../../proto/iam/actor user.proto

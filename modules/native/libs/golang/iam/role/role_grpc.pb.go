@@ -32,6 +32,8 @@ type IAMRoleServiceClient interface {
 	List(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (IAMRoleService_ListClient, error)
 	// Count roles in the namespace
 	Count(ctx context.Context, in *CountRolesRequest, opts ...grpc.CallOption) (*CountRolesResponse, error)
+	// Update role information
+	Update(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error)
 	// Delete role
 	Delete(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
 	// Get role that is managed by service
@@ -144,6 +146,15 @@ func (c *iAMRoleServiceClient) Count(ctx context.Context, in *CountRolesRequest,
 	return out, nil
 }
 
+func (c *iAMRoleServiceClient) Update(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error) {
+	out := new(UpdateRoleResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_role.IAMRoleService/Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMRoleServiceClient) Delete(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error) {
 	out := new(DeleteRoleResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_role.IAMRoleService/Delete", in, out, opts...)
@@ -212,6 +223,8 @@ type IAMRoleServiceServer interface {
 	List(*ListRolesRequest, IAMRoleService_ListServer) error
 	// Count roles in the namespace
 	Count(context.Context, *CountRolesRequest) (*CountRolesResponse, error)
+	// Update role information
+	Update(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error)
 	// Delete role
 	Delete(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
 	// Get role that is managed by service
@@ -244,6 +257,9 @@ func (UnimplementedIAMRoleServiceServer) List(*ListRolesRequest, IAMRoleService_
 }
 func (UnimplementedIAMRoleServiceServer) Count(context.Context, *CountRolesRequest) (*CountRolesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Count not implemented")
+}
+func (UnimplementedIAMRoleServiceServer) Update(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedIAMRoleServiceServer) Delete(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -368,6 +384,24 @@ func _IAMRoleService_Count_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IAMRoleServiceServer).Count(ctx, req.(*CountRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMRoleService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMRoleServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_role.IAMRoleService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMRoleServiceServer).Update(ctx, req.(*UpdateRoleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -498,6 +532,10 @@ var IAMRoleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Count",
 			Handler:    _IAMRoleService_Count_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _IAMRoleService_Update_Handler,
 		},
 		{
 			MethodName: "Delete",

@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+// import "device.proto";
+
+package iot_core_telemetry;
+
+option go_package = "slamy/openERP/iot/core/telemetry;telemetry";
+
+message HeartBeat {
+    // Namespace of the device which emited the heart beat
+    string deviceNamespace = 1;
+    // Unique identifier of the device which emited the eart beat
+    string deviceUUID = 2;
+    // Timestamp when the eart beat was emited
+    google.protobuf.Timestamp timestamp = 3;
+}
+
+message CPUMetric {
+    // Total CPU usage for all CPUs and cores. 0 - 100% range.
+    float usage = 1;
+}
+message RAMMetric {
+    // Total RAM usage. 0 - 100% range.
+    float usage = 2;
+}
+message GPUMetric {
+    // Total memory usage of all GPUs. 0 - 100% range
+    float memoryUsage = 2;
+}
+message NetworkMetric {
+    // Total bytes download per second
+    uint64 download = 1;
+    // Total bytes upload per second
+    uint64 upload = 2;
+}
+message StorageMetric {
+    // Total bytes written per second
+    uint64 writes = 1;
+    // Total bytes readed per second
+    uint64 reads = 2;
+    // Total IO operations per second
+    uint64 iops = 3;
+}
+
+
+message BasicMetrics {
+    // Metric unique identifier
+    string UUID = 1; 
+    // Timestamp when the metrics was collected
+    google.protobuf.Timestamp timestamp = 2;
+    // Namespace of the device which emited the metrics
+    string deviceNamespace = 3;
+    // Unique identifier of the device which emited the metrics
+    string deviceUUID = 4;
+
+    // Information about CPU of the device
+    CPUMetric cpu = 10;
+    // Information about RAM of the device
+    RAMMetric ram = 11;
+    // Information about GPU of the device
+    GPUMetric gpu = 12;
+    // Information about network usage of the device
+    NetworkMetric network = 13;
+    // Information about persistant storage used by the device
+    StorageMetric storage = 14;
+}
+
+message LogEntry {
+    // Log entry unique identifier
+    string UUID = 1;
+    // Timestamp when the log was emited
+    google.protobuf.Timestamp timestamp = 2;
+    // Namespace of the device which emited the log
+    string deviceNamespace = 3;
+    // Unique identifier of the device which emited the log
+    string deviceUUID = 4;
+
+    // Log message
+    bytes message = 10;
+}
+
+message Event {
+    // Event unique identifier. You can search for event only if it was persisted.
+    string UUID = 1;
+    // Timestamp when the event was raise
+    google.protobuf.Timestamp timestamp = 2;
+    // Namespace of the device which raised the event
+    string deviceNamespace = 3;
+    // Unique identifier of the device which raised the event
+    string deviceUUID = 4;
+
+    /*
+        Envent unique identifiers defined by user application.
+
+        Here is the list of the predefined identifiers:
+            * openbp.start - devices started up
+            * openbp.reboot - device went in reboot
+            * openbp.shutdown - device went in shutdown
+            * openbp.update.started - device started the update process
+            * openbp.update.progress - progress of the device update
+            * openbp.update.success - update successfullt finished
+            * openbp.update.failed - update ended with error
+
+        Identifiers can be added by user application.
+    */
+    string eventID = 10;
+    // Arbitrary data sended together with the event. Should be in JSON format.
+    bytes data = 11;
+    // Indicates if the event was be persisted on the server. If not persistent, it will be deleted after delivering it to all the listeners.
+    bool persistent = 12;
+}
+
+message SubmitBasicMetricsRequest {
+    message NewBasicMetricData {
+        // Timestamp when the metrics was collected
+        google.protobuf.Timestamp timestamp = 1;
+        // Namespace of the device which emited the metrics
+        string deviceNamespace = 2;
+        // Unique identifier of the device which emited the metrics
+        string deviceUUID = 3;
+
+        // Information about CPU of the device
+        CPUMetric cpu = 10;
+        // Information about RAM of the device
+        RAMMetric ram = 11;
+        // Information about GPU of the device
+        GPUMetric gpu = 12;
+        // Information about network usage of the device
+        NetworkMetric network = 13;
+        // Information about persistant storage used by the device
+        StorageMetric storage = 14;
+    }
+
+    // Batch of the metrics to be submitted
+    repeated NewBasicMetricData metrics = 1;
+}
+message SubmitBasicMetricsResponse {
+    // Uniques identifiers assigned to provided metrics
+    repeated string assignedUUIDs = 1;
+}
+
+
+message SubmitLogRequest {
+    message NewLogEntryData {
+        // Timestamp when the log was emited
+        google.protobuf.Timestamp timestamp = 1;
+        // Namespace of the device which emited the log
+        string deviceNamespace = 2;
+        // Unique identifier of the device which emited the log
+        string deviceUUID = 3;
+
+        // Log message
+        bytes message = 10;
+    }
+
+    // Batch of log entries to be submited
+    repeated NewLogEntryData entries = 1;
+}
+message SubmitLogResponse {
+    // Uniques identifiers assigned to provided log entries
+    repeated string assignedUUIDs = 1;
+}
+
+
+message SubmitEventRequest {
+    message NewEventData {
+        // Timestamp when the event was raise
+        google.protobuf.Timestamp timestamp = 2;
+        // Namespace of the device which raised the event
+        string deviceNamespace = 3;
+        // Unique identifier of the device which raised the event
+        string deviceUUID = 4;
+
+        /*
+            Envent unique identifiers defined by user application.
+
+            Here is the list of the predefined identifiers:
+                * openbp.start - devices started up
+                * openbp.reboot - device went in reboot
+                * openbp.shutdown - device went in shutdown
+                * openbp.update.started - device started the update process
+                * openbp.update.progress - progress of the device update
+                * openbp.update.success - update successfullt finished
+                * openbp.update.failed - update ended with error
+
+            Identifiers can be added by user application.
+        */
+        string eventID = 10;
+        // Arbitrary data sended together with the event. Should be in JSON format.
+        bytes data = 11;
+        // Indicates if the event will be persisted on the server. If not persistent, it will be deleted after delivering it to all the listeners.
+        bool persistent = 12;
+    }
+
+    // Batch of events to be submited
+    repeated NewEventData events = 1;
+}
+message SubmitEventResponse {
+    // Uniques identifiers assigned to provided events
+    repeated string assignedUUIDs = 1;
+}
+
+// Works with devices telemetry
+service TelemetryService {
+    // Submit batch of basic metrics
+    rpc SubmitBasicMetrics(SubmitBasicMetricsRequest) returns (SubmitBasicMetricsResponse);
+    // Submit batch of logs
+    rpc SubmitLog(SubmitLogRequest) returns (SubmitLogResponse);
+    // Submit batch of events
+    rpc SubmitEvent(SubmitEventRequest) returns (SubmitEventResponse);
+}

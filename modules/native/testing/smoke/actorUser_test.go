@@ -9,12 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	tools "github.com/slamy-solutions/openbp/modules/native/testing/tools"
 )
 
 func TestActorUser(t *testing.T) {
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithActorUserService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithIAMService())
 	err := nativeStub.Connect()
 	require.Nil(t, err)
 	defer nativeStub.Close()
@@ -27,7 +27,7 @@ func TestActorUser(t *testing.T) {
 	avatar := tools.GetRandomString(20)
 	email := tools.GetRandomString(20)
 
-	userCreateResponse, err := nativeStub.Services.ActorUser.Create(ctx, &user.CreateRequest{
+	userCreateResponse, err := nativeStub.Services.IAM.Actor.User.Create(ctx, &user.CreateRequest{
 		Namespace: "",
 		Login:     login,
 		FullName:  fullName,
@@ -35,14 +35,14 @@ func TestActorUser(t *testing.T) {
 		Email:     email,
 	})
 	require.Nil(t, err)
-	defer nativeStub.Services.ActorUser.Delete(context.Background(), &user.DeleteRequest{Namespace: "", Uuid: userCreateResponse.User.Uuid})
+	defer nativeStub.Services.IAM.Actor.User.Delete(context.Background(), &user.DeleteRequest{Namespace: "", Uuid: userCreateResponse.User.Uuid})
 
 	assert.Equal(t, login, userCreateResponse.User.Login)
 	assert.Equal(t, fullName, userCreateResponse.User.FullName)
 	assert.Equal(t, avatar, userCreateResponse.User.Avatar)
 	assert.Equal(t, email, userCreateResponse.User.Email)
 
-	userGetResponse, err := nativeStub.Services.ActorUser.Get(ctx, &user.GetRequest{
+	userGetResponse, err := nativeStub.Services.IAM.Actor.User.Get(ctx, &user.GetRequest{
 		Namespace: "",
 		Uuid:      userCreateResponse.User.Uuid,
 		UseCache:  true,
@@ -54,7 +54,7 @@ func TestActorUser(t *testing.T) {
 	assert.Equal(t, avatar, userGetResponse.User.Avatar)
 	assert.Equal(t, email, userGetResponse.User.Email)
 
-	userDeleteResponse, err := nativeStub.Services.ActorUser.Delete(ctx, &user.DeleteRequest{
+	userDeleteResponse, err := nativeStub.Services.IAM.Actor.User.Delete(ctx, &user.DeleteRequest{
 		Namespace: "",
 		Uuid:      userCreateResponse.User.Uuid,
 	})

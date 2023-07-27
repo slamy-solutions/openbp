@@ -33,7 +33,7 @@
 >
 
     <div
-        class="col-4 q-pl-md q-pr-md q-pb-md"
+        class="col-sm-12 col-md-6 col-lg-4 q-pl-md q-pr-md q-pb-md"
     >
     <q-list dense>
         <q-item>
@@ -108,7 +108,7 @@
     </div>
 
     <div
-        class="col-4 q-pl-md q-pr-md q-pb-md"
+        class="col-sm-12 col-md-6 col-lg-4 q-pl-md q-pr-md q-pb-md"
     >
     <h6 class="q-ma-sm text-uppercase q-pa-none">
                 {{ $t('modules.accessControl.iam.policy.view.resources') }}
@@ -121,7 +121,7 @@
     </div>
 
     <div
-        class="col-4 q-pl-md q-pr-md q-pb-md"
+        class="col-sm-12 col-md-6 col-lg-4 q-pl-md q-pr-md q-pb-md"
     >
     <h6 class="q-ma-sm text-uppercase q-pa-none">
                 {{ $t('modules.accessControl.iam.policy.view.actions') }}
@@ -146,7 +146,7 @@ import api from 'src/boot/api';
 import { Policy } from 'src/boot/api/accessControl/policy';
 import { onMounted,computed, Ref, ref, watch, PropType, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
-  import StringListInputComponent from './StringListInputComponent.vue'
+import StringListInputComponent from './StringListInputComponent.vue'
 import ManagedByComponent from '../../../../components/managedItem/ManagedByComponent.vue'
 import { ManagedBy } from '../../../../components/managedItem/model'
 
@@ -257,7 +257,12 @@ function applyPolicyData(policy: Policy) {
 
 watch(props, async (newProps)=>{
     if (newProps.uuid !== '') {
-        console.log("Change")
+        await loadData()
+    }
+})
+
+onMounted(async () => {
+    if (props.uuid !== '') {
         await loadData()
     }
 })

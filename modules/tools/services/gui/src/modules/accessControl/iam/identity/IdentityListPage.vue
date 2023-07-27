@@ -1,0 +1,187 @@
+<template>
+  <q-page class="q-pa-md row">
+    <div class="col-2 q-pr-md">
+      <MenuComponent selected="identities"/>
+    </div>
+    <div class="col-10 row">
+    <q-table
+        class="col-12 q-ma-none"
+        :title="$t('modules.accessControl.iam.identity.list.header')"
+        :columns="tableColumns"
+        :rows="tableData"
+        row-key="uuid"
+        :loading="dataLoading"
+        ref="tableRef"
+        @request="loadData"
+        dense
+        v-model:pagination="tablePagination"
+        @row-click="selectIdentity"
+    >
+        <template v-slot:loading>
+            <q-inner-loading showing color="secondary" />
+        </template>
+
+      <template v-slot:no-data="{}">
+        <div class="full-width row flex-center q-gutter-sm">
+          <span v-if="loadingError === ''">
+            {{ $t('modules.accessControl.iam.identity.list.noData') }}
+          </span>
+          <span v-else class="text-negative">
+            {{ $t('modules.accessControl.iam.identity.list.failedToLoad', { error: loadingError }) }}
+          </span>
+        </div>
+      </template>
+
+      <template v-slot:top-right>
+        <q-btn
+            :label="$t('modules.accessControl.iam.identity.list.createButton')"
+            class="q-ma-none"
+            unelevated
+            outline
+            color="positive"
+            size="md"
+            :disable="creationDialog"
+            @click="creationDialog = true"
+        />
+      </template>
+
+      <template v-slot:body-cell-actions="props">
+        <q-td :props="props">
+          <q-btn color="dark" outline label="" icon="menu">
+            <q-menu>
+              <q-list style="">
+                <q-item clickable v-close-popup @click="identityUUIDToDelete = props.row.uuid; deletionDialog = true;">
+                  <q-item-section class="text-negative">{{ $t('modules.accessControl.iam.identity.list.actionsMenu.delete') }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </q-td>
+      </template>
+
+      <template v-slot:body-cell-managed="props">
+        <q-td :props="props">
+          <ManagedByComponent 
+            :managed-by="props.row.managed"
+            :dense="false"
+          />
+        </q-td>
+      </template>
+    </q-table>
+
+    <q-card class="col-12 q-mt-md">
+      <IdentityViewComponent :namespace="displayableNamespace" :uuid="selectedUUID" update-possible />
+    </q-card>
+
+    </div>
+
+    <q-dialog v-model="creationDialog">
+        <IdentityCreateModal :namespace="displayableNamespace" @created="onIdentityCreated"></IdentityCreateModal>
+    </q-dialog>
+
+    <q-dialog v-model="deletionDialog">
+        <IdentityDeleteModal :namespace="displayableNamespace" :uuid="identityUUIDToDelete" @deleted="onIdentityDeleted"></IdentityDeleteModal>
+    </q-dialog>
+  </q-page>
+</template>
+
+<script setup lang="ts">
+import { QPaginationProps, QTableProps, useQuasar } from 'quasar';
+import { onMounted, Ref, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import api from '../../../../boot/api';
+import { Identity } from '../../../../boot/api/accessControl/identity';
+import { Namespace } from '../../../../boot/api/namespace/models';
+
+import IdentityViewComponent from './IdentityViewComponent.vue'
+import IdentityCreateModal from './IdentityCreateModal.vue'
+import IdentityDeleteModal from './IdentityDeleteModal.vue'
+import MenuComponent from '../../MenuComponent.vue'
+import ManagedByComponent from 'src/components/managedItem/ManagedByComponent.vue';
+
+const $i18n = useI18n()
+const $q = useQuasar()
+
+const displayableNamespace = ref("")
+
+const tableColumns: Ref<QTableProps['columns']> = ref([
+    {name: 'uuid', required: true, label: $i18n.t('modules.accessControl.iam.identity.list.uuidColumn'), align: 'left', sortable: false, field: 'uuid'},
+    {name: 'name', required: true, label: $i18n.t('modules.accessControl.iam.identity.list.nameColumn'), align: 'left', sortable: false, field: 'name'},
+    {name: 'managed', required: true, label: $i18n.t('modules.accessControl.iam.identity.list.managedColumn'), align: 'left', sortable: false, field: 'managed'},
+    {name: 'actions', required: false, label: $i18n.t('modules.accessControl.iam.identity.list.actionsColumn'), align: 'right', sortable: false, field: 'actions'}
+])
+const tableData = ref([] as Array<Identity>)
+const dataLoading = ref(false)
+const loadingError = ref("")
+const tableRef = ref()
+
+const tablePagination = ref({
+  page: 1,
+  rowsPerPage: 10,
+  rowsNumber: 0
+})
+
+const creationDialog = ref(false)
+const identityUUIDToDelete = ref('')
+const deletionDialog = ref(false)
+
+const selectedUUID = ref('')
+
+async function loadData(tableProps: QTableProps) {
+    const rowsPerPage = tableProps.pagination?.rowsPerPage || 100
+    const page = (tableProps.pagination?.page || 1) - 1
+
+    const notif = $q.notify({
+      type: 'ongoing',
+      message: $i18n.t('modules.accessControl.iam.identity.list.loadOperationNotify')
+  })
+    dataLoading.value = true
+
+    try {
+      const response = await api.accessControl.identity.list({ namespace: displayableNamespace.value, skip: rowsPerPage*page, limit: rowsPerPage })
+      tableData.value = response.identities
+      if (tablePagination.value != undefined) {
+        tablePagination.value.page = page + 1
+        tablePagination.value.rowsPerPage = rowsPerPage
+        tablePagination.value.rowsNumber = response.totalCount
+      }
+      notif()
+      loadingError.value = ""
+
+      if (selectedUUID.value === '' && tableData.value.length > 0) {
+        selectedUUID.value = tableData.value[0].uuid
+      }
+    } catch (error) {
+      notif({
+          type: 'negative',
+          message: $i18n.t('modules.accessControl.iam.identity.list.loadFailNotify', { error }),
+          timeout: 5000
+      })
+      loadingError.value = String(error) 
+    } finally {
+      dataLoading.value = false
+    }
+}
+
+async function onIdentityCreated() {
+  creationDialog.value = false
+  tableRef.value.requestServerInteraction()
+}
+
+async function onIdentityDeleted() {
+  deletionDialog.value = false
+  tableRef.value.requestServerInteraction()
+}
+
+onMounted(() => {
+  tableRef.value.requestServerInteraction()
+})
+
+function selectIdentity(_evt: Event, identity: Identity) {
+  selectedUUID.value = identity.uuid
+}
+</script>
+
+<style>
+
+</style>

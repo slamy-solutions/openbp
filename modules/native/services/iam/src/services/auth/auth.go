@@ -4,20 +4,21 @@ import (
 	"context"
 	"errors"
 
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	grpccodes "google.golang.org/grpc/codes"
 
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 
 	nativeIAmAuthGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 	nativeIAmAuthenticationPasswordGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/x509"
 	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
 	nativeIAmPolicyGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/policy"
 	nativeIAmRoleGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
 	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 
-	authentication_password "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication"
+	authentication_password "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/password"
+	authentication_x509 "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/x509"
 	identity_server "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/identity"
 	policy_server "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/policy"
 	role_server "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/role"
@@ -30,6 +31,7 @@ type IAmAuthServer struct {
 	systemStub *system.SystemStub
 
 	authenticationPasswordServer *authentication_password.PasswordIdentificationService
+	authenticationX509Server     *authentication_x509.X509IdentificationServer
 	identityServer               *identity_server.IAmIdentityServer
 	policyServer                 *policy_server.IAMPolicyServer
 	roleServer                   *role_server.IAMRoleServer
@@ -39,6 +41,7 @@ type IAmAuthServer struct {
 func NewIAmAuthServer(
 	systemStub *system.SystemStub,
 	authenticationPasswordServer *authentication_password.PasswordIdentificationService,
+	authenticationX509Server *authentication_x509.X509IdentificationServer,
 	identityServer *identity_server.IAmIdentityServer,
 	policyServer *policy_server.IAMPolicyServer,
 	roleServer *role_server.IAMRoleServer,
@@ -47,6 +50,7 @@ func NewIAmAuthServer(
 	return &IAmAuthServer{
 		systemStub:                   systemStub,
 		authenticationPasswordServer: authenticationPasswordServer,
+		authenticationX509Server:     authenticationX509Server,
 		identityServer:               identityServer,
 		policyServer:                 policyServer,
 		roleServer:                   roleServer,
@@ -135,7 +139,7 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 		Password:  in.Password,
 	})
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Error while performing authentication: "+err.Error())
+		return nil, status.Error(codes.Internal, "Error while performing authentication: "+err.Error())
 	}
 	if !authenticateResponse.Authenticated {
 		return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_CREDENTIALS_INVALID, AccessToken: "", RefreshToken: ""}, nil
@@ -146,12 +150,12 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			// This error must not occure in healthy system
-			if st.Code() == grpccodes.NotFound {
-				return nil, status.Error(grpccodes.Internal, "Failed to get identity information. Identity not found.")
+			if st.Code() == codes.NotFound {
+				return nil, status.Error(codes.Internal, "Failed to get identity information. Identity not found.")
 			}
 		}
 
-		return nil, status.Error(grpccodes.Internal, "Failed to get identity information: "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to get identity information: "+err.Error())
 	}
 	if !identityResponse.Identity.Active {
 		return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_IDENTITY_NOT_ACTIVE, AccessToken: "", RefreshToken: ""}, nil
@@ -160,7 +164,7 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 	// Get all policies for identity
 	policies, err := s.fetchIdentityPolicies(ctx, identityResponse.Identity)
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to get policy information for identity: "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to get policy information for identity: "+err.Error())
 	}
 
 	if !arePoliciesAllowScopes(policies, in.Scopes) {
@@ -199,14 +203,14 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 		Metadata:  in.Metadata,
 	})
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to create token. "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to create token. "+err.Error())
 	}
 
 	return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{
 		Status:       nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_OK,
 		AccessToken:  tokenResponse.Token,
 		RefreshToken: tokenResponse.RefreshToken,
-	}, status.Error(grpccodes.OK, "")
+	}, status.Error(codes.OK, "")
 }
 
 func (s *IAmAuthServer) RefreshToken(ctx context.Context, in *nativeIAmAuthGRPC.RefreshTokenRequest) (*nativeIAmAuthGRPC.RefreshTokenResponse, error) {
@@ -214,23 +218,23 @@ func (s *IAmAuthServer) RefreshToken(ctx context.Context, in *nativeIAmAuthGRPC.
 		RefreshToken: in.RefreshToken,
 	})
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to refresh token token. "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to refresh token token. "+err.Error())
 	}
 	switch refershResponse.Status {
 	case nativeIAmTokenGRPC.RefreshResponse_OK:
 		break
 	case nativeIAmTokenGRPC.RefreshResponse_DISABLED:
-		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_DISABLED}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_DISABLED}, status.Error(codes.OK, "")
 	case nativeIAmTokenGRPC.RefreshResponse_EXPIRED:
-		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_EXPIRED}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_EXPIRED}, status.Error(codes.OK, "")
 	case nativeIAmTokenGRPC.RefreshResponse_INVALID:
-		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_INVALID}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_INVALID}, status.Error(codes.OK, "")
 	case nativeIAmTokenGRPC.RefreshResponse_NOT_FOUND:
-		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_NOT_FOUND}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_NOT_FOUND}, status.Error(codes.OK, "")
 	case nativeIAmTokenGRPC.RefreshResponse_NOT_REFRESH_TOKEN:
-		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_IS_NOT_REFRESH_TOKEN}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_TOKEN_IS_NOT_REFRESH_TOKEN}, status.Error(codes.OK, "")
 	default:
-		return nil, status.Error(grpccodes.Internal, "Unknow refresh response from the native_iam_token service. Received status: "+refershResponse.Status.String())
+		return nil, status.Error(codes.Internal, "Unknow refresh response from the native_iam_token service. Received status: "+refershResponse.Status.String())
 	}
 
 	identityResponse, err := s.identityServer.Get(ctx, &nativeIAmIdentityGRPC.GetIdentityRequest{
@@ -241,30 +245,30 @@ func (s *IAmAuthServer) RefreshToken(ctx context.Context, in *nativeIAmAuthGRPC.
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			// This error must not occure in healthy system
-			if st.Code() == grpccodes.NotFound {
-				return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_IDENTITY_NOT_FOUND}, status.Error(grpccodes.OK, "")
+			if st.Code() == codes.NotFound {
+				return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_IDENTITY_NOT_FOUND}, status.Error(codes.OK, "")
 			}
 		}
-		return nil, status.Error(grpccodes.Internal, "Failed to get identity of the token. Error: "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to get identity of the token. Error: "+err.Error())
 	}
 
 	if !identityResponse.Identity.Active {
-		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_IDENTITY_NOT_ACTIVE}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_IDENTITY_NOT_ACTIVE}, status.Error(codes.OK, "")
 	}
 
 	policies, err := s.fetchIdentityPolicies(ctx, identityResponse.Identity)
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to get policy information for identity: "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to get policy information for identity: "+err.Error())
 	}
 
 	if !areTokenScopesValidForIdentityScopes(policies, refershResponse.TokenData.Scopes) {
-		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_IDENTITY_UNAUTHENTICATED}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.RefreshTokenResponse{Status: nativeIAmAuthGRPC.RefreshTokenResponse_IDENTITY_UNAUTHENTICATED}, status.Error(codes.OK, "")
 	}
 
 	return &nativeIAmAuthGRPC.RefreshTokenResponse{
 		Status:      nativeIAmAuthGRPC.RefreshTokenResponse_OK,
 		AccessToken: refershResponse.Token,
-	}, status.Error(grpccodes.OK, "")
+	}, status.Error(codes.OK, "")
 }
 
 func (s *IAmAuthServer) CheckAccessWithToken(ctx context.Context, in *nativeIAmAuthGRPC.CheckAccessWithTokenRequest) (*nativeIAmAuthGRPC.CheckAccessWithTokenResponse, error) {
@@ -273,27 +277,27 @@ func (s *IAmAuthServer) CheckAccessWithToken(ctx context.Context, in *nativeIAmA
 		UseCache: true,
 	})
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to validate token. "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to validate token. "+err.Error())
 	}
 
 	switch tokenResponse.Status {
 	case nativeIAmTokenGRPC.ValidateResponse_OK:
 		break
 	case nativeIAmTokenGRPC.ValidateResponse_EXPIRED:
-		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_EXPIRED, Message: "Token expired"}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_EXPIRED, Message: "Token expired"}, status.Error(codes.OK, "")
 	case nativeIAmTokenGRPC.ValidateResponse_DISABLED:
-		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_DISABLED, Message: "Token was manually disabled"}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_DISABLED, Message: "Token was manually disabled"}, status.Error(codes.OK, "")
 	case nativeIAmTokenGRPC.ValidateResponse_INVALID:
-		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_INVALID, Message: "Token invalid. Maybe it has bad structure or signature"}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_INVALID, Message: "Token invalid. Maybe it has bad structure or signature"}, status.Error(codes.OK, "")
 	case nativeIAmTokenGRPC.ValidateResponse_NOT_FOUND:
-		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_NOT_FOUND, Message: "Token not found. Most probably it was deteled and cant be used."}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{Status: nativeIAmAuthGRPC.CheckAccessWithTokenResponse_TOKEN_NOT_FOUND, Message: "Token not found. Most probably it was deteled and cant be used."}, status.Error(codes.OK, "")
 	}
 
 	if !areTokenScopesAllowAccess(tokenResponse.TokenData.Scopes, in.Scopes) {
 		return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{
 			Status:  nativeIAmAuthGRPC.CheckAccessWithTokenResponse_UNAUTHORIZED,
 			Message: "Token doesnt have enought privileges to access provided scopes", //TODO: add here information about additional required policies
-		}, status.Error(grpccodes.OK, "")
+		}, status.Error(codes.OK, "")
 	}
 
 	return &nativeIAmAuthGRPC.CheckAccessWithTokenResponse{
@@ -302,7 +306,7 @@ func (s *IAmAuthServer) CheckAccessWithToken(ctx context.Context, in *nativeIAmA
 		Namespace:    tokenResponse.TokenData.Namespace,
 		TokenUUID:    tokenResponse.TokenData.Uuid,
 		IdentityUUID: tokenResponse.TokenData.Identity,
-	}, status.Error(grpccodes.OK, "")
+	}, status.Error(codes.OK, "")
 }
 
 func (s *IAmAuthServer) CheckAccessWithPassword(ctx context.Context, in *nativeIAmAuthGRPC.CheckAccessWithPasswordRequest) (*nativeIAmAuthGRPC.CheckAccessWithPasswordResponse, error) {
@@ -314,10 +318,10 @@ func (s *IAmAuthServer) CheckAccessWithPassword(ctx context.Context, in *nativeI
 		Password:  in.Password,
 	})
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Error while authorizing using password. "+err.Error())
+		return nil, status.Error(codes.Internal, "Error while authorizing using password. "+err.Error())
 	}
 	if !authenticateResponse.Authenticated {
-		return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHENTICATED, Message: "Identity or password doesnt match."}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHENTICATED, Message: "Identity or password doesnt match."}, status.Error(codes.OK, "")
 	}
 
 	// Find identity and its policies
@@ -329,28 +333,145 @@ func (s *IAmAuthServer) CheckAccessWithPassword(ctx context.Context, in *nativeI
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			// This error must not occure in healthy system
-			if st.Code() == grpccodes.NotFound {
-				return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHENTICATED, Message: "Identity or password doesnt match."}, status.Error(grpccodes.OK, "")
+			if st.Code() == codes.NotFound {
+				return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHENTICATED, Message: "Identity or password doesnt match."}, status.Error(codes.OK, "")
 			}
 		}
 
-		return nil, status.Error(grpccodes.Internal, "Error while searching for identity. "+err.Error())
+		return nil, status.Error(codes.Internal, "Error while searching for identity. "+err.Error())
 	}
 
 	if !identityGetResponse.Identity.Active {
-		return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHORIZED, Message: "Identity is not active."}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHORIZED, Message: "Identity is not active."}, status.Error(codes.OK, "")
 	}
 
 	//TODO: Cache this
 	// Get all policies for identity
 	policies, err := s.fetchIdentityPolicies(ctx, identityGetResponse.Identity)
 	if err != nil {
-		return nil, status.Error(grpccodes.Internal, "Failed to get policy information for identity: "+err.Error())
+		return nil, status.Error(codes.Internal, "Failed to get policy information for identity: "+err.Error())
 	}
 
 	if !arePoliciesAllowScopes(policies, in.Scopes) {
-		return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHORIZED, Message: "Not enought privileges"}, status.Error(grpccodes.OK, "")
+		return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_UNAUTHORIZED, Message: "Not enought privileges"}, status.Error(codes.OK, "")
 	}
 
-	return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_OK, Message: ""}, status.Error(grpccodes.OK, "")
+	return &nativeIAmAuthGRPC.CheckAccessWithPasswordResponse{Status: nativeIAmAuthGRPC.CheckAccessWithPasswordResponse_OK, Message: ""}, status.Error(codes.OK, "")
+}
+
+func (s *IAmAuthServer) CheckAccessWithX509(ctx context.Context, in *nativeIAmAuthGRPC.CheckAccessWithX509Request) (*nativeIAmAuthGRPC.CheckAccessWithX509Response, error) {
+	certificateValidateResponse, err := s.authenticationX509Server.ValidateAndGetFromRawX509(ctx, &x509.ValidateAndGetFromRawX509Request{
+		Raw: in.Certificate,
+	})
+	if err != nil {
+		st, ok := status.FromError(err)
+
+		if ok {
+			switch st.Code() {
+			case codes.OK:
+				break
+			case codes.FailedPrecondition:
+				return nil, err
+			default:
+				return nil, status.Error(codes.Internal, "error while validating certificate: "+err.Error())
+			}
+		} else {
+			return nil, status.Error(codes.Internal, "error while validating certificate: "+err.Error())
+		}
+	}
+
+	switch certificateValidateResponse.Status {
+	case x509.ValidateAndGetFromRawX509Response_OK:
+		break
+	case x509.ValidateAndGetFromRawX509Response_INVALID_FORMAT:
+		return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_CERTIFICATE_INVALID_FORMAT, Message: ""}, status.Error(codes.OK, "")
+	case x509.ValidateAndGetFromRawX509Response_SIGNATURE_INVALID:
+		return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_CERTIFICATE_INVALID, Message: "Invalid signature or other fields of the certificate"}, status.Error(codes.OK, "")
+	case x509.ValidateAndGetFromRawX509Response_NOT_FOUND:
+		return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_CERTIFICATE_NOT_FOUND, Message: "Certificate has valid signature, but doesnt exist in the system"}, status.Error(codes.OK, "")
+	default:
+		return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_CERTIFICATE_INVALID, Message: "Certificate invalid for unknown reason"}, status.Error(codes.OK, "")
+	}
+
+	certificateInfo := &nativeIAmAuthGRPC.CheckAccessWithX509Response_CertificateInfo{
+		Namespace: certificateValidateResponse.Certificate.Namespace,
+		Uuid:      certificateValidateResponse.Certificate.Uuid,
+		Identity:  certificateValidateResponse.Certificate.Identity,
+	}
+
+	if certificateValidateResponse.Certificate.Disabled {
+		return &nativeIAmAuthGRPC.CheckAccessWithX509Response{
+			Status:          nativeIAmAuthGRPC.CheckAccessWithX509Response_CERTIFICATE_DISABLED,
+			Message:         "Certificate was manually disabled",
+			CertificateInfo: certificateInfo,
+		}, status.Error(codes.OK, "")
+	}
+
+	// Find identity
+	identityGetResponse, err := s.identityServer.Get(ctx, &nativeIAmIdentityGRPC.GetIdentityRequest{
+		Namespace: certificateInfo.Namespace,
+		Uuid:      certificateInfo.Identity,
+		UseCache:  false,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.NotFound {
+				return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_IDENTITY_NOT_FOUND, Message: "Identity not found.", CertificateInfo: certificateInfo}, status.Error(codes.OK, "")
+			}
+		}
+
+		return nil, status.Error(codes.Internal, "Error while searching for identity. "+err.Error())
+	}
+
+	if !identityGetResponse.Identity.Active {
+		return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_IDENTITY_NOT_ACTIVE, Message: "Identity is not active.", CertificateInfo: certificateInfo}, status.Error(codes.OK, "")
+	}
+
+	//TODO: Cache this
+	// Get all policies for identity
+	policies, err := s.fetchIdentityPolicies(ctx, identityGetResponse.Identity)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Failed to get policy information for identity: "+err.Error())
+	}
+
+	if !arePoliciesAllowScopes(policies, in.Scopes) {
+		return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_UNAUTHORIZED, Message: "Not enought privileges", CertificateInfo: certificateInfo}, status.Error(codes.OK, "")
+	}
+
+	return &nativeIAmAuthGRPC.CheckAccessWithX509Response{Status: nativeIAmAuthGRPC.CheckAccessWithX509Response_OK, Message: "", CertificateInfo: certificateInfo}, status.Error(codes.OK, "")
+}
+
+func (s *IAmAuthServer) CheckAccess(ctx context.Context, in *nativeIAmAuthGRPC.CheckAccessRequest) (*nativeIAmAuthGRPC.CheckAccessResponse, error) {
+	// Find identity
+	identityGetResponse, err := s.identityServer.Get(ctx, &nativeIAmIdentityGRPC.GetIdentityRequest{
+		Namespace: in.Namespace,
+		Uuid:      in.Identity,
+		UseCache:  false,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.NotFound {
+				return &nativeIAmAuthGRPC.CheckAccessResponse{Status: nativeIAmAuthGRPC.CheckAccessResponse_IDENTITY_NOT_FOUND, Message: "Identity not found."}, status.Error(codes.OK, "")
+			}
+		}
+
+		return nil, status.Error(codes.Internal, "Error while searching for identity. "+err.Error())
+	}
+
+	if !identityGetResponse.Identity.Active {
+		return &nativeIAmAuthGRPC.CheckAccessResponse{Status: nativeIAmAuthGRPC.CheckAccessResponse_IDENTITY_NOT_ACTIVE, Message: "Identity is not active."}, status.Error(codes.OK, "")
+	}
+
+	//TODO: Cache this
+	// Get all policies for identity
+	policies, err := s.fetchIdentityPolicies(ctx, identityGetResponse.Identity)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Failed to get policy information for identity: "+err.Error())
+	}
+
+	if !arePoliciesAllowScopes(policies, in.Scopes) {
+		return &nativeIAmAuthGRPC.CheckAccessResponse{Status: nativeIAmAuthGRPC.CheckAccessResponse_UNAUTHORIZED, Message: "Not enought privileges"}, status.Error(codes.OK, "")
+	}
+
+	return &nativeIAmAuthGRPC.CheckAccessResponse{Status: nativeIAmAuthGRPC.CheckAccessResponse_OK, Message: ""}, status.Error(codes.OK, "")
 }

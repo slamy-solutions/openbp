@@ -49,11 +49,21 @@ message GetRSAPublicKeyResponse {
     bytes publicKey = 1;
 }
 
+enum RSASignMechanism {
+    // System will use best algorithm for HSM in use
+    DEFAULT = 0;
+    SHA256_RSA = 1;
+    SHA512_RSA = 2;
+    RSA_PKCS = 3;
+}
+
 message RSASignStreamRequest {
     // Name of the key pair to use
     string keyName = 1;
     // Data chunk to sign
     bytes data = 2;
+    // Mechanism to use. If not sure - leave default (SHA512_RSA)
+    RSASignMechanism mechanism = 3;
 }
 message RSASignStreamResponse {
     // Signature of the provided data
@@ -66,6 +76,8 @@ message RSAVerifyStreamRequest {
     bytes data = 2;
     // Signature to validate
     bytes signature = 3;
+    // Mechanism to use. If not sure - leave default (SHA512_RSA)
+    RSASignMechanism mechanism = 4;
 }
 message RSAVerifyStreamResponse {
     // Returns True if and only if provided data and its signature matches provided key-pair
@@ -77,6 +89,8 @@ message RSASignRequest {
     string keyName = 1;
     // Data to sign
     bytes data = 2;
+    // Mechanism to use. If not sure - leave default (SHA512_RSA)
+    RSASignMechanism mechanism = 3;
 }
 message RSASignResponse {
     // Signature of the provided data
@@ -89,6 +103,8 @@ message RSAVerifyRequest {
     bytes data = 2;
     // Signature to validate
     bytes signature = 3;
+    // Mechanism to use. If not sure - leave default (SHA512_RSA)
+    RSASignMechanism mechanism = 4;
 }
 message RSAVerifyResponse {
     // Returns True if and only if provided data and its signature matches provided key-pair

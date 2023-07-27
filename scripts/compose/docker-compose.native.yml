@@ -36,15 +36,3 @@ services:
       - native_namespace
     networks:
       - internal
-
-  native_actor_user:
-    image: openbp/obp-native-actor-user:${OPENBP_VERSION:-latest}
-    container_name: native_actor_user
-    restart: always
-    depends_on:
-      - system_db
-      - system_cache
-      - system_nats
-      - native_iam
-    networks:
-      - internal

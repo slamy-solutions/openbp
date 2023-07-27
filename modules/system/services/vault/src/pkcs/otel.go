@@ -62,32 +62,32 @@ func (wraper *otelPKCSWraper) GetRSAPublicKey(ctx context.Context, name string) 
 	return wraper.innerPKCS.GetRSAPublicKey(ctx, name)
 }
 
-func (wraper *otelPKCSWraper) SignRSAStream(ctx context.Context, name string, message *io.PipeReader) ([]byte, error) {
+func (wraper *otelPKCSWraper) SignRSAStream(ctx context.Context, name string, message *io.PipeReader, mechanism uint) ([]byte, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignRSA")
 	defer span.End()
 
-	return wraper.innerPKCS.SignRSAStream(ctx, name, message)
+	return wraper.innerPKCS.SignRSAStream(ctx, name, message, mechanism)
 }
 
-func (wraper *otelPKCSWraper) VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte) (bool, error) {
+func (wraper *otelPKCSWraper) VerifyRSAStream(ctx context.Context, name string, message *io.PipeReader, signature []byte, mechanism uint) (bool, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyRSA")
 	defer span.End()
 
-	return wraper.innerPKCS.VerifyRSAStream(ctx, name, message, signature)
+	return wraper.innerPKCS.VerifyRSAStream(ctx, name, message, signature, mechanism)
 }
 
-func (wraper *otelPKCSWraper) SignRSA(ctx context.Context, name string, message []byte) ([]byte, error) {
+func (wraper *otelPKCSWraper) SignRSA(ctx context.Context, name string, message []byte, mechanism uint) ([]byte, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.SignRSA")
 	defer span.End()
 
-	return wraper.innerPKCS.SignRSA(ctx, name, message)
+	return wraper.innerPKCS.SignRSA(ctx, name, message, mechanism)
 }
 
-func (wraper *otelPKCSWraper) VerifyRSA(ctx context.Context, name string, message []byte, signature []byte) (bool, error) {
+func (wraper *otelPKCSWraper) VerifyRSA(ctx context.Context, name string, message []byte, signature []byte, mechanism uint) (bool, error) {
 	ctx, span := wraper.tracer.Start(ctx, "pkcs.VerifyRSA")
 	defer span.End()
 
-	return wraper.innerPKCS.VerifyRSA(ctx, name, message, signature)
+	return wraper.innerPKCS.VerifyRSA(ctx, name, message, signature, mechanism)
 }
 
 func (wraper *otelPKCSWraper) Close() error {

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
-	"github.com/slamy-solutions/openbp/modules/native/libs/golang/actor/user"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
 
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/models"
@@ -35,7 +35,7 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 	}
 
 	// Try to find user with this login
-	userGetResponse, err := r.nativeStub.Services.ActorUser.GetByLogin(ctx.Request.Context(), &user.GetByLoginRequest{
+	userGetResponse, err := r.nativeStub.Services.IAM.Actor.User.GetByLogin(ctx.Request.Context(), &user.GetByLoginRequest{
 		Login:    requestData.Login,
 		UseCache: false,
 	})

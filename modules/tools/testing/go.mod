@@ -6,10 +6,10 @@ replace github.com/slamy-solutions/openbp/modules/system/libs/golang => ../../sy
 
 replace github.com/slamy-solutions/openbp/modules/native/libs/golang => ../../native/libs/golang
 
-replace github.com/slamy-solutions/openbp/modules/tools/libs/sdk/golang => ../libs/sdk/golang
+replace github.com/slamy-solutions/openbp/modules/tools/libs/golang => ../libs/golang
 
 require (
-	github.com/slamy-solutions/openbp/modules/tools/libs/sdk/golang v0.0.0-00010101000000-000000000000
+	github.com/slamy-solutions/openbp/modules/tools/libs/golang v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.8.3
 )
 

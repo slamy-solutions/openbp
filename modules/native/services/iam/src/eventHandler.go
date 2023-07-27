@@ -14,7 +14,9 @@ import (
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 	system_nats "github.com/slamy-solutions/openbp/modules/system/libs/golang/nats"
 
-	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/actor/user"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/password"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/x509"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/identity"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/policy"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/role"
@@ -121,9 +123,19 @@ func (s *eventHandlerService) handleNamespaceCreationEvent(msg *nats.Msg) {
 		badAnswer(errors.New("failed to handle creation event for identity service: " + err.Error()))
 		return
 	}
-	err = authentication.HandleNamespaceCreationEvent(ctx, logger.WithField("service", "authentication"), &namespace, s.systemStub)
+	err = password.HandleNamespaceCreationEvent(ctx, logger.WithField("service", "authentication_password"), &namespace, s.systemStub)
 	if err != nil {
-		badAnswer(errors.New("failed to handle creation event for authentication service: " + err.Error()))
+		badAnswer(errors.New("failed to handle creation event for authentication_password service: " + err.Error()))
+		return
+	}
+	err = x509.HandleNamespaceCreationEvent(ctx, logger.WithField("service", "authentication_x509"), &namespace, s.systemStub)
+	if err != nil {
+		badAnswer(errors.New("failed to handle creation event for authentication_x509 service: " + err.Error()))
+		return
+	}
+	err = user.HandleNamespaceCreationEvent(ctx, logger.WithField("service", "actor_user"), &namespace, s.systemStub)
+	if err != nil {
+		badAnswer(errors.New("failed to handle creation event for actor_user service: " + err.Error()))
 		return
 	}
 
