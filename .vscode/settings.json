@@ -12,9 +12,9 @@
         "NATIVE_KEYVALUESTORAGE_URL": "127.0.0.1:28251",
         "NATIVE_IAM_URL": "127.0.0.1:28252",
 
-        "CRM_CORE": "127.0.0.1:28280",
+        "CRM_CORE_URL": "127.0.0.1:28280",
 
-        "IOT_CORE": "127.0.0.1:28285",
+        "IOT_CORE_URL": "127.0.0.1:28285",
 
         "TOOLS_REST_URL": "127.0.0.1:28300"
     }

@@ -37,7 +37,7 @@ func NewTelemetryRouter(logger *logrus.Entry, systemStub *system.SystemStub, nat
 }
 
 type TelemetryListenRequest struct {
-	Namespace          string `form:"namespace" binding:"required,lte=64,regexp=^[A-Za-z0-9]+$"`
+	Namespace          string `form:"namespace" binding:"lte=64,regexp=^[A-Za-z0-9]+$"`
 	Devices            string `form:"devices" binding:"required,lte=2048,regexp=^[A-Za-z0-9,]+$"`
 	ListenBasicMetrics bool   `form:"listenBasicMetrics"`
 	ListenEvents       bool   `form:"listenEvents"`

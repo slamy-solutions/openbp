@@ -46,7 +46,7 @@ func CreateCollections(ctx context.Context, systemStub *system.SystemStub, names
 	err := db.CreateCollection(ctx, basicMetricsCollectionName, basicMetricsOptions)
 	if err != nil {
 		// If error is not "collection already exist"
-		if cmd, ok := err.(mongo.CommandError); !ok || cmd.Code != 17399 {
+		if cmd, ok := err.(mongo.CommandError); !ok || (cmd.Code != 17399 && cmd.Name != "NamespaceExists") {
 			return errors.New("failed to create basic metrics collection: " + err.Error())
 		}
 	}
@@ -59,7 +59,7 @@ func CreateCollections(ctx context.Context, systemStub *system.SystemStub, names
 	err = db.CreateCollection(ctx, logCollectionName, logOptions)
 	if err != nil {
 		// If error is not "collection already exist"
-		if cmd, ok := err.(mongo.CommandError); !ok || cmd.Code != 17399 {
+		if cmd, ok := err.(mongo.CommandError); !ok || (cmd.Code != 17399 && cmd.Name != "NamespaceExists") {
 			return errors.New("failed to create log collection: " + err.Error())
 		}
 	}
@@ -71,7 +71,7 @@ func CreateCollections(ctx context.Context, systemStub *system.SystemStub, names
 	err = db.CreateCollection(ctx, logCollectionName, eventOptions)
 	if err != nil {
 		// If error is not "collection already exist"
-		if cmd, ok := err.(mongo.CommandError); !ok || cmd.Code != 17399 {
+		if cmd, ok := err.(mongo.CommandError); !ok || (cmd.Code != 17399 && cmd.Name != "NamespaceExists") {
 			return errors.New("failed to create event collection: " + err.Error())
 		}
 	}

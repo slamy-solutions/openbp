@@ -2,6 +2,7 @@ package fleet
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
@@ -15,14 +16,14 @@ import (
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
-type CountTestSuite struct {
+type ListTestSuite struct {
 	suite.Suite
 
 	nativeStub *native.NativeStub
 	iotStub    *iot.IOTStub
 }
 
-func (suite *CountTestSuite) SetupSuite() {
+func (suite *ListTestSuite) SetupSuite() {
 	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
@@ -35,14 +36,14 @@ func (suite *CountTestSuite) SetupSuite() {
 		panic(err)
 	}
 }
-func (suite *CountTestSuite) TearDownSuite() {
+func (suite *ListTestSuite) TearDownSuite() {
 	suite.nativeStub.Close()
 }
-func TestCountTestSuite(t *testing.T) {
-	suite.Run(t, new(CountTestSuite))
+func TestListTestSuite(t *testing.T) {
+	suite.Run(t, new(ListTestSuite))
 }
 
-func (s *CountTestSuite) TestCount() {
+func (s *ListTestSuite) TestList() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -64,12 +65,23 @@ func (s *CountTestSuite) TestCount() {
 		fleets = append(fleets, createResponse.Fleet.Uuid)
 	}
 
-	countResponse, err := s.iotStub.Core.Fleet.Count(ctx, &fleet.CountRequest{Namespace: ""})
+	listStream, err := s.iotStub.Core.Fleet.List(ctx, &fleet.ListRequest{Namespace: "", Skip: 0, Limit: 0})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), fleetsCount, countResponse.Count)
+	receivedIds := make([]string, 0, fleetsCount)
+	for {
+		d, err := listStream.Recv()
+		if err != nil {
+			require.Equal(s.T(), io.EOF, err)
+			break
+		}
+		receivedIds = append(receivedIds, d.Fleet.Uuid)
+	}
+	for _, fleet := range fleets {
+		require.Contains(s.T(), receivedIds, fleet)
+	}
 }
 
-func (s *CountTestSuite) TestCountInNamespace() {
+func (s *ListTestSuite) TestListInNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -100,16 +112,65 @@ func (s *CountTestSuite) TestCountInNamespace() {
 		fleets = append(fleets, createResponse.Fleet.Uuid)
 	}
 
-	countResponse, err := s.iotStub.Core.Fleet.Count(ctx, &fleet.CountRequest{Namespace: namespaceName})
+	listStream, err := s.iotStub.Core.Fleet.List(ctx, &fleet.ListRequest{Namespace: namespaceName, Skip: 0, Limit: 0})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), fleetsCount, countResponse.Count)
+	receivedIds := make([]string, 0, fleetsCount)
+	for {
+		d, err := listStream.Recv()
+		if err != nil {
+			require.Equal(s.T(), io.EOF, err)
+			break
+		}
+		receivedIds = append(receivedIds, d.Fleet.Uuid)
+	}
+	require.Equal(s.T(), fleets, receivedIds)
+
+	listStream, err = s.iotStub.Core.Fleet.List(ctx, &fleet.ListRequest{Namespace: namespaceName, Skip: 0, Limit: 3})
+	require.Nil(s.T(), err)
+	receivedIds = make([]string, 0, fleetsCount)
+	for {
+		d, err := listStream.Recv()
+		if err != nil {
+			require.Equal(s.T(), io.EOF, err)
+			break
+		}
+		receivedIds = append(receivedIds, d.Fleet.Uuid)
+	}
+	require.Equal(s.T(), fleets[:3], receivedIds)
+
+	listStream, err = s.iotStub.Core.Fleet.List(ctx, &fleet.ListRequest{Namespace: namespaceName, Skip: 3, Limit: 0})
+	require.Nil(s.T(), err)
+	receivedIds = make([]string, 0, fleetsCount)
+	for {
+		d, err := listStream.Recv()
+		if err != nil {
+			require.Equal(s.T(), io.EOF, err)
+			break
+		}
+		receivedIds = append(receivedIds, d.Fleet.Uuid)
+	}
+	require.Equal(s.T(), fleets[3:], receivedIds)
+
+	listStream, err = s.iotStub.Core.Fleet.List(ctx, &fleet.ListRequest{Namespace: namespaceName, Skip: 3, Limit: 4})
+	require.Nil(s.T(), err)
+	receivedIds = make([]string, 0, fleetsCount)
+	for {
+		d, err := listStream.Recv()
+		if err != nil {
+			require.Equal(s.T(), io.EOF, err)
+			break
+		}
+		receivedIds = append(receivedIds, d.Fleet.Uuid)
+	}
+	require.Equal(s.T(), fleets[3:7], receivedIds)
 }
 
-func (s *CountTestSuite) TestCountInNonExistingNamespace() {
+func (s *ListTestSuite) TestListInNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	countResponse, err := s.iotStub.Core.Fleet.Count(ctx, &fleet.CountRequest{Namespace: tools.GetRandomString(32)})
+	listStream, err := s.iotStub.Core.Fleet.List(ctx, &fleet.ListRequest{Namespace: tools.GetRandomString(32), Skip: 0, Limit: 0})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, countResponse.Count)
+	_, err = listStream.Recv()
+	require.Equal(s.T(), io.EOF, err)
 }

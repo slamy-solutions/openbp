@@ -44,7 +44,7 @@ func TestListDevicesTestSuite(t *testing.T) {
 	suite.Run(t, new(ListDevicesTestSuite))
 }
 
-func (s *CountTestSuite) TestListDevices() {
+func (s *ListDevicesTestSuite) TestListDevices() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -161,7 +161,7 @@ func (s *CountTestSuite) TestListDevices() {
 	require.Equal(s.T(), devices[4*devicePerFleetCount+1:4*devicePerFleetCount+3], listedDevices)
 }
 
-func (s *CountTestSuite) TestListDevicesInNamespace() {
+func (s *ListDevicesTestSuite) TestListDevicesInNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 

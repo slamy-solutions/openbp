@@ -78,7 +78,7 @@ func (s *FleetServer) Create(ctx context.Context, in *fleetGRPC.CreateRequest) (
 		Version:     0,
 	}
 
-	updateResult, err := collection.UpdateOne(ctx, bson.M{"name": in.Name}, bson.M{"$setOnIsert": insertData}, options.MergeUpdateOptions().SetUpsert(true))
+	updateResult, err := collection.UpdateOne(ctx, bson.M{"name": in.Name}, bson.M{"$setOnInsert": insertData}, options.MergeUpdateOptions().SetUpsert(true))
 	if err != nil {
 		err = errors.New("error while inserting new fleet to the database: " + err.Error())
 		s.logger.Error(err.Error())
@@ -415,7 +415,7 @@ func (s *FleetServer) CountDevicesWithoutFleet(ctx context.Context, namespace st
 }
 
 func (s *FleetServer) CountDevices(ctx context.Context, in *fleetGRPC.CountDevicesRequest) (*fleetGRPC.CountDevicesResponse, error) {
-	collection := FleetCollectionByNamespace(s.systemStub, in.Namespace)
+	collection := FleetDevicesCollectionByNamespace(s.systemStub, in.Namespace)
 
 	if in.Uuid == "" {
 		return s.CountDevicesWithoutFleet(ctx, in.Namespace)
@@ -496,7 +496,7 @@ func (s *FleetServer) ListDevicesWithoutFleet(ctx context.Context, in *fleetGRPC
 
 func (s *FleetServer) ListDevices(in *fleetGRPC.ListDevicesRequest, out fleetGRPC.FleetService_ListDevicesServer) error {
 	ctx := out.Context()
-	collection := FleetCollectionByNamespace(s.systemStub, in.Namespace)
+	collection := FleetDevicesCollectionByNamespace(s.systemStub, in.Namespace)
 
 	// Listing the devices that are not in the namespace
 	if in.Uuid == "" {
@@ -584,6 +584,15 @@ func (s *FleetServer) ListDevices(in *fleetGRPC.ListDevicesRequest, out fleetGRP
 		}
 
 		sendedDevices += 1
+	}
+
+	if cursor.Err() != nil {
+		err = errors.New("error while listing devices in the fleet: error while getting next value from database cursor: " + err.Error())
+		s.logger.WithFields(logrus.Fields{
+			"iot_core_fleet_uuid": in.Uuid,
+			"namespace":           in.Namespace,
+		}).Error(err.Error())
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	return status.Error(codes.OK, "")

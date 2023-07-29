@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	iot "github.com/slamy-solutions/openbp/modules/iot/libs/golang"
 	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/fleet"
@@ -15,14 +17,14 @@ import (
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
 )
 
-type DeleteTestSuite struct {
+type UpdateTestSuite struct {
 	suite.Suite
 
 	nativeStub *native.NativeStub
 	iotStub    *iot.IOTStub
 }
 
-func (suite *DeleteTestSuite) SetupSuite() {
+func (suite *UpdateTestSuite) SetupSuite() {
 	suite.nativeStub = native.NewNativeStub(native.NewStubConfig().WithNamespaceService())
 	err := suite.nativeStub.Connect()
 	if err != nil {
@@ -35,14 +37,14 @@ func (suite *DeleteTestSuite) SetupSuite() {
 		panic(err)
 	}
 }
-func (suite *DeleteTestSuite) TearDownSuite() {
+func (suite *UpdateTestSuite) TearDownSuite() {
 	suite.nativeStub.Close()
 }
-func TestDeleteTestSuite(t *testing.T) {
-	suite.Run(t, new(DeleteTestSuite))
+func TestUpdateTestSuite(t *testing.T) {
+	suite.Run(t, new(UpdateTestSuite))
 }
 
-func (s *DeleteTestSuite) TestDelete() {
+func (s *UpdateTestSuite) TestUpdate() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -57,19 +59,33 @@ func (s *DeleteTestSuite) TestDelete() {
 	require.Nil(s.T(), err)
 	defer s.iotStub.Core.Fleet.Delete(context.Background(), &fleet.DeleteRequest{Namespace: "", Uuid: createResponse.Fleet.Uuid})
 
-	deleteResponse, err := s.iotStub.Core.Fleet.Delete(ctx, &fleet.DeleteRequest{
+	timeBeforeUpdate := time.Now().UTC()
+	require.Less(s.T(), createResponse.Fleet.Created.AsTime(), timeBeforeUpdate)
+
+	newDescription := tools.GetRandomString(32)
+
+	updateResponse, err := s.iotStub.Core.Fleet.Update(ctx, &fleet.UpdateRequest{
+		Namespace:   "",
+		Uuid:        createResponse.Fleet.Uuid,
+		Description: newDescription,
+	})
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), newDescription, updateResponse.Fleet.Description)
+	require.Equal(s.T(), createResponse.Fleet.Uuid, updateResponse.Fleet.Uuid)
+	require.Equal(s.T(), createResponse.Fleet.Version+1, updateResponse.Fleet.Version)
+
+	getResponse, err := s.iotStub.Core.Fleet.Get(ctx, &fleet.GetRequest{
 		Namespace: "",
 		Uuid:      createResponse.Fleet.Uuid,
 	})
 	require.Nil(s.T(), err)
-	require.True(s.T(), deleteResponse.Existed)
 
-	existResponse, err := s.iotStub.Core.Fleet.Exists(ctx, &fleet.ExistsRequest{Namespace: "", Uuid: createResponse.Fleet.Uuid})
-	require.Nil(s.T(), err)
-	require.False(s.T(), existResponse.Exists)
+	require.Equal(s.T(), newDescription, getResponse.Fleet.Description)
+	require.Equal(s.T(), createResponse.Fleet.Uuid, getResponse.Fleet.Uuid)
+	require.Equal(s.T(), createResponse.Fleet.Version+1, getResponse.Fleet.Version)
 }
 
-func (s *DeleteTestSuite) TestDeleteFromNamespace() {
+func (s *UpdateTestSuite) TestUpdateInNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -93,19 +109,33 @@ func (s *DeleteTestSuite) TestDeleteFromNamespace() {
 	require.Nil(s.T(), err)
 	defer s.iotStub.Core.Fleet.Delete(context.Background(), &fleet.DeleteRequest{Namespace: namespaceName, Uuid: createResponse.Fleet.Uuid})
 
-	deleteResponse, err := s.iotStub.Core.Fleet.Delete(ctx, &fleet.DeleteRequest{
+	timeBeforeUpdate := time.Now().UTC()
+	require.Less(s.T(), createResponse.Fleet.Created.AsTime(), timeBeforeUpdate)
+
+	newDescription := tools.GetRandomString(32)
+
+	updateResponse, err := s.iotStub.Core.Fleet.Update(ctx, &fleet.UpdateRequest{
+		Namespace:   namespaceName,
+		Uuid:        createResponse.Fleet.Uuid,
+		Description: newDescription,
+	})
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), newDescription, updateResponse.Fleet.Description)
+	require.Equal(s.T(), createResponse.Fleet.Uuid, updateResponse.Fleet.Uuid)
+	require.Equal(s.T(), createResponse.Fleet.Version+1, updateResponse.Fleet.Version)
+
+	getResponse, err := s.iotStub.Core.Fleet.Get(ctx, &fleet.GetRequest{
 		Namespace: namespaceName,
 		Uuid:      createResponse.Fleet.Uuid,
 	})
 	require.Nil(s.T(), err)
-	require.True(s.T(), deleteResponse.Existed)
 
-	existResponse, err := s.iotStub.Core.Fleet.Exists(ctx, &fleet.ExistsRequest{Namespace: namespaceName, Uuid: createResponse.Fleet.Uuid})
-	require.Nil(s.T(), err)
-	require.False(s.T(), existResponse.Exists)
+	require.Equal(s.T(), newDescription, getResponse.Fleet.Description)
+	require.Equal(s.T(), createResponse.Fleet.Uuid, getResponse.Fleet.Uuid)
+	require.Equal(s.T(), createResponse.Fleet.Version+1, getResponse.Fleet.Version)
 }
 
-func (s *DeleteTestSuite) TestDeleteNonExisting() {
+func (s *UpdateTestSuite) TestUpdateNonExisting() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -118,19 +148,18 @@ func (s *DeleteTestSuite) TestDeleteNonExisting() {
 	_, err = s.iotStub.Core.Fleet.Delete(context.Background(), &fleet.DeleteRequest{Namespace: "", Uuid: createResponse.Fleet.Uuid})
 	require.Nil(s.T(), err)
 
-	deleteResponse, err := s.iotStub.Core.Fleet.Delete(ctx, &fleet.DeleteRequest{
-		Namespace: "",
-		Uuid:      createResponse.Fleet.Uuid,
+	_, err = s.iotStub.Core.Fleet.Update(ctx, &fleet.UpdateRequest{
+		Namespace:   "",
+		Uuid:        createResponse.Fleet.Uuid,
+		Description: tools.GetRandomString(32),
 	})
-	require.Nil(s.T(), err)
-	require.False(s.T(), deleteResponse.Existed)
-
-	existResponse, err := s.iotStub.Core.Fleet.Exists(ctx, &fleet.ExistsRequest{Namespace: "", Uuid: createResponse.Fleet.Uuid})
-	require.Nil(s.T(), err)
-	require.False(s.T(), existResponse.Exists)
+	require.NotNil(s.T(), err)
+	st, ok := status.FromError(err)
+	require.True(s.T(), ok)
+	require.Equal(s.T(), codes.NotFound, st.Code())
 }
 
-func (s *DeleteTestSuite) TestDeleteNonExistingFromNamespace() {
+func (s *UpdateTestSuite) TestUpdateNonExistingInNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -152,19 +181,18 @@ func (s *DeleteTestSuite) TestDeleteNonExistingFromNamespace() {
 	_, err = s.iotStub.Core.Fleet.Delete(context.Background(), &fleet.DeleteRequest{Namespace: namespaceName, Uuid: createResponse.Fleet.Uuid})
 	require.Nil(s.T(), err)
 
-	deleteResponse, err := s.iotStub.Core.Fleet.Delete(ctx, &fleet.DeleteRequest{
-		Namespace: namespaceName,
-		Uuid:      createResponse.Fleet.Uuid,
+	_, err = s.iotStub.Core.Fleet.Update(ctx, &fleet.UpdateRequest{
+		Namespace:   namespaceName,
+		Uuid:        createResponse.Fleet.Uuid,
+		Description: tools.GetRandomString(32),
 	})
-	require.Nil(s.T(), err)
-	require.False(s.T(), deleteResponse.Existed)
-
-	existResponse, err := s.iotStub.Core.Fleet.Exists(ctx, &fleet.ExistsRequest{Namespace: namespaceName, Uuid: createResponse.Fleet.Uuid})
-	require.Nil(s.T(), err)
-	require.False(s.T(), existResponse.Exists)
+	require.NotNil(s.T(), err)
+	st, ok := status.FromError(err)
+	require.True(s.T(), ok)
+	require.Equal(s.T(), codes.NotFound, st.Code())
 }
 
-func (s *DeleteTestSuite) TestDleteFromNonExistingNamespace() {
+func (s *UpdateTestSuite) TestUpdateInNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -177,10 +205,13 @@ func (s *DeleteTestSuite) TestDleteFromNonExistingNamespace() {
 	_, err = s.iotStub.Core.Fleet.Delete(context.Background(), &fleet.DeleteRequest{Namespace: "", Uuid: createResponse.Fleet.Uuid})
 	require.Nil(s.T(), err)
 
-	deleteResponse, err := s.iotStub.Core.Fleet.Delete(ctx, &fleet.DeleteRequest{
-		Namespace: tools.GetRandomString(32),
-		Uuid:      createResponse.Fleet.Uuid,
+	_, err = s.iotStub.Core.Fleet.Update(ctx, &fleet.UpdateRequest{
+		Namespace:   tools.GetRandomString(32),
+		Uuid:        createResponse.Fleet.Uuid,
+		Description: tools.GetRandomString(32),
 	})
 	require.NotNil(s.T(), err)
-	require.False(s.T(), deleteResponse.Existed)
+	st, ok := status.FromError(err)
+	require.True(s.T(), ok)
+	require.Equal(s.T(), codes.NotFound, st.Code())
 }

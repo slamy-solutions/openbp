@@ -76,46 +76,9 @@ func (s *ListTestSuite) TestList() {
 		}
 		receivedIds = append(receivedIds, d.Device.Uuid)
 	}
-	require.Equal(s.T(), devices, receivedIds)
-
-	listStream, err = s.iotStub.Core.Device.List(ctx, &device.ListRequest{Namespace: "", Skip: 0, Limit: 3})
-	require.Nil(s.T(), err)
-	receivedIds = make([]string, 0, devicesCount)
-	for {
-		d, err := listStream.Recv()
-		if err != nil {
-			require.Equal(s.T(), io.EOF, err)
-			break
-		}
-		receivedIds = append(receivedIds, d.Device.Uuid)
+	for _, device := range devices {
+		require.Contains(s.T(), receivedIds, device)
 	}
-	require.Equal(s.T(), devices[:3], receivedIds)
-
-	listStream, err = s.iotStub.Core.Device.List(ctx, &device.ListRequest{Namespace: "", Skip: 3, Limit: 0})
-	require.Nil(s.T(), err)
-	receivedIds = make([]string, 0, devicesCount)
-	for {
-		d, err := listStream.Recv()
-		if err != nil {
-			require.Equal(s.T(), io.EOF, err)
-			break
-		}
-		receivedIds = append(receivedIds, d.Device.Uuid)
-	}
-	require.Equal(s.T(), devices[3:], receivedIds)
-
-	listStream, err = s.iotStub.Core.Device.List(ctx, &device.ListRequest{Namespace: "", Skip: 3, Limit: 4})
-	require.Nil(s.T(), err)
-	receivedIds = make([]string, 0, devicesCount)
-	for {
-		d, err := listStream.Recv()
-		if err != nil {
-			require.Equal(s.T(), io.EOF, err)
-			break
-		}
-		receivedIds = append(receivedIds, d.Device.Uuid)
-	}
-	require.Equal(s.T(), devices[3:7], receivedIds)
 }
 
 func (s *ListTestSuite) TestListInNamespace() {

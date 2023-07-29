@@ -43,7 +43,7 @@ func TestCountDevicesTestSuite(t *testing.T) {
 	suite.Run(t, new(CountDevicesTestSuite))
 }
 
-func (s *CountTestSuite) TestCountDevices() {
+func (s *CountDevicesTestSuite) TestCountDevices() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -113,7 +113,7 @@ func (s *CountTestSuite) TestCountDevices() {
 	require.EqualValues(s.T(), 3, countResponse.Count)
 }
 
-func (s *CountTestSuite) TestCountDevicesInNamespace() {
+func (s *CountDevicesTestSuite) TestCountDevicesInNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -192,7 +192,7 @@ func (s *CountTestSuite) TestCountDevicesInNamespace() {
 	require.EqualValues(s.T(), 3, countResponse.Count)
 }
 
-func (s *CountTestSuite) TestCountDevicesForNonExistingFleet() {
+func (s *CountDevicesTestSuite) TestCountDevicesForNonExistingFleet() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -218,10 +218,10 @@ func (s *CountTestSuite) TestCountDevicesForNonExistingFleet() {
 		Uuid:      createFleetResponse.Fleet.Uuid,
 	})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, countResponse.Count)
+	require.EqualValues(s.T(), 0, countResponse.Count)
 }
 
-func (s *CountTestSuite) TestCountDevicesForNonExistingFleetInNamespace() {
+func (s *CountDevicesTestSuite) TestCountDevicesForNonExistingFleetInNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -256,10 +256,10 @@ func (s *CountTestSuite) TestCountDevicesForNonExistingFleetInNamespace() {
 		Uuid:      createFleetResponse.Fleet.Uuid,
 	})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, countResponse.Count)
+	require.EqualValues(s.T(), 0, countResponse.Count)
 }
 
-func (s *CountTestSuite) TestCountDevicesForNonExistingNamespace() {
+func (s *CountDevicesTestSuite) TestCountDevicesForNonExistingNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -277,5 +277,5 @@ func (s *CountTestSuite) TestCountDevicesForNonExistingNamespace() {
 		Uuid:      createFleetResponse.Fleet.Uuid,
 	})
 	require.Nil(s.T(), err)
-	require.Equal(s.T(), 0, countResponse.Count)
+	require.EqualValues(s.T(), 0, countResponse.Count)
 }

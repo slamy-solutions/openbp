@@ -90,12 +90,13 @@ func (s *DeviceServer) Create(ctx context.Context, in *deviceGRPC.CreateRequest)
 	insertData := DeviceInMongo{
 		Name:        in.Name,
 		Description: in.Description,
+		Identity:    identityCreateResponse.Identity.Uuid,
 		Created:     creationTime,
 		Updated:     creationTime,
 		Version:     0,
 	}
 
-	insertResult, err := collection.UpdateOne(ctx, bson.M{"name": in.Name}, bson.M{"$setOnInsert": insertData}, options.MergeUpdateOptions().SetUpsert(true))
+	insertResult, err := collection.UpdateOne(ctx, bson.M{"name": in.Name}, bson.M{"$setOnInsert": insertData}, options.Update().SetUpsert(true))
 	if err != nil {
 		_, deleteErr := s.nativeStub.Services.IAM.Identity.Delete(ctx, &identity.DeleteIdentityRequest{
 			Namespace: in.Namespace,

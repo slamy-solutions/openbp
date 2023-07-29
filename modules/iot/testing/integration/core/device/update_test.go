@@ -73,7 +73,6 @@ func (s *UpdateTestSuite) TestUpdate() {
 	require.Equal(s.T(), newDescription, updateResponse.Device.Description)
 	require.Equal(s.T(), createResponse.Device.Uuid, updateResponse.Device.Uuid)
 	require.Equal(s.T(), createResponse.Device.Version+1, updateResponse.Device.Version)
-	require.Greater(s.T(), updateResponse.Device.Created.AsTime(), timeBeforeUpdate)
 
 	getResponse, err := s.iotStub.Core.Device.Get(ctx, &device.GetRequest{
 		Namespace: "",
@@ -84,7 +83,6 @@ func (s *UpdateTestSuite) TestUpdate() {
 	require.Equal(s.T(), newDescription, getResponse.Device.Description)
 	require.Equal(s.T(), createResponse.Device.Uuid, getResponse.Device.Uuid)
 	require.Equal(s.T(), createResponse.Device.Version+1, getResponse.Device.Version)
-	require.Greater(s.T(), getResponse.Device.Created.AsTime(), timeBeforeUpdate)
 }
 
 func (s *UpdateTestSuite) TestUpdateInNamespace() {
@@ -125,7 +123,6 @@ func (s *UpdateTestSuite) TestUpdateInNamespace() {
 	require.Equal(s.T(), newDescription, updateResponse.Device.Description)
 	require.Equal(s.T(), createResponse.Device.Uuid, updateResponse.Device.Uuid)
 	require.Equal(s.T(), createResponse.Device.Version+1, updateResponse.Device.Version)
-	require.Greater(s.T(), updateResponse.Device.Created.AsTime(), timeBeforeUpdate)
 
 	getResponse, err := s.iotStub.Core.Device.Get(ctx, &device.GetRequest{
 		Namespace: namespaceName,
@@ -136,7 +133,6 @@ func (s *UpdateTestSuite) TestUpdateInNamespace() {
 	require.Equal(s.T(), newDescription, getResponse.Device.Description)
 	require.Equal(s.T(), createResponse.Device.Uuid, getResponse.Device.Uuid)
 	require.Equal(s.T(), createResponse.Device.Version+1, getResponse.Device.Version)
-	require.Greater(s.T(), getResponse.Device.Created.AsTime(), timeBeforeUpdate)
 }
 
 func (s *UpdateTestSuite) TestUpdateNonExisting() {

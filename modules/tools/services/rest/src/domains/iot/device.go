@@ -32,7 +32,7 @@ func NewDeviceRouter(logger *logrus.Entry, nativeStub *native.NativeStub, iotStu
 }
 
 type DeviceCreateRequest struct {
-	Namespace   string `json:"namespace" binding:"required,lte=64"`
+	Namespace   string `json:"namespace" binding:"lte=64"`
 	Name        string `json:"name" binding:"required,lte=64"`
 	Description string `json:"description" binding:"required,lte=256"`
 }
@@ -101,7 +101,7 @@ func (r *DeviceRouter) Create(ctx *gin.Context) {
 }
 
 type DeviceListRequest struct {
-	Namespace string `form:"namespace" binding:"required,lte=64"`
+	Namespace string `form:"namespace" binding:"lte=64"`
 	Skip      uint64 `form:"skip" binding:"gte=0"`
 	Limit     uint64 `form:"limit" binding:"gt=0,lte=100"`
 }
@@ -192,7 +192,7 @@ func (r *DeviceRouter) List(ctx *gin.Context) {
 }
 
 type DeviceUpdateRequest struct {
-	Namespace      string `json:"namespace" binding:"required,lte=64"`
+	Namespace      string `json:"namespace" binding:"lte=64"`
 	UUID           string `json:"uuid" binding:"required,lte=32"`
 	NewDescription string `json:"newDescription" binding:"required,lte=256"`
 }
@@ -276,7 +276,7 @@ func (r *DeviceRouter) Update(ctx *gin.Context) {
 }
 
 type DeviceDeleteRequest struct {
-	Namespace string `form:"namespace" binding:"required,lte=64"`
+	Namespace string `form:"namespace" binding:"lte=64"`
 	UUID      string `form:"uuid" binding:"required,lte=32"`
 }
 

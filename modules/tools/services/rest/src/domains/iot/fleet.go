@@ -33,7 +33,7 @@ func NewFleetRouter(logger *logrus.Entry, nativeStub *native.NativeStub, iotStub
 }
 
 type FleetCreateRequest struct {
-	Namespace   string `json:"namespace" binding:"required,lte=64"`
+	Namespace   string `json:"namespace" binding:"lte=64"`
 	Name        string `json:"name" binding:"required,lte=64"`
 	Description string `json:"description" binding:"required,lte=256"`
 }
@@ -101,7 +101,7 @@ func (r *FleetRouter) Create(ctx *gin.Context) {
 }
 
 type FleetListRequest struct {
-	Namespace string `form:"namespace" binding:"required,lte=64"`
+	Namespace string `form:"namespace" binding:"lte=64"`
 	Skip      uint64 `form:"skip" binding:"gte=0"`
 	Limit     uint64 `form:"limit" binding:"gt=0,lte=100"`
 }
@@ -192,7 +192,7 @@ func (r *FleetRouter) List(ctx *gin.Context) {
 }
 
 type FleetUpdateRequest struct {
-	Namespace      string `json:"namespace" binding:"required,lte=64"`
+	Namespace      string `json:"namespace" binding:"lte=64"`
 	UUID           string `json:"uuid" binding:"required,lte=32"`
 	NewDescription string `json:"newDescription" binding:"required,lte=256"`
 }
@@ -276,7 +276,7 @@ func (r *FleetRouter) Update(ctx *gin.Context) {
 }
 
 type FleetDeleteRequest struct {
-	Namespace string `form:"namespace" binding:"required,lte=64"`
+	Namespace string `form:"namespace" binding:"lte=64"`
 	UUID      string `form:"uuid" binding:"required,lte=32"`
 }
 
@@ -350,7 +350,7 @@ func (r *FleetRouter) Delete(ctx *gin.Context) {
 }
 
 type FleetListDevicesRequest struct {
-	Namespace string `form:"namespace" binding:"required,lte=64"`
+	Namespace string `form:"namespace" binding:"lte=64"`
 	UUID      string `form:"uuid" binding:"required,lte=32"`
 	Skip      uint64 `form:"skip" binding:"gte=0"`
 	Limit     uint64 `form:"limit" binding:"gt=0,lte=100"`
@@ -463,7 +463,7 @@ func (r *FleetRouter) ListDevices(ctx *gin.Context) {
 }
 
 type FleetAddDeviceRequest struct {
-	Namespace  string `json:"namespace" binding:"required,lte=64"`
+	Namespace  string `json:"namespace" binding:"lte=64"`
 	FleetUUID  string `json:"fleetUUID" binding:"required,lte=32"`
 	DeviceUUID string `json:"deviceUUID" binding:"required,lte=32"`
 }
@@ -558,7 +558,7 @@ func (r *FleetRouter) AddDevice(ctx *gin.Context) {
 }
 
 type FleetRemoveDeviceRequest struct {
-	Namespace  string `form:"namespace" binding:"required,lte=64"`
+	Namespace  string `form:"namespace" binding:"lte=64"`
 	FleetUUID  string `form:"fleetUUID" binding:"required,lte=32"`
 	DeviceUUID string `form:"deviceUUID" binding:"required,lte=32"`
 }
