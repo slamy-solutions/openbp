@@ -12,8 +12,8 @@ import (
 type BalenaDeviceInMongo struct {
 	UUID primitive.ObjectID `bson:"_id,omitempty"`
 
-	BindedDeviceNamespace *string `bson:"bindedDeviceNamespace"`
-	BindedDeviceUUID      *string `bson:"bindedDeviceUUID"`
+	BindedDeviceNamespace *string             `bson:"bindedDeviceNamespace"`
+	BindedDeviceUUID      *primitive.ObjectID `bson:"bindedDeviceUUID"`
 
 	BalenaServerNamespace string             `bson:"balenaServerNamespace"`
 	BalenaServerUUID      primitive.ObjectID `bson:"balenaServerUUID"`
@@ -22,6 +22,29 @@ type BalenaDeviceInMongo struct {
 	Created time.Time `bson:"created"`
 	Updated time.Time `bson:"updated"`
 	Version uint64    `bson:"version"`
+}
+
+func (d *BalenaDeviceInMongo) ToGRPCDevice() *balena.BalenaDevice {
+	device := &balena.BalenaDevice{
+		Uuid:                  d.UUID.Hex(),
+		BindedDeviceNamespace: "",
+		BindedDeviceUUID:      "",
+		BalenaServerNamespace: d.BalenaServerNamespace,
+		BalenaServerUUID:      d.BalenaServerUUID.Hex(),
+		BalenaData:            d.BalenaData.ToGRPCBalenaData(),
+		Created:               timestamppb.New(d.Created),
+		Updated:               timestamppb.New(d.Updated),
+		Version:               d.Version,
+	}
+
+	if d.BindedDeviceNamespace != nil {
+		device.BindedDeviceNamespace = *d.BindedDeviceNamespace
+	}
+	if d.BindedDeviceUUID != nil {
+		device.BindedDeviceUUID = (*d.BindedDeviceUUID).Hex()
+	}
+
+	return device
 }
 
 type BalenaServerInMongo struct {

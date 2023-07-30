@@ -1,6 +1,11 @@
 package api
 
-import "time"
+import (
+	"time"
+
+	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/integration/balena"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
 
 type BalenaServerInfo struct {
 	BaseURL  string
@@ -26,4 +31,36 @@ type Device struct {
 	CPUUsage              int        `json:"cpu_usage" bson:"cpu_usage"`
 	CPUTemp               int        `json:"cpu_total" bson:"cpu_total"`
 	IsUndervolted         bool       `json:"is_undervolted" bson:"is_undervolted"`
+}
+
+func (d *Device) ToGRPCBalenaData() *balena.BalenaData {
+	data := &balena.BalenaData{
+		Uuid:                  d.UUID,
+		Id:                    int32(d.ID),
+		IsOnline:              d.IsOnline,
+		Status:                d.Status,
+		DeviceName:            d.DeviceName,
+		MemoryUsage:           uint32(d.MemoryUsage),
+		StorageUsage:          uint32(d.StorageUsage),
+		MemoryTotal:           uint32(d.MemoryTotal),
+		CpuUsage:              uint32(d.CPUUsage),
+		CpuTemp:               uint32(d.CPUTemp),
+		IsUndervolted:         d.IsUndervolted,
+		Longitude:             "",
+		Latitude:              "",
+		Location:              "",
+		LastConnectivityEvent: nil,
+	}
+
+	if d.Longitude != nil {
+		data.Longitude = *d.Longitude
+	}
+	if d.Location != nil {
+		data.Location = *d.Location
+	}
+	if d.LastConnectivityEvent != nil {
+		data.LastConnectivityEvent = timestamppb.New(*d.LastConnectivityEvent)
+	}
+
+	return data
 }
