@@ -9,6 +9,7 @@ import (
 
 	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/device"
 	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/fleet"
+	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/integration/balena"
 )
 
 func getConfigEnv(key string, fallback string) string {
@@ -18,9 +19,21 @@ func getConfigEnv(key string, fallback string) string {
 	return fallback
 }
 
+type CoreBalenaIntegrationServices struct {
+	Server balena.BalenaServersServiceClient
+	Device balena.BalenaDevicesServiceClient
+	Sync   balena.BalenaSyncServiceClient
+	Tools  balena.BalenaToolsServiceClient
+}
+
+type CoreIntegrationServices struct {
+	Balena CoreBalenaIntegrationServices
+}
+
 type CoreService struct {
-	Device device.DeviceServiceClient
-	Fleet  fleet.FleetServiceClient
+	Device      device.DeviceServiceClient
+	Fleet       fleet.FleetServiceClient
+	Integration CoreIntegrationServices
 }
 
 type GrpcServiceConfig struct {

@@ -87,6 +87,12 @@ const modules = [
     description: 'layout.main.modules.accessControl.description',
     routerPathName: 'accessControl_iam_identity_list',
     icon: 'fingerprint'
+  },
+  {
+    name: 'layout.main.modules.iot.name',
+    description: 'layout.main.modules.iot.description',
+    routerPathName: 'iot_fleet_list',
+    icon: 'fa-solid fa-cubes'
   }
 ] as ModuleInfo[]
 

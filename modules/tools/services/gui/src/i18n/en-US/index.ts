@@ -9,6 +9,10 @@ export default {
         accessControl: {
           name: "Access Management",
           description: ""
+        },
+        iot: {
+          name: "IoT",
+          description: ""
         }
       }
     },
@@ -475,6 +479,51 @@ export default {
             loadOperationNotify: "Loading roles list ...",
             loadFailedNotify: "Failed to load roles list: {error}",
           }
+        }
+      }
+    },
+    iot: {
+      fleet: {
+        create: {
+          header: "Create fleet",
+    
+          namespaceInput: "Namespace",
+          nameInput: "Name",
+          descriptionInput: "Description",
+  
+          createButton: "Create",
+          createHint: "System will create iot devices fleet. After creation, you will be able to add devices to the fleet",
+  
+          createOperationNotify: 'Trying to create new fleet ...',
+          createSuccessNotify: 'Successfully created new fleet',
+          createFailNotify: 'Failed to create fleet. Error: {error}'
+        },
+        delete: {
+          header: 'Delete fleet?',
+          bodyText: 'You are about to delete "{uuid}" fleet from the "{namespace}" namespace. This action can not be undone - all the data related to the fleet will be lost. Devices will be unbinded from the fleet. This process is asynchronous, so you will have to wait for all the services will recognize the change (most probably up to several seconds).',
+        
+          deleteButton: 'Delete',
+  
+          deleteOperationNotify: 'Trying to delete fleet ...',
+          deleteSuccessNotify: 'Successfully deleted fleet',
+          deleteFailNotify: 'Failed to delete fleet. Error: {error}'
+        },
+        list: {
+          header: "Fleets",
+          uuidColumn: "UUID",
+          nameColumn: "Name",
+          descriptionColumn: "Description",
+          actionsColumn: "Actions",
+          actionsMenu: {
+            delete: "Delete"
+          },
+
+          noData: "There are no device fleets in this namespace",
+          failedToLoad: "Failed to load fleets list: {error}",
+          createButton: "Create",
+
+          loadOperationNotify: 'Trying to load fleets list ...',
+          loadFailNotify: 'Failed to load fleets list. Error: {error}'
         }
       }
     }

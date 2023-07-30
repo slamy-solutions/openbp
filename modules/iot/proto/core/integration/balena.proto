@@ -6,45 +6,66 @@ package iot_core_integration_balena;
 
 option go_package = "github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/integration/balena;balena";
 
-message ConnectionConfig {
-    // Indicates if integration is enabled or not
-    bool enabled = 1;
-    // URL of the service. For example https://api.balena.com
-    string url = 2;
-    // Access token
-    string token = 3;
 
+message BalenaServer {
+    // Namespace where the server is located
+    string namespace = 1;
+    // Unique identifier of the server
+    string uuid = 2;
+    // Unique name of the server
+    string name = 3;
+    // Arbitrary description
+    string description = 4;
 
-    // Last time when the config was updated.
-    google.protobuf.Timestamp updated = 50;
-    // Counter that increases after every update of the config
-    uint64 version = 51;
+    // Base URL where to the server api. (for example 'https://api.balena.com')
+    string baseURL = 5;
+    // Indicates if synchronization is enabled
+    bool enabled = 6;
+
+    // Time when the information about this balena server was added to the system
+    google.protobuf.Timestamp created = 50;
+    // Last time when the information was updated.
+    google.protobuf.Timestamp updated = 51;
+    // Counter that increases after every update of the information
+    uint64 version = 52;
 }
 
-message SyncConfig {
-    // Interval in seconds between synchronizations
-    uint32 updateInterval = 1;
-    // Time to next synchronization will be calculated as "updateInterval + random(0, updateIntervalVariation)". This will ensure, that multiple workers make updates in different time
-    uint32 updateIntervalVariation = 2;
+message BalenaData {
+    string uuid = 1;
+    int32 id = 2;
+    bool isOnline = 3;
+    string status = 4;
+    string deviceName = 5;
 
-    // Last time when the config was updated.
-    google.protobuf.Timestamp updated = 50;
-    // Counter that increases after every update of the config
-    uint64 version = 51;
+    string longitude = 6;
+    string latitude = 7;
+    string location = 8;
+
+    google.protobuf.Timestamp lastConnectivityEvent = 9;
+    uint32 memoryUsage = 10;
+    uint32 memoryTotal = 11;
+    uint32 storageUsage = 12;
+    uint32 cpuUsage = 13;
+    uint32 cpuTemp = 14;
+    bool isUndervolted = 15;
 }
 
 message BalenaDevice {
-    // Namespace of the balena service integration
-    string balenaNamespace = 1;
-    // Device ID from the balena server
-    int32 balenaID = 2;
-    // Device UUID from the balena server
-    string balenaUUID = 3;
+    // Unique identifier of the device inside OpenBP
+    string uuid = 1;
 
-    // Device namespace in the OpenBP
-    string deviceNamespace = 4;
-    // Device UUID in the OpenBP. If the device wasnt assigned - it will be empty.
-    string deviceUUID = 5;
+    // Namespace of the OpenBP device that is binded to this balena device
+    string bindedDeviceNamespace = 2;
+    // Unieuqe identifier of the OpenBP device that is binded to this balena device. If its is empty, then balena device is not binded.
+    string bindedDeviceUUID = 3;
+
+    // Namespace of balena server where this devices is located
+    string balenaServerNamespace = 4;
+    // Unique identifier of the balena server where the device is located
+    string balenaServerUUID = 5;
+
+    // Device information loaded from the balena server. Updates on synchronizations.
+    BalenaData balenaData = 6;
 
     // Time when the information about this balena device was loaded first time
     google.protobuf.Timestamp created = 50;
@@ -54,32 +75,149 @@ message BalenaDevice {
     uint64 version = 52;
 }
 
-message SetConnectionConfigRequest {
-    // Indicates if integration is enabled or not
-    bool enabled = 1;
-    // URL of the service. For example https://api.balena.com
-    string url = 2;
-    // Access token
-    string token = 3;
-}
-message SetConnectionConfigResponse {
-    // Updated configuration
-    ConnectionConfig config = 1;
+message SyncLogEntry {
+    enum Status {
+        // Everything is ok
+        OK = 0;
+        // Error occured. Error is related to the user input or malfuncition of the balena server
+        ERROR = 1;
+        // Internal OpenBP error occured during the synchronization
+        INTERNAL_ERROR = 2;
+    }
+
+    message Stats {
+        // Number of devices founded on the balena server
+        int32 foundedDevicesOnServer = 1;
+        // Number of founded devices that are active (online)
+        int32 foundedActiveDevices = 2;
+        // Number of the devices for which metrics where updated
+        int32 metricsUpdates = 3;
+        // Execution time in milliseconds
+        uint64 executionTime = 4;
+    }
+
+    // Log entry unique identifier
+    string uuid = 1;
+    // Unique identifier of the balena server that was synchronized
+    string serverUUID = 2;
+    // Timestamp of the synchronization
+    google.protobuf.Timestamp timestamp = 3;
+
+    // Overall status
+    Status status = 4;
+    // Human-readable error explanation
+    string error = 5;
+    // Statistics
+    Stats stats = 6;
 }
 
-message GetConnectionConfigRequest {}
-message GetConnectionConfigResponse {
-    // Current configuration
-    ConnectionConfig config = 1;
+message CreateServerRequest {
+    // Namespace where the server will be located
+    string namespace = 1;
+    // Unique name of the server
+    string name = 2;
+    // Arbitrary description
+    string description = 3;
+    // Base URL for API (for example 'https://api.balena.com')
+    string baseURL = 4;
+    // Auth token
+    string authToken = 5;
+}
+message CreateServerResponse {
+    // Created balena server
+    BalenaServer server = 1;
 }
 
-message VerifyConnectionConfigRequest {
+message GetServerRequest {
+    // Server unique identifier
+    string uuid = 1;
+}
+message GetServerResponse {
+    // Founded balena server information
+    BalenaServer server = 1;
+}
+
+message ListServersRequest {
+    // Skip first 'skip' entries
+    uint64 skip = 1;
+    // Limit result to number of entries
+    uint64 limit = 2;
+}
+message ListServersResponse {
+    // One of the founded servers
+    BalenaServer server = 1;
+}
+
+message CountServersRequest {}
+message CountServersResponse {
+    // Total count of servers
+    uint64 totalCount = 1;
+}
+
+message ListServersInNamespaceRequest {
+    // Namespace where to list servers
+    string namespace = 1;
+    // Skip first 'skip' entries
+    uint64 skip = 2;
+    // Limit result to number of entries
+    uint64 limit = 3;
+}
+message ListServersInNamespaceResponse {
+    // One of the founded servers
+    BalenaServer server = 1;
+}
+
+message CountServersInNamespaceRequest {
+    // Namespace where to count servers
+    string namespace = 1;
+}
+message CountServersInNamespaceResponse {
+    // Total count of servers in namespace
+    uint64 totalCount = 1;
+}
+
+message SetServerEnabledRequest {
+    // Unique identifier of the server to set
+    string serverUUID = 1;
+    // Set server enabled or not
+    bool enabled = 2;
+}
+message SetServerEnabledResponse {
+    // Updated server information
+    BalenaServer server = 1;
+}
+
+message UpdateServerRequest {
+    // Server unique identifier to update
+    string serverUUID = 1;
+    // New description
+    string newDescription = 2;
+    // New base server url. Leave empty in order not to update
+    string newBaseURL = 3;
+    // New auth token. Leave empty in order not to update
+    string newAuthToken = 4;
+}
+message UpdateServerResponse {
+    // Updated server information
+    BalenaServer server = 1;
+}
+
+message DeleteServerRequest {
+    // Server unique identifier to delete
+    string serverUUID = 1;
+}
+message DeleteServerResponse {
+    // Indicates if server existed before this operation
+    bool existed = 1;
+}
+
+message VerifyConnectionDataRequest {
     // URL of the service. For example https://api.balena.com
     string url = 1;
     // Access token
     string token = 2;
 }
-message VerifyConnectionConfigResponse {
+message VerifyConnectionDataResponse {
     enum Status {
         // Everything is ok
         OK = 0;
@@ -97,54 +235,30 @@ message VerifyConnectionConfigResponse {
     string message = 2;
 }
 
-message SetSyncConfigRequest {
-    // Interval in seconds between synchronizations
-    uint32 updateInterval = 1;
-    // Time to next synchronization will be calculated as "updateInterval + random(0, updateIntervalVariation)". This will ensure, that multiple workers make updates in different time
-    uint32 updateIntervalVariation = 2;
-}
-message SetSyncConfigResponse {
-    // Updated configuration
-    SyncConfig config = 1;
-}
-
-message GetSyncConfigRequest {}
-message GetSyncConfigResponse {
-    // Current configuration
-    SyncConfig config = 1;
-}
-
-message SyncNowRequest {}
-message SyncNowResponse {}
-
-message BindRequest {
-    // Namespace of the balena service integration
-    string balenaNamespace = 1;
-    // Device ID from the balena server
-    int32 balenaID = 2;
+message BindDeviceRequest {
+    // Unique identifier of the balena device information stored in the OpenBP
+    string balenaDeviceUUID = 1;
 
     // Device namespace in the OpenBP
-    string deviceNamespace = 3;
+    string deviceNamespace = 2;
     // Device UUID in the OpenBP.
-    string deviceUUID = 4;
+    string deviceUUID = 3;
 }
-message BindResponse {
+message BindDeviceResponse {
     // Updated balena device information
     BalenaDevice device = 1;
 }
 
-message UnBindRequest {
-    // Namespace of the balena service integration
-    string balenaNamespace = 1;
-    // Device ID from the balena server
-    int32 balenaID = 2;
+message UnBindDeviceRequest {
+    // Unique identifier of the balena device information stored in the OpenBP
+    string balenaDeviceUUID = 1;
 }
-message UnBindResponse {
+message UnBindDeviceResponse {
     // Updated balena device information
     BalenaDevice device = 1;
 }
 
-message ListRequest {
+message ListDevicesInNamespaceRequest {
     enum BindingFilter {
         // Return all
         ALL = 0;
@@ -155,18 +269,20 @@ message ListRequest {
     }
 
     // Namespace of the balena service integration
-    string balenaNamespace = 1;
+    string balenaServersNamespace = 1;
 
     BindingFilter bindingFilter = 2;
 
+    // Skip first 'skip' entries
     uint64 skip = 3;
+    // Limit result to number of entries
     uint64 limit = 4;
 }
-message ListResponse {
+message ListDevicesInNamespaceResponse {
     BalenaDevice device = 1;
 }
 
-message CountRequest {
+message CountDevicesInNamespaceRequest {
     enum BindingFilter {
         // Return all
         ALL = 0;
@@ -177,36 +293,98 @@ message CountRequest {
     }
 
     // Namespace of the balena service integration
-    string balenaNamespace = 1;
+    string balenaServersNamespace = 1;
     BindingFilter bindingFilter = 2;
 }
-message CountResponse {
+message CountDevicesInNamespaceResponse {
     uint64 count = 1;
 }
 
-service BalenaIntegrationService {
-    // Set connection configuration
-    rpc SetConnectionConfig(SetConnectionConfigRequest) returns (SetConnectionConfigResponse);
-    // Get current connection configuration
-    rpc GetConnectionConfig(GetConnectionConfigRequest) returns (GetConnectionConfigResponse);
-    // Perform request to the Balena server and check if sended configuration is valid. 
-    rpc VerifyConnectionConfig(VerifyConnectionConfigRequest) returns (VerifyConnectionConfigResponse);
+message SyncNowRequest {
+    // Balena server to synchronize
+    string balenaServerUUID = 1;
+}
+message SyncNowResponse {
+    // Synchronization log
+    SyncLogEntry log = 1;
+}
 
-    // Set synchronization configuration
-    rpc SetSyncConfig(SetSyncConfigRequest) returns (SetSyncConfigResponse);
-    // Get current synchronization configuration
-    rpc GetSyncConfig(GetSyncConfigRequest) returns (GetSyncConfigResponse);
+message ListSyncLogRequest {
+    // Unique identifier of the balena server for which to list the logs
+    string serverUUID = 1;
+    // Skip first 'skip' entries
+    uint64 skip = 2;
+    // Limit result to number of entries
+    uint64 limit = 3;
+}
+message ListSyncLogResponse {
+    // One of the log entries
+    SyncLogEntry log = 1;
+}
 
+message CountSyncLogRequest {
+    // Unique identifier of the balena server for which to count the logs
+    string serverUUID = 1;
+}
+message CountSyncLogResponse {
+    // Total count of logs for specified balena server
+    uint64 totalCount = 1;
+}
 
+message GetLastSyncLogRequest {
+    // Unique identifier of the server for which to get log
+    string serverUUID = 1;
+}
+message GetLastSyncLogResponse {
+    // Last synchronization log
+    SyncLogEntry log = 1;
+}
+
+service BalenaServersService {
+    // Create (register in the system) new balena server
+    rpc Create(CreateServerRequest) returns (CreateServerResponse);
+    // Get balena server information
+    rpc Get(GetServerRequest) returns (GetServerResponse);
+    // Get all the registered balena servers
+    rpc List(ListServersRequest) returns (stream ListServersResponse);
+    // Get total count of all the registered balena servers 
+    rpc Count(CountServersRequest) returns (CountServersResponse);
+    // Get all the registered balena servers in specified namespace
+    rpc ListInNamespace(ListServersInNamespaceRequest) returns (stream ListServersInNamespaceResponse);
+    // Get total count of all the registered balena servers in specified namespace
+    rpc CountInNamespace(CountServersInNamespaceRequest) returns (CountServersInNamespaceResponse);
+    // Set status of the balena servers. Servers that are enabled will be periodically automatically synchronized.
+    rpc SetEnabled(SetServerEnabledRequest) returns (SetServerEnabledResponse);
+    // Update balena server information
+    rpc Update(UpdateServerRequest) returns (UpdateServerResponse);
+    // Delete balena server
+    rpc Delete(DeleteServerRequest) returns (DeleteServerResponse);
+}
+
+service BalenaToolsService {
+    // Verify provided connection data. Make request to the remote server and check if it responses as expected.
+    rpc VerifyConnectionData(VerifyConnectionDataRequest) returns (VerifyConnectionDataResponse);
+}
+
+service BalenaDevicesService {
+    // Bind Balena device to the OpenBP IoT device
+    rpc Bind(BindDeviceRequest) returns (BindDeviceResponse);
+    // Unbind OpenBP device from the Balena device
+    rpc UnBind(UnBindDeviceRequest) returns (UnBindDeviceResponse);
+
+    // List all the Balena devices in namespace
+    rpc ListInNamespace(ListDevicesInNamespaceRequest) returns (stream ListDevicesInNamespaceResponse);
+    // Count all the Balena devices in namespace
+    rpc CountInNamespace(CountDevicesInNamespaceRequest) returns (CountDevicesInNamespaceResponse);
+}
+
+service BalenaSyncService {
     // Synchronize the state between Balena server and OpenBP. Start synchronization immediatelly
     rpc SyncNow(SyncNowRequest) returns (SyncNowResponse);
-
-    // Bind Balena device to the OpenBP IoT device
-    rpc Bind(BindRequest) returns (BindResponse);
-    // Unbind OpenBP device from the Balena device
-    rpc UnBind(UnBindRequest) returns (UnBindResponse);
-    // List all the Balena devices
-    rpc List(ListRequest) returns (stream ListResponse);
-    // Count all the Balena devices
-    rpc Count(CountRequest) returns (CountResponse);
+    // List synchronization log
+    rpc ListLog(ListSyncLogRequest) returns (stream ListSyncLogResponse);
+    // Count number of entries in the synchronization log
+    rpc CountLog(CountSyncLogRequest) returns (CountSyncLogResponse);
+    // Get last synchronization log for server
+    rpc GetLastSyncLog(GetLastSyncLogRequest) returns (GetLastSyncLogResponse);
 }

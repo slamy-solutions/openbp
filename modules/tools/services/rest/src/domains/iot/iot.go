@@ -21,8 +21,9 @@ func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *s
 	group.GET("/fleets", fleetRouter.List)
 	group.PATCH("/fleets/fleet", fleetRouter.Update)
 	group.DELETE("/fleets/fleet", fleetRouter.Delete)
-	group.PUT("/fleets/fleet/device", fleetRouter.AddDevice)
-	group.DELETE("/fleets/fleet/device", fleetRouter.RemoveDevice)
+	group.GET("/fleets/fleet/devices", fleetRouter.ListDevices)
+	group.PUT("/fleets/fleet/devices/device", fleetRouter.AddDevice)
+	group.DELETE("/fleets/fleet/devices/device", fleetRouter.RemoveDevice)
 
 	telemetryRouter := NewTelemetryRouter(logger.WithField("domain.service", "telemetry"), systemStub, nativeStub, iotStub)
 	group.GET("/telemetry/listen", telemetryRouter.Listen)

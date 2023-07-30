@@ -5,6 +5,7 @@ import (
 
 	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/device"
 	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/fleet"
+	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/integration/balena"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
@@ -41,5 +42,13 @@ func NewCoreConnection(address string, opts ...grpc.DialOption) (*grpc.ClientCon
 	return dial, &CoreService{
 		Device: device.NewDeviceServiceClient(dial),
 		Fleet:  fleet.NewFleetServiceClient(dial),
+		Integration: CoreIntegrationServices{
+			Balena: CoreBalenaIntegrationServices{
+				Server: balena.NewBalenaServersServiceClient(dial),
+				Device: balena.NewBalenaDevicesServiceClient(dial),
+				Sync:   balena.NewBalenaSyncServiceClient(dial),
+				Tools:  balena.NewBalenaToolsServiceClient(dial),
+			},
+		},
 	}, nil
 }
