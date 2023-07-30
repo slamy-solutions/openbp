@@ -29,6 +29,7 @@ type client struct {
 
 type Client interface {
 	GetAllDevices(ctx context.Context, server BalenaServerInfo) ([]Device, error)
+	Ping(ctx context.Context, server BalenaServerInfo) error
 
 	// Close client and free resources
 	Close()
@@ -82,6 +83,8 @@ func (c *client) GetAllDevices(ctx context.Context, server BalenaServerInfo) ([]
 	if err != nil {
 		return nil, errors.Join(ErrFailedToCreateRequest, err)
 	}
+	r.Header["Content-Type"] = []string{"application/json"}
+	r.Header["Authorization"] = []string{"Bearer " + server.APIToken}
 
 	response, err := c.httpClient.Do(r)
 	if err != nil {
@@ -107,4 +110,31 @@ func (c *client) GetAllDevices(ctx context.Context, server BalenaServerInfo) ([]
 	}
 
 	return devicesResponse.Devices, nil
+}
+
+func (c *client) Ping(ctx context.Context, server BalenaServerInfo) error {
+	requestURL := fmt.Sprintf("%s/user/v1/whoami", server.BaseURL)
+	_, err := url.ParseRequestURI(requestURL)
+	if err != nil {
+		return errors.Join(ErrServerURLInvalid, err)
+	}
+
+	r, err := http.NewRequestWithContext(ctx, "GET", requestURL, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		return errors.Join(ErrFailedToCreateRequest, err)
+	}
+	r.Header["Content-Type"] = []string{"application/json"}
+	r.Header["Authorization"] = []string{"Bearer " + server.APIToken}
+
+	response, err := c.httpClient.Do(r)
+	if err != nil {
+		return errors.Join(ErrServerConnectionError, err)
+	}
+	defer response.Body.Close()
+
+	if err = c.getErrorByResponse(response); err != nil {
+		return err
+	}
+
+	return nil
 }
