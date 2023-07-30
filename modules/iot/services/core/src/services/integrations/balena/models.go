@@ -86,12 +86,20 @@ type SyncStats struct {
 	ExecutionTime uint64 `bson:"executionTime"`
 }
 
+type SyncStatus int
+
+const (
+	SyncStatusOK            SyncStatus = 0
+	SyncStatusError         SyncStatus = 1
+	SyncStatusInternalError SyncStatus = 2
+)
+
 type SyncLogInMongo struct {
 	UUID       primitive.ObjectID `bson:"_id,omitempty"`
 	ServerUUID primitive.ObjectID `bson:"serverUUID"`
 	Timestamp  time.Time          `bson:"timestamp"`
 
-	Status string    `bson:"status"`
-	Error  string    `bson:"error,omitempty"`
-	Stats  SyncStats `bson:"stats"`
+	Status SyncStatus `bson:"status"`
+	Error  string     `bson:"error,omitempty"`
+	Stats  SyncStats  `bson:"stats"`
 }
