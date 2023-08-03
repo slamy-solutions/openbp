@@ -29,6 +29,27 @@ func NewDevicesServer(logger *logrus.Entry, systemStub *system.SystemStub) *Devi
 	}
 }
 
+func (s *DevicesServer) Get(ctx context.Context, in *balena.GetDeviceRequest) (*balena.GetDeviceResponse, error) {
+	balenaDeviceUUID, err := primitive.ObjectIDFromHex(in.Uuid)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "device not found. Balena device UUID has bad format")
+	}
+
+	collection := getBalenaDeviceCollection(s.systemStub)
+	var foundedDevice BalenaDeviceInMongo
+	if err = collection.FindOne(ctx, bson.M{"_id": balenaDeviceUUID}).Decode(&foundedDevice); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(codes.NotFound, "")
+		}
+
+		err = errors.Join(errors.New("error while searching for device in the database"), err)
+		s.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &balena.GetDeviceResponse{Device: foundedDevice.ToGRPCDevice()}, status.Error(codes.OK, "")
+}
+
 func (s *DevicesServer) Bind(ctx context.Context, in *balena.BindDeviceRequest) (*balena.BindDeviceResponse, error) {
 	balenaDeviceUUID, err := primitive.ObjectIDFromHex(in.BalenaDeviceUUID)
 	if err != nil {

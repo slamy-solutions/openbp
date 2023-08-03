@@ -6,6 +6,7 @@ import (
 	iot "github.com/slamy-solutions/openbp/modules/iot/libs/golang"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
+	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/iot/integration"
 )
 
 func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *system.SystemStub, nativeStub *native.NativeStub, iotStub *iot.IOTStub) {
@@ -27,4 +28,6 @@ func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *s
 
 	telemetryRouter := NewTelemetryRouter(logger.WithField("domain.service", "telemetry"), systemStub, nativeStub, iotStub)
 	group.GET("/telemetry/listen", telemetryRouter.Listen)
+
+	integration.FillRouterGroup(logger.WithField("domain.service", "integration"), group.Group("/integration"), systemStub, nativeStub, iotStub)
 }

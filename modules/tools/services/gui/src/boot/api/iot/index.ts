@@ -2,7 +2,7 @@ import { APIModuleBase } from '../model';
 import { FleetAPI } from './fleet'
 
 export class IoTAPI extends APIModuleBase {
-    public fleet: FleetAPI;
+    public readonly fleet: FleetAPI;
 
     constructor() {
         super();

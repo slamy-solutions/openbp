@@ -18,11 +18,11 @@ export interface AuthAPIs {
 }
 
 export class AccessControlAPI extends APIModuleBase {
-    public identity: IdentityAPI;
-    public role: RoleAPI
-    public policy: PolicyAPI
-    public actor: ActorAPIs
-    public auth: AuthAPIs
+    public readonly identity: IdentityAPI;
+    public readonly role: RoleAPI
+    public readonly policy: PolicyAPI
+    public readonly actor: ActorAPIs
+    public readonly auth: AuthAPIs
 
     constructor() {
         super();

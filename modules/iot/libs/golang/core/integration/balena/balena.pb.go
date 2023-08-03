@@ -178,7 +178,7 @@ func (x ListDevicesInNamespaceRequest_BindingFilter) Number() protoreflect.EnumN
 
 // Deprecated: Use ListDevicesInNamespaceRequest_BindingFilter.Descriptor instead.
 func (ListDevicesInNamespaceRequest_BindingFilter) EnumDescriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{28, 0}
+	return file_balena_proto_rawDescGZIP(), []int{30, 0}
 }
 
 type CountDevicesInNamespaceRequest_BindingFilter int32
@@ -230,7 +230,7 @@ func (x CountDevicesInNamespaceRequest_BindingFilter) Number() protoreflect.Enum
 
 // Deprecated: Use CountDevicesInNamespaceRequest_BindingFilter.Descriptor instead.
 func (CountDevicesInNamespaceRequest_BindingFilter) EnumDescriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{30, 0}
+	return file_balena_proto_rawDescGZIP(), []int{32, 0}
 }
 
 type BalenaServer struct {
@@ -1792,6 +1792,102 @@ func (x *VerifyConnectionDataResponse) GetMessage() string {
 	return ""
 }
 
+type GetDeviceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// UUID of the balena device to get
+	Uuid string `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+}
+
+func (x *GetDeviceRequest) Reset() {
+	*x = GetDeviceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_balena_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDeviceRequest) ProtoMessage() {}
+
+func (x *GetDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_balena_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDeviceRequest.ProtoReflect.Descriptor instead.
+func (*GetDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_balena_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GetDeviceRequest) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
+type GetDeviceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Founded device
+	Device *BalenaDevice `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+}
+
+func (x *GetDeviceResponse) Reset() {
+	*x = GetDeviceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_balena_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDeviceResponse) ProtoMessage() {}
+
+func (x *GetDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_balena_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDeviceResponse.ProtoReflect.Descriptor instead.
+func (*GetDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_balena_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *GetDeviceResponse) GetDevice() *BalenaDevice {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
 type BindDeviceRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1808,7 +1904,7 @@ type BindDeviceRequest struct {
 func (x *BindDeviceRequest) Reset() {
 	*x = BindDeviceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[24]
+		mi := &file_balena_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1821,7 +1917,7 @@ func (x *BindDeviceRequest) String() string {
 func (*BindDeviceRequest) ProtoMessage() {}
 
 func (x *BindDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[24]
+	mi := &file_balena_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1834,7 +1930,7 @@ func (x *BindDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BindDeviceRequest.ProtoReflect.Descriptor instead.
 func (*BindDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{24}
+	return file_balena_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *BindDeviceRequest) GetBalenaDeviceUUID() string {
@@ -1870,7 +1966,7 @@ type BindDeviceResponse struct {
 func (x *BindDeviceResponse) Reset() {
 	*x = BindDeviceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[25]
+		mi := &file_balena_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1883,7 +1979,7 @@ func (x *BindDeviceResponse) String() string {
 func (*BindDeviceResponse) ProtoMessage() {}
 
 func (x *BindDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[25]
+	mi := &file_balena_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1896,7 +1992,7 @@ func (x *BindDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BindDeviceResponse.ProtoReflect.Descriptor instead.
 func (*BindDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{25}
+	return file_balena_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *BindDeviceResponse) GetDevice() *BalenaDevice {
@@ -1918,7 +2014,7 @@ type UnBindDeviceRequest struct {
 func (x *UnBindDeviceRequest) Reset() {
 	*x = UnBindDeviceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[26]
+		mi := &file_balena_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1931,7 +2027,7 @@ func (x *UnBindDeviceRequest) String() string {
 func (*UnBindDeviceRequest) ProtoMessage() {}
 
 func (x *UnBindDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[26]
+	mi := &file_balena_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1944,7 +2040,7 @@ func (x *UnBindDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnBindDeviceRequest.ProtoReflect.Descriptor instead.
 func (*UnBindDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{26}
+	return file_balena_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *UnBindDeviceRequest) GetBalenaDeviceUUID() string {
@@ -1966,7 +2062,7 @@ type UnBindDeviceResponse struct {
 func (x *UnBindDeviceResponse) Reset() {
 	*x = UnBindDeviceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[27]
+		mi := &file_balena_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1979,7 +2075,7 @@ func (x *UnBindDeviceResponse) String() string {
 func (*UnBindDeviceResponse) ProtoMessage() {}
 
 func (x *UnBindDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[27]
+	mi := &file_balena_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1992,7 +2088,7 @@ func (x *UnBindDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnBindDeviceResponse.ProtoReflect.Descriptor instead.
 func (*UnBindDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{27}
+	return file_balena_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *UnBindDeviceResponse) GetDevice() *BalenaDevice {
@@ -2019,7 +2115,7 @@ type ListDevicesInNamespaceRequest struct {
 func (x *ListDevicesInNamespaceRequest) Reset() {
 	*x = ListDevicesInNamespaceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[28]
+		mi := &file_balena_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2032,7 +2128,7 @@ func (x *ListDevicesInNamespaceRequest) String() string {
 func (*ListDevicesInNamespaceRequest) ProtoMessage() {}
 
 func (x *ListDevicesInNamespaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[28]
+	mi := &file_balena_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2045,7 +2141,7 @@ func (x *ListDevicesInNamespaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesInNamespaceRequest.ProtoReflect.Descriptor instead.
 func (*ListDevicesInNamespaceRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{28}
+	return file_balena_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListDevicesInNamespaceRequest) GetBalenaServersNamespace() string {
@@ -2087,7 +2183,7 @@ type ListDevicesInNamespaceResponse struct {
 func (x *ListDevicesInNamespaceResponse) Reset() {
 	*x = ListDevicesInNamespaceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[29]
+		mi := &file_balena_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2100,7 +2196,7 @@ func (x *ListDevicesInNamespaceResponse) String() string {
 func (*ListDevicesInNamespaceResponse) ProtoMessage() {}
 
 func (x *ListDevicesInNamespaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[29]
+	mi := &file_balena_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2113,7 +2209,7 @@ func (x *ListDevicesInNamespaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesInNamespaceResponse.ProtoReflect.Descriptor instead.
 func (*ListDevicesInNamespaceResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{29}
+	return file_balena_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListDevicesInNamespaceResponse) GetDevice() *BalenaDevice {
@@ -2136,7 +2232,7 @@ type CountDevicesInNamespaceRequest struct {
 func (x *CountDevicesInNamespaceRequest) Reset() {
 	*x = CountDevicesInNamespaceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[30]
+		mi := &file_balena_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2149,7 +2245,7 @@ func (x *CountDevicesInNamespaceRequest) String() string {
 func (*CountDevicesInNamespaceRequest) ProtoMessage() {}
 
 func (x *CountDevicesInNamespaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[30]
+	mi := &file_balena_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2162,7 +2258,7 @@ func (x *CountDevicesInNamespaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CountDevicesInNamespaceRequest.ProtoReflect.Descriptor instead.
 func (*CountDevicesInNamespaceRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{30}
+	return file_balena_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *CountDevicesInNamespaceRequest) GetBalenaServersNamespace() string {
@@ -2190,7 +2286,7 @@ type CountDevicesInNamespaceResponse struct {
 func (x *CountDevicesInNamespaceResponse) Reset() {
 	*x = CountDevicesInNamespaceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[31]
+		mi := &file_balena_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2203,7 +2299,7 @@ func (x *CountDevicesInNamespaceResponse) String() string {
 func (*CountDevicesInNamespaceResponse) ProtoMessage() {}
 
 func (x *CountDevicesInNamespaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[31]
+	mi := &file_balena_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2216,7 +2312,7 @@ func (x *CountDevicesInNamespaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CountDevicesInNamespaceResponse.ProtoReflect.Descriptor instead.
 func (*CountDevicesInNamespaceResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{31}
+	return file_balena_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *CountDevicesInNamespaceResponse) GetCount() uint64 {
@@ -2238,7 +2334,7 @@ type SyncNowRequest struct {
 func (x *SyncNowRequest) Reset() {
 	*x = SyncNowRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[32]
+		mi := &file_balena_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2251,7 +2347,7 @@ func (x *SyncNowRequest) String() string {
 func (*SyncNowRequest) ProtoMessage() {}
 
 func (x *SyncNowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[32]
+	mi := &file_balena_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2264,7 +2360,7 @@ func (x *SyncNowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncNowRequest.ProtoReflect.Descriptor instead.
 func (*SyncNowRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{32}
+	return file_balena_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *SyncNowRequest) GetBalenaServerUUID() string {
@@ -2286,7 +2382,7 @@ type SyncNowResponse struct {
 func (x *SyncNowResponse) Reset() {
 	*x = SyncNowResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[33]
+		mi := &file_balena_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2299,7 +2395,7 @@ func (x *SyncNowResponse) String() string {
 func (*SyncNowResponse) ProtoMessage() {}
 
 func (x *SyncNowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[33]
+	mi := &file_balena_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2312,7 +2408,7 @@ func (x *SyncNowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncNowResponse.ProtoReflect.Descriptor instead.
 func (*SyncNowResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{33}
+	return file_balena_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *SyncNowResponse) GetLog() *SyncLogEntry {
@@ -2338,7 +2434,7 @@ type ListSyncLogRequest struct {
 func (x *ListSyncLogRequest) Reset() {
 	*x = ListSyncLogRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[34]
+		mi := &file_balena_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2351,7 +2447,7 @@ func (x *ListSyncLogRequest) String() string {
 func (*ListSyncLogRequest) ProtoMessage() {}
 
 func (x *ListSyncLogRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[34]
+	mi := &file_balena_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2364,7 +2460,7 @@ func (x *ListSyncLogRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSyncLogRequest.ProtoReflect.Descriptor instead.
 func (*ListSyncLogRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{34}
+	return file_balena_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ListSyncLogRequest) GetServerUUID() string {
@@ -2400,7 +2496,7 @@ type ListSyncLogResponse struct {
 func (x *ListSyncLogResponse) Reset() {
 	*x = ListSyncLogResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[35]
+		mi := &file_balena_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2413,7 +2509,7 @@ func (x *ListSyncLogResponse) String() string {
 func (*ListSyncLogResponse) ProtoMessage() {}
 
 func (x *ListSyncLogResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[35]
+	mi := &file_balena_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2426,7 +2522,7 @@ func (x *ListSyncLogResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSyncLogResponse.ProtoReflect.Descriptor instead.
 func (*ListSyncLogResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{35}
+	return file_balena_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListSyncLogResponse) GetLog() *SyncLogEntry {
@@ -2448,7 +2544,7 @@ type CountSyncLogRequest struct {
 func (x *CountSyncLogRequest) Reset() {
 	*x = CountSyncLogRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[36]
+		mi := &file_balena_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2461,7 +2557,7 @@ func (x *CountSyncLogRequest) String() string {
 func (*CountSyncLogRequest) ProtoMessage() {}
 
 func (x *CountSyncLogRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[36]
+	mi := &file_balena_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2474,7 +2570,7 @@ func (x *CountSyncLogRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CountSyncLogRequest.ProtoReflect.Descriptor instead.
 func (*CountSyncLogRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{36}
+	return file_balena_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *CountSyncLogRequest) GetServerUUID() string {
@@ -2496,7 +2592,7 @@ type CountSyncLogResponse struct {
 func (x *CountSyncLogResponse) Reset() {
 	*x = CountSyncLogResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[37]
+		mi := &file_balena_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2509,7 +2605,7 @@ func (x *CountSyncLogResponse) String() string {
 func (*CountSyncLogResponse) ProtoMessage() {}
 
 func (x *CountSyncLogResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[37]
+	mi := &file_balena_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2522,7 +2618,7 @@ func (x *CountSyncLogResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CountSyncLogResponse.ProtoReflect.Descriptor instead.
 func (*CountSyncLogResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{37}
+	return file_balena_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *CountSyncLogResponse) GetTotalCount() uint64 {
@@ -2544,7 +2640,7 @@ type GetLastSyncLogRequest struct {
 func (x *GetLastSyncLogRequest) Reset() {
 	*x = GetLastSyncLogRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[38]
+		mi := &file_balena_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2557,7 +2653,7 @@ func (x *GetLastSyncLogRequest) String() string {
 func (*GetLastSyncLogRequest) ProtoMessage() {}
 
 func (x *GetLastSyncLogRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[38]
+	mi := &file_balena_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2570,7 +2666,7 @@ func (x *GetLastSyncLogRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLastSyncLogRequest.ProtoReflect.Descriptor instead.
 func (*GetLastSyncLogRequest) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{38}
+	return file_balena_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *GetLastSyncLogRequest) GetServerUUID() string {
@@ -2592,7 +2688,7 @@ type GetLastSyncLogResponse struct {
 func (x *GetLastSyncLogResponse) Reset() {
 	*x = GetLastSyncLogResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[39]
+		mi := &file_balena_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2605,7 +2701,7 @@ func (x *GetLastSyncLogResponse) String() string {
 func (*GetLastSyncLogResponse) ProtoMessage() {}
 
 func (x *GetLastSyncLogResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[39]
+	mi := &file_balena_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2618,7 +2714,7 @@ func (x *GetLastSyncLogResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLastSyncLogResponse.ProtoReflect.Descriptor instead.
 func (*GetLastSyncLogResponse) Descriptor() ([]byte, []int) {
-	return file_balena_proto_rawDescGZIP(), []int{39}
+	return file_balena_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *GetLastSyncLogResponse) GetLog() *SyncLogEntry {
@@ -2646,7 +2742,7 @@ type SyncLogEntry_Stats struct {
 func (x *SyncLogEntry_Stats) Reset() {
 	*x = SyncLogEntry_Stats{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_balena_proto_msgTypes[40]
+		mi := &file_balena_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2659,7 +2755,7 @@ func (x *SyncLogEntry_Stats) String() string {
 func (*SyncLogEntry_Stats) ProtoMessage() {}
 
 func (x *SyncLogEntry_Stats) ProtoReflect() protoreflect.Message {
-	mi := &file_balena_proto_msgTypes[40]
+	mi := &file_balena_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2934,7 +3030,15 @@ var file_balena_proto_rawDesc = []byte{
 	0x55, 0x52, 0x4c, 0x10, 0x01, 0x12, 0x16, 0x0a, 0x12, 0x53, 0x45, 0x52, 0x56, 0x45, 0x52, 0x5f,
 	0x55, 0x4e, 0x41, 0x56, 0x41, 0x49, 0x4c, 0x41, 0x42, 0x4c, 0x45, 0x10, 0x02, 0x12, 0x17, 0x0a,
 	0x13, 0x53, 0x45, 0x52, 0x56, 0x45, 0x52, 0x5f, 0x42, 0x41, 0x44, 0x5f, 0x52, 0x45, 0x53, 0x50,
-	0x4f, 0x4e, 0x53, 0x45, 0x10, 0x03, 0x22, 0x89, 0x01, 0x0a, 0x11, 0x42, 0x69, 0x6e, 0x64, 0x44,
+	0x4f, 0x4e, 0x53, 0x45, 0x10, 0x03, 0x22, 0x26, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76,
+	0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x75,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x75, 0x75, 0x69, 0x64, 0x22, 0x56,
+	0x0a, 0x11, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x41, 0x0a, 0x06, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69,
+	0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e,
+	0x61, 0x2e, 0x42, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x06,
+	0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x22, 0x89, 0x01, 0x0a, 0x11, 0x42, 0x69, 0x6e, 0x64, 0x44,
 	0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2a, 0x0a, 0x10,
 	0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x55, 0x55, 0x49, 0x44,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x44, 0x65,
@@ -3118,76 +3222,82 @@ var file_balena_proto_rawDesc = []byte{
 	0x39, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67,
 	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x56, 0x65,
 	0x72, 0x69, 0x66, 0x79, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x44, 0x61,
-	0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x8d, 0x04, 0x0a, 0x14, 0x42,
+	0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xf3, 0x04, 0x0a, 0x14, 0x42,
 	0x61, 0x6c, 0x65, 0x6e, 0x61, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x53, 0x65, 0x72, 0x76,
-	0x69, 0x63, 0x65, 0x12, 0x67, 0x0a, 0x04, 0x42, 0x69, 0x6e, 0x64, 0x12, 0x2e, 0x2e, 0x69, 0x6f,
-	0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x42, 0x69, 0x6e, 0x64, 0x44, 0x65,
-	0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2f, 0x2e, 0x69, 0x6f,
-	0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x42, 0x69, 0x6e, 0x64, 0x44, 0x65,
-	0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6d, 0x0a, 0x06,
-	0x55, 0x6e, 0x42, 0x69, 0x6e, 0x64, 0x12, 0x30, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72,
-	0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61,
-	0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x55, 0x6e, 0x42, 0x69, 0x6e, 0x64, 0x44, 0x65, 0x76, 0x69, 0x63,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63,
-	0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
-	0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x55, 0x6e, 0x42, 0x69, 0x6e, 0x64, 0x44, 0x65, 0x76,
-	0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x8c, 0x01, 0x0a, 0x0f,
-	0x4c, 0x69, 0x73, 0x74, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12,
-	0x3a, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67,
-	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x4c, 0x69,
-	0x73, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73,
-	0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x3b, 0x2e, 0x69, 0x6f,
-	0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x65,
-	0x76, 0x69, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x30, 0x01, 0x12, 0x8d, 0x01, 0x0a, 0x10, 0x43,
-	0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12,
-	0x3b, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67,
-	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x43, 0x6f,
-	0x75, 0x6e, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65,
-	0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x3c, 0x2e, 0x69,
-	0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74,
-	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61,
-	0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xd5, 0x03, 0x0a, 0x11, 0x42,
-	0x61, 0x6c, 0x65, 0x6e, 0x61, 0x53, 0x79, 0x6e, 0x63, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
-	0x12, 0x64, 0x0a, 0x07, 0x53, 0x79, 0x6e, 0x63, 0x4e, 0x6f, 0x77, 0x12, 0x2b, 0x2e, 0x69, 0x6f,
-	0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x53, 0x79, 0x6e, 0x63, 0x4e, 0x6f,
-	0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63,
-	0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
-	0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x53, 0x79, 0x6e, 0x63, 0x4e, 0x6f, 0x77, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x07, 0x4c, 0x69, 0x73, 0x74, 0x4c, 0x6f,
-	0x67, 0x12, 0x2f, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74,
-	0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e,
-	0x4c, 0x69, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x30, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e,
-	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61,
-	0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x30, 0x01, 0x12, 0x6f, 0x0a, 0x08, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x4c,
-	0x6f, 0x67, 0x12, 0x30, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e,
-	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61,
-	0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f,
-	0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65,
-	0x6e, 0x61, 0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x79, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x4c, 0x61,
-	0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x12, 0x32, 0x2e, 0x69, 0x6f, 0x74, 0x5f,
+	0x69, 0x63, 0x65, 0x12, 0x64, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x2d, 0x2e, 0x69, 0x6f, 0x74,
+	0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69,
+	0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x69, 0x6f, 0x74, 0x5f,
 	0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x73, 0x74, 0x53,
-	0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x33, 0x2e,
-	0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x4c,
-	0x61, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x42, 0x5a, 0x5a, 0x58, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x73, 0x6c, 0x61, 0x6d, 0x79, 0x2d, 0x73, 0x6f, 0x6c, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x2f, 0x6f, 0x70, 0x65, 0x6e, 0x62, 0x70, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x73, 0x2f,
-	0x69, 0x6f, 0x74, 0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x67, 0x6f, 0x6c, 0x61, 0x6e, 0x67, 0x2f,
-	0x63, 0x6f, 0x72, 0x65, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x2f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x3b, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x67, 0x0a, 0x04, 0x42, 0x69, 0x6e,
+	0x64, 0x12, 0x2e, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74,
+	0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e,
+	0x42, 0x69, 0x6e, 0x64, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x2f, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74,
+	0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e,
+	0x42, 0x69, 0x6e, 0x64, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x6d, 0x0a, 0x06, 0x55, 0x6e, 0x42, 0x69, 0x6e, 0x64, 0x12, 0x30, 0x2e, 0x69,
+	0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x55, 0x6e, 0x42, 0x69, 0x6e,
+	0x64, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31,
+	0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x55, 0x6e, 0x42,
+	0x69, 0x6e, 0x64, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x8c, 0x01, 0x0a, 0x0f, 0x4c, 0x69, 0x73, 0x74, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x3a, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65,
+	0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c,
+	0x65, 0x6e, 0x61, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x49,
+	0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x3b, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74,
+	0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e,
+	0x4c, 0x69, 0x73, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x4e, 0x61, 0x6d,
+	0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x30, 0x01,
+	0x12, 0x8d, 0x01, 0x0a, 0x10, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x3b, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65,
+	0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c,
+	0x65, 0x6e, 0x61, 0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73,
+	0x49, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x3c, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e,
+	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61,
+	0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x4e,
+	0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x32, 0xd5, 0x03, 0x0a, 0x11, 0x42, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x53, 0x79, 0x6e, 0x63, 0x53,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x64, 0x0a, 0x07, 0x53, 0x79, 0x6e, 0x63, 0x4e, 0x6f,
+	0x77, 0x12, 0x2b, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74,
+	0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e,
+	0x53, 0x79, 0x6e, 0x63, 0x4e, 0x6f, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c,
+	0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x53, 0x79, 0x6e,
+	0x63, 0x4e, 0x6f, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x07,
+	0x4c, 0x69, 0x73, 0x74, 0x4c, 0x6f, 0x67, 0x12, 0x2f, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f,
+	0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62,
+	0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f,
+	0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63,
+	0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
+	0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c,
+	0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x30, 0x01, 0x12, 0x6f, 0x0a, 0x08,
+	0x43, 0x6f, 0x75, 0x6e, 0x74, 0x4c, 0x6f, 0x67, 0x12, 0x30, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63,
+	0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
+	0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x53, 0x79, 0x6e, 0x63,
+	0x4c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x69, 0x6f, 0x74,
+	0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x53, 0x79,
+	0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x79, 0x0a,
+	0x0e, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x12,
+	0x32, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x2e, 0x47, 0x65,
+	0x74, 0x4c, 0x61, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x33, 0x2e, 0x69, 0x6f, 0x74, 0x5f, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x69,
+	0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x61, 0x6c, 0x65, 0x6e,
+	0x61, 0x2e, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x73, 0x74, 0x53, 0x79, 0x6e, 0x63, 0x4c, 0x6f, 0x67,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x5a, 0x5a, 0x58, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6c, 0x61, 0x6d, 0x79, 0x2d, 0x73, 0x6f, 0x6c,
+	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x6f, 0x70, 0x65, 0x6e, 0x62, 0x70, 0x2f, 0x6d, 0x6f,
+	0x64, 0x75, 0x6c, 0x65, 0x73, 0x2f, 0x69, 0x6f, 0x74, 0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x67,
+	0x6f, 0x6c, 0x61, 0x6e, 0x67, 0x2f, 0x63, 0x6f, 0x72, 0x65, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x67,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x62, 0x61, 0x6c, 0x65, 0x6e, 0x61, 0x3b, 0x62, 0x61,
+	0x6c, 0x65, 0x6e, 0x61, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3203,7 +3313,7 @@ func file_balena_proto_rawDescGZIP() []byte {
 }
 
 var file_balena_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_balena_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_balena_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
 var file_balena_proto_goTypes = []interface{}{
 	(SyncLogEntry_Status)(0),                          // 0: iot_core_integration_balena.SyncLogEntry.Status
 	(VerifyConnectionDataResponse_Status)(0),          // 1: iot_core_integration_balena.VerifyConnectionDataResponse.Status
@@ -3233,35 +3343,37 @@ var file_balena_proto_goTypes = []interface{}{
 	(*DeleteServerResponse)(nil),                      // 25: iot_core_integration_balena.DeleteServerResponse
 	(*VerifyConnectionDataRequest)(nil),               // 26: iot_core_integration_balena.VerifyConnectionDataRequest
 	(*VerifyConnectionDataResponse)(nil),              // 27: iot_core_integration_balena.VerifyConnectionDataResponse
-	(*BindDeviceRequest)(nil),                         // 28: iot_core_integration_balena.BindDeviceRequest
-	(*BindDeviceResponse)(nil),                        // 29: iot_core_integration_balena.BindDeviceResponse
-	(*UnBindDeviceRequest)(nil),                       // 30: iot_core_integration_balena.UnBindDeviceRequest
-	(*UnBindDeviceResponse)(nil),                      // 31: iot_core_integration_balena.UnBindDeviceResponse
-	(*ListDevicesInNamespaceRequest)(nil),             // 32: iot_core_integration_balena.ListDevicesInNamespaceRequest
-	(*ListDevicesInNamespaceResponse)(nil),            // 33: iot_core_integration_balena.ListDevicesInNamespaceResponse
-	(*CountDevicesInNamespaceRequest)(nil),            // 34: iot_core_integration_balena.CountDevicesInNamespaceRequest
-	(*CountDevicesInNamespaceResponse)(nil),           // 35: iot_core_integration_balena.CountDevicesInNamespaceResponse
-	(*SyncNowRequest)(nil),                            // 36: iot_core_integration_balena.SyncNowRequest
-	(*SyncNowResponse)(nil),                           // 37: iot_core_integration_balena.SyncNowResponse
-	(*ListSyncLogRequest)(nil),                        // 38: iot_core_integration_balena.ListSyncLogRequest
-	(*ListSyncLogResponse)(nil),                       // 39: iot_core_integration_balena.ListSyncLogResponse
-	(*CountSyncLogRequest)(nil),                       // 40: iot_core_integration_balena.CountSyncLogRequest
-	(*CountSyncLogResponse)(nil),                      // 41: iot_core_integration_balena.CountSyncLogResponse
-	(*GetLastSyncLogRequest)(nil),                     // 42: iot_core_integration_balena.GetLastSyncLogRequest
-	(*GetLastSyncLogResponse)(nil),                    // 43: iot_core_integration_balena.GetLastSyncLogResponse
-	(*SyncLogEntry_Stats)(nil),                        // 44: iot_core_integration_balena.SyncLogEntry.Stats
-	(*timestamp.Timestamp)(nil),                       // 45: google.protobuf.Timestamp
+	(*GetDeviceRequest)(nil),                          // 28: iot_core_integration_balena.GetDeviceRequest
+	(*GetDeviceResponse)(nil),                         // 29: iot_core_integration_balena.GetDeviceResponse
+	(*BindDeviceRequest)(nil),                         // 30: iot_core_integration_balena.BindDeviceRequest
+	(*BindDeviceResponse)(nil),                        // 31: iot_core_integration_balena.BindDeviceResponse
+	(*UnBindDeviceRequest)(nil),                       // 32: iot_core_integration_balena.UnBindDeviceRequest
+	(*UnBindDeviceResponse)(nil),                      // 33: iot_core_integration_balena.UnBindDeviceResponse
+	(*ListDevicesInNamespaceRequest)(nil),             // 34: iot_core_integration_balena.ListDevicesInNamespaceRequest
+	(*ListDevicesInNamespaceResponse)(nil),            // 35: iot_core_integration_balena.ListDevicesInNamespaceResponse
+	(*CountDevicesInNamespaceRequest)(nil),            // 36: iot_core_integration_balena.CountDevicesInNamespaceRequest
+	(*CountDevicesInNamespaceResponse)(nil),           // 37: iot_core_integration_balena.CountDevicesInNamespaceResponse
+	(*SyncNowRequest)(nil),                            // 38: iot_core_integration_balena.SyncNowRequest
+	(*SyncNowResponse)(nil),                           // 39: iot_core_integration_balena.SyncNowResponse
+	(*ListSyncLogRequest)(nil),                        // 40: iot_core_integration_balena.ListSyncLogRequest
+	(*ListSyncLogResponse)(nil),                       // 41: iot_core_integration_balena.ListSyncLogResponse
+	(*CountSyncLogRequest)(nil),                       // 42: iot_core_integration_balena.CountSyncLogRequest
+	(*CountSyncLogResponse)(nil),                      // 43: iot_core_integration_balena.CountSyncLogResponse
+	(*GetLastSyncLogRequest)(nil),                     // 44: iot_core_integration_balena.GetLastSyncLogRequest
+	(*GetLastSyncLogResponse)(nil),                    // 45: iot_core_integration_balena.GetLastSyncLogResponse
+	(*SyncLogEntry_Stats)(nil),                        // 46: iot_core_integration_balena.SyncLogEntry.Stats
+	(*timestamp.Timestamp)(nil),                       // 47: google.protobuf.Timestamp
 }
 var file_balena_proto_depIdxs = []int32{
-	45, // 0: iot_core_integration_balena.BalenaServer.created:type_name -> google.protobuf.Timestamp
-	45, // 1: iot_core_integration_balena.BalenaServer.updated:type_name -> google.protobuf.Timestamp
-	45, // 2: iot_core_integration_balena.BalenaData.lastConnectivityEvent:type_name -> google.protobuf.Timestamp
+	47, // 0: iot_core_integration_balena.BalenaServer.created:type_name -> google.protobuf.Timestamp
+	47, // 1: iot_core_integration_balena.BalenaServer.updated:type_name -> google.protobuf.Timestamp
+	47, // 2: iot_core_integration_balena.BalenaData.lastConnectivityEvent:type_name -> google.protobuf.Timestamp
 	5,  // 3: iot_core_integration_balena.BalenaDevice.balenaData:type_name -> iot_core_integration_balena.BalenaData
-	45, // 4: iot_core_integration_balena.BalenaDevice.created:type_name -> google.protobuf.Timestamp
-	45, // 5: iot_core_integration_balena.BalenaDevice.updated:type_name -> google.protobuf.Timestamp
-	45, // 6: iot_core_integration_balena.SyncLogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	47, // 4: iot_core_integration_balena.BalenaDevice.created:type_name -> google.protobuf.Timestamp
+	47, // 5: iot_core_integration_balena.BalenaDevice.updated:type_name -> google.protobuf.Timestamp
+	47, // 6: iot_core_integration_balena.SyncLogEntry.timestamp:type_name -> google.protobuf.Timestamp
 	0,  // 7: iot_core_integration_balena.SyncLogEntry.status:type_name -> iot_core_integration_balena.SyncLogEntry.Status
-	44, // 8: iot_core_integration_balena.SyncLogEntry.stats:type_name -> iot_core_integration_balena.SyncLogEntry.Stats
+	46, // 8: iot_core_integration_balena.SyncLogEntry.stats:type_name -> iot_core_integration_balena.SyncLogEntry.Stats
 	4,  // 9: iot_core_integration_balena.CreateServerResponse.server:type_name -> iot_core_integration_balena.BalenaServer
 	4,  // 10: iot_core_integration_balena.GetServerResponse.server:type_name -> iot_core_integration_balena.BalenaServer
 	4,  // 11: iot_core_integration_balena.ListServersResponse.server:type_name -> iot_core_integration_balena.BalenaServer
@@ -3269,55 +3381,58 @@ var file_balena_proto_depIdxs = []int32{
 	4,  // 13: iot_core_integration_balena.SetServerEnabledResponse.server:type_name -> iot_core_integration_balena.BalenaServer
 	4,  // 14: iot_core_integration_balena.UpdateServerResponse.server:type_name -> iot_core_integration_balena.BalenaServer
 	1,  // 15: iot_core_integration_balena.VerifyConnectionDataResponse.status:type_name -> iot_core_integration_balena.VerifyConnectionDataResponse.Status
-	6,  // 16: iot_core_integration_balena.BindDeviceResponse.device:type_name -> iot_core_integration_balena.BalenaDevice
-	6,  // 17: iot_core_integration_balena.UnBindDeviceResponse.device:type_name -> iot_core_integration_balena.BalenaDevice
-	2,  // 18: iot_core_integration_balena.ListDevicesInNamespaceRequest.bindingFilter:type_name -> iot_core_integration_balena.ListDevicesInNamespaceRequest.BindingFilter
-	6,  // 19: iot_core_integration_balena.ListDevicesInNamespaceResponse.device:type_name -> iot_core_integration_balena.BalenaDevice
-	3,  // 20: iot_core_integration_balena.CountDevicesInNamespaceRequest.bindingFilter:type_name -> iot_core_integration_balena.CountDevicesInNamespaceRequest.BindingFilter
-	7,  // 21: iot_core_integration_balena.SyncNowResponse.log:type_name -> iot_core_integration_balena.SyncLogEntry
-	7,  // 22: iot_core_integration_balena.ListSyncLogResponse.log:type_name -> iot_core_integration_balena.SyncLogEntry
-	7,  // 23: iot_core_integration_balena.GetLastSyncLogResponse.log:type_name -> iot_core_integration_balena.SyncLogEntry
-	8,  // 24: iot_core_integration_balena.BalenaServersService.Create:input_type -> iot_core_integration_balena.CreateServerRequest
-	10, // 25: iot_core_integration_balena.BalenaServersService.Get:input_type -> iot_core_integration_balena.GetServerRequest
-	12, // 26: iot_core_integration_balena.BalenaServersService.List:input_type -> iot_core_integration_balena.ListServersRequest
-	14, // 27: iot_core_integration_balena.BalenaServersService.Count:input_type -> iot_core_integration_balena.CountServersRequest
-	16, // 28: iot_core_integration_balena.BalenaServersService.ListInNamespace:input_type -> iot_core_integration_balena.ListServersInNamespaceRequest
-	18, // 29: iot_core_integration_balena.BalenaServersService.CountInNamespace:input_type -> iot_core_integration_balena.CountServersInNamespaceRequest
-	20, // 30: iot_core_integration_balena.BalenaServersService.SetEnabled:input_type -> iot_core_integration_balena.SetServerEnabledRequest
-	22, // 31: iot_core_integration_balena.BalenaServersService.Update:input_type -> iot_core_integration_balena.UpdateServerRequest
-	24, // 32: iot_core_integration_balena.BalenaServersService.Delete:input_type -> iot_core_integration_balena.DeleteServerRequest
-	26, // 33: iot_core_integration_balena.BalenaToolsService.VerifyConnectionData:input_type -> iot_core_integration_balena.VerifyConnectionDataRequest
-	28, // 34: iot_core_integration_balena.BalenaDevicesService.Bind:input_type -> iot_core_integration_balena.BindDeviceRequest
-	30, // 35: iot_core_integration_balena.BalenaDevicesService.UnBind:input_type -> iot_core_integration_balena.UnBindDeviceRequest
-	32, // 36: iot_core_integration_balena.BalenaDevicesService.ListInNamespace:input_type -> iot_core_integration_balena.ListDevicesInNamespaceRequest
-	34, // 37: iot_core_integration_balena.BalenaDevicesService.CountInNamespace:input_type -> iot_core_integration_balena.CountDevicesInNamespaceRequest
-	36, // 38: iot_core_integration_balena.BalenaSyncService.SyncNow:input_type -> iot_core_integration_balena.SyncNowRequest
-	38, // 39: iot_core_integration_balena.BalenaSyncService.ListLog:input_type -> iot_core_integration_balena.ListSyncLogRequest
-	40, // 40: iot_core_integration_balena.BalenaSyncService.CountLog:input_type -> iot_core_integration_balena.CountSyncLogRequest
-	42, // 41: iot_core_integration_balena.BalenaSyncService.GetLastSyncLog:input_type -> iot_core_integration_balena.GetLastSyncLogRequest
-	9,  // 42: iot_core_integration_balena.BalenaServersService.Create:output_type -> iot_core_integration_balena.CreateServerResponse
-	11, // 43: iot_core_integration_balena.BalenaServersService.Get:output_type -> iot_core_integration_balena.GetServerResponse
-	13, // 44: iot_core_integration_balena.BalenaServersService.List:output_type -> iot_core_integration_balena.ListServersResponse
-	15, // 45: iot_core_integration_balena.BalenaServersService.Count:output_type -> iot_core_integration_balena.CountServersResponse
-	17, // 46: iot_core_integration_balena.BalenaServersService.ListInNamespace:output_type -> iot_core_integration_balena.ListServersInNamespaceResponse
-	19, // 47: iot_core_integration_balena.BalenaServersService.CountInNamespace:output_type -> iot_core_integration_balena.CountServersInNamespaceResponse
-	21, // 48: iot_core_integration_balena.BalenaServersService.SetEnabled:output_type -> iot_core_integration_balena.SetServerEnabledResponse
-	23, // 49: iot_core_integration_balena.BalenaServersService.Update:output_type -> iot_core_integration_balena.UpdateServerResponse
-	25, // 50: iot_core_integration_balena.BalenaServersService.Delete:output_type -> iot_core_integration_balena.DeleteServerResponse
-	27, // 51: iot_core_integration_balena.BalenaToolsService.VerifyConnectionData:output_type -> iot_core_integration_balena.VerifyConnectionDataResponse
-	29, // 52: iot_core_integration_balena.BalenaDevicesService.Bind:output_type -> iot_core_integration_balena.BindDeviceResponse
-	31, // 53: iot_core_integration_balena.BalenaDevicesService.UnBind:output_type -> iot_core_integration_balena.UnBindDeviceResponse
-	33, // 54: iot_core_integration_balena.BalenaDevicesService.ListInNamespace:output_type -> iot_core_integration_balena.ListDevicesInNamespaceResponse
-	35, // 55: iot_core_integration_balena.BalenaDevicesService.CountInNamespace:output_type -> iot_core_integration_balena.CountDevicesInNamespaceResponse
-	37, // 56: iot_core_integration_balena.BalenaSyncService.SyncNow:output_type -> iot_core_integration_balena.SyncNowResponse
-	39, // 57: iot_core_integration_balena.BalenaSyncService.ListLog:output_type -> iot_core_integration_balena.ListSyncLogResponse
-	41, // 58: iot_core_integration_balena.BalenaSyncService.CountLog:output_type -> iot_core_integration_balena.CountSyncLogResponse
-	43, // 59: iot_core_integration_balena.BalenaSyncService.GetLastSyncLog:output_type -> iot_core_integration_balena.GetLastSyncLogResponse
-	42, // [42:60] is the sub-list for method output_type
-	24, // [24:42] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	6,  // 16: iot_core_integration_balena.GetDeviceResponse.device:type_name -> iot_core_integration_balena.BalenaDevice
+	6,  // 17: iot_core_integration_balena.BindDeviceResponse.device:type_name -> iot_core_integration_balena.BalenaDevice
+	6,  // 18: iot_core_integration_balena.UnBindDeviceResponse.device:type_name -> iot_core_integration_balena.BalenaDevice
+	2,  // 19: iot_core_integration_balena.ListDevicesInNamespaceRequest.bindingFilter:type_name -> iot_core_integration_balena.ListDevicesInNamespaceRequest.BindingFilter
+	6,  // 20: iot_core_integration_balena.ListDevicesInNamespaceResponse.device:type_name -> iot_core_integration_balena.BalenaDevice
+	3,  // 21: iot_core_integration_balena.CountDevicesInNamespaceRequest.bindingFilter:type_name -> iot_core_integration_balena.CountDevicesInNamespaceRequest.BindingFilter
+	7,  // 22: iot_core_integration_balena.SyncNowResponse.log:type_name -> iot_core_integration_balena.SyncLogEntry
+	7,  // 23: iot_core_integration_balena.ListSyncLogResponse.log:type_name -> iot_core_integration_balena.SyncLogEntry
+	7,  // 24: iot_core_integration_balena.GetLastSyncLogResponse.log:type_name -> iot_core_integration_balena.SyncLogEntry
+	8,  // 25: iot_core_integration_balena.BalenaServersService.Create:input_type -> iot_core_integration_balena.CreateServerRequest
+	10, // 26: iot_core_integration_balena.BalenaServersService.Get:input_type -> iot_core_integration_balena.GetServerRequest
+	12, // 27: iot_core_integration_balena.BalenaServersService.List:input_type -> iot_core_integration_balena.ListServersRequest
+	14, // 28: iot_core_integration_balena.BalenaServersService.Count:input_type -> iot_core_integration_balena.CountServersRequest
+	16, // 29: iot_core_integration_balena.BalenaServersService.ListInNamespace:input_type -> iot_core_integration_balena.ListServersInNamespaceRequest
+	18, // 30: iot_core_integration_balena.BalenaServersService.CountInNamespace:input_type -> iot_core_integration_balena.CountServersInNamespaceRequest
+	20, // 31: iot_core_integration_balena.BalenaServersService.SetEnabled:input_type -> iot_core_integration_balena.SetServerEnabledRequest
+	22, // 32: iot_core_integration_balena.BalenaServersService.Update:input_type -> iot_core_integration_balena.UpdateServerRequest
+	24, // 33: iot_core_integration_balena.BalenaServersService.Delete:input_type -> iot_core_integration_balena.DeleteServerRequest
+	26, // 34: iot_core_integration_balena.BalenaToolsService.VerifyConnectionData:input_type -> iot_core_integration_balena.VerifyConnectionDataRequest
+	28, // 35: iot_core_integration_balena.BalenaDevicesService.Get:input_type -> iot_core_integration_balena.GetDeviceRequest
+	30, // 36: iot_core_integration_balena.BalenaDevicesService.Bind:input_type -> iot_core_integration_balena.BindDeviceRequest
+	32, // 37: iot_core_integration_balena.BalenaDevicesService.UnBind:input_type -> iot_core_integration_balena.UnBindDeviceRequest
+	34, // 38: iot_core_integration_balena.BalenaDevicesService.ListInNamespace:input_type -> iot_core_integration_balena.ListDevicesInNamespaceRequest
+	36, // 39: iot_core_integration_balena.BalenaDevicesService.CountInNamespace:input_type -> iot_core_integration_balena.CountDevicesInNamespaceRequest
+	38, // 40: iot_core_integration_balena.BalenaSyncService.SyncNow:input_type -> iot_core_integration_balena.SyncNowRequest
+	40, // 41: iot_core_integration_balena.BalenaSyncService.ListLog:input_type -> iot_core_integration_balena.ListSyncLogRequest
+	42, // 42: iot_core_integration_balena.BalenaSyncService.CountLog:input_type -> iot_core_integration_balena.CountSyncLogRequest
+	44, // 43: iot_core_integration_balena.BalenaSyncService.GetLastSyncLog:input_type -> iot_core_integration_balena.GetLastSyncLogRequest
+	9,  // 44: iot_core_integration_balena.BalenaServersService.Create:output_type -> iot_core_integration_balena.CreateServerResponse
+	11, // 45: iot_core_integration_balena.BalenaServersService.Get:output_type -> iot_core_integration_balena.GetServerResponse
+	13, // 46: iot_core_integration_balena.BalenaServersService.List:output_type -> iot_core_integration_balena.ListServersResponse
+	15, // 47: iot_core_integration_balena.BalenaServersService.Count:output_type -> iot_core_integration_balena.CountServersResponse
+	17, // 48: iot_core_integration_balena.BalenaServersService.ListInNamespace:output_type -> iot_core_integration_balena.ListServersInNamespaceResponse
+	19, // 49: iot_core_integration_balena.BalenaServersService.CountInNamespace:output_type -> iot_core_integration_balena.CountServersInNamespaceResponse
+	21, // 50: iot_core_integration_balena.BalenaServersService.SetEnabled:output_type -> iot_core_integration_balena.SetServerEnabledResponse
+	23, // 51: iot_core_integration_balena.BalenaServersService.Update:output_type -> iot_core_integration_balena.UpdateServerResponse
+	25, // 52: iot_core_integration_balena.BalenaServersService.Delete:output_type -> iot_core_integration_balena.DeleteServerResponse
+	27, // 53: iot_core_integration_balena.BalenaToolsService.VerifyConnectionData:output_type -> iot_core_integration_balena.VerifyConnectionDataResponse
+	29, // 54: iot_core_integration_balena.BalenaDevicesService.Get:output_type -> iot_core_integration_balena.GetDeviceResponse
+	31, // 55: iot_core_integration_balena.BalenaDevicesService.Bind:output_type -> iot_core_integration_balena.BindDeviceResponse
+	33, // 56: iot_core_integration_balena.BalenaDevicesService.UnBind:output_type -> iot_core_integration_balena.UnBindDeviceResponse
+	35, // 57: iot_core_integration_balena.BalenaDevicesService.ListInNamespace:output_type -> iot_core_integration_balena.ListDevicesInNamespaceResponse
+	37, // 58: iot_core_integration_balena.BalenaDevicesService.CountInNamespace:output_type -> iot_core_integration_balena.CountDevicesInNamespaceResponse
+	39, // 59: iot_core_integration_balena.BalenaSyncService.SyncNow:output_type -> iot_core_integration_balena.SyncNowResponse
+	41, // 60: iot_core_integration_balena.BalenaSyncService.ListLog:output_type -> iot_core_integration_balena.ListSyncLogResponse
+	43, // 61: iot_core_integration_balena.BalenaSyncService.CountLog:output_type -> iot_core_integration_balena.CountSyncLogResponse
+	45, // 62: iot_core_integration_balena.BalenaSyncService.GetLastSyncLog:output_type -> iot_core_integration_balena.GetLastSyncLogResponse
+	44, // [44:63] is the sub-list for method output_type
+	25, // [25:44] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_balena_proto_init() }
@@ -3615,7 +3730,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BindDeviceRequest); i {
+			switch v := v.(*GetDeviceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3627,7 +3742,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BindDeviceResponse); i {
+			switch v := v.(*GetDeviceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3639,7 +3754,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnBindDeviceRequest); i {
+			switch v := v.(*BindDeviceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3651,7 +3766,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnBindDeviceResponse); i {
+			switch v := v.(*BindDeviceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3663,7 +3778,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListDevicesInNamespaceRequest); i {
+			switch v := v.(*UnBindDeviceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3675,7 +3790,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListDevicesInNamespaceResponse); i {
+			switch v := v.(*UnBindDeviceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3687,7 +3802,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CountDevicesInNamespaceRequest); i {
+			switch v := v.(*ListDevicesInNamespaceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3699,7 +3814,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CountDevicesInNamespaceResponse); i {
+			switch v := v.(*ListDevicesInNamespaceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3711,7 +3826,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SyncNowRequest); i {
+			switch v := v.(*CountDevicesInNamespaceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3723,7 +3838,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SyncNowResponse); i {
+			switch v := v.(*CountDevicesInNamespaceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3735,7 +3850,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListSyncLogRequest); i {
+			switch v := v.(*SyncNowRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3747,7 +3862,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListSyncLogResponse); i {
+			switch v := v.(*SyncNowResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3759,7 +3874,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CountSyncLogRequest); i {
+			switch v := v.(*ListSyncLogRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3771,7 +3886,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CountSyncLogResponse); i {
+			switch v := v.(*ListSyncLogResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3783,7 +3898,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetLastSyncLogRequest); i {
+			switch v := v.(*CountSyncLogRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3795,7 +3910,7 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetLastSyncLogResponse); i {
+			switch v := v.(*CountSyncLogResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3807,6 +3922,30 @@ func file_balena_proto_init() {
 			}
 		}
 		file_balena_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetLastSyncLogRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_balena_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetLastSyncLogResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_balena_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SyncLogEntry_Stats); i {
 			case 0:
 				return &v.state
@@ -3825,7 +3964,7 @@ func file_balena_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_balena_proto_rawDesc,
 			NumEnums:      4,
-			NumMessages:   41,
+			NumMessages:   43,
 			NumExtensions: 0,
 			NumServices:   4,
 		},

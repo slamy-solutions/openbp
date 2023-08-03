@@ -557,6 +557,7 @@ var BalenaToolsService_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BalenaDevicesServiceClient interface {
+	Get(ctx context.Context, in *GetDeviceRequest, opts ...grpc.CallOption) (*GetDeviceResponse, error)
 	// Bind Balena device to the OpenBP IoT device
 	Bind(ctx context.Context, in *BindDeviceRequest, opts ...grpc.CallOption) (*BindDeviceResponse, error)
 	// Unbind OpenBP device from the Balena device
@@ -573,6 +574,15 @@ type balenaDevicesServiceClient struct {
 
 func NewBalenaDevicesServiceClient(cc grpc.ClientConnInterface) BalenaDevicesServiceClient {
 	return &balenaDevicesServiceClient{cc}
+}
+
+func (c *balenaDevicesServiceClient) Get(ctx context.Context, in *GetDeviceRequest, opts ...grpc.CallOption) (*GetDeviceResponse, error) {
+	out := new(GetDeviceResponse)
+	err := c.cc.Invoke(ctx, "/iot_core_integration_balena.BalenaDevicesService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *balenaDevicesServiceClient) Bind(ctx context.Context, in *BindDeviceRequest, opts ...grpc.CallOption) (*BindDeviceResponse, error) {
@@ -638,6 +648,7 @@ func (c *balenaDevicesServiceClient) CountInNamespace(ctx context.Context, in *C
 // All implementations must embed UnimplementedBalenaDevicesServiceServer
 // for forward compatibility
 type BalenaDevicesServiceServer interface {
+	Get(context.Context, *GetDeviceRequest) (*GetDeviceResponse, error)
 	// Bind Balena device to the OpenBP IoT device
 	Bind(context.Context, *BindDeviceRequest) (*BindDeviceResponse, error)
 	// Unbind OpenBP device from the Balena device
@@ -653,6 +664,9 @@ type BalenaDevicesServiceServer interface {
 type UnimplementedBalenaDevicesServiceServer struct {
 }
 
+func (UnimplementedBalenaDevicesServiceServer) Get(context.Context, *GetDeviceRequest) (*GetDeviceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
 func (UnimplementedBalenaDevicesServiceServer) Bind(context.Context, *BindDeviceRequest) (*BindDeviceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Bind not implemented")
 }
@@ -676,6 +690,24 @@ type UnsafeBalenaDevicesServiceServer interface {
 
 func RegisterBalenaDevicesServiceServer(s grpc.ServiceRegistrar, srv BalenaDevicesServiceServer) {
 	s.RegisterService(&BalenaDevicesService_ServiceDesc, srv)
+}
+
+func _BalenaDevicesService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalenaDevicesServiceServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iot_core_integration_balena.BalenaDevicesService/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalenaDevicesServiceServer).Get(ctx, req.(*GetDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _BalenaDevicesService_Bind_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -760,6 +792,10 @@ var BalenaDevicesService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "iot_core_integration_balena.BalenaDevicesService",
 	HandlerType: (*BalenaDevicesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Get",
+			Handler:    _BalenaDevicesService_Get_Handler,
+		},
 		{
 			MethodName: "Bind",
 			Handler:    _BalenaDevicesService_Bind_Handler,

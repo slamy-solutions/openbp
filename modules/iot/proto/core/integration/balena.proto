@@ -235,6 +235,15 @@ message VerifyConnectionDataResponse {
     string message = 2;
 }
 
+message GetDeviceRequest{
+    // UUID of the balena device to get
+    string uuid = 1;
+}
+message GetDeviceResponse {
+    // Founded device
+    BalenaDevice device = 1;
+}
+
 message BindDeviceRequest {
     // Unique identifier of the balena device information stored in the OpenBP
     string balenaDeviceUUID = 1;
@@ -367,6 +376,8 @@ service BalenaToolsService {
 }
 
 service BalenaDevicesService {
+    rpc Get(GetDeviceRequest) returns (GetDeviceResponse);
+
     // Bind Balena device to the OpenBP IoT device
     rpc Bind(BindDeviceRequest) returns (BindDeviceResponse);
     // Unbind OpenBP device from the Balena device

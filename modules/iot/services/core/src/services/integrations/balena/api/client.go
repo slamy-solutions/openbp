@@ -66,7 +66,7 @@ func (c *client) getErrorByResponse(response *http.Response) error {
 	}
 
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return ErrInvalidStatusCode
+		return errors.Join(ErrInvalidStatusCode, fmt.Errorf("balena responded with %d status code", response.StatusCode))
 	}
 
 	return nil
