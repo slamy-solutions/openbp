@@ -132,3 +132,16 @@ func (wraper *otelPKCSWraper) DecryptStream(ctx context.Context, encrypted *io.P
 
 	return wraper.innerPKCS.DecryptStream(ctx, encrypted, plain)
 }
+
+func (wraper *otelPKCSWraper) Encrypt(ctx context.Context, plain []byte) ([]byte, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.Encrypt")
+	defer span.End()
+
+	return wraper.innerPKCS.Encrypt(ctx, plain)
+}
+func (wraper *otelPKCSWraper) Decrypt(ctx context.Context, encrypted []byte) ([]byte, error) {
+	ctx, span := wraper.tracer.Start(ctx, "pkcs.Decrypt")
+	defer span.End()
+
+	return wraper.innerPKCS.Decrypt(ctx, encrypted)
+}

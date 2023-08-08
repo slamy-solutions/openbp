@@ -447,3 +447,156 @@ func (s *VaultService) HMACVerify(ctx context.Context, in *vault.HMACVerifyReque
 		Valid: valid,
 	}, status.Error(codes.OK, "")
 }
+
+func (s *VaultService) EncryptStream(srv vault.VaultService_EncryptStreamServer) error {
+	ctx := srv.Context()
+
+	requestReader, requestWriter := io.Pipe()
+	defer requestWriter.Close()
+	defer requestReader.Close()
+
+	responseReader, responseWriter := io.Pipe()
+	defer responseWriter.Close()
+	defer responseReader.Close()
+
+	// Reads incomming data and sends it to the encryptor
+	go func() {
+		for {
+			message, err := srv.Recv()
+			if err != nil {
+				if err == io.EOF {
+					requestWriter.Close()
+					return
+				}
+				requestWriter.CloseWithError(errors.New("error while receiving message from grpc: " + err.Error()))
+				return
+			}
+			_, err = requestWriter.Write(message.PlainData)
+			if err != nil {
+				requestWriter.Close()
+				return
+			}
+		}
+	}()
+
+	// Reads encrypted data and sends it to the client
+	go func() {
+		for {
+			buf := make([]byte, 1024)
+			n, err := responseReader.Read(buf)
+			if err != nil {
+				if err == io.EOF {
+					responseWriter.Close()
+					return
+				}
+				responseWriter.CloseWithError(errors.New("error while reading encrypted data: " + err.Error()))
+				return
+			}
+			err = srv.Send(&vault.EncryptStreamResponse{
+				EncryptedData: buf[:n],
+			})
+			if err != nil {
+				responseWriter.Close()
+				return
+			}
+		}
+	}()
+
+	return s.pkcsHandle.EncryptStream(ctx, requestReader, responseWriter)
+}
+func (s *VaultService) DecryptStream(srv vault.VaultService_DecryptStreamServer) error {
+	ctx := srv.Context()
+
+	requestReader, requestWriter := io.Pipe()
+	defer requestWriter.Close()
+	defer requestReader.Close()
+
+	responseReader, responseWriter := io.Pipe()
+	defer responseWriter.Close()
+	defer responseReader.Close()
+
+	// Reads incomming data and sends it to the decryptor
+	go func() {
+		for {
+			message, err := srv.Recv()
+			if err != nil {
+				if err == io.EOF {
+					requestWriter.Close()
+					return
+				}
+				requestWriter.CloseWithError(errors.New("error while receiving message from grpc: " + err.Error()))
+				return
+			}
+			_, err = requestWriter.Write(message.EncryptedData)
+			if err != nil {
+				requestWriter.Close()
+				return
+			}
+		}
+	}()
+
+	// Reads decrypted data and sends it to the client
+	go func() {
+		for {
+			buf := make([]byte, 1024)
+			n, err := responseReader.Read(buf)
+			if err != nil {
+				if err == io.EOF {
+					responseWriter.Close()
+					return
+				}
+				responseWriter.CloseWithError(errors.New("error while reading decrypted data: " + err.Error()))
+				return
+			}
+			err = srv.Send(&vault.DecryptStreamResponse{
+				PlainData: buf[:n],
+			})
+			if err != nil {
+				responseWriter.Close()
+				return
+			}
+		}
+	}()
+
+	return s.pkcsHandle.DecryptStream(ctx, requestReader, responseWriter)
+}
+func (s *VaultService) Encrypt(ctx context.Context, in *vault.EncryptRequest) (*vault.EncryptResponse, error) {
+	encrypted, err := s.pkcsHandle.Encrypt(ctx, in.PlainData)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return nil, status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		if err == pkcs.ErrEncryptionKeyDoesntExist {
+			return nil, status.Error(codes.NotFound, "encryption key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(Encrypt) Internal error while encrypting message with PKCS11: " + err.Error())
+		return nil, status.Error(codes.Internal, "error while encrypting message with PKCS11: "+err.Error())
+	}
+
+	return &vault.EncryptResponse{
+		EncryptedData: encrypted,
+	}, status.Error(codes.OK, "")
+}
+func (s *VaultService) Decrypt(ctx context.Context, in *vault.DecryptRequest) (*vault.DecryptResponse, error) {
+	decrypted, err := s.pkcsHandle.Decrypt(ctx, in.EncryptedData)
+
+	if err != nil {
+		if err == pkcs.ErrPKCSNotLoggedIn {
+			return nil, status.Error(codes.FailedPrecondition, "the vault is sealed")
+		}
+
+		if err == pkcs.ErrEncryptionKeyDoesntExist {
+			return nil, status.Error(codes.NotFound, "encryption key doesnt exist")
+		}
+
+		log.Error("[GRPC Vault Service]-(Decrypt) Internal error while decrypting message with PKCS11: " + err.Error())
+		return nil, status.Error(codes.Internal, "error while decrypting message with PKCS11: "+err.Error())
+	}
+
+	return &vault.DecryptResponse{
+		PlainData: decrypted,
+	}, status.Error(codes.OK, "")
+}

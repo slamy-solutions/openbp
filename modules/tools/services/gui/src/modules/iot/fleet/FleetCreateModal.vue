@@ -9,7 +9,7 @@
               <q-form class="q-gutter-md">
               <q-input disable square filled v-model="props.namespace" counter maxlength="32" type="text" :label="$t('modules.iot.fleet.create.namespaceInput')" />
               <q-input square filled clearable v-model="name" counter maxlength="32" type="text" :label="$t('modules.iot.fleet.create.nameInput')" />
-              <q-input square filled clearable v-model="description" counter maxlength="32" type="text" :label="$t('modules.iot.fleet.create.descriptionInput')" />
+              <q-input square filled clearable v-model="description" counter maxlength="128" type="text" :label="$t('modules.iot.fleet.create.descriptionInput')" />
               </q-form>
           </q-card-section>
           <q-card-actions class="q-px-md">

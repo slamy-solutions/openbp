@@ -63,7 +63,7 @@ const integrationViews = [
         name: 'balena',
         icon: '',
         title: 'Balena',
-        routerPageName: ''
+        routerPageName: 'iot_integration_balena'
     }
 ] as Viewdata[]
 

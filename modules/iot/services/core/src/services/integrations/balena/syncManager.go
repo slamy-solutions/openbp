@@ -3,7 +3,6 @@ package balena
 import (
 	"context"
 	"errors"
-	"io"
 	"sync"
 	"time"
 
@@ -121,37 +120,18 @@ func (m *syncManager) SyncAllServers(ctx context.Context) error {
 }
 
 func (s *syncManager) decryptAuthToken(ctx context.Context, encryptedToken []byte) (string, error) {
-	decryptStream, err := s.systemStub.Vault.DecryptStream(ctx)
+	decryptResponse, err := s.systemStub.Vault.Decrypt(ctx, &vault.DecryptRequest{
+		EncryptedData: encryptedToken,
+	})
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.FailedPrecondition {
 			return "", errors.Join(ErrSyncVaultSealed, err)
 		}
 
-		return "", errors.Join(ErrSyncInternal, errors.New("error while openning descryption stream with system_vault service to decrypt auth token"), err)
+		return "", errors.Join(ErrSyncInternal, errors.New("error with system_vault service while decrypting auth token"), err)
 	}
 
-	if err = decryptStream.Send(&vault.DecryptStreamRequest{EncryptedData: encryptedToken}); err != nil {
-		return "", errors.Join(ErrSyncInternal, errors.New("error while sending auth token for decryption"), err)
-	}
-	if err = decryptStream.CloseSend(); err != nil {
-		return "", errors.Join(errors.New("error while sending auth token for decryption. Error closing send stream"), err)
-	}
-
-	response := make([]byte, 0, len(encryptedToken))
-	for {
-		chunk, err := decryptStream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return "", errors.Join(ErrSyncInternal, errors.New("error while receiving decrypted token from system_vault"), err)
-		}
-
-		response = append(response, chunk.PlainData...)
-	}
-
-	return string(response), nil
+	return string(decryptResponse.PlainData), nil
 }
 
 func (m *syncManager) SyncServer(ctx context.Context, server BalenaServerInMongo) (*SyncLogInMongo, error) {
@@ -217,16 +197,14 @@ func (m *syncManager) SyncServer(ctx context.Context, server BalenaServerInMongo
 	deviceUpdatesModels := make([]mongo.WriteModel, 0, 10)
 	for _, foundedDevice := range foundedDevices {
 		updateModel := mongo.NewUpdateOneModel()
-		updateModel.SetFilter(bson.M{"balenaServerUUID": server.UUID, "balenaData.id": foundedDevice.ID})
+		updateModel.SetFilter(bson.M{"balenaServerUUID": server.UUID, "balenaDeviceUUID": foundedDevice.UUID})
 		updateModel.SetUpdate(bson.M{
 			"$set": bson.M{"balenaData": foundedDevice},
-			"$setOnInsert": BalenaDeviceInMongo{
-				BalenaServerNamespace: server.Namespace,
-				BalenaServerUUID:      server.UUID,
-				BalenaData:            foundedDevice,
-				Created:               syncStartTime,
-				Updated:               syncStartTime,
-				Version:               0,
+			"$setOnInsert": bson.M{
+				"balenaServerNamespace": server.Namespace,
+				"balenaServerUUID":      server.UUID,
+				"balenaDeviceUUID":      foundedDevice.UUID,
+				"created":               syncStartTime,
 			},
 			"$currentDate": bson.M{"updated": bson.M{"$type": "timestamp"}},
 			"$inc":         bson.M{"version": 1},
@@ -254,7 +232,7 @@ func (m *syncManager) SyncServer(ctx context.Context, server BalenaServerInMongo
 
 		// Find if device is binded
 		var device BalenaDeviceInMongo
-		if err = devicesCollection.FindOne(ctx, bson.M{"balenaServerUUID": server.UUID, "balenaData.id": foundedDevice.ID}).Decode(&device); err != nil {
+		if err = devicesCollection.FindOne(ctx, bson.M{"balenaServerUUID": server.UUID, "balenaDeviceUUID": foundedDevice.UUID}).Decode(&device); err != nil {
 			return saveLogAndFormatError(errors.Join(ErrSyncInternal, errors.New("error while getting device information from database"), err))
 		}
 

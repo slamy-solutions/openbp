@@ -59,8 +59,7 @@ func (s *jwtService) loadPublicKey(ctx context.Context) error {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.FailedPrecondition {
 				return ErrVaultSealed
-			}
-			if st.Code() == codes.NotFound {
+			} else if st.Code() == codes.NotFound {
 				_, err = s.systemStub.Vault.EnsureRSAKeyPair(ctx, &vault.EnsureRSAKeyPairRequest{
 					KeyName: jwtVaultKeyName,
 				})
@@ -79,6 +78,8 @@ func (s *jwtService) loadPublicKey(ctx context.Context) error {
 					return errors.New("failed to parse RSA public key: " + err.Error())
 				}
 				s.rsaKey = key
+			} else {
+				return errors.New("unexpected error while trying to get JWT RSA public key from the system_vault: " + st.Message())
 			}
 		} else {
 			return errors.New("unexpected error while trying to get JWT RSA public key from the system_vault: " + err.Error())

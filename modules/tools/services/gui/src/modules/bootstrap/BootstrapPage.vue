@@ -86,12 +86,14 @@ import { useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { ref, onMounted } from 'vue'
 import { useBootstrapStore } from '../../stores/bootstrap-store'
+import { useLoginStore } from  '../../stores/login-store' 
 import { api } from '../../boot/axios'
 import { useRouter } from 'vue-router'
 
 const step = ref(2)
 
 const bootstrapStore = useBootstrapStore()
+const loginStore = useLoginStore()
 const $router = useRouter()
 const $q = useQuasar()
 const $i18n = useI18n()
@@ -153,6 +155,9 @@ async function createRootUser() {
             message: $i18n.t('modules.bootstrap.steps.rootUser.createSuccessNotify'),
             timeout: 5000
         })
+
+        // Clear old login data if it presents (mostly for dev)
+        loginStore.logout()
     } catch (e) {
         notif({
             type: 'negative',

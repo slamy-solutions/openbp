@@ -50,7 +50,7 @@ func setupCollections(ctx context.Context, systemStub *system.SystemStub) error 
 		{
 			Keys: bson.D{
 				bson.E{Key: "balenaServerUUID", Value: 1},
-				bson.E{Key: "balenaData.id", Value: "hashed"},
+				bson.E{Key: "balenaDeviceUUID", Value: "hashed"},
 			},
 			Options: options.Index().SetName("namespace_fast_by_balena_id"),
 		},

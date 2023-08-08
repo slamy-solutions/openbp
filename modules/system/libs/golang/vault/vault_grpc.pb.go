@@ -55,6 +55,10 @@ type VaultServiceClient interface {
 	EncryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_EncryptStreamClient, error)
 	// Decrypt data stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
 	DecryptStream(ctx context.Context, opts ...grpc.CallOption) (VaultService_DecryptStreamClient, error)
+	// Encrypt data. The data must be short (max several kilobytes). If it is longer - use `EncryptStream` instead. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable of decrypting from the middle of the whole data (partial decryption).
+	Encrypt(ctx context.Context, in *EncryptRequest, opts ...grpc.CallOption) (*EncryptResponse, error)
+	// Decrypt data. The data must be short (max several kilobytes). If it is longer - use `DecryptStream` instead.
+	Decrypt(ctx context.Context, in *DecryptRequest, opts ...grpc.CallOption) (*DecryptResponse, error)
 }
 
 type vaultServiceClient struct {
@@ -353,6 +357,24 @@ func (x *vaultServiceDecryptStreamClient) Recv() (*DecryptStreamResponse, error)
 	return m, nil
 }
 
+func (c *vaultServiceClient) Encrypt(ctx context.Context, in *EncryptRequest, opts ...grpc.CallOption) (*EncryptResponse, error) {
+	out := new(EncryptResponse)
+	err := c.cc.Invoke(ctx, "/system_vault.VaultService/Encrypt", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vaultServiceClient) Decrypt(ctx context.Context, in *DecryptRequest, opts ...grpc.CallOption) (*DecryptResponse, error) {
+	out := new(DecryptResponse)
+	err := c.cc.Invoke(ctx, "/system_vault.VaultService/Decrypt", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VaultServiceServer is the server API for VaultService service.
 // All implementations must embed UnimplementedVaultServiceServer
 // for forward compatibility
@@ -390,6 +412,10 @@ type VaultServiceServer interface {
 	EncryptStream(VaultService_EncryptStreamServer) error
 	// Decrypt data stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
 	DecryptStream(VaultService_DecryptStreamServer) error
+	// Encrypt data. The data must be short (max several kilobytes). If it is longer - use `EncryptStream` instead. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable of decrypting from the middle of the whole data (partial decryption).
+	Encrypt(context.Context, *EncryptRequest) (*EncryptResponse, error)
+	// Decrypt data. The data must be short (max several kilobytes). If it is longer - use `DecryptStream` instead.
+	Decrypt(context.Context, *DecryptRequest) (*DecryptResponse, error)
 	mustEmbedUnimplementedVaultServiceServer()
 }
 
@@ -444,6 +470,12 @@ func (UnimplementedVaultServiceServer) EncryptStream(VaultService_EncryptStreamS
 }
 func (UnimplementedVaultServiceServer) DecryptStream(VaultService_DecryptStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method DecryptStream not implemented")
+}
+func (UnimplementedVaultServiceServer) Encrypt(context.Context, *EncryptRequest) (*EncryptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Encrypt not implemented")
+}
+func (UnimplementedVaultServiceServer) Decrypt(context.Context, *DecryptRequest) (*DecryptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Decrypt not implemented")
 }
 func (UnimplementedVaultServiceServer) mustEmbedUnimplementedVaultServiceServer() {}
 
@@ -794,6 +826,42 @@ func (x *vaultServiceDecryptStreamServer) Recv() (*DecryptStreamRequest, error) 
 	return m, nil
 }
 
+func _VaultService_Encrypt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EncryptRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VaultServiceServer).Encrypt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/system_vault.VaultService/Encrypt",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VaultServiceServer).Encrypt(ctx, req.(*EncryptRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VaultService_Decrypt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecryptRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VaultServiceServer).Decrypt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/system_vault.VaultService/Decrypt",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VaultServiceServer).Decrypt(ctx, req.(*DecryptRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VaultService_ServiceDesc is the grpc.ServiceDesc for VaultService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -840,6 +908,14 @@ var VaultService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HMACVerify",
 			Handler:    _VaultService_HMACVerify_Handler,
+		},
+		{
+			MethodName: "Encrypt",
+			Handler:    _VaultService_Encrypt_Handler,
+		},
+		{
+			MethodName: "Decrypt",
+			Handler:    _VaultService_Decrypt_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

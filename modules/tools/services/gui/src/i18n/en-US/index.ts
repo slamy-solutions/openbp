@@ -483,6 +483,34 @@ export default {
       }
     },
     iot: {
+      device: {
+        create: {
+          header: "Create device",
+    
+          namespaceInput: "Namespace",
+          fleetInput: "Fleet",
+          nameInput: "Name",
+          descriptionInput: "Description",
+  
+          createButton: "Create",
+          createHint: "System will create iot device. Also, if fleet is selected, device will be automatically added to the fleet.",
+  
+          createOperationNotify: 'Trying to create new device ...',
+          addOperationNotify: 'Adding device to the fleet...',
+          createSuccessNotify: 'Successfully created new device',
+          createFailNotify: 'Failed to create device. Error: {error}'
+        },
+        delete: {
+          header: 'Delete device?',
+          bodyText: 'You are about to delete "{uuid}" device from the "{namespace}" namespace. This action can not be undone - all the data related to the device will be lost (including events, logs and basic statistics). This process is asynchronous, so you will have to wait for all the services will recognize the change (most probably up to several seconds).',
+        
+          deleteButton: 'Delete',
+  
+          deleteOperationNotify: 'Trying to delete device ...',
+          deleteSuccessNotify: 'Successfully deleted device',
+          deleteFailNotify: 'Failed to delete device. Error: {error}'
+        },
+      },
       fleet: {
         create: {
           header: "Create fleet",
@@ -524,6 +552,70 @@ export default {
 
           loadOperationNotify: 'Trying to load fleets list ...',
           loadFailNotify: 'Failed to load fleets list. Error: {error}'
+        },
+        view: {
+          header: "Fleet view",
+          notSelected: "Fleet to view is not selected.",
+          loading: "Loading fleet information ...",
+          error: "Failed to load fleet. Error: {error}",
+          namespace: "Namespace",
+          uuid: "UUID",
+          name: "Name",
+          description: "Description",
+          created: "Created",
+          updated: "Updated",
+          version: "Version",
+          devices: "Devices",
+          updateButton: "Update",
+          devicesCaption: "List of the devices assigned to the fleet",
+          loadOperationNotify: 'Trying to load fleet information ...',
+          loadFailNotify: 'Failed to load fleet information. Error: {error}',
+          updateOperationNotify: "Updating fleet information",
+          updateSuccessfullNotify: "Successfully updated fleet information",
+          updateFailNotify: "Failed to update fleet. Error: {error}",
+        },
+        deviceList: {
+          header: "Devices",
+          uuidColumn: "UUID",
+          nameColumn: "Name",
+          descriptionColumn: "Description",
+          actionsColumn: "Actions",
+          actionsMenu: {
+            delete: "Delete",
+            changeFleet: "Change fleet",
+          },
+
+          failedToLoad: "Failed to load devices list: {error}",
+          noData: "There are no devices in this fleet",
+          createButton: "Create",
+        },
+      },
+      integration: {
+        balena: {
+          server: {
+            add: {
+              header: "Add Balena server",
+        
+              namespaceInput: "Namespace",
+              nameInput: "Name",
+              descriptionInput: "Description",
+              urlInput: "API URL",
+              apiTokenInput: "API token",
+      
+              validateConnectionButton: "Validate connection data",
+              connectionDataNotValidated: "You have to validate connection data before adding the server. This will make request to the provided server with provided credentials and will check if server is accessible and credentials are valid.",
+              connectionDataIsValid: "Connection data is valid. You can add the server now.",
+              createButton: "Add server",
+              createHint: "Provided information will be used to communicate with balena server in the background and get information about devices. The communication will not be enabled immediatelly, you will have to enable it manually after server is added. The information on how to connect to the server will be encrypted using system_vault hardware security module.",
+      
+              validateOperationNotify: 'Trying to validate connection data ...',
+              validateFailNotify: 'Failed to validate connection data. Error: {error}',
+
+              addOperationNotify: 'Trying to add server ...',
+              addSuccessNotify: 'Successfully added server',
+              addFailNotify: 'Failed to add server. Error: {error}'
+            },
+          }
         }
       }
     }

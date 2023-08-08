@@ -18,6 +18,7 @@ import (
 	telemetryGRPC "github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/telemetry"
 	"github.com/slamy-solutions/openbp/modules/iot/services/core/src/services/device"
 	"github.com/slamy-solutions/openbp/modules/iot/services/core/src/services/fleet"
+	"github.com/slamy-solutions/openbp/modules/iot/services/core/src/services/integrations/balena"
 	"github.com/slamy-solutions/openbp/modules/iot/services/core/src/services/telemetry"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
@@ -38,7 +39,7 @@ func getHostname() string {
 func main() {
 	// Connect to the "system" module services
 	systemStub := system.NewSystemStub(
-		system.NewSystemStubConfig().WithCache().WithDB().WithNats().WithOTel(system.NewOTelConfig("iot", "core", VERSION, getHostname())),
+		system.NewSystemStubConfig().WithCache().WithDB().WithNats().WithOTel(system.NewOTelConfig("iot", "core", VERSION, getHostname())).WithVault(),
 	)
 	systemConnectionContext, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -86,6 +87,13 @@ func main() {
 		panic("Failed to setup telemetry server: " + err.Error())
 	}
 	telemetryGRPC.RegisterTelemetryServiceServer(grpcServer, telemetryServer)
+
+	balenaIntegration, err := balena.NewBalenaIntegration(context.Background(), systemStub, telemetryServer, deviceServer, logger.WithField("service", "integration_balena"))
+	if err != nil {
+		panic("Failed to setup balena integration: " + err.Error())
+	}
+	defer balenaIntegration.Close()
+	balenaIntegration.RegisterGRPCServices(grpcServer)
 
 	eventHandler, err := NewEventHandler(logger.WithField("service", "event_handler"), systemStub)
 	if err != nil {

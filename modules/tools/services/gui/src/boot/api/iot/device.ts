@@ -25,17 +25,18 @@ export interface DeleteRequest {
     namespace: string
     uuid: string
 }
+export interface DeleteResponse {}
 
-export class FleetAPI extends APIModuleBase {
+export class DeviceAPI extends APIModuleBase {
     async createDevice(params: CreateRequest): Promise<CreateResponse> {
-        const response = await FleetAPI._axios.post<CreateResponse>('/iot/devices/device', params)
+        const response = await DeviceAPI._axios.post<CreateResponse>('/iot/devices/device', params)
         const device = response.data.device
         device.created = new Date(device.created)
         device.updated = new Date(device.updated)
         return { device }
     }
 
-    async deleteDevice(params: CreateRequest): Promise<void> {
-        await FleetAPI._axios.delete<CreateResponse>('/iot/devices/device', { params })
+    async deleteDevice(params: DeleteRequest): Promise<void> {
+        await DeviceAPI._axios.delete<CreateResponse>('/iot/devices/device', { params })
     }
 }

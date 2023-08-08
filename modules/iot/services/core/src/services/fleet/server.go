@@ -529,7 +529,9 @@ func (s *FleetServer) ListDevices(in *fleetGRPC.ListDevicesRequest, out fleetGRP
 	sendedDevices := 0
 	for cursor.Next(ctx) {
 		var entry struct {
-			FleetDeviceInMongo
+			DeviceUUID primitive.ObjectID `bson:"deviceUUID"`
+			FleetUUID  primitive.ObjectID `bson:"fleetUUID"`
+			Added      time.Time          `bson:"added"`
 
 			DeviceInfo []*deviceServer.DeviceInMongo `bson:"deviceInfo"`
 		}

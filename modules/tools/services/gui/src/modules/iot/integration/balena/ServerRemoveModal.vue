@@ -1,10 +1,10 @@
 <template>
     <ActionWarningModal 
-        :action-button="$t('modules.iot.fleet.delete.deleteButton')"
-        :body-text="$t('modules.iot.fleet.delete.bodyText', { uuid: props.uuid, namespace: props.namespace })"
-        :header="$t('modules.iot.fleet.delete.header')"
+        :action-button="$t('modules.iot.integration.balena.server.remove.deleteButton')"
+        :body-text="$t('modules.iot.integration.balena.server.remove.bodyText', { uuid: props.uuid })"
+        :header="$t('modules.iot.integration.balena.server.remove.header')"
         :loading="loading"
-        @action-clicked="deleteFleet"
+        @action-clicked="removeServer"
     />
 </template>
 
@@ -16,7 +16,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const emit = defineEmits<{
-  (e: 'deleted', namespace: string, uuid: string): void
+  (e: 'removed', uuid: string): void
 }>()
 
 const props = defineProps<{
@@ -29,26 +29,25 @@ const $i18n = useI18n()
 
 const loading = ref(false)
 
-async function deleteFleet() {
+async function removeServer() {
   loading.value = true
   const notif = $q.notify({
       type: 'ongoing',
-      message: $i18n.t('modules.iot.fleet.delete.deleteOperationNotify')
+      message: $i18n.t('modules.iot.integration.balena.server.remove.deleteOperationNotify')
   })
   try {
-      await api.iot.fleet.deleteFleet({
-        namespace: props.namespace,
+      await api.iot.integration.balena.server.delete({
         uuid: props.uuid
       })
       notif({
           type: 'positive',
-          message: $i18n.t('modules.iot.fleet.delete.deleteSuccessNotify')
+          message: $i18n.t('modulesiot.integration.balena.server.remove.deleteSuccessNotify')
       })
-      emit('deleted', props.namespace, props.uuid)
+      emit('removed', props.uuid)
   } catch (error) {
       notif({
           type: 'negative',
-          message: $i18n.t('modules.iot.fleet.delete.deleteFailNotify', { error }),
+          message: $i18n.t('modulesiot.integration.balena.server.remove.deleteFailNotify', { error }),
           timeout: 5000
       })
   } finally {

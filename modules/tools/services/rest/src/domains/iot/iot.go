@@ -19,6 +19,7 @@ func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *s
 
 	fleetRouter := NewFleetRouter(logger.WithField("domain.service", "fleet"), nativeStub, iotStub)
 	group.POST("/fleets/fleet", fleetRouter.Create)
+	group.GET("/fleets/fleet", fleetRouter.Get)
 	group.GET("/fleets", fleetRouter.List)
 	group.PATCH("/fleets/fleet", fleetRouter.Update)
 	group.DELETE("/fleets/fleet", fleetRouter.Delete)

@@ -3,7 +3,6 @@ package balena
 import (
 	"context"
 	"errors"
-	"io"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -33,46 +32,21 @@ func NewServersServer(logger *logrus.Entry, systemStub *system.SystemStub) *Serv
 }
 
 func (s *ServersServer) encryptAuthToken(ctx context.Context, plainToken string) ([]byte, error) {
-	encryptStream, err := s.systemStub.Vault.EncryptStream(ctx)
+	encryptResponse, err := s.systemStub.Vault.Encrypt(ctx, &vault.EncryptRequest{
+		PlainData: []byte(plainToken),
+	})
+
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.FailedPrecondition {
 			return nil, status.Error(codes.FailedPrecondition, "auth token encryption precondition failed: "+err.Error())
 		}
 
-		err = errors.Join(errors.New("error while openning ecryption stream with system_vault service to encrypt auth token"), err)
+		err = errors.Join(errors.New("error with system_vault service while encrypting auth token"), err)
 		s.logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	dataToEncrypt := []byte(plainToken)
-	if err = encryptStream.Send(&vault.EncryptStreamRequest{PlainData: dataToEncrypt}); err != nil {
-		err = errors.Join(errors.New("error while sending auth token for ecryption"), err)
-		s.logger.Error(err.Error())
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if err = encryptStream.CloseSend(); err != nil {
-		err = errors.Join(errors.New("error while sending auth token for ecryption. Error closing send stream"), err)
-		s.logger.Error(err.Error())
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	response := make([]byte, 0, len(dataToEncrypt))
-	for {
-		chunk, err := encryptStream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			err = errors.Join(errors.New("error while receiving encrypted token from system_vault"), err)
-			s.logger.Error(err.Error())
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
-		response = append(response, chunk.EncryptedData...)
-	}
-
-	return response, nil
+	return encryptResponse.EncryptedData, nil
 }
 
 func (s *ServersServer) Create(ctx context.Context, in *balena.CreateServerRequest) (*balena.CreateServerResponse, error) {
@@ -111,7 +85,9 @@ func (s *ServersServer) Create(ctx context.Context, in *balena.CreateServerReque
 	}
 	serverInMongo.UUID = updateResult.UpsertedID.(primitive.ObjectID)
 
-	return &balena.CreateServerResponse{}, status.Error(codes.OK, "")
+	return &balena.CreateServerResponse{
+		Server: serverInMongo.ToGRPCServer(),
+	}, status.Error(codes.OK, "")
 }
 func (s *ServersServer) Get(ctx context.Context, in *balena.GetServerRequest) (*balena.GetServerResponse, error) {
 	uuid, err := primitive.ObjectIDFromHex(in.Uuid)

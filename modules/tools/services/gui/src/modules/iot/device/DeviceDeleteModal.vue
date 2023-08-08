@@ -1,10 +1,10 @@
 <template>
     <ActionWarningModal 
-        :action-button="$t('modules.iot.fleet.delete.deleteButton')"
-        :body-text="$t('modules.iot.fleet.delete.bodyText', { uuid: props.uuid, namespace: props.namespace })"
-        :header="$t('modules.iot.fleet.delete.header')"
+        :action-button="$t('modules.iot.device.delete.deleteButton')"
+        :body-text="$t('modules.iot.device.delete.bodyText', { uuid: props.uuid })"
+        :header="$t('modules.iot.device.delete.header')"
         :loading="loading"
-        @action-clicked="deleteFleet"
+        @action-clicked="deleteDevice"
     />
 </template>
 
@@ -16,11 +16,10 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const emit = defineEmits<{
-  (e: 'deleted', namespace: string, uuid: string): void
+  (e: 'removed', uuid: string): void
 }>()
 
 const props = defineProps<{
-    namespace: string,
     uuid: string
 }>()
 
@@ -29,26 +28,25 @@ const $i18n = useI18n()
 
 const loading = ref(false)
 
-async function deleteFleet() {
+async function deleteDevice() {
   loading.value = true
   const notif = $q.notify({
       type: 'ongoing',
-      message: $i18n.t('modules.iot.fleet.delete.deleteOperationNotify')
+      message: $i18n.t('modules.iot.device.delete.deleteOperationNotify')
   })
   try {
-      await api.iot.fleet.deleteFleet({
-        namespace: props.namespace,
+      await api.iot.integration.balena.server.delete({
         uuid: props.uuid
       })
       notif({
           type: 'positive',
-          message: $i18n.t('modules.iot.fleet.delete.deleteSuccessNotify')
+          message: $i18n.t('modules.iot.device.delete.deleteSuccessNotify')
       })
-      emit('deleted', props.namespace, props.uuid)
+      emit('removed', props.uuid)
   } catch (error) {
       notif({
           type: 'negative',
-          message: $i18n.t('modules.iot.fleet.delete.deleteFailNotify', { error }),
+          message: $i18n.t('modules.iot.device.delete.deleteFailNotify', { error }),
           timeout: 5000
       })
   } finally {

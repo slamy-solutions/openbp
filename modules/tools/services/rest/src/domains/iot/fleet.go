@@ -100,6 +100,70 @@ func (r *FleetRouter) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, FleetCreateResponse{Fleet: formatedFleetFromGRPC(createResponse.Fleet)})
 }
 
+type FleetGetRequest struct {
+	Namespace string `form:"namespace" binding:"lte=64"`
+	UUID      string `form:"uuid" binding:"required,lte=64"`
+}
+type FleetGetResponse struct {
+	Fleet formatedFleet `json:"fleet"`
+}
+
+func (r *FleetRouter) Get(ctx *gin.Context) {
+	var requestData FleetGetRequest
+	if err := ctx.ShouldBind(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	logger := r.logger.WithFields(logrus.Fields{
+		"fleet.namespace": requestData.Namespace,
+		"fleet.uuid":      requestData.UUID,
+	})
+
+	// Check auth
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, []*auth.Scope{
+		{
+			Namespace:            requestData.Namespace,
+			Resources:            []string{"iot.core.fleet." + requestData.UUID},
+			Actions:              []string{"iot.core.fleet.get"},
+			NamespaceIndependent: false,
+		},
+	})
+	if err != nil {
+		err := errors.New("failed to check auth: " + err.Error())
+		logger.Error(err.Error())
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+	logger = authTools.FillLoggerWithAuthMetadata(logger, authData)
+
+	getResponse, err := r.iotStub.Core.Fleet.Get(ctx.Request.Context(), &fleet.GetRequest{
+		Namespace: requestData.Namespace,
+		Uuid:      requestData.UUID,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
+			logger.Debug("Failed to get fleet. Fleet not found")
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Fleet not found"})
+			return
+		}
+
+		err = errors.New("failed to get fleet: " + err.Error())
+		logger.Error(err.Error())
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	logger.Debug("Successfully got fleet")
+	ctx.JSON(http.StatusOK, FleetGetResponse{Fleet: formatedFleetFromGRPC(getResponse.Fleet)})
+}
+
 type FleetListRequest struct {
 	Namespace string `form:"namespace" binding:"lte=64"`
 	Skip      uint64 `form:"skip" binding:"gte=0"`

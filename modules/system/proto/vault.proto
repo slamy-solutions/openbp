@@ -166,6 +166,23 @@ message DecryptStreamResponse {
     bytes plainData = 1;
 }
 
+message EncryptRequest {
+    // Data to encrypt
+    bytes plainData = 1;
+}
+message EncryptResponse {
+    // Encrypted data
+    bytes encryptedData = 1;
+}
+message DecryptRequest {
+    // Encrypted data
+    bytes encryptedData = 1;
+}
+message DecryptResponse {
+    // Decrypted data
+    bytes plainData = 1;
+}
+
 service VaultService {
     // Close and encrypt vault. After sealing, most of the operations will not be accessible.
     rpc Seal(SealRequest) returns (SealResponse) {};
@@ -203,4 +220,8 @@ service VaultService {
     rpc EncryptStream(stream EncryptStreamRequest) returns (stream EncryptStreamResponse) {};
     // Decrypt data stream. If you want to decrypt part of the information from the middle of the whole data - ensure, that the first chunk of the data, that you are sending is padded by 2048 bit.
     rpc DecryptStream(stream DecryptStreamRequest) returns (stream DecryptStreamResponse) {};
+    // Encrypt data. The data must be short (max several kilobytes). If it is longer - use `EncryptStream` instead. Encryption secret never leaves the HSM (hardware security module). It automatically uses the best available encryption algorithm for currently used HSM. It will only select the algorithm that is capable of decrypting from the middle of the whole data (partial decryption).
+    rpc Encrypt(EncryptRequest) returns (EncryptResponse) {};
+    // Decrypt data. The data must be short (max several kilobytes). If it is longer - use `DecryptStream` instead.
+    rpc Decrypt(DecryptRequest) returns (DecryptResponse) {};
 }

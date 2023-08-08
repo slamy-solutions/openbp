@@ -29,6 +29,15 @@ export interface GetResponse {
     fleet: Fleet
 }
 
+export interface UpdateRequest {
+    namespace: string
+    uuid: string
+    newDescription: string
+}
+export interface UpdateResponse {
+    fleet: Fleet
+}
+
 export interface ListFleetsRequest {
     namespace: string
     skip: number
@@ -47,7 +56,7 @@ export interface DeleteRequest {
 
 export interface ListDevicesRequest {
     namespace: string
-    fleet: string
+    uuid: string
     skip: number
     limit: number
 }
@@ -89,6 +98,14 @@ export class FleetAPI extends APIModuleBase {
 
     async getFleet(params: GetRequest): Promise<GetResponse> {
         const response = await FleetAPI._axios.get<GetResponse>('/iot/fleets/fleet', { params })
+        const fleet = response.data.fleet
+        fleet.created = new Date(fleet.created)
+        fleet.updated = new Date(fleet.updated)
+        return { fleet }
+    }
+
+    async updateFleet(params: UpdateRequest): Promise<UpdateResponse> {
+        const response = await FleetAPI._axios.patch<UpdateResponse>('/iot/fleets/fleet', params)
         const fleet = response.data.fleet
         fleet.created = new Date(fleet.created)
         fleet.updated = new Date(fleet.updated)

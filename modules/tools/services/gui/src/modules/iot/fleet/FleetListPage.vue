@@ -5,7 +5,7 @@
       </div>
       <div class="col-10">
       <q-table
-          class="q-ma-none"
+          class="row q-ma-none"
           :title="$t('modules.iot.fleet.list.header')"
           :columns="tableColumns"
           :rows="tableData"
@@ -13,6 +13,8 @@
           :loading="dataLoading"
           ref="tableRef"
           @request="loadData"
+          @row-click="selectFleet"
+          :selected="selectedFleet ? [selectedFleet] : []"
           dense
           v-model:pagination="tablePagination"
       >
@@ -58,6 +60,19 @@
           </q-td>
         </template>
       </q-table>
+
+      <div class="row full-width q-pt-md">
+      <q-card class="full-width q-pt-xs">
+       
+        <FleetViewComponent
+
+          :namespace="displayableNamespace"
+          :update-possible="true"
+          :uuid="selectedFleet?.uuid || ''"
+        />
+      </q-card>
+    </div>
+
       </div>
   
       <q-dialog v-model="creationDialog">
@@ -79,7 +94,7 @@
   import MenuComponent from '../MenuComponent.vue'
   import FleetCreateModal from './FleetCreateModal.vue';
   import FleetDeleteModal from './FleetDeleteModal.vue';
-  import IdentityViewComponent from '../../iam/identity/IdentityViewComponent.vue';
+  import FleetViewComponent from './FleetViewComponent.vue';
   import { Fleet } from 'src/boot/api/iot/fleet';
   
   const $i18n = useI18n()
@@ -97,7 +112,9 @@
   const dataLoading = ref(false)
   const loadingError = ref("")
   const tableRef = ref()
-  
+  const selectedFleet = ref(undefined as Fleet | undefined)
+
+
   const tablePagination = ref({
     page: 1,
     rowsPerPage: 10,
@@ -108,6 +125,9 @@
   const fleetUUIDToDelete = ref('')
   const deletionDialog = ref(false)
   
+  function selectFleet(_evt: Event, fleet: Fleet) {
+    selectedFleet.value = fleet
+  }
   
   async function loadData(tableProps: QTableProps) {
       const rowsPerPage = tableProps.pagination?.rowsPerPage || 100
@@ -129,7 +149,9 @@
         }
         notif()
         loadingError.value = ""
-  
+        if (response.fleets.length > 0) {
+          selectedFleet.value = response.fleets[0]
+        }
       } catch (error) {
         notif({
             type: 'negative',

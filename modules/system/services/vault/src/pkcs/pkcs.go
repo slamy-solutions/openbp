@@ -60,6 +60,10 @@ type PKCS interface {
 	EncryptStream(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error
 	// Decrypt message stream
 	DecryptStream(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error
+	// Encrypt message
+	Encrypt(ctx context.Context, plain []byte) ([]byte, error)
+	// Decrypt message
+	Decrypt(ctx context.Context, encrypted []byte) ([]byte, error)
 
 	Close() error
 }

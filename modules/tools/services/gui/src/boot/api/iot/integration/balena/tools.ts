@@ -1,12 +1,14 @@
 import { APIModuleBase } from '../../../model';
 import { SyncLogEntry } from './models'
 
+export type ConnectionStatus = 'OK' | 'BAD_URL' | 'SERVER_UNAVAILABLE' | 'SERVER_BAD_RESPONSE'
+
 export interface VerifyConnectiopnDataRequest {
     url: string
     apiToken: string
 }
 export interface VerifyConnectiopnDataResponse {
-    status: 'OK' | 'BAD_URL' | 'SERVER_UNAVAILABLE' | 'SERVER_BAD_RESPONSE'
+    status: ConnectionStatus
     message: string
 }
 

@@ -17,6 +17,7 @@ type BalenaDeviceInMongo struct {
 
 	BalenaServerNamespace string             `bson:"balenaServerNamespace"`
 	BalenaServerUUID      primitive.ObjectID `bson:"balenaServerUUID"`
+	BalenaDeviceUUID      string             `bson:"balenaDeviceUUID"`
 	BalenaData            api.Device         `bson:"balenaData"`
 
 	Created time.Time `bson:"created"`

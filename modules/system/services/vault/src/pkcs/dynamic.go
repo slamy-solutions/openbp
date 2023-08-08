@@ -3,6 +3,7 @@ package pkcs
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"errors"
@@ -138,7 +139,7 @@ func (h *DynamicPKCSHandle) LogOutAndCloseSession() error {
 func (h *DynamicPKCSHandle) ensureDefaults() error {
 	// --- Generate default HMAC key
 	// Check if HMAC key already exists
-	{
+	err := func() error {
 		searchTemplate := []*pkcs11.Attribute{
 			pkcs11.NewAttribute(pkcs11.CKA_LABEL, defaultHMACKeyName),
 			pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
@@ -160,6 +161,7 @@ func (h *DynamicPKCSHandle) ensureDefaults() error {
 				pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
 				pkcs11.NewAttribute(pkcs11.CKA_LABEL, defaultHMACKeyName),
 				pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
+				pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, false),
 				pkcs11.NewAttribute(pkcs11.CKA_TOKEN, true),
 				pkcs11.NewAttribute(pkcs11.CKA_ENCRYPT, true),
 				pkcs11.NewAttribute(pkcs11.CKA_DECRYPT, true),
@@ -174,6 +176,58 @@ func (h *DynamicPKCSHandle) ensureDefaults() error {
 			}
 			log.Infof("[%s PKCS] Successfully generate HMAC secret", h.GetProviderName())
 		}
+
+		return nil
+	}()
+	if err != nil {
+		return err
+	}
+
+	// --- Generate default encryption key
+	// Check if encryption key already exists
+	err = func() error {
+		searchTemplate := []*pkcs11.Attribute{
+			pkcs11.NewAttribute(pkcs11.CKA_LABEL, defaultEncryptionKeyName),
+			pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
+		}
+		err := h.PKCS11Ctx.FindObjectsInit(h.session, searchTemplate)
+		if err != nil {
+			return errors.New("failed to initialize search for default encryption key: " + err.Error())
+		}
+		defer h.PKCS11Ctx.FindObjectsFinal(h.session)
+
+		objs, _, err := h.PKCS11Ctx.FindObjects(h.session, 1)
+		if err != nil {
+			return errors.New("failed to search for default encryption key: " + err.Error())
+		}
+
+		if len(objs) == 0 {
+			log.Infof("[%s PKCS] Cant find default encryption secret. Generating new one.", h.GetProviderName())
+			attrs := []*pkcs11.Attribute{
+				pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
+				pkcs11.NewAttribute(pkcs11.CKA_LABEL, defaultEncryptionKeyName),
+				pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_AES),
+				pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
+				pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, false),
+				pkcs11.NewAttribute(pkcs11.CKA_TOKEN, true),
+				pkcs11.NewAttribute(pkcs11.CKA_ENCRYPT, true),
+				pkcs11.NewAttribute(pkcs11.CKA_DECRYPT, true),
+				pkcs11.NewAttribute(pkcs11.CKA_VALUE_LEN, 32),
+			}
+
+			// Generate the secret key
+			mech := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_KEY_GEN, nil)}
+			_, err = h.PKCS11Ctx.GenerateKey(h.session, mech, attrs)
+			if err != nil {
+				return errors.New("failed to create default encryption key: " + err.Error())
+			}
+			log.Infof("[%s PKCS] Successfully generate encryption secret", h.GetProviderName())
+		}
+
+		return nil
+	}()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -630,14 +684,251 @@ func (h *DynamicPKCSHandle) VerifyHMAC(ctx context.Context, message []byte, sign
 }
 
 func (h *DynamicPKCSHandle) findEncryptionKey(name string) (pkcs11.ObjectHandle, error) {
-	return 0, nil
+	findTemplate := []*pkcs11.Attribute{
+		pkcs11.NewAttribute(pkcs11.CKA_LABEL, name),
+		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
+	}
+
+	if err := h.PKCS11Ctx.FindObjectsInit(h.session, findTemplate); err != nil {
+		go h.LogOutAndCloseSession()
+		return 0, errors.New("error while initializing PKCS search of AES key: " + err.Error())
+	}
+	defer h.PKCS11Ctx.FindObjectsFinal(h.session)
+
+	objs, _, err := h.PKCS11Ctx.FindObjects(h.session, 1)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return 0, errors.New("error while performing PKCS search of AES key: " + err.Error())
+	}
+
+	if len(objs) != 1 {
+		return 0, ErrEncryptionKeyDoesntExist
+	}
+
+	return objs[0], nil
 }
 
 func (h *DynamicPKCSHandle) EncryptStream(ctx context.Context, plain *io.PipeReader, encrypted *io.PipeWriter) error {
-	return errors.New("not implemented")
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	key, err := h.findEncryptionKey(defaultEncryptionKeyName)
+	if err != nil {
+		return errors.New("failed to find ecryption key: " + err.Error())
+	}
+
+	iv := make([]byte, 16)
+	if _, err = rand.Read(iv); err != nil {
+		return errors.New("failed to generate IV: " + err.Error())
+	}
+
+	err = h.PKCS11Ctx.EncryptInit(h.session, []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_CBC_PAD, iv)}, key)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return errors.New("failed to initialize encryption: " + err.Error())
+	}
+
+	if _, err := encrypted.Write(iv); err != nil {
+		plain.CloseWithError(err)
+		encrypted.CloseWithError(err)
+		h.PKCS11Ctx.EncryptFinal(h.session)
+		return errors.New("error while writing IV data: " + err.Error())
+	}
+
+	dataBuffer := make([]byte, 2048)
+	for {
+		readed, err := plain.Read(dataBuffer)
+
+		if readed != 0 {
+			encryptedData, updateErr := h.PKCS11Ctx.EncryptUpdate(h.session, dataBuffer[:readed])
+
+			if updateErr != nil {
+				plain.CloseWithError(updateErr)
+				encrypted.CloseWithError(updateErr)
+				h.PKCS11Ctx.EncryptFinal(h.session)
+				go h.LogOutAndCloseSession()
+				return errors.New("error while encrypting block of data: " + updateErr.Error())
+			}
+
+			if _, err := encrypted.Write(encryptedData); err != nil {
+				plain.CloseWithError(err)
+				encrypted.CloseWithError(err)
+				h.PKCS11Ctx.EncryptFinal(h.session)
+				return errors.New("error while writing encrypted data: " + err.Error())
+			}
+		}
+
+		if err != nil {
+			if err == io.EOF {
+				encryptedData, err := h.PKCS11Ctx.EncryptFinal(h.session)
+				if err != nil {
+					plain.CloseWithError(err)
+					encrypted.CloseWithError(err)
+					go h.LogOutAndCloseSession()
+					return errors.New("error while finalizing encryption: " + err.Error())
+				}
+
+				if _, err := encrypted.Write(encryptedData); err != nil {
+					plain.CloseWithError(err)
+					encrypted.CloseWithError(err)
+					return errors.New("error while writing encrypted data: " + err.Error())
+				}
+
+				encrypted.Close()
+				return nil
+			}
+
+			plain.CloseWithError(err)
+			encrypted.CloseWithError(err)
+			h.PKCS11Ctx.EncryptFinal(h.session)
+			return errors.New("error while reading data for encryption: " + err.Error())
+		}
+	}
 }
 func (h *DynamicPKCSHandle) DecryptStream(ctx context.Context, encrypted *io.PipeReader, plain *io.PipeWriter) error {
-	return errors.New("not implemented")
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	key, err := h.findEncryptionKey(defaultEncryptionKeyName)
+	if err != nil {
+		return errors.New("failed to find decryption key: " + err.Error())
+	}
+
+	iv := make([]byte, 0, 16)
+
+	dataBuffer := make([]byte, 2048)
+	for {
+		readed, err := encrypted.Read(dataBuffer)
+
+		// We have to read IV first
+		if len(iv) != 16 {
+			if err != nil {
+				if err == io.EOF {
+					plain.CloseWithError(errors.New("iv not received"))
+				}
+
+				plain.CloseWithError(err)
+				encrypted.CloseWithError(err)
+				return nil
+			}
+
+			if len(iv)+readed < 16 {
+				iv = append(iv, dataBuffer[:readed]...)
+				continue
+			}
+
+			copyAmmount := 16 - len(iv)
+			iv = append(iv, dataBuffer[:copyAmmount]...)
+			dataBuffer = dataBuffer[copyAmmount:]
+			readed -= copyAmmount
+
+			err = h.PKCS11Ctx.DecryptInit(h.session, []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_CBC_PAD, iv)}, key)
+			if err != nil {
+				plain.CloseWithError(err)
+				encrypted.CloseWithError(err)
+				go h.LogOutAndCloseSession()
+				return errors.New("failed to initialize encryption: " + err.Error())
+			}
+		}
+
+		if readed != 0 {
+			encryptedData, updateErr := h.PKCS11Ctx.DecryptUpdate(h.session, dataBuffer[:readed])
+
+			if updateErr != nil {
+				plain.CloseWithError(updateErr)
+				encrypted.CloseWithError(updateErr)
+				h.PKCS11Ctx.DecryptFinal(h.session)
+				go h.LogOutAndCloseSession()
+				return errors.New("error while decrypting block of data: " + updateErr.Error())
+			}
+
+			if _, err := plain.Write(encryptedData); err != nil {
+				plain.CloseWithError(err)
+				encrypted.CloseWithError(err)
+				h.PKCS11Ctx.DecryptFinal(h.session)
+				return errors.New("error while writing plain data: " + err.Error())
+			}
+		}
+
+		if err != nil {
+			if err == io.EOF {
+				encryptedData, err := h.PKCS11Ctx.DecryptFinal(h.session)
+				if err != nil {
+					plain.CloseWithError(err)
+					encrypted.CloseWithError(err)
+					go h.LogOutAndCloseSession()
+					return errors.New("error while finalizing decryption: " + err.Error())
+				}
+
+				if _, err := plain.Write(encryptedData); err != nil {
+					plain.CloseWithError(err)
+					encrypted.CloseWithError(err)
+					return errors.New("error while writing plain data: " + err.Error())
+				}
+
+				encrypted.Close()
+				return nil
+			}
+
+			plain.CloseWithError(err)
+			encrypted.CloseWithError(err)
+			h.PKCS11Ctx.DecryptFinal(h.session)
+			return errors.New("error while reading data for decryption: " + err.Error())
+		}
+	}
+}
+
+func (h *DynamicPKCSHandle) Encrypt(ctx context.Context, plain []byte) ([]byte, error) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	key, err := h.findEncryptionKey(defaultEncryptionKeyName)
+	if err != nil {
+		return []byte{}, errors.New("failed to find ecryption key: " + err.Error())
+	}
+
+	iv := make([]byte, 16)
+	if _, err = rand.Read(iv); err != nil {
+		return []byte{}, errors.New("failed to generate IV: " + err.Error())
+	}
+
+	err = h.PKCS11Ctx.EncryptInit(h.session, []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_CBC_PAD, iv)}, key)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("failed to initialize encryption: " + err.Error())
+	}
+
+	encrypted, err := h.PKCS11Ctx.Encrypt(h.session, plain)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("failed to encrypt data: " + err.Error())
+	}
+	encrypted = append(iv, encrypted...)
+
+	return encrypted, nil
+}
+func (h *DynamicPKCSHandle) Decrypt(ctx context.Context, encrypted []byte) ([]byte, error) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	key, err := h.findEncryptionKey(defaultEncryptionKeyName)
+	if err != nil {
+		return []byte{}, errors.New("failed to find decryption key: " + err.Error())
+	}
+
+	err = h.PKCS11Ctx.DecryptInit(h.session, []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_CBC_PAD, encrypted[:16])}, key)
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("failed to initialize decryption: " + err.Error())
+	}
+
+	decrypted, err := h.PKCS11Ctx.Decrypt(h.session, encrypted[16:])
+	if err != nil {
+		go h.LogOutAndCloseSession()
+		return []byte{}, errors.New("failed to decrypt data: " + err.Error())
+	}
+
+	return decrypted, nil
 }
 
 func (h *DynamicPKCSHandle) Close() error {

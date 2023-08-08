@@ -5,10 +5,12 @@ import (
 	"errors"
 
 	"github.com/sirupsen/logrus"
+	"github.com/slamy-solutions/openbp/modules/iot/libs/golang/core/integration/balena"
 	"github.com/slamy-solutions/openbp/modules/iot/services/core/src/services/device"
 	"github.com/slamy-solutions/openbp/modules/iot/services/core/src/services/integrations/balena/api"
 	"github.com/slamy-solutions/openbp/modules/iot/services/core/src/services/telemetry"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
+	"google.golang.org/grpc"
 )
 
 type BalenaIntegration struct {
@@ -46,6 +48,13 @@ func NewBalenaIntegration(ctx context.Context, systemStub *system.SystemStub, te
 		syncManager: syncManager,
 		logger:      logger.WithField("balenaIntegration.component", "grpcServer"),
 	}, nil
+}
+
+func (s *BalenaIntegration) RegisterGRPCServices(grpcServer *grpc.Server) {
+	balena.RegisterBalenaDevicesServiceServer(grpcServer, s.DevicesServer)
+	balena.RegisterBalenaServersServiceServer(grpcServer, s.ServersServer)
+	balena.RegisterBalenaToolsServiceServer(grpcServer, s.ToolsServer)
+	balena.RegisterBalenaSyncServiceServer(grpcServer, s.SyncServer)
 }
 
 func (s *BalenaIntegration) Close() {

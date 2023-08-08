@@ -36,7 +36,8 @@ const routes: RouteRecordRaw[] = [
       { path: 'accessControl/iam/policy/list', name: 'accessControl_iam_policy_list', component: () => import('../modules/accessControl/iam/policy/PolicyListPage.vue')},
       { path: 'accessControl/iam/role/list', name: 'accessControl_iam_role_list', component: () => import('../modules/accessControl/iam/role/RoleListPage.vue')},
 
-      { path: 'iot/fleet/list', name: 'iot_fleet_list', component: () => import('../modules/iot/fleet/FleetListPage.vue') }
+      { path: 'iot/fleet/list', name: 'iot_fleet_list', component: () => import('../modules/iot/fleet/FleetListPage.vue') },
+      { path: 'iot/integration/balena', name: 'iot_integration_balena', component: () => import('../modules/iot/integration/balena/BalenaIntegrationPage.vue') },
     ],
     beforeEnter: [bootstrapGuard, loginGuard]
   },
