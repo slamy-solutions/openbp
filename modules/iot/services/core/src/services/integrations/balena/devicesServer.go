@@ -68,8 +68,8 @@ func (s *DevicesServer) Bind(ctx context.Context, in *balena.BindDeviceRequest) 
 		bson.M{"_id": balenaDeviceUUID},
 		bson.M{
 			"$set": bson.M{
-				"deviceNamespace": in.DeviceNamespace,
-				"deviceUUID":      balenaUUID,
+				"bindedDeviceNamespace": in.DeviceNamespace,
+				"bindedDeviceUUID":      balenaUUID,
 			},
 			"$currentDate": bson.M{"updated": bson.M{"$type": "timestamp"}},
 			"$inc":         bson.M{"version": 1},
@@ -103,8 +103,8 @@ func (s *DevicesServer) UnBind(ctx context.Context, in *balena.UnBindDeviceReque
 		bson.M{"_id": balenaDeviceUUID},
 		bson.M{
 			"$set": bson.M{
-				"deviceNamespace": nil,
-				"deviceUUID":      nil,
+				"bindedDeviceNamespace": nil,
+				"bindedDeviceUUID":      nil,
 			},
 			"$currentDate": bson.M{"updated": bson.M{"$type": "timestamp"}},
 			"$inc":         bson.M{"version": 1},
@@ -137,8 +137,16 @@ func (s *DevicesServer) ListInNamespace(in *balena.ListDevicesInNamespaceRequest
 	default:
 	}
 
+	options := options.Find().SetSort(bson.M{"_id": 1})
+	if in.Limit > 0 {
+		options.SetLimit(int64(in.Limit))
+	}
+	if in.Skip > 0 {
+		options.SetSkip(int64(in.Skip))
+	}
+
 	collection := getBalenaDeviceCollection(s.systemStub)
-	cur, err := collection.Find(ctx, filter)
+	cur, err := collection.Find(ctx, filter, options)
 	if err != nil {
 		err = errors.Join(errors.New("error while finding devices in namespace. Failed to initialize database cursor"), err)
 		s.logger.Error(err.Error())

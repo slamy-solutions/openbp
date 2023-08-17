@@ -45,12 +45,12 @@
   
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn color="dark" outline label="" icon="menu">
+            <q-btn color="dark" outline label="" icon="menu" size="xs">
               <q-menu>
                 <q-list style="">
-                    <q-item clickable v-close-popup @click="deviceUUIDToDelete = props.row.uuid; deletionDialog = true;">
+                    <!-- <q-item clickable v-close-popup @click="deviceUUIDToDelete = props.row.uuid; deletionDialog = true;">
                       <q-item-section class="text-dark">{{ $t('modules.iot.fleet.deviceList.actionsMenu.changeFleet') }}</q-item-section>
-                    </q-item>
+                    </q-item> -->
                   <q-item clickable v-close-popup @click="deviceUUIDToDelete = props.row.uuid; deletionDialog = true;">
                     <q-item-section class="text-negative">{{ $t('modules.iot.fleet.deviceList.actionsMenu.delete') }}</q-item-section>
                   </q-item>
@@ -60,9 +60,10 @@
           </q-td>
         </template>
   
-        <template v-slot:body-cell-managed="props">
+        <template v-slot:body-cell-identity="props">
           <q-td :props="props">
-            <ManagedByComponent dense :managed-by="props.row.managed" />
+            {{ props.row.identity }}
+            <q-btn size="xs" round flat icon="info" color="dark" @click="identityUUIDToView = props.row.identity; identityViewDialog = true"></q-btn>
           </q-td>
         </template>
         </q-table>
@@ -82,6 +83,16 @@
               @deleted="onDeviceDeleted"
           />
         </q-dialog>
+
+        <q-dialog v-model="identityViewDialog">
+          <div class="bg-primary" style="width: 95%; max-width: 95%;">
+          <IdentityViewComponent
+            :namespace="props.namespace"
+            :uuid="identityUUIDToView"
+            :update-possible="true"
+          />
+          </div>
+        </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -93,6 +104,7 @@ import { useI18n } from 'vue-i18n';
 
 import DeviceCreateModal from '../device/DeviceCreateModal.vue';
 import DeviceDeleteModal from '../device/DeviceDeleteModal.vue';
+import IdentityViewComponent from 'src/modules/accessControl/iam/identity/IdentityViewComponent.vue';
 
 const $i18n = useI18n()
 const $q = useQuasar()
@@ -105,6 +117,7 @@ const tableColumns = computed(() => {
     { name: 'uuid', label: $i18n.t('modules.iot.fleet.deviceList.uuidColumn'), field: 'uuid', align: 'left', sortable: true },
     { name: 'name', label: $i18n.t('modules.iot.fleet.deviceList.nameColumn'), field: 'name', align: 'left', sortable: true },
     { name: 'description', label: $i18n.t('modules.iot.fleet.deviceList.descriptionColumn'), field: 'description', align: 'left', sortable: false },
+    { name: 'identity', label: $i18n.t('modules.iot.fleet.deviceList.identityColumn'), field: 'identity', align: 'left', sortable: false },
   ] as QTableProps['columns']
 
   if ( v && props.editable) {
@@ -119,6 +132,9 @@ const tableRef = ref<QTable | null>(null)
 const creationDialog = ref(false)
 const deviceUUIDToDelete = ref('')
 const deletionDialog = ref(false)
+
+const identityUUIDToView = ref('')
+const identityViewDialog = ref(false)
 
 const props = defineProps<{
     namespace: string,

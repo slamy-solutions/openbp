@@ -4,8 +4,14 @@
         <MenuComponent selected="balena"/>
       </div>
       <div class="col-10">
-        <q-card>
+        <q-card class="row">
           <ServersListComponent
+            :editable="true"
+            :namespace="displayableNamespace"
+          />
+        </q-card>
+        <q-card class="row q-mt-md">
+          <DevicesListComponent
             :editable="true"
             :namespace="displayableNamespace"
           />
@@ -18,6 +24,7 @@
 import { ref } from 'vue';
 import MenuComponent from '../../MenuComponent.vue'
 import ServersListComponent from './ServersListComponent.vue';
+import DevicesListComponent from './DevicesListComponent.vue';
 
 const displayableNamespace = ref('')
 

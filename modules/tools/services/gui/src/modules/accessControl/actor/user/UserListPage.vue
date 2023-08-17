@@ -47,7 +47,7 @@
       <template v-slot:body-cell-identity="props">
         <q-td :props="props">
           {{ props.row.identity }}
-          <q-btn color="dark" outline round size="sm" icon="info" @click="userIdentityUUIDToShow = props.row.identity; userIdentityInfoDialog=true" />
+          <q-btn color="dark" flat round size="sm" icon="info" @click="userIdentityUUIDToShow = props.row.identity; userIdentityInfoDialog=true" />
         </q-td>
       </template>
 

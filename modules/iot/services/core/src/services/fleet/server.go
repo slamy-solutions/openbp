@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -363,7 +364,7 @@ func (s *FleetServer) CountDevicesWithoutFleet(ctx context.Context, namespace st
 	aggregation := bson.A{
 		bson.D{
 			{Key: "$lookup", Value: bson.D{
-				{Key: "from", Value: "iot_core_fleet"},
+				{Key: "from", Value: "iot_core_fleetdevices"},
 				{Key: "localField", Value: "_id"},
 				{Key: "foreignField", Value: "deviceUUID"},
 				{Key: "as", Value: "fleetInfo"},
@@ -404,6 +405,10 @@ func (s *FleetServer) CountDevicesWithoutFleet(ctx context.Context, namespace st
 	var response struct{ count int }
 	err = cursor.Decode(&response)
 	if err != nil {
+		if err == io.EOF {
+			return &fleetGRPC.CountDevicesResponse{Count: 0}, status.Error(codes.OK, "")
+		}
+
 		err = errors.New("error while counting devices without fleet: error while decoding database stream: " + err.Error())
 		s.logger.WithFields(logrus.Fields{
 			"namespace": namespace,

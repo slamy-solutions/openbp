@@ -3,11 +3,11 @@
           flat
           bordered
           class="col-12 q-ma-none"
-          :title="$t('modules.iot.integration.balena.server.header')"
+          :title="$t('modules.iot.integration.balena.server.list.header')"
           :columns="tableColumns"
           :rows="tableData"
-          row-key="uuid"
-          :loading="dataLoading"
+          :row-key="(r) => r.server.uuid"
+          :loading="dataLoading && tableData.length === 0"
           ref="tableRef"
           @request="loadData"
           dense
@@ -21,10 +21,10 @@
         <template v-slot:no-data="{}">
           <div class="full-width row flex-center q-gutter-sm">
             <span v-if="loadingError === ''">
-              {{ $t('modules.iot.integration.balena.server.noData') }}
+              {{ $t('modules.iot.integration.balena.server.list.noData') }}
             </span>
             <span v-else class="text-negative">
-              {{ $t('modules.iot.integration.balena.server.failedToLoad', { error: loadingError }) }}
+              {{ $t('modules.iot.integration.balena.server.list.failedToLoad', { error: loadingError }) }}
             </span>
           </div>
         </template>
@@ -32,7 +32,7 @@
         <template v-slot:top-right>
           <q-btn
               v-if="props.editable"
-              :label="$t('modules.iot.integration.balena.server.createButton')"
+              :label="$t('modules.iot.integration.balena.server.list.createButton')"
               class="q-ma-none"
               unelevated
               outline
@@ -43,26 +43,59 @@
           />
         </template>
   
+        <template v-slot:body-cell-enabled="props">
+          <q-td :props="props">
+            <q-toggle size="xs" v-model="props.row.server.enabled" @update:model-value="async (newVal) => await setServerEnabled(props.row.server, newVal)" />
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-syncStatus="props">
+          <q-td :props="props">
+            <div v-if="props.row.lastSyncLog === null || props.row.lastSyncLog === undefined">-</div>
+            <div v-else>
+              {{ props.row.lastSyncLog.status + (props.row.lastSyncLog.message ? ` (${props.row.lastSyncLog.message})` : '') }}
+            </div>
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-syncDevices="props">
+          <q-td :props="props">
+            <div v-if="props.row.lastSyncLog === null || props.row.lastSyncLog === undefined">-</div>
+            <div v-else>
+              {{ props.row.lastSyncLog.stats.foundedDevicesOnServer }}
+            </div>
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-syncTime="props">
+          <q-td :props="props">
+            <div v-if="props.row.lastSyncLog === null || props.row.lastSyncLog === undefined">-</div>
+            <div v-else>
+              {{ String((props.row.lastSyncLog.stats.executionTime / 1000).toFixed(1)) + " s" }}
+            </div>
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-syncTimestamp="props">
+          <q-td :props="props">
+            <div v-if="props.row.lastSyncLog === null || props.row.lastSyncLog === undefined">-</div>
+            <div v-else>
+              {{ props.row.lastSyncLog.timestamp.toLocaleString('en-GB') }}
+            </div>
+          </q-td>
+        </template>
+
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn color="dark" outline label="" icon="menu">
+            <q-btn color="dark" outline label="" icon="menu" size="xs">
               <q-menu>
                 <q-list style="">
-                    <q-item clickable v-close-popup @click="serverUUIDToDelete = props.row.uuid; removingDialog = true;">
-                      <q-item-section class="text-dark">{{ $t('modules.iot.integration.balena.server.actionsMenu.changeFleet') }}</q-item-section>
-                    </q-item>
                   <q-item clickable v-close-popup @click="serverUUIDToDelete = props.row.uuid; removingDialog = true;">
-                    <q-item-section class="text-negative">{{ $t('modules.iot.integration.balena.server.actionsMenu.delete') }}</q-item-section>
+                    <q-item-section class="text-negative">{{ $t('modules.iot.integration.balena.server.list.actionsMenu.delete') }}</q-item-section>
                   </q-item>
                 </q-list>
               </q-menu>
             </q-btn>
-          </q-td>
-        </template>
-  
-        <template v-slot:body-cell-managed="props">
-          <q-td :props="props">
-            <ManagedByComponent dense :managed-by="props.row.managed" />
           </q-td>
         </template>
         </q-table>
@@ -87,7 +120,7 @@
 import { QTableProps, useQuasar, QTable } from 'quasar';
 import api from 'src/boot/api';
 import { Server, SyncLogEntry } from 'src/boot/api/iot/integration/balena/models';
-import { computed, onMounted, ref, Ref } from 'vue';
+import { computed, onMounted, ref, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import ServerAddModal from './ServerAddModal.vue';
@@ -105,14 +138,18 @@ const tableData = ref([] as Array<{
 }>)
 const tableColumns = computed(() => {
   const v = [
-    { name: 'uuid', label: $i18n.t('modules.iot.integration.balena.server.uuidColumn'), field: 'uuid', align: 'left', sortable: true },
-    { name: 'name', label: $i18n.t('modules.iot.integration.balena.server.nameColumn'), field: 'name', align: 'left', sortable: true },
-    { name: 'description', label: $i18n.t('modules.iot.integration.balena.server.descriptionColumn'), field: 'description', align: 'left', sortable: false },
-    { name: 'enabled', label: $i18n.t('modules.iot.integration.balena.server.enabledColumn'), field: 'enabled', align: 'left', sortable: false },
+    { name: 'uuid', label: $i18n.t('modules.iot.integration.balena.server.list.uuidColumn'), field: (r) => r.server.uuid, align: 'left', sortable: true },
+    { name: 'name', label: $i18n.t('modules.iot.integration.balena.server.list.nameColumn'), field: (r) => r.server.name, align: 'left', sortable: true },
+    { name: 'description', label: $i18n.t('modules.iot.integration.balena.server.list.descriptionColumn'), field: (r) => r.server.description, align: 'left', sortable: false },
+    { name: 'enabled', label: $i18n.t('modules.iot.integration.balena.server.list.enabledColumn'), align: 'left', sortable: false },
+    { name: 'syncStatus', label: $i18n.t('modules.iot.integration.balena.server.list.syncStatusColumn'), align: 'left', sortable: false },
+    { name: 'syncDevices', label: $i18n.t('modules.iot.integration.balena.server.list.syncDevicesColumn'), align: 'left', sortable: false },
+    { name: 'syncTime', label: $i18n.t('modules.iot.integration.balena.server.list.syncTimeColumn'), align: 'left', sortable: false },
+    { name: 'syncTimestamp', label: $i18n.t('modules.iot.integration.balena.server.list.syncTimestampColumn'), align: 'left', sortable: false },
   ] as QTableProps['columns']
 
   if ( v && props.editable) {
-    v.push({ name: 'actions', label: $i18n.t('modules.iot.integration.balena.server.actionsColumn'), field: 'actions', align: 'right', sortable: false })
+    v.push({ name: 'actions', label: $i18n.t('modules.iot.integration.balena.server.list.actionsColumn'), field: 'actions', align: 'right', sortable: false })
   }
 
   return v
@@ -140,10 +177,6 @@ const tablePagination = ref({
       const rowsPerPage = tableProps.pagination?.rowsPerPage || 100
       const page = (tableProps.pagination?.page || 1) - 1
   
-      const notif = $q.notify({
-        type: 'ongoing',
-        message: $i18n.t('modules.iot.integration.balena.server.loadOperationNotify.')
-    })
       dataLoading.value = true
   
       try {
@@ -154,13 +187,12 @@ const tablePagination = ref({
           tablePagination.value.rowsPerPage = rowsPerPage
           tablePagination.value.rowsNumber = response.totalCount
         }
-        notif()
         loadingError.value = ""
 
       } catch (error) {
-        notif({
+        $q.notify({
             type: 'negative',
-            message: $i18n.t('modules.iot.integration.balena.server.loadFailNotify', { error }),
+            message: $i18n.t('modules.iot.integration.balena.server.list.loadFailNotify', { error }),
             timeout: 5000
         })
         loadingError.value = String(error) 
@@ -173,6 +205,31 @@ const tablePagination = ref({
 
   }
 
+  async function setServerEnabled(server: Server, enabled: boolean) {
+    const notif = $q.notify({
+      type: 'ongoing',
+      message: $i18n.t('modules.iot.integration.balena.server.list.setEnabledOperationNotify')
+    })
+
+    try {
+      await api.iot.integration.balena.server.setEnabled({ uuid: server.uuid, enabled })
+      notif({
+        type: 'positive',
+        message: $i18n.t('modules.iot.integration.balena.server.list.setEnabledSuccessNotify'),
+      })
+      loadingError.value = ""
+    } catch (error) {
+      notif({
+        type: 'negative',
+        message: $i18n.t('modules.iot.integration.balena.server.list.setEnabledFailNotify', { error }),
+        timeout: 5000
+      })
+      loadingError.value = String(error)
+    } finally {
+      tableRef.value?.requestServerInteraction()
+    }
+  }
+
   function onServerAdded() {
     addDialog.value = false
     tableRef.value?.requestServerInteraction()
@@ -183,7 +240,21 @@ const tablePagination = ref({
     tableRef.value?.requestServerInteraction()
   }
 
-  onMounted(() => {
+  //TODO: should this be changed to websocket?
+  const refreshInterval = ref(null as null | NodeJS.Timeout)
+
+function refreshData() {
     tableRef.value?.requestServerInteraction()
-  })
+}
+
+onMounted(() => {
+    refreshData()
+    refreshInterval.value = setInterval(refreshData, 5000)
+})
+
+onBeforeUnmount(()=>{
+    if (refreshInterval.value) {
+        clearInterval(refreshInterval.value)
+    }
+})
 </script>

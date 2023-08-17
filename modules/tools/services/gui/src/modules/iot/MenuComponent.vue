@@ -50,12 +50,12 @@ const mainViews = [
         title: 'Device fleets',
         routerPageName: 'iot_fleet_list'
     },
-    {
+    /*{
         name: 'applications',
         icon: 'terminal',
         title: 'Applications',
         routerPageName: ''
-    },
+    },*/
 ] as Viewdata[] 
 
 const integrationViews = [

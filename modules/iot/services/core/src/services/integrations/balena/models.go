@@ -26,10 +26,19 @@ type BalenaDeviceInMongo struct {
 }
 
 func (d *BalenaDeviceInMongo) ToGRPCDevice() *balena.BalenaDevice {
+	bindedDeviceNamespace := ""
+	if d.BindedDeviceNamespace != nil {
+		bindedDeviceNamespace = *d.BindedDeviceNamespace
+	}
+	bindedDeviceUUID := ""
+	if d.BindedDeviceUUID != nil {
+		bindedDeviceUUID = (*d.BindedDeviceUUID).Hex()
+	}
+
 	device := &balena.BalenaDevice{
 		Uuid:                  d.UUID.Hex(),
-		BindedDeviceNamespace: "",
-		BindedDeviceUUID:      "",
+		BindedDeviceNamespace: bindedDeviceNamespace,
+		BindedDeviceUUID:      bindedDeviceUUID,
 		BalenaServerNamespace: d.BalenaServerNamespace,
 		BalenaServerUUID:      d.BalenaServerUUID.Hex(),
 		BalenaData:            d.BalenaData.ToGRPCBalenaData(),
@@ -87,6 +96,15 @@ type SyncStats struct {
 	ExecutionTime uint64 `bson:"executionTime"`
 }
 
+func (s *SyncStats) ToGRPCStats() *balena.SyncLogEntry_Stats {
+	return &balena.SyncLogEntry_Stats{
+		FoundedDevicesOnServer: int32(s.FoundedDevicesOnServer),
+		FoundedActiveDevices:   int32(s.FoundedActiveDevices),
+		MetricsUpdates:         int32(s.MetricsUpdates),
+		ExecutionTime:          s.ExecutionTime,
+	}
+}
+
 type SyncStatus int
 
 const (
@@ -103,4 +121,22 @@ type SyncLogInMongo struct {
 	Status SyncStatus `bson:"status"`
 	Error  string     `bson:"error,omitempty"`
 	Stats  SyncStats  `bson:"stats"`
+}
+
+func (l *SyncLogInMongo) ToGRPCSyncLog() *balena.SyncLogEntry {
+	status := balena.SyncLogEntry_OK
+	if l.Status == SyncStatusError {
+		status = balena.SyncLogEntry_ERROR
+	} else if l.Status == SyncStatusInternalError {
+		status = balena.SyncLogEntry_INTERNAL_ERROR
+	}
+
+	return &balena.SyncLogEntry{
+		Uuid:       l.UUID.Hex(),
+		ServerUUID: l.ServerUUID.Hex(),
+		Timestamp:  timestamppb.New(l.Timestamp),
+		Status:     status,
+		Error:      l.Error,
+		Stats:      l.Stats.ToGRPCStats(),
+	}
 }

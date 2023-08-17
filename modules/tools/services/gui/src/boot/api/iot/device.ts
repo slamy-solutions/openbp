@@ -27,6 +27,14 @@ export interface DeleteRequest {
 }
 export interface DeleteResponse {}
 
+export interface GetRequest {
+    namespace: string
+    uuid: string
+}
+export interface GetResponse {
+    device: Device
+}
+
 export class DeviceAPI extends APIModuleBase {
     async createDevice(params: CreateRequest): Promise<CreateResponse> {
         const response = await DeviceAPI._axios.post<CreateResponse>('/iot/devices/device', params)
@@ -38,5 +46,13 @@ export class DeviceAPI extends APIModuleBase {
 
     async deleteDevice(params: DeleteRequest): Promise<void> {
         await DeviceAPI._axios.delete<CreateResponse>('/iot/devices/device', { params })
+    }
+
+    async getDevice(params: GetRequest): Promise<GetResponse> {
+        const response = await DeviceAPI._axios.get<GetResponse>('/iot/devices/device', { params })
+        const device = response.data.device
+        device.created = new Date(device.created)
+        device.updated = new Date(device.updated)
+        return { device }
     }
 }

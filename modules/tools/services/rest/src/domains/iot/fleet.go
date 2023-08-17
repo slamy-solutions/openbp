@@ -34,7 +34,7 @@ func NewFleetRouter(logger *logrus.Entry, nativeStub *native.NativeStub, iotStub
 
 type FleetCreateRequest struct {
 	Namespace   string `json:"namespace" binding:"lte=64"`
-	Name        string `json:"name" binding:"required,lte=64"`
+	Name        string `json:"name" binding:"required,gte=1,lte=64"`
 	Description string `json:"description" binding:"required,lte=256"`
 }
 type FleetCreateResponse struct {
@@ -415,7 +415,7 @@ func (r *FleetRouter) Delete(ctx *gin.Context) {
 
 type FleetListDevicesRequest struct {
 	Namespace string `form:"namespace" binding:"lte=64"`
-	UUID      string `form:"uuid" binding:"required,lte=32"`
+	UUID      string `form:"uuid" binding:"lte=32"`
 	Skip      uint64 `form:"skip" binding:"gte=0"`
 	Limit     uint64 `form:"limit" binding:"gt=0,lte=100"`
 }
@@ -438,29 +438,35 @@ func (r *FleetRouter) ListDevices(ctx *gin.Context) {
 		"params.limit":    requestData.Limit,
 	})
 
-	// Get the fleet name to check auth
-	getFleetResponse, err := r.iotStub.Core.Fleet.Get(ctx.Request.Context(), &fleet.GetRequest{
-		Namespace: requestData.Namespace,
-		Uuid:      requestData.UUID,
-	})
-	if err != nil {
-		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
-			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Fleet not found"})
+	fleetName := ""
+
+	if requestData.UUID != "" {
+		// Get the fleet name to check auth
+		getFleetResponse, err := r.iotStub.Core.Fleet.Get(ctx.Request.Context(), &fleet.GetRequest{
+			Namespace: requestData.Namespace,
+			Uuid:      requestData.UUID,
+		})
+		if err != nil {
+			if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
+				ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Fleet not found"})
+				return
+			}
+
+			err = errors.New("failed to list fleet devices: failed to get fleet information: " + err.Error())
+			logger.Error(err.Error())
+
+			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
-		err = errors.New("failed to list fleet devices: failed to get fleet information: " + err.Error())
-		logger.Error(err.Error())
-
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
+		fleetName = getFleetResponse.Fleet.Name
 	}
 
 	// Check auth
 	authData, err := authTools.CheckAuth(ctx, r.nativeStub, []*auth.Scope{
 		{
 			Namespace:            requestData.Namespace,
-			Resources:            []string{"iot.core.fleet." + getFleetResponse.Fleet.Name},
+			Resources:            []string{"iot.core.fleet." + fleetName},
 			Actions:              []string{"iot.core.fleet.listDevices"},
 			NamespaceIndependent: false,
 		},

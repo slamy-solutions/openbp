@@ -36,7 +36,7 @@ type listDevicesInNamespaceRequest struct {
 	Namespace     string `form:"namespace"`
 	Skip          uint64 `form:"skip" binding:"gte=0"`
 	Limit         uint64 `form:"limit" binding:"gt=0,lte=100"`
-	BindingFilter string `form:"bindingFilter" binding:"regex=^(all|binded|unbinded)$"`
+	BindingFilter string `form:"bindingFilter" binding:"required,oneof=all binded unbinded"`
 }
 type listDevicesInNamespaceResponse struct {
 	Devices    []formatedDevice `json:"devices"`
@@ -179,7 +179,7 @@ func (s *DevicesServer) BindDevice(ctx *gin.Context) {
 
 	getIOTDeviceResponse, err := s.iotStub.Core.Device.Get(ctx.Request.Context(), &device.GetRequest{
 		Namespace: requestData.DeviceNamespace,
-		Uuid:      requestData.BalenaDeviceUUID,
+		Uuid:      requestData.DeviceUUID,
 	})
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {

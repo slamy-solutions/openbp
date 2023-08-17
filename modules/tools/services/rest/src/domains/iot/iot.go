@@ -14,6 +14,7 @@ func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *s
 
 	group.POST("/devices/device", deviceRouter.Create)
 	group.GET("/devices", deviceRouter.List)
+	group.GET("/devices/device", deviceRouter.Get)
 	group.PATCH("/devices/device", deviceRouter.Update)
 	group.DELETE("/devices/device", deviceRouter.Delete)
 

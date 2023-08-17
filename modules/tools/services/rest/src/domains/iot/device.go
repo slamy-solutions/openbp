@@ -191,6 +191,69 @@ func (r *DeviceRouter) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, DeviceListResponse{Devices: foundedDevices, TotalCount: countResponse.Count})
 }
 
+type DeviceGetRequest struct {
+	Namespace string `json:"namespace" binding:"lte=64"`
+	UUID      string `json:"uuid" binding:"required,lte=32"`
+}
+type DeviceGetResponse struct {
+	Device formatedDevice `json:"device"`
+}
+
+func (r *DeviceRouter) Get(ctx *gin.Context) {
+	var requestData DeviceGetRequest
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	logger := r.logger.WithFields(logrus.Fields{
+		"device.namespace": requestData.Namespace,
+		"device.uuid":      requestData.UUID,
+	})
+
+	getResponse, err := r.iotStub.Core.Device.Get(ctx.Request.Context(), &device.GetRequest{
+		Namespace: requestData.Namespace,
+		Uuid:      requestData.UUID,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "device not found"})
+			return
+		}
+
+		err = errors.New("failed to get device: " + err.Error())
+		logger.Error(err.Error())
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// Check auth scopes
+	authData, err := authTools.CheckAuth(ctx, r.nativeStub, []*auth.Scope{
+		{
+			Namespace:            requestData.Namespace,
+			Resources:            []string{"iot.core.device." + getResponse.Device.Name},
+			Actions:              []string{"iot.core.device.get"},
+			NamespaceIndependent: false,
+		},
+	})
+	if err != nil {
+		err := errors.New("failed to check auth: " + err.Error())
+		logger.Error(err.Error())
+
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !authData.AccessGranted {
+		ctx.AbortWithStatusJSON(authData.StatusCode, gin.H{"message": authData.ErrorMessage})
+		return
+	}
+	logger = authTools.FillLoggerWithAuthMetadata(logger, authData)
+
+	logger.Debug("Successfully got device")
+	ctx.JSON(http.StatusOK, DeviceGetResponse{Device: formatedDeviceFromGRPC(getResponse.Device)})
+}
+
 type DeviceUpdateRequest struct {
 	Namespace      string `json:"namespace" binding:"lte=64"`
 	UUID           string `json:"uuid" binding:"required,lte=32"`

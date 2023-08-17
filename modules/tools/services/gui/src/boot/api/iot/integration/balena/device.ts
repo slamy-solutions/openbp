@@ -15,7 +15,7 @@ export interface ListResponse {
 export interface BindRequest {
     deviceNamespace: string
     deviceUuid: string
-    balenaDeviceUUID: number
+    balenaDeviceUUID: string
 }
 export interface BindResponse {}
 
@@ -39,12 +39,12 @@ export class DeviceAPI extends APIModuleBase {
     }
 
     async bind(params: BindRequest): Promise<BindResponse> {
-        await DeviceAPI._axios.patch<BindResponse>('/iot/integration/balena/devices/bind', params)
+        await DeviceAPI._axios.patch<BindResponse>('/iot/integration/balena/devices/device/bind', params)
         return {}
     }
 
     async unbind(params: UnbindRequest): Promise<UnbindResponse> {
-        await DeviceAPI._axios.patch<BindResponse>('/iot/integration/balena/devices/unbind', params)
+        await DeviceAPI._axios.patch<BindResponse>('/iot/integration/balena/devices/device/unbind', params)
         return {}
     }
 }

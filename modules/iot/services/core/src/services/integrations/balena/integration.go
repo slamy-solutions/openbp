@@ -36,7 +36,7 @@ func NewBalenaIntegration(ctx context.Context, systemStub *system.SystemStub, te
 	serversServer := NewServersServer(logger.WithField("balenaIntegration.component", "grpcServersServer"), systemStub)
 	devicesServer := NewDevicesServer(logger.WithField("balenaIntegration.component", "grpcDevicesServer"), systemStub)
 	toolsServer := NewToolsServer(logger.WithField("balenaIntegration.component", "grpcToolsServer"), apiClient)
-	syncServer := NewSyncServer(logger.WithField("balenaIntegration.component", "grpcSyncServer"))
+	syncServer := NewSyncServer(logger.WithField("balenaIntegration.component", "grpcSyncServer"), systemStub, syncManager)
 
 	return &BalenaIntegration{
 		ServersServer: serversServer,

@@ -113,6 +113,38 @@ func (s *CountDevicesTestSuite) TestCountDevices() {
 	require.EqualValues(s.T(), 3, countResponse.Count)
 }
 
+func (s *CountDevicesTestSuite) TestCountDevicesWithoutFleet() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	countResponse, err := s.iotStub.Core.Fleet.CountDevices(ctx, &fleet.CountDevicesRequest{
+		Namespace: "",
+		Uuid:      "",
+	})
+	require.Nil(s.T(), err)
+	require.EqualValues(s.T(), 0, countResponse.Count)
+}
+
+func (s *CountDevicesTestSuite) TestCountDevicesInNamespaceWithoutFleet() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	namespaceName := tools.GetRandomString(32)
+	_, err := s.nativeStub.Services.Namespace.Create(ctx, &namespace.CreateNamespaceRequest{
+		Name:        namespaceName,
+		FullName:    tools.GetRandomString(10),
+		Description: "",
+	})
+	require.Nil(s.T(), err)
+
+	countResponse, err := s.iotStub.Core.Fleet.CountDevices(ctx, &fleet.CountDevicesRequest{
+		Namespace: namespaceName,
+		Uuid:      "",
+	})
+	require.Nil(s.T(), err)
+	require.EqualValues(s.T(), 0, countResponse.Count)
+}
+
 func (s *CountDevicesTestSuite) TestCountDevicesInNamespace() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

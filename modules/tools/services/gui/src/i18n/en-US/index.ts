@@ -484,6 +484,19 @@ export default {
     },
     iot: {
       device: {
+        selectInput: {
+          label: "Select device",
+        },
+        select: {
+          header: "Select device",
+          cancelButton: "Cancel",
+          selectButton: "Select",
+          noData: "There are no devices yet. Maybe try to change fleet or namespace?",
+          failedToLoad: "Failed to load devices list: {error}",
+          uuidColumn: "UUID",
+          nameColumn: "Name",
+          descriptionColumn: "Description",
+        },
         create: {
           header: "Create device",
     
@@ -512,6 +525,19 @@ export default {
         },
       },
       fleet: {
+        selectInput: {
+          label: "Select fleet",
+        },
+        select: {
+          header: "Select fleet",
+          cancelButton: "Cancel",
+          selectButton: "Select",
+          noData: "There are no fleets in this namespace yet.",
+          failedToLoad: "Failed to load fleets list: {error}",
+          uuidColumn: "UUID",
+          nameColumn: "Name",
+          descriptionColumn: "Description",
+        },
         create: {
           header: "Create fleet",
     
@@ -580,6 +606,7 @@ export default {
           nameColumn: "Name",
           descriptionColumn: "Description",
           actionsColumn: "Actions",
+          identityColumn: "Identity",
           actionsMenu: {
             delete: "Delete",
             changeFleet: "Change fleet",
@@ -592,7 +619,66 @@ export default {
       },
       integration: {
         balena: {
+          device: {
+            list: {
+              header: "Balena devices",
+              uuidColumn: "UUID",
+              serverColumn: "Server",
+              balenaUUIDColumn: "Balena UUID",
+              nameColumn: "Name",
+
+              bindedDeviceNamespaceColumn: "Bind namespace",
+              bindedDeviceColumn: "Bind device",
+              statusColumn: "Status",
+              isOnlineColumn: "Online",
+              cpuUsageColumn: "CPU usage",
+              cpuTempColumn: "CPU °C",
+              ramUsageColumn: "RAM",
+              lastConnectivityColumn: "Last connectivity",
+              actionsColumn: "Actions",
+
+              noData: "There are no balena devices yet.",
+              failedToLoad: "Failed to load balena devices list: {error}",
+              bindButton: "Disable",
+              unbindButton: "Delete",
+
+              actionsMenu: {
+                bind: "Bind"
+              },
+
+              loadOperationNotify: 'Trying to load devices list ...',
+              loadFailNotify: 'Failed to load devices list. Error: {error}'
+            },
+          },
           server: {
+            list: {
+              header: "Balena servers",
+              uuidColumn: "UUID",
+              nameColumn: "Name",
+              descriptionColumn: "Description",
+              enabledColumn: "Enabled",
+              actionsColumn: "Actions",
+              syncStatusColumn: "Sync status",
+              syncDevicesColumn: "Synced devices",
+              syncTimeColumn: "Sync duration",
+              syncTimestampColumn: "Sync timestamp",
+
+              actionsMenu: {
+                delete: "Delete"
+              },
+
+              noData: "There are no balena servers yet.",
+              failedToLoad: "Failed to load balena servers list: {error}",
+              createButton: "Add balena server",
+              enableButton: "Enable",
+              disableButton: "Disable",
+              deleteButton: "Delete",
+
+              loadFailNotify: 'Failed to load servers list. Error: {error}',
+              setEnabledOperationNotify: 'Trying to set server enabled state ...',
+              setEnabledSuccessNotify: 'Successfully set server enabled state',
+              setEnabledFailNotify: 'Failed to set server enabled state. Error: {error}',
+            },
             add: {
               header: "Add Balena server",
         

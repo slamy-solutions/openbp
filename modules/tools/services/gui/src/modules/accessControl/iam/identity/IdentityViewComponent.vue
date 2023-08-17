@@ -122,8 +122,8 @@
             <q-tab :label="$t('modules.accessControl.iam.identity.view.tabs.certificates')" name="certificates"/>
         </q-tabs>
 
-        <q-tab-panels v-model="additionalInfoTab" animated class="bg-none">
-            <q-tab-panel name="privileges" class="row">
+        <q-tab-panels v-model="additionalInfoTab" animated class="transparent">
+            <q-tab-panel name="privileges" class="row bg-transparent">
                 <div class="col-sm-12 col-md-6 q-pl-md q-pr-md q-pb-md">
                     <h6 class="q-ma-sm text-uppercase q-pa-none">
                         {{ $t('modules.accessControl.iam.identity.view.roles') }}
@@ -159,7 +159,7 @@
 
             <q-tab-panel name="password" class="q-pa-xs q-pt-md">
                 <PasswordConfigComponent
-                    class="full-width"
+                    class="full-width transparent"
                     :identityNamespace="props.namespace"
                     :identityUUID="props.uuid"
                     :editable="updatesEnabled"
