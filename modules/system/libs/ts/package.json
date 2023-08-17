@@ -1,0 +1,38 @@
+{
+  "name": "@openbp/system",
+  "version": "1.0.1",
+  "description": "OpenBP library to communicate with system module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "proto": "protoc --plugin=\"./node_modules/.bin/protoc-gen-ts_proto\" --ts_proto_out=./src/proto --ts_proto_opt=paths=source_relative -I ../../proto  `find ../../proto -iname \"*.proto\"`"
+  },
+  "keywords": [
+    "openbp"
+  ],
+  "repository": "https://github.com/slamy-solutions/openbp",
+  "homepage": "https://openbp.io",
+  "author": "Slamy Solutions",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "ts-proto": "^1.156.6",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.9.0",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/instrumentation": "^0.41.2",
+    "@opentelemetry/instrumentation-grpc": "^0.41.2",
+    "@opentelemetry/instrumentation-mongodb": "^0.36.1",
+    "@opentelemetry/instrumentation-redis": "^0.35.1",
+    "mongodb": "^5.7.0",
+    "nats": "^2.16.0",
+    "redis": "^4.6.7",
+    "rxjs": "^7.8.1"
+  },
+  "files": [
+    "lib/**/*"
+  ]
+}
