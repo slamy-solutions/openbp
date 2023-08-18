@@ -4,40 +4,38 @@ import { Config, makeDefaultConfig } from './config'
 import { NamespaceServiceClientImpl } from './proto/namespace'
 import { KeyValueStorageServiceClientImpl } from './proto/keyvaluestorage'
 
-import { ActorUserServiceClientImpl } from './proto/actor/user'
-
 import { IAMAuthenticationPasswordServiceClientImpl } from './proto/iam/authentication/password'
 import { IAMIdentityServiceClientImpl } from './proto/iam/identity'
 import { IAMPolicyServiceClientImpl } from './proto/iam/policy'
-import { IAMOAuthServiceClientImpl } from './proto/iam/oauth'
 import { IAMTokenServiceClientImpl } from './proto/iam/token'
+import { ActorUserServiceClientImpl } from './proto/iam/actor/user'
+import { IAMAuthenticationX509ServiceClientImpl } from './proto/iam/authentication/x509'
+import { IAMRoleServiceClientImpl } from './proto/iam/role'
+import { IAMAuthServiceClientImpl } from './proto/iam/auth'
 
 interface NativeServices {
     namespace: NamespaceServiceClientImpl
     keyvaluestorage: KeyValueStorageServiceClientImpl
-    actor: {
-        user: ActorUserServiceClientImpl
-    },
     iam: {
+        actor: {
+            user: ActorUserServiceClientImpl
+        },
         authentication: {
-            password: IAMAuthenticationPasswordServiceClientImpl
+            password: IAMAuthenticationPasswordServiceClientImpl,
+            x509: IAMAuthenticationX509ServiceClientImpl
         },
         identity: IAMIdentityServiceClientImpl,
         policy: IAMPolicyServiceClientImpl,
-        oauth: IAMOAuthServiceClientImpl,
-        token: IAMTokenServiceClientImpl
+        role: IAMRoleServiceClientImpl,
+        token: IAMTokenServiceClientImpl,
+        auth: IAMAuthServiceClientImpl
     }
 }
 
 export enum Service {
     NAMESPACE,
     KEYVALUESTORAGE,
-    ACTOR_USER,
-    IAM_AUTHENTICAION_PASSWORD,
-    IAM_IDENTITY,
-    IAM_POLICY,
-    IAM_OAUTH,
-    IAM_TOKEN
+    IAM
 }
 
 export class NativeStub {
@@ -69,20 +67,24 @@ export class NativeStub {
             return dummyClient
         }
         
+        const iamConnection = makeRpc(Service.IAM, config.urls.iam)
+
         this.services = {
             namespace: new NamespaceServiceClientImpl(makeRpc(Service.NAMESPACE, config.urls.namespace)),
             keyvaluestorage: new KeyValueStorageServiceClientImpl(makeRpc(Service.KEYVALUESTORAGE, config.urls.keyvaluestorage)),
-            actor: {
-                user: new ActorUserServiceClientImpl(makeRpc(Service.ACTOR_USER, config.urls.actor.user))
-            },
             iam: {
-                authentication: {
-                    password: new IAMAuthenticationPasswordServiceClientImpl(makeRpc(Service.IAM_AUTHENTICAION_PASSWORD, config.urls.iam.authentication.password))
+                actor: {
+                    user: new ActorUserServiceClientImpl(iamConnection)
                 },
-                identity: new IAMIdentityServiceClientImpl(makeRpc(Service.IAM_IDENTITY, config.urls.iam.identity)),
-                oauth: new IAMOAuthServiceClientImpl(makeRpc(Service.IAM_OAUTH, config.urls.iam.oauth)),
-                policy: new IAMPolicyServiceClientImpl(makeRpc(Service.IAM_POLICY, config.urls.iam.policy)),
-                token: new IAMTokenServiceClientImpl(makeRpc(Service.IAM_TOKEN, config.urls.iam.token))
+                authentication: {
+                    password: new IAMAuthenticationPasswordServiceClientImpl(iamConnection),
+                    x509: new IAMAuthenticationX509ServiceClientImpl(iamConnection)
+                },
+                identity: new IAMIdentityServiceClientImpl(iamConnection),
+                policy: new IAMPolicyServiceClientImpl(iamConnection),
+                role: new IAMRoleServiceClientImpl(iamConnection),
+                token: new IAMTokenServiceClientImpl(iamConnection),
+                auth: new IAMAuthServiceClientImpl(iamConnection)
             }
         }
     }
