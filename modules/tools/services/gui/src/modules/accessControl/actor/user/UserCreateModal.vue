@@ -3,21 +3,21 @@
       <div class="row">
           <q-card square bordered class="q-pa-lg shadow-1">
               <q-card-section class="text-center">
-                  <h3 class="q-ma-sm text-bold text-uppercase">{{ $t('modules.accessControl.actor.user.create.header') }}</h3>
+                  <h3 class="q-ma-sm text-bold text-uppercase">{{ $t('modules.accessControl.iam.actor.user.create.header') }}</h3>
               </q-card-section>
           <q-card-section>
               <q-form class="q-gutter-md">
-              <q-input disable square filled v-model="props.namespace" counter maxlength="32" type="text" :label="$t('modules.accessControl.actor.user.create.namespaceInput')" />
-              <q-input square filled clearable v-model="login" counter maxlength="32" type="text" :label="$t('modules.accessControl.actor.user.create.loginInput')" />
-              <q-input square filled clearable v-model="fullName" counter maxlength="32" type="text" :label="$t('modules.accessControl.actor.user.create.fullNameInput')" />
-              <q-input square filled clearable v-model="email" counter maxlength="32" type="text" :label="$t('modules.accessControl.actor.user.create.emailInput')" />
+              <q-input disable square filled v-model="props.namespace" counter maxlength="32" type="text" :label="$t('modules.accessControl.iam.actor.user.create.namespaceInput')" />
+              <q-input square filled clearable v-model="login" counter maxlength="32" type="text" :label="$t('modules.accessControl.iam.actor.user.create.loginInput')" />
+              <q-input square filled clearable v-model="fullName" counter maxlength="64" type="text" :label="$t('modules.accessControl.iam.actor.user.create.fullNameInput')" />
+              <q-input square filled clearable v-model="email" counter maxlength="64" type="text" :label="$t('modules.accessControl.iam.actor.user.create.emailInput')" />
               </q-form>
           </q-card-section>
           <q-card-actions class="q-px-md">
-              <q-btn unelevated color="dark" size="lg" class="full-width" :label="$t('modules.accessControl.actor.user.create.createButton')" :loading="loading" :disabled="loading" @click="createIdentity" />
+              <q-btn unelevated color="dark" size="lg" class="full-width" :label="$t('modules.accessControl.iam.actor.user.create.createButton')" :loading="loading" :disabled="loading" @click="createIdentity" />
           </q-card-actions>
           <q-card-section class="text-center q-pa-none">
-              <p class="text-grey-6">{{ $t('modules.accessControl.actor.user.create.createHint') }}</p>
+              <p class="text-grey-6">{{ $t('modules.accessControl.iam.actor.user.create.createHint') }}</p>
           </q-card-section>
           </q-card>
       </div>
@@ -53,7 +53,7 @@ async function createIdentity() {
   loading.value = true
   const notif = $q.notify({
       type: 'ongoing',
-      message: $i18n.t('modules.accessControl.actor.user.create.createOperationNotify')
+      message: $i18n.t('modules.accessControl.actor.iam.user.create.createOperationNotify')
   })
   try {
       const createdUser = await api.accessControl.actor.user.create({
@@ -64,7 +64,7 @@ async function createIdentity() {
       })
       notif({
           type: 'positive',
-          message: $i18n.t('modules.accessControl.actor.user.create.createSuccessNotify'),
+          message: $i18n.t('modules.accessControl.actor.iam.user.create.createSuccessNotify'),
           timeout: 5000
       })
       emit('created', createdUser)
@@ -72,7 +72,7 @@ async function createIdentity() {
       console.error(error)
       notif({
           type: 'negative',
-          message: $i18n.t('modules.accessControl.actor.user.create.createFailNotify', { error }),
+          message: $i18n.t('modules.accessControl.actor.iam.user.create.createFailNotify', { error }),
           timeout: 5000
       })
   } finally {

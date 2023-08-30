@@ -10,6 +10,7 @@ import (
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 
 	nativeIAmAuthGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
+	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/oauth2"
 	nativeIAmAuthenticationPasswordGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/x509"
 	nativeIAmIdentityGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
@@ -17,6 +18,8 @@ import (
 	nativeIAmRoleGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/role"
 	nativeIAmTokenGRPC "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/oauth"
+	authentication_OAuth "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/oauth"
 	authentication_password "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/password"
 	authentication_x509 "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/x509"
 	identity_server "github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/identity"
@@ -32,6 +35,7 @@ type IAmAuthServer struct {
 
 	authenticationPasswordServer *authentication_password.PasswordIdentificationService
 	authenticationX509Server     *authentication_x509.X509IdentificationServer
+	authenticationOAuthServer    *authentication_OAuth.OAuthServer
 	identityServer               *identity_server.IAmIdentityServer
 	policyServer                 *policy_server.IAMPolicyServer
 	roleServer                   *role_server.IAMRoleServer
@@ -42,6 +46,7 @@ func NewIAmAuthServer(
 	systemStub *system.SystemStub,
 	authenticationPasswordServer *authentication_password.PasswordIdentificationService,
 	authenticationX509Server *authentication_x509.X509IdentificationServer,
+	authenticationOAuthServer *authentication_OAuth.OAuthServer,
 	identityServer *identity_server.IAmIdentityServer,
 	policyServer *policy_server.IAMPolicyServer,
 	roleServer *role_server.IAMRoleServer,
@@ -51,6 +56,7 @@ func NewIAmAuthServer(
 		systemStub:                   systemStub,
 		authenticationPasswordServer: authenticationPasswordServer,
 		authenticationX509Server:     authenticationX509Server,
+		authenticationOAuthServer:    authenticationOAuthServer,
 		identityServer:               identityServer,
 		policyServer:                 policyServer,
 		roleServer:                   roleServer,
@@ -128,52 +134,39 @@ func (s *IAmAuthServer) fetchIdentityPolicies(ctx context.Context, identity *nat
 	return policies, nil
 }
 
-func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeIAmAuthGRPC.CreateTokenWithPasswordRequest) (*nativeIAmAuthGRPC.CreateTokenWithPasswordResponse, error) {
+var errCreateTokenIdentityNotActive = errors.New("identity not active")
+var errCreateTokenUnauthorized = errors.New("unauthorized")
 
-	// TODO: refactor this function. Refactor usage of the pointers
-
-	// Authenticate
-	authenticateResponse, err := s.authenticationPasswordServer.Authenticate(ctx, &nativeIAmAuthenticationPasswordGRPC.AuthenticateRequest{
-		Namespace: in.Namespace,
-		Identity:  in.Identity,
-		Password:  in.Password,
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Error while performing authentication: "+err.Error())
-	}
-	if !authenticateResponse.Authenticated {
-		return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_CREDENTIALS_INVALID, AccessToken: "", RefreshToken: ""}, nil
-	}
-
+func (s *IAmAuthServer) createTokenForIdentity(ctx context.Context, namespace string, identity string, scopes []*nativeIAmAuthGRPC.Scope, metadata string) (string, string, error) {
 	// Check if identity is not disabled. Dont use cache, because it is rare operation and invalid cache will result in allowing access for very long period of time
-	identityResponse, err := s.identityServer.Get(ctx, &nativeIAmIdentityGRPC.GetIdentityRequest{Namespace: in.Namespace, Uuid: in.Identity, UseCache: false})
+	identityResponse, err := s.identityServer.Get(ctx, &nativeIAmIdentityGRPC.GetIdentityRequest{Namespace: namespace, Uuid: identity, UseCache: false})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			// This error must not occure in healthy system
 			if st.Code() == codes.NotFound {
-				return nil, status.Error(codes.Internal, "Failed to get identity information. Identity not found.")
+				return "", "", status.Error(codes.Internal, "Failed to get identity information. Identity not found.")
 			}
 		}
 
-		return nil, status.Error(codes.Internal, "Failed to get identity information: "+err.Error())
+		return "", "", status.Error(codes.Internal, "Failed to get identity information: "+err.Error())
 	}
 	if !identityResponse.Identity.Active {
-		return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_IDENTITY_NOT_ACTIVE, AccessToken: "", RefreshToken: ""}, nil
+		return "", "", errCreateTokenIdentityNotActive
 	}
 
 	// Get all policies for identity
 	policies, err := s.fetchIdentityPolicies(ctx, identityResponse.Identity)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to get policy information for identity: "+err.Error())
+		return "", "", status.Error(codes.Internal, "Failed to get policy information for identity: "+err.Error())
 	}
 
-	if !arePoliciesAllowScopes(policies, in.Scopes) {
-		return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_UNAUTHORIZED, AccessToken: "", RefreshToken: ""}, nil
+	if !arePoliciesAllowScopes(policies, scopes) {
+		return "", "", errCreateTokenUnauthorized
 	}
 
 	// Get all policies as scopes if list of scopes in request is empty
 	var scopesToAssign []*nativeIAmTokenGRPC.Scope
-	if len(in.Scopes) == 0 {
+	if len(scopes) == 0 {
 		scopesToAssign = make([]*nativeIAmTokenGRPC.Scope, len(policies))
 		for i, policy := range policies {
 			scopesToAssign[i] = &nativeIAmTokenGRPC.Scope{
@@ -184,8 +177,8 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 			}
 		}
 	} else {
-		scopesToAssign = make([]*nativeIAmTokenGRPC.Scope, len(in.Scopes))
-		for i, scope := range in.Scopes {
+		scopesToAssign = make([]*nativeIAmTokenGRPC.Scope, len(scopes))
+		for i, scope := range scopes {
 			scopesToAssign[i] = &nativeIAmTokenGRPC.Scope{
 				Namespace:            scope.Namespace,
 				Resources:            scope.Resources,
@@ -197,19 +190,97 @@ func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeI
 
 	// Generate new login token
 	tokenResponse, err := s.tokenServer.Create(ctx, &nativeIAmTokenGRPC.CreateRequest{
-		Namespace: in.Namespace,
-		Identity:  in.Identity,
+		Namespace: namespace,
+		Identity:  identity,
 		Scopes:    scopesToAssign,
-		Metadata:  in.Metadata,
+		Metadata:  metadata,
 	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to create token. "+err.Error())
+		return "", "", status.Error(codes.Internal, "Failed to create token. "+err.Error())
+	}
+
+	return tokenResponse.Token, tokenResponse.RefreshToken, nil
+}
+
+func (s *IAmAuthServer) CreateTokenWithPassword(ctx context.Context, in *nativeIAmAuthGRPC.CreateTokenWithPasswordRequest) (*nativeIAmAuthGRPC.CreateTokenWithPasswordResponse, error) {
+	authenticateResponse, err := s.authenticationPasswordServer.Authenticate(ctx, &nativeIAmAuthenticationPasswordGRPC.AuthenticateRequest{
+		Namespace: in.Namespace,
+		Identity:  in.Identity,
+		Password:  in.Password,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Error while performing authentication: "+err.Error())
+	}
+	if !authenticateResponse.Authenticated {
+		return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_CREDENTIALS_INVALID}, nil
+	}
+
+	accessToken, refreshToken, err := s.createTokenForIdentity(ctx, in.Namespace, in.Identity, in.Scopes, in.Metadata)
+	if err != nil {
+		if err == errCreateTokenIdentityNotActive {
+			return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_IDENTITY_NOT_ACTIVE}, nil
+		}
+		if err == errCreateTokenUnauthorized {
+			return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{Status: nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_UNAUTHORIZED}, nil
+		}
+
+		return nil, err
 	}
 
 	return &nativeIAmAuthGRPC.CreateTokenWithPasswordResponse{
 		Status:       nativeIAmAuthGRPC.CreateTokenWithPasswordResponse_OK,
-		AccessToken:  tokenResponse.Token,
-		RefreshToken: tokenResponse.RefreshToken,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, status.Error(codes.OK, "")
+}
+
+func (s *IAmAuthServer) CreateTokenWithOAuth2(ctx context.Context, in *nativeIAmAuthGRPC.CreateTokenWithOAuth2Request) (*nativeIAmAuthGRPC.CreateTokenWithOAuth2Response, error) {
+	providerType, ok := oauth.ProviderStringTypeToGRPC[in.Provider]
+	if !ok {
+		return nil, status.Errorf(codes.Unimplemented, "Uninplemented provider type: %s", in.Provider)
+	}
+
+	authenticateResponse, err := s.authenticationOAuthServer.Authenticate(ctx, &oauth2.AuthenticateRequest{
+		Namespace:    in.Namespace,
+		Provider:     providerType,
+		Code:         in.Code,
+		CodeVerifier: in.CodeVerifier,
+		RedirectUrl:  in.RedirectURL,
+	})
+	if err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.FailedPrecondition {
+			return nil, status.Error(codes.FailedPrecondition, "failed to authenticate. most probably vault is sealed: "+err.Error())
+		}
+
+		return nil, status.Error(codes.Internal, "failed to authenticate: "+err.Error())
+	}
+
+	switch authenticateResponse.Status {
+	case oauth2.AuthenticateResponse_OK:
+		break
+	case oauth2.AuthenticateResponse_UNAUTHENTICATED, oauth2.AuthenticateResponse_ERROR_WHILE_FETCHING_USER_DETAILS, oauth2.AuthenticateResponse_ERROR_WHILE_RETRIEVING_AUTH_TOKEN:
+		return &nativeIAmAuthGRPC.CreateTokenWithOAuth2Response{Status: nativeIAmAuthGRPC.CreateTokenWithOAuth2Response_UNAUTHENTICATED}, nil
+	default:
+		return nil, status.Errorf(codes.Internal, "Unknown authenticate response status: %s", authenticateResponse.Status.String())
+
+	}
+
+	accessToken, refreshToken, err := s.createTokenForIdentity(ctx, in.Namespace, authenticateResponse.Identity, in.Scopes, in.Metadata)
+	if err != nil {
+		if err == errCreateTokenIdentityNotActive {
+			return &nativeIAmAuthGRPC.CreateTokenWithOAuth2Response{Status: nativeIAmAuthGRPC.CreateTokenWithOAuth2Response_IDENTITY_NOT_ACTIVE}, nil
+		}
+		if err == errCreateTokenUnauthorized {
+			return &nativeIAmAuthGRPC.CreateTokenWithOAuth2Response{Status: nativeIAmAuthGRPC.CreateTokenWithOAuth2Response_UNAUTHORIZED}, nil
+		}
+
+		return nil, err
+	}
+
+	return &nativeIAmAuthGRPC.CreateTokenWithOAuth2Response{
+		Status:       nativeIAmAuthGRPC.CreateTokenWithOAuth2Response_OK,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}, status.Error(codes.OK, "")
 }
 

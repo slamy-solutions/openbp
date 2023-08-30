@@ -48,18 +48,40 @@ message CreateTokenWithPasswordResponse {
 }
 
 message CreateTokenWithOAuth2Request {
+    // Namespace where identity located. May be empty for global identity
+    string namespace = 1;
     // OAuth2 provider
-    string provider = 1;
-    // Token issued by OAuth2 provider``
-    string token = 2;
+    string provider = 2;
+    // Code sended with initial request
+    string code = 3;
+    // Code_verifier used for initial request
+    string codeVerifier = 4;
+    // Redirect URL sended with initial request
+    string redirectURL = 5;
+    // Arbitrary metadata. For example MAC/IP/information of the actor/application/browser/machine that created this token. The exact format of metadata is not defined, but JSON is suggested.
+    string metadata = 6;
+    // Scopes of the created token. Empty for creating token with all possible scopes for identity.
+    repeated Scope scopes = 7;
 }
 message CreateTokenWithOAuth2Response {
+    enum Status {
+        // Everything is ok. Access and refresh tokens were successfully created
+        OK = 0;
+        // Failed to find identity by provided OAuth secrets
+        UNAUTHENTICATED = 1;
+        // Identity was manually disabled
+        IDENTITY_NOT_ACTIVE = 2;
+        // Not enough privileges to create token with specified scopes
+        UNAUTHORIZED = 3;
+    }
+    // Status of the token creation
+    Status status = 1;
     // Token used for authentication and authorization
-    string accessToken = 1;
+    string accessToken = 2;
     // Token used for refreshing accessToken
-    string refreshToken = 2;
+    string refreshToken = 3;
     // Identity UUID
-    string identity = 3;
+    string identity = 4;
 }
 
 message RefreshTokenRequest {
@@ -253,11 +275,11 @@ service IAMAuthService {
     // OAuth. Create access token and refresh token using password
     rpc CreateTokenWithPassword(CreateTokenWithPasswordRequest) returns (CreateTokenWithPasswordResponse);
     // Create access token and refresh token using thrid party OAuth2 provider
-    // rpc CreateTokenWithOAuth2(CreateTokenWithOAuth2Request) returns (CreateTokenWithOAuth2Response);
+    rpc CreateTokenWithOAuth2(CreateTokenWithOAuth2Request) returns (CreateTokenWithOAuth2Response);
     // Create access token and refresh token using SSO (Single Sign On) 
     // rpc CreateTokenWithSSO() returns ();
 
-    // Completes started two factor TOTP (Time-based one-time password) authetication and returns actual access asn refresh tokens
+    // Completes started two factor TOTP (Time-based one-time password) authetication and returns actual access and refresh tokens
     // rpc ExtendTokenWithTOTP(CompleteTwoFactorTOTPRequest) returns (CompleteTwoFactorTOTPResponse);
     
     // OAuth. Creates new access token using refresh tokenna

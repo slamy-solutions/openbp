@@ -41,6 +41,10 @@ protoc --go_out=./iam/authentication/password --go_opt=paths=source_relative --g
 echo "Generating proto for iam_authentication_x509 service"
 mkdir -p ./iam/authentication/x509
 protoc --go_out=./iam/authentication/x509 --go_opt=paths=source_relative --go-grpc_out=./iam/authentication/x509 --go-grpc_opt=paths=source_relative -I ../../proto/iam/authentication x509.proto
+# iam_authentication_oauth2
+echo "Generating proto for iam_authentication_oauth2 service"
+mkdir -p ./iam/authentication/oauth2
+protoc --go_out=./iam/authentication/oauth2 --go_opt=paths=source_relative --go-grpc_out=./iam/authentication/oauth2 --go-grpc_opt=paths=source_relative -I ../../proto/iam/authentication oauth2.proto
 # iam_actor_user
 echo "Generating proto for iam_actor_user service"
 mkdir -p ./iam/actor/user

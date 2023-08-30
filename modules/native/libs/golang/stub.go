@@ -9,6 +9,7 @@ import (
 
 	iamActorUserGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	iamAuthGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
+	iamAuthenticationOAuth2Grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/oauth2"
 	iamAuthenticationPasswordGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	iamAuthenticationX509Grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/x509"
 	iamIdentityGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
@@ -33,6 +34,12 @@ type IamActorServices struct {
 type IamAuthenticationServices struct {
 	Password iamAuthenticationPasswordGrpc.IAMAuthenticationPasswordServiceClient
 	X509     iamAuthenticationX509Grpc.IAMAuthenticationX509ServiceClient
+	OAuth    IamAuthenticationOAuthServices
+}
+
+type IamAuthenticationOAuthServices struct {
+	Config iamAuthenticationOAuth2Grpc.IAMAuthenticationOAuth2ConfigServiceClient
+	OAuth2 iamAuthenticationOAuth2Grpc.IAMAuthenticationOAuth2ServiceClient
 }
 
 type IAMService struct {

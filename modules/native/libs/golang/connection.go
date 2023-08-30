@@ -6,6 +6,7 @@ import (
 
 	iamActorUser "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	iamAuth "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
+	iamAuthenticationOAuth2 "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/oauth2"
 	iamAuthenticationPassword "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	iamAuthenticationX509 "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/x509"
 	iamIdentity "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
@@ -74,6 +75,10 @@ func NewIAMConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn
 		Authentication: &IamAuthenticationServices{
 			Password: iamAuthenticationPassword.NewIAMAuthenticationPasswordServiceClient(dial),
 			X509:     iamAuthenticationX509.NewIAMAuthenticationX509ServiceClient(dial),
+			OAuth: IamAuthenticationOAuthServices{
+				Config: iamAuthenticationOAuth2.NewIAMAuthenticationOAuth2ConfigServiceClient(dial),
+				OAuth2: iamAuthenticationOAuth2.NewIAMAuthenticationOAuth2ServiceClient(dial),
+			},
 		},
 		Identity: iamIdentity.NewIAMIdentityServiceClient(dial),
 		Auth:     iamAuth.NewIAMAuthServiceClient(dial),

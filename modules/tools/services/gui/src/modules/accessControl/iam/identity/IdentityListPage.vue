@@ -88,6 +88,7 @@
 <script setup lang="ts">
 import { QPaginationProps, QTableProps, useQuasar } from 'quasar';
 import { onMounted, Ref, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import api from '../../../../boot/api';
 import { Identity } from '../../../../boot/api/accessControl/identity';
@@ -101,8 +102,8 @@ import ManagedByComponent from 'src/components/managedItem/ManagedByComponent.vu
 
 const $i18n = useI18n()
 const $q = useQuasar()
-
-const displayableNamespace = ref("")
+const $route = useRoute()
+const displayableNamespace = $route.params.currentNamespace === "_global" ? "" : $route.params.currentNamespace as string
 
 const tableColumns: Ref<QTableProps['columns']> = ref([
     {name: 'uuid', required: true, label: $i18n.t('modules.accessControl.iam.identity.list.uuidColumn'), align: 'left', sortable: false, field: 'uuid'},
@@ -138,7 +139,7 @@ async function loadData(tableProps: QTableProps) {
     dataLoading.value = true
 
     try {
-      const response = await api.accessControl.identity.list({ namespace: displayableNamespace.value, skip: rowsPerPage*page, limit: rowsPerPage })
+      const response = await api.accessControl.identity.list({ namespace: displayableNamespace, skip: rowsPerPage*page, limit: rowsPerPage })
       tableData.value = response.identities
       if (tablePagination.value != undefined) {
         tablePagination.value.page = page + 1

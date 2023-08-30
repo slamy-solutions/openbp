@@ -1,8 +1,7 @@
 <template>
     <q-table
           flat
-          bordered
-          class="col-12 q-ma-none"
+          class="col-12 q-ma-none bg-transparent"
           :title="$t('modules.iot.integration.balena.device.list.header')"
           :columns="tableColumns"
           :rows="tableData"

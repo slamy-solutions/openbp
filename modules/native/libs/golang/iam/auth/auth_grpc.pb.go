@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type IAMAuthServiceClient interface {
 	// OAuth. Create access token and refresh token using password
 	CreateTokenWithPassword(ctx context.Context, in *CreateTokenWithPasswordRequest, opts ...grpc.CallOption) (*CreateTokenWithPasswordResponse, error)
+	// Create access token and refresh token using thrid party OAuth2 provider
+	CreateTokenWithOAuth2(ctx context.Context, in *CreateTokenWithOAuth2Request, opts ...grpc.CallOption) (*CreateTokenWithOAuth2Response, error)
 	// OAuth. Creates new access token using refresh tokenna
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 	// rpc VerifyResoureAccess(VerifyResourceAccessRequest) returns (VerifyResourceAccessResponse);
@@ -48,6 +50,15 @@ func NewIAMAuthServiceClient(cc grpc.ClientConnInterface) IAMAuthServiceClient {
 func (c *iAMAuthServiceClient) CreateTokenWithPassword(ctx context.Context, in *CreateTokenWithPasswordRequest, opts ...grpc.CallOption) (*CreateTokenWithPasswordResponse, error) {
 	out := new(CreateTokenWithPasswordResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_auth.IAMAuthService/CreateTokenWithPassword", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMAuthServiceClient) CreateTokenWithOAuth2(ctx context.Context, in *CreateTokenWithOAuth2Request, opts ...grpc.CallOption) (*CreateTokenWithOAuth2Response, error) {
+	out := new(CreateTokenWithOAuth2Response)
+	err := c.cc.Invoke(ctx, "/native_iam_auth.IAMAuthService/CreateTokenWithOAuth2", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +116,8 @@ func (c *iAMAuthServiceClient) CheckAccess(ctx context.Context, in *CheckAccessR
 type IAMAuthServiceServer interface {
 	// OAuth. Create access token and refresh token using password
 	CreateTokenWithPassword(context.Context, *CreateTokenWithPasswordRequest) (*CreateTokenWithPasswordResponse, error)
+	// Create access token and refresh token using thrid party OAuth2 provider
+	CreateTokenWithOAuth2(context.Context, *CreateTokenWithOAuth2Request) (*CreateTokenWithOAuth2Response, error)
 	// OAuth. Creates new access token using refresh tokenna
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	// rpc VerifyResoureAccess(VerifyResourceAccessRequest) returns (VerifyResourceAccessResponse);
@@ -125,6 +138,9 @@ type UnimplementedIAMAuthServiceServer struct {
 
 func (UnimplementedIAMAuthServiceServer) CreateTokenWithPassword(context.Context, *CreateTokenWithPasswordRequest) (*CreateTokenWithPasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTokenWithPassword not implemented")
+}
+func (UnimplementedIAMAuthServiceServer) CreateTokenWithOAuth2(context.Context, *CreateTokenWithOAuth2Request) (*CreateTokenWithOAuth2Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateTokenWithOAuth2 not implemented")
 }
 func (UnimplementedIAMAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
@@ -168,6 +184,24 @@ func _IAMAuthService_CreateTokenWithPassword_Handler(srv interface{}, ctx contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IAMAuthServiceServer).CreateTokenWithPassword(ctx, req.(*CreateTokenWithPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMAuthService_CreateTokenWithOAuth2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTokenWithOAuth2Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMAuthServiceServer).CreateTokenWithOAuth2(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_auth.IAMAuthService/CreateTokenWithOAuth2",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMAuthServiceServer).CreateTokenWithOAuth2(ctx, req.(*CreateTokenWithOAuth2Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -272,6 +306,10 @@ var IAMAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateTokenWithPassword",
 			Handler:    _IAMAuthService_CreateTokenWithPassword_Handler,
+		},
+		{
+			MethodName: "CreateTokenWithOAuth2",
+			Handler:    _IAMAuthService_CreateTokenWithOAuth2_Handler,
 		},
 		{
 			MethodName: "RefreshToken",

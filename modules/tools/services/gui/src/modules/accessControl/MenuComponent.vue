@@ -1,38 +1,33 @@
 <template>
-  <q-card class="full-width full-height">
+  <q-card class="full-width full-height bg-transparent" flat style="border-right: #ccc solid 1px;">
     <q-card-section>
-      <div class="text-h6 gt-sm">Access management</div>
-      <div class="text-subtitle2"></div>
-    </q-card-section>
-
-    <q-card-section>
-        <div>Actors</div>
+        <div class="text-overline">Actors</div>
         <q-list>
             <q-separator />
             <div v-for="view in actorViews" :key="view.name">
-                <MenuListItem :name="view.name" :title="view.title" :icon="view.icon" :selected="view.name === props.selected" :route="view.routerPageName"/>
+                <MenuListItem :name="view.name" :title="view.title" :icon="view.icon" :selected="view.name === props.selected" :route="view.routerPageName" :icon-as-image="view.iconAsImage"/>
                 <q-separator />
             </div>
         </q-list>
     </q-card-section>
 
     <q-card-section>
-        <div>IAM</div>
+        <div class="text-overline">IAM</div>
         <q-list>
             <q-separator />
             <div v-for="view in iamViews" :key="view.name">
-                <MenuListItem :name="view.name" :title="view.title" :icon="view.icon" :selected="view.name === props.selected" :route="view.routerPageName"/>
+                <MenuListItem :name="view.name" :title="view.title" :icon="view.icon" :selected="view.name === props.selected" :route="view.routerPageName" :icon-as-image="view.iconAsImage"/>
                 <q-separator />
             </div>
         </q-list>
     </q-card-section>
 
     <q-card-section>
-        <div>Settings and security</div>
+        <div class="text-overline">Settings and security</div>
         <q-list>
             <q-separator />
             <div v-for="view in settingsViews" :key="view.name">
-                <MenuListItem :name="view.name" :title="view.title" :icon="view.icon" :selected="view.name === props.selected" :route="view.routerPageName"/>
+                <MenuListItem :name="view.name" :title="view.title" :icon="view.icon" :selected="view.name === props.selected" :route="view.routerPageName" :icon-as-image="view.iconAsImage"/>
                 <q-separator />
             </div>
         </q-list>
@@ -49,6 +44,7 @@ interface Viewdata {
     title: string
     icon: string
     routerPageName: string
+    iconAsImage?: boolean
 }
 
 const props = defineProps<{
@@ -93,9 +89,16 @@ const iamViews = [
 
 const settingsViews = [
     {
-        name: 'sso',
-        icon: 'local_activity',
-        title: 'SSO and 2FA',
+        name: 'oauth',
+        icon: 'icons/oauth.logo.svg',
+        iconAsImage: true,
+        title: 'OAuth',
+        routerPageName: 'accessControl_settings_oauth'
+    },
+    {
+        name: '2fa',
+        icon: 'mdi-two-factor-authentication',
+        title: '2FA',
         routerPageName: ''
     },
     {

@@ -21,12 +21,16 @@ require (
 	google.golang.org/protobuf v1.30.0
 )
 
+require github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
+
 require (
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/klauspost/compress v1.16.6 // indirect
@@ -37,6 +41,7 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5 // indirect
+	github.com/spf13/cast v1.5.1
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

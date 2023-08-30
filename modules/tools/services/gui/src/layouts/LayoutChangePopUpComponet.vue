@@ -1,20 +1,30 @@
 <template>
-    <q-btn square dense icon="apps">
+    <q-btn outline dense icon="apps">
         <q-menu class="q-pa-xs">
-            <q-btn icon="settings" @click="goToLayout('home')" class="full-width">Adminer</q-btn>
-            <q-btn icon="developer_board" @click="goToLayout('crm_home')" class="full-width">CRM</q-btn>
+            <q-btn icon="settings" @click="goToRoute('home')" class="full-width">Adminer</q-btn>
+            <q-btn icon="developer_board" @click="goToRoute('crm_home')" class="full-width">CRM</q-btn>
         </q-menu>
     </q-btn>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-
+import { useRouter, useRoute } from 'vue-router';
+import { useLoginStore } from 'src/stores/login-store'
 
 const $router = useRouter()
+const $route = useRoute()
+const loginStore = useLoginStore()
 
-async function goToLayout(name: string) {
-    await $router.push({ name })
+
+let currentNamespace = $route.params.currentNamespace as string
+if (!currentNamespace) {
+    currentNamespace = loginStore.originalNamespace
+}
+if (!currentNamespace) {
+    currentNamespace = "_global"
 }
 
+async function goToRoute(name: string) {
+    await $router.push({ name: name, params: { currentNamespace } })
+}
 </script>

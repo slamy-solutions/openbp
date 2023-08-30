@@ -16,12 +16,29 @@ export default {
         }
       }
     },
+    me: {
+      modules: {
+        general: {
+          name: "General information",
+          description: "General information about the user"
+        },
+        auth: {
+          name: "Authentication",
+          description: "Authentication methods"
+        },
+        security: {
+          name: "Security",
+          description: "Security settings"
+        }
+      }
+    }
   },
   modules: {
     login: {
       header: 'Login to the OpenBP',
       hint: 'There is no public registration. In case of any problems you have to directly communicate with platform administrator.',
 
+      namespaceInput: 'Namespace',
       usernameInput: 'Username',
       passwordInput: 'Password',
 
@@ -30,6 +47,16 @@ export default {
       loginOperationPendingNotify: 'Trying to login ...',
       failToLoginNotify: 'Failed to login. Check your credentials and try again. Error: {error}',
       successfullyLoggedInNotify: 'Successfully logged in.',
+
+      oauth: {
+
+        finalize: {
+          finalizeOperationNotify: 'Trying to finalize OAuth login ...',
+          finalizeSuccessNotify: 'Successfully logged in with third-party OAuth provider',
+          finalizeFailNotify: 'Failed to finalize OAuth login. Error: {error}',
+          finalizeInvalidStateNotify: 'Failed to finalize OAuth login. Invalid state OAuth state detected. Maybe you are trying to finalize OAuth login from another browser tab?'
+        }
+      }
     },
     bootstrap: {
       header: 'System is not ready yet',
@@ -134,6 +161,21 @@ export default {
   
               loadOperationNotify: 'Trying to load users list ...',
               loadFailNotify: 'Failed to load users list. Error: {error}'
+            },
+            create: {
+              header: "Create user",
+
+              namespaceInput: "Namespace",
+              loginInput: "Login",
+              fullNameInput: "Full name",
+              emailInput: "Email",
+
+              createButton: "Create",
+              createHint: "New user will have no rights in the system. You will have to assign roles and privileges. Also dont forget to enable one of the login methods for the user to be able to login to the system.",
+
+              createOperationNotify: 'Trying to create new namespace ...',
+              createSuccessNotify: 'Successfully created new namespace',
+              createFailNotify: 'Failed to create namespace. Error: {error}'
             }
           }
         },
@@ -702,6 +744,35 @@ export default {
               addFailNotify: 'Failed to add server. Error: {error}'
             },
           }
+        }
+      }
+    },
+    me: {
+      auth: {
+        oauth: {
+          finalize: {
+            finalizeOperationNotify: 'Trying to finalize OAuth registration ...',
+            finalizeSuccessNotify: 'Successfully finalized OAuth registration',
+            finalizeFailNotify: 'Failed to finalize OAuth registration. Error: {error}',
+            finalizeInvalidStateNotify: 'Failed to finalize OAuth registration. Invalid state OAuth state detected. Maybe you are trying to finalize OAuth registration from another browser tab?'
+          }
+        },
+        password: {
+          header: "Password",
+          caption: "Enabling the password allows you to login to the sysem by providing your login and password. remember to use strong password and change it regurally",
+          passwordInput: "Provide new password",
+          setOrUpdateButton: "set / update password",
+          disableButton: "Disable password login",
+          disableCaption: "Be aware, that if you dont have other authentication methods, you will not be able to login to the system",
+          disabledMessage: "Password login is disabled. You can enable it by providing new password.",
+
+          updateOperationNotify: 'Trying to set or update password ...',
+          updateSuccessNotify: 'Successfully updated password',
+          updateFailNotify: 'Failed to set or update password. Error: {error}',
+
+          deleteOperationNotify: 'Trying to disable password login ...',
+          deleteSuccessNotify: 'Successfully disabled password login',
+          deleteFailNotify: 'Failed to disable password login. Error: {error}',
         }
       }
     }

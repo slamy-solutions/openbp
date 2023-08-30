@@ -10,7 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
+const $route = useRoute()
 
 const props = defineProps<{
     name: string,
@@ -24,7 +25,7 @@ const $router = useRouter()
 
 async function goToPage() {
     if (props.route != "" && !props.selected) {
-        await $router.push({ name: props.route })
+        await $router.push({ name: props.route, params: { currentNamespace: $route.params.currentNamespace } })
     }
 }
 </script>

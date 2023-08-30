@@ -30,5 +30,6 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -
 RUN chmod +x app
 
 FROM scratch
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /src/modules/native/services/iam/src/app /app
 CMD ["/app"]

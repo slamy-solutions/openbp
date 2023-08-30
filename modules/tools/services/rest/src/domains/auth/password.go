@@ -19,8 +19,9 @@ type PasswordRouter struct {
 }
 
 type passwordLoginRequest struct {
-	Login    string `json:"login" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Namespace string `json:"namespace" binding:""`
+	Login     string `json:"login" binding:"required"`
+	Password  string `json:"password" binding:"required"`
 }
 type passwordLoginResponse struct {
 	AccessToken  string `json:"accessToken"`
@@ -36,8 +37,9 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 
 	// Try to find user with this login
 	userGetResponse, err := r.nativeStub.Services.IAM.Actor.User.GetByLogin(ctx.Request.Context(), &user.GetByLoginRequest{
-		Login:    requestData.Login,
-		UseCache: false,
+		Namespace: requestData.Namespace,
+		Login:     requestData.Login,
+		UseCache:  false,
 	})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
@@ -52,7 +54,7 @@ func (r *PasswordRouter) Login(ctx *gin.Context) {
 
 	// Try to verify password and create authorization token for user
 	tokenCreationResponse, err := r.nativeStub.Services.IAM.Auth.CreateTokenWithPassword(ctx.Request.Context(), &auth.CreateTokenWithPasswordRequest{
-		Namespace: "",
+		Namespace: requestData.Namespace,
 		Identity:  userGetResponse.User.Identity,
 		Password:  requestData.Password,
 		Metadata:  MetadataFromRequestContext(ctx).ToJSONString(),

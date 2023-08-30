@@ -15,6 +15,7 @@ import (
 	system_nats "github.com/slamy-solutions/openbp/modules/system/libs/golang/nats"
 
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/actor/user"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/oauth"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/password"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/x509"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/identity"
@@ -131,6 +132,11 @@ func (s *eventHandlerService) handleNamespaceCreationEvent(msg *nats.Msg) {
 	err = x509.HandleNamespaceCreationEvent(ctx, logger.WithField("service", "authentication_x509"), &namespace, s.systemStub)
 	if err != nil {
 		badAnswer(errors.New("failed to handle creation event for authentication_x509 service: " + err.Error()))
+		return
+	}
+	err = oauth.HandleNamespaceCreationEvent(ctx, logger.WithField("service", "authentication_oauth"), &namespace, s.systemStub)
+	if err != nil {
+		badAnswer(errors.New("failed to handle creation event for authentication_oauth service: " + err.Error()))
 		return
 	}
 	err = user.HandleNamespaceCreationEvent(ctx, logger.WithField("service", "actor_user"), &namespace, s.systemStub)

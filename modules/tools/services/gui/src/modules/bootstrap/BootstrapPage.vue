@@ -119,7 +119,7 @@ async function loadStatus() {
         } else if (!status.rootUserCreated) {
             step.value = 2
         } else {
-            await $router.push({ name: "login" })
+            await $router.push({ name: "login", params: { currentNamespace: '_global' } })
         }
 
         notif()
@@ -172,7 +172,7 @@ async function createRootUser() {
 
 onMounted(async () => {
     if (bootstrapStore.bootstrapped) {
-        await $router.push({name: 'login'})
+        await $router.push({name: 'login', params: { currentNamespace: '_global' }})
     } else {
         await loadStatus()
     }

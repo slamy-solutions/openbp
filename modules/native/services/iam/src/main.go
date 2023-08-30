@@ -15,6 +15,7 @@ import (
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	native_iam_actor_user_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/actor/user"
 	native_iam_auth_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/auth"
+	native_iam_authentication_oauth_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/oauth2"
 	native_iam_authentication_password_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/password"
 	native_iam_authentication_x509_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/authentication/x509"
 	native_iam_identity_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/identity"
@@ -23,6 +24,7 @@ import (
 	native_iam_token_grpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/actor/user"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/auth"
+	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/oauth"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/password"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/authentication/x509"
 	"github.com/slamy-solutions/openbp/modules/native/services/iam/src/services/identity"
@@ -110,7 +112,16 @@ func main() {
 	}
 	native_iam_authentication_x509_grpc.RegisterIAMAuthenticationX509ServiceServer(grpcServer, authenticationX509Server)
 
-	iamAuthServer := auth.NewIAmAuthServer(systemStub, authenticationPasswordServer, authenticationX509Server, identityServer, policyServer, roleServer, tokenServer)
+	authenticationOAuth2ConfigServer := oauth.NewConfigService(systemStub)
+	native_iam_authentication_oauth_grpc.RegisterIAMAuthenticationOAuth2ConfigServiceServer(grpcServer, authenticationOAuth2ConfigServer)
+
+	authenticationOAuth2Server, err := oauth.NewOAuthServer(context.Background(), systemStub)
+	if err != nil {
+		panic("Failed to startup authentication_oauth2 server: " + err.Error())
+	}
+	native_iam_authentication_oauth_grpc.RegisterIAMAuthenticationOAuth2ServiceServer(grpcServer, authenticationOAuth2Server)
+
+	iamAuthServer := auth.NewIAmAuthServer(systemStub, authenticationPasswordServer, authenticationX509Server, authenticationOAuth2Server, identityServer, policyServer, roleServer, tokenServer)
 	native_iam_auth_grpc.RegisterIAMAuthServiceServer(grpcServer, iamAuthServer)
 
 	iamActorUserServer, err := user.NewActorUserServer(context.Background(), systemStub, identityServer)

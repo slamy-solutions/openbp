@@ -3,6 +3,7 @@ import { BootstrapAPI } from './bootstrap'
 import { NamespaceAPI } from './namespace'
 import { AccessControlAPI } from './accessControl'
 import { IoTAPI } from './iot'
+import { MeAPI } from './me'
 
 export interface API {
     login: LoginAPI,
@@ -10,6 +11,7 @@ export interface API {
     namespace: NamespaceAPI,
     accessControl: AccessControlAPI
     iot: IoTAPI
+    me: MeAPI
 }
 
 export const api = {
@@ -17,7 +19,8 @@ export const api = {
     bootstrap: new BootstrapAPI(),
     namespace: new NamespaceAPI(),
     accessControl: new AccessControlAPI(),
-    iot: new IoTAPI()
+    iot: new IoTAPI(),
+    me: new MeAPI()
 } as API
 
 export default api 

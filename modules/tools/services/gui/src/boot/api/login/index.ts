@@ -1,12 +1,36 @@
 import { APIModuleBase } from "../model"
 
 export interface CreateTokensWithPasswordRequest {
+    namespace: string
     login: string
     password: string
 }
 export interface CreateTokensWithPasswordResponse {
     accessToken: string
     refreshToken: string
+}
+
+export interface CreateTokenWithOAuthRequest {
+    namespace: string
+    provider: string
+    code: string
+}
+export interface CreateTokenWithOAuthResponse {
+    accessToken: string
+    refreshToken: string
+}
+
+export interface AvailableOAuthProvider {
+    name: string
+    clientId: string
+    authUrl: string
+}
+
+export interface GetAvailableOAuthProvidersRequest {
+    namespace: string
+}
+export interface GetAvailableOAuthProvidersResponse {
+    providers: Array<AvailableOAuthProvider>
 }
 
 export interface RefreshTokenRequest {
@@ -29,7 +53,19 @@ export class LoginAPI extends APIModuleBase {
     async createTokensWithPassword(credentials: CreateTokensWithPasswordRequest): Promise<CreateTokensWithPasswordResponse> {
         const response = await LoginAPI._axios.post<CreateTokensWithPasswordResponse>('/auth/login/password', credentials)
         return response.data
-    } 
+    }
+    
+    // Try to create access and refresh token with OAuth
+    async createTokenWithOAuth(credentials: CreateTokenWithOAuthRequest): Promise<CreateTokenWithOAuthResponse> {
+        const response = await LoginAPI._axios.post<CreateTokenWithOAuthResponse>('/auth/login/oauth', credentials)
+        return response.data
+    }
+
+    // Get available OAuth providers for namespace
+    async getAvailableOAuthProviders(params: GetAvailableOAuthProvidersRequest): Promise<GetAvailableOAuthProvidersResponse> {
+        const response = await LoginAPI._axios.get<GetAvailableOAuthProvidersResponse>('/auth/login/oauth/providers', { params })
+        return response.data
+    }
 
     // Try to refresh token and get new access token 
     async refreshToken(params: RefreshTokenRequest): Promise<string> {

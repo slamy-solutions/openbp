@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package native_iam_authentication_oauth2;
+
+option go_package = "slamy/openBP/native/iam/authentication/oauth2;oauth2";
+
+enum ProviderType {
+    GOOGLE = 0;
+    FACEBOOK = 1;
+    GITHUB = 2;
+    MICROSOFT = 3;
+    TWITTER = 4;
+    APPLE = 5;
+    GITLAB = 6;
+    DISCORD = 7;
+    OIDC = 8;
+    OIDC2 = 9;
+    OIDC3 = 10;
+    INSTAGRAM = 11;
+}
+
+message ProviderConfig {
+    string namespace = 1;
+    // The OAuth2 provider type
+    ProviderType type = 2;
+    // If provider is enabled or not. If provider is disable, then it is not possible to use it for authentication
+    bool enabled = 3;
+    // The OAuth2 client id
+    string clientId = 4;
+    // The OAuth2 client secret. It is stored as an ecrypted value. The encryption is done by system_vault service.
+    string clientSecret = 5;
+    // The OAuth2 authorization url
+    string authUrl = 6;
+    // The OAuth2 token url
+    string tokenUrl = 7;
+    // The OAuth2 user api url
+    string userApiUrl = 8;
+}
+
+message UpdateProviderConfigRequest {
+    ProviderConfig config = 1;
+}
+message UpdateProviderConfigResponse {}
+
+message ListProviderConfigsRequest {
+    string namespace = 1;
+}
+message ListProviderConfigsResponse {
+    repeated ProviderConfig configs = 1;
+}
+
+message GetAvailableProvidersRequest {
+    string namespace = 1;
+}
+message GetAvailableProvidersResponse {
+    repeated ProviderType providers = 1;
+}
+
+message ProviderUserDetails {
+    string id = 1;
+    string name = 2;
+    string username = 3;
+    string email = 4;
+    string avatarUrl = 5;
+}
+
+message AuthenticateRequest {
+    string namespace = 1;
+    ProviderType provider = 2;
+    string code = 3;
+    string codeVerifier = 4;
+    string redirectUrl = 5;
+}
+message AuthenticateResponse {
+    enum Status {
+        OK = 0;
+        PROVIDER_DISABLED = 1;
+        ERROR_WHILE_RETRIEVING_AUTH_TOKEN = 2;
+        ERROR_WHILE_FETCHING_USER_DETAILS = 3;
+        // Provider is OK, but cant find registered identity
+        UNAUTHENTICATED = 4;
+    }
+
+    Status status = 1;
+    string identity = 2;
+    ProviderUserDetails userDetails = 3;
+}
+
+message RegisterProviderForIdentityRequest {
+    string namespace = 1;
+    string identity = 2;
+    ProviderType provider = 3;
+    string code = 4;
+    string codeVerifier = 5;
+    string redirectUrl = 6;
+}
+message RegisterProviderForIdentityResponse {
+    enum Status {
+        OK = 0;
+        PROVIDER_DISABLED = 1;
+        ERROR_WHILE_RETRIEVING_AUTH_TOKEN = 2;
+        ERROR_WHILE_FETCHING_USER_DETAILS = 3;
+        ALREADY_REGISTERED = 4;
+    }
+    
+    Status status = 1;
+    ProviderUserDetails userDetails = 3;
+}
+
+message ForgetIdentityProviderRequest {
+    string namespace = 1;
+    string identity = 2;
+    ProviderType provider = 3;
+}
+message ForgetIdentityProviderResponse {}
+
+message GetRegisteredIdentityProvidersRequest {
+    string namespace = 1;
+    string identity = 2;
+}
+message GetRegisteredIdentityProvidersResponse {
+    message RegisteredProvider {
+        ProviderType provider = 1;
+        ProviderUserDetails userDetails = 2;
+    }
+
+    repeated RegisteredProvider providers = 1;
+}
+
+// Provides API to manage OAuth2 provider configurations
+service IAMAuthenticationOAuth2ConfigService {
+    // Updates OAuth2 provider configuration. If configuration does not exist, then it is created.
+    rpc UpdateProviderConfig(UpdateProviderConfigRequest) returns (UpdateProviderConfigResponse) {}
+    // Lists all OAuth2 provider configurations
+    rpc ListProviderConfigs(ListProviderConfigsRequest) returns (ListProviderConfigsResponse) {}
+    // Lists all available (configured and enabled) OAuth2 providers
+    rpc GetAvailableProviders(GetAvailableProvidersRequest) returns (GetAvailableProvidersResponse) {}
+}
+
+// Provides API to authentificate identities using OAuth2
+service IAMAuthenticationOAuth2Service {
+    // Authenticates identity using OAuth2 provider
+    rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
+    // Registers identity using OAuth2 provider. After registration, identity can be authenticated using Authenticate method with this provider.
+    rpc RegisterProviderForIdentity(RegisterProviderForIdentityRequest) returns (RegisterProviderForIdentityResponse) {}
+    // Forgets identity provider. After forgetting, identity can not be authenticated using Authenticate method with this provider.
+    rpc ForgetIdentityProvider(ForgetIdentityProviderRequest) returns (ForgetIdentityProviderResponse) {}
+    // Lists all registered OAuth2 providers for identity
+    rpc GetRegisteredIdentityProviders(GetRegisteredIdentityProvidersRequest) returns (GetRegisteredIdentityProvidersResponse) {}
+}

@@ -85,6 +85,7 @@
   import { QTableProps, useQuasar } from 'quasar';
 import { Role } from '../../../../boot/api/accessControl/role';
 import { onMounted, ref, Ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import MenuComponent from '../../MenuComponent.vue'
 import api from '../../../../boot/api';
@@ -96,8 +97,8 @@ import RoleDeleteModal from './RoleDeleteModal.vue'
 
   const $i18n = useI18n()
   const $q = useQuasar()
-  
-  const displayableNamespace = ref("")
+  const $route = useRoute()
+  const displayableNamespace = $route.params.currentNamespace === "_global" ? "" : $route.params.currentNamespace as string
 
   const tableColumns: Ref<QTableProps['columns']> = ref([
       {name: 'uuid', required: true, label: $i18n.t('modules.accessControl.iam.role.list.uuidColumn'), align: 'left', sortable: false, field: 'uuid'},
@@ -134,7 +135,7 @@ import RoleDeleteModal from './RoleDeleteModal.vue'
       dataLoading.value = true
   
       try {
-        const response = await api.accessControl.role.list({ namespace: displayableNamespace.value, skip: rowsPerPage*page, limit: rowsPerPage })
+        const response = await api.accessControl.role.list({ namespace: displayableNamespace, skip: rowsPerPage*page, limit: rowsPerPage })
         tableData.value = response.roles
         if (tablePagination.value != undefined) {
           tablePagination.value.page = page + 1

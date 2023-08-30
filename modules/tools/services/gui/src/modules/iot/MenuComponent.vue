@@ -1,10 +1,5 @@
 <template>
-  <q-card class="full-width full-height">
-    <q-card-section>
-      <div class="text-h6 gt-sm">IoT</div>
-      <div class="text-subtitle2"></div>
-    </q-card-section>
-
+  <q-card class="full-width full-height bg-transparent" flat >
     <q-card-section>
         <q-list>
             <q-separator />
@@ -16,7 +11,7 @@
     </q-card-section>
 
     <q-card-section>
-        <div>Integrations</div>
+        <div class="text-subtitle2">Integrations</div>
         <q-list>
             <q-separator />
             <div v-for="view in integrationViews" :key="view.name">

@@ -481,7 +481,9 @@ import { Identity } from 'src/boot/api/accessControl/identity';
     })
 
     onMounted(async () => {
-        await loadData()
+        if (props.uuid !== '') {
+            await loadData()
+        }
     })
     
     </script>

@@ -8,6 +8,8 @@ import { UserAPI } from './actor/user'
 import { PasswordAPI } from './auth/password'
 import { CertificateAPI } from './auth/certificate'
 
+import { ConfigAPI } from './config'
+
 export interface ActorAPIs {
     user: UserAPI
 }
@@ -23,6 +25,7 @@ export class AccessControlAPI extends APIModuleBase {
     public readonly policy: PolicyAPI
     public readonly actor: ActorAPIs
     public readonly auth: AuthAPIs
+    public readonly config: ConfigAPI
 
     constructor() {
         super();
@@ -36,5 +39,6 @@ export class AccessControlAPI extends APIModuleBase {
             password: new PasswordAPI(),
             certificate: new CertificateAPI()
         }
+        this.config = new ConfigAPI()
     }
 }

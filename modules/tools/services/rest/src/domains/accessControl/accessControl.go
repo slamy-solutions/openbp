@@ -6,6 +6,7 @@ import (
 
 	actorAPI "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/accessControl/actor"
 	authAPI "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/accessControl/auth"
+	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/accessControl/config"
 )
 
 func FillRouterGroup(group *gin.RouterGroup, nativeStub *native.NativeStub) {
@@ -52,4 +53,8 @@ func FillRouterGroup(group *gin.RouterGroup, nativeStub *native.NativeStub) {
 	group.GET("/iam/actor/user", actorUserRouter.ListUsers)
 	group.POST("/iam/actor/user", actorUserRouter.CreateUser)
 	group.DELETE("/iam/actor/user", actorUserRouter.DeleteUser)
+
+	configOAuthRouter := config.NewOAuthConfigRouter(nativeStub)
+	group.GET("/config/oauth/provider/list", configOAuthRouter.GetProvidersConfigs)
+	group.PATCH("/config/oauth/provider", configOAuthRouter.UpdateProviderConfig)
 }

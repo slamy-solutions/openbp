@@ -20,6 +20,7 @@ import (
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/auth"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/bootstrap"
 	iotDomain "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/iot"
+	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/me"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/namespace"
 )
 
@@ -75,6 +76,7 @@ func main() {
 	namespace.FillRouterGroup(r.Group("/api/namespace"), nativeStub)
 	accesscontrol.FillRouterGroup(r.Group("/api/accessControl"), nativeStub)
 	iotDomain.FillRouterGroup(logger.WithField("domain.name", "iot"), r.Group("/api/iot"), systemStub, nativeStub, iotStub)
+	me.FillRouterGroup(logger.WithField("domain.name", "me"), r.Group("/api/me"), systemStub, nativeStub, iotStub)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

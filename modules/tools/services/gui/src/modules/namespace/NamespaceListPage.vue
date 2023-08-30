@@ -1,10 +1,13 @@
 <template>
   <q-page class="q-pa-md">
     <q-table
-        :title="$t('modules.namespace.list.table.header')"
+        
         :columns="tableColumns"
         :rows="tableData"
         row-key="name"
+        flat
+        dense
+        class="bg-transparent"
         :loading="dataLoading"
         :filter="filter"
     >
@@ -24,30 +27,29 @@
       </template>
 
       <template v-slot:top-right>
-        <q-btn
-            :label="$t('modules.namespace.list.table.createButton')"
-            class="q-ma-none q-mr-lg"
-            unelevated
-            outline
-            color="positive"
-            size="lg"
-            :disable="creationDialog"
-            @click="creationDialog = true"
-        />
-        <q-input outlined debounce="100" v-model="filter" :placeholder="$t('modules.namespace.list.table.search')">
+        <q-input size="sm" dense outlined debounce="100" v-model="filter" :placeholder="$t('modules.namespace.list.table.search')">
           <template v-slot:append>
             <q-icon name="search" size="sm"/>
           </template>
         </q-input>
+        <q-btn
+            :label="$t('modules.namespace.list.table.createButton')"
+            unelevated
+            class="q-ml-md"
+            outline
+            size="md"
+            :disable="creationDialog"
+            @click="creationDialog = true"
+        />
       </template>
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
-          <q-btn color="dark" outline label="" icon="menu">
+          <q-btn color="dark" outline label="" size="sm" icon="menu">
             <q-menu>
               <q-list style="">
                 <q-item clickable v-close-popup @click="namespaceToDelete = props.row.name; deletionDialog = true;">
-                  <q-item-section class="text-negative">{{ $t('modules.namespace.list.table.actionsMenu.delete') }}</q-item-section>
+                  <q-item-section size="sm" class="text-negative">{{ $t('modules.namespace.list.table.actionsMenu.delete') }}</q-item-section>
                 </q-item>
               </q-list>
             </q-menu>
