@@ -5,7 +5,8 @@
       </div>
       <div class="col-10 row">
       <q-table
-          class="col-12 q-ma-none"
+          class="col-12 q-ma-none bg-transparent"
+          flat
           :title="$t('modules.accessControl.iam.policy.list.header')"
           :columns="tableColumns"
           :rows="tableData"
@@ -38,7 +39,6 @@
               class="q-ma-none"
               unelevated
               outline
-              color="positive"
               size="md"
               :disable="creationDialog"
               @click="creationDialog = true"
@@ -47,7 +47,7 @@
   
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn color="dark" outline label="" icon="menu">
+            <q-btn color="dark" outline label="" icon="menu" size="sm">
               <q-menu>
                 <q-list style="">
                   <q-item clickable v-close-popup @click="identityUUIDToDelete = props.row.uuid; deletionDialog = true;">
@@ -67,7 +67,7 @@
       </q-table>
 
       <q-card
-        class="col-12 q-mt-md"
+        class="col-12 q-mt-md bg-transparent" flat
       >
         <PolicyViewComponent :namespace="displayableNamespace" :uuid="selectedUUID" update-possible></PolicyViewComponent>
       </q-card>

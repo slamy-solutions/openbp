@@ -4,7 +4,8 @@
             <h5 class="q-pa-none q-ma-none text-bold">{{ $t('modules.accessControl.iam.policy.select.header') }}</h5>
         </div>
       <q-table
-          class="col-12 q-ma-none q-mt-md"
+          class="col-12 q-ma-none q-mt-md bg-transparent"
+          flat
           :columns="tableColumns"
           :rows="tableData"
           row-key="uuid"
@@ -22,7 +23,7 @@
           <template v-slot:body-cell="props">
             <q-td
             :props="props"
-            :class="(props.row.uuid==selectedUUID)?'bg-primary':'bg-white text-black'"
+            :class="(props.row.uuid==selectedUUID)?'bg-primary':'bg-transparent text-black'"
             >
             {{props.value}}
             </q-td>
@@ -42,16 +43,16 @@
         <template v-slot:body-cell-managed="props">
           <q-td
             :props="props"
-            :class="(props.row.uuid==selectedUUID)?'bg-primary':'bg-white text-black'"
+            :class="(props.row.uuid==selectedUUID)?'bg-primary':'bg-transparent text-black'"
         >
             <ManagedByComponent dense :managed-by="props.row.managed" />
           </q-td>
         </template>
       </q-table>
       <div class="col-12 q-mt-md row">
-        <q-btn color="negative" class="col-2" @click="emit('canceled')">{{ $t('modules.accessControl.iam.policy.select.cancelButton') }}</q-btn>
+        <q-btn color="negative" outline class="col-2" @click="emit('canceled')">{{ $t('modules.accessControl.iam.policy.select.cancelButton') }}</q-btn>
         <div class="col-5"></div>
-        <q-btn color="positive" class="col-5" :disable="selectedUUID == ''" @click="emit('selected', props.namespace, selectedUUID)">{{ $t('modules.accessControl.iam.policy.select.selectButton') }}</q-btn>
+        <q-btn outline class="col-5" :disable="selectedUUID == ''" @click="emit('selected', props.namespace, selectedUUID)">{{ $t('modules.accessControl.iam.policy.select.selectButton') }}</q-btn>
       </div>
     </div>
 </template>

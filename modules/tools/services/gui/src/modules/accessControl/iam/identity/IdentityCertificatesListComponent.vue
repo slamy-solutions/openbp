@@ -1,9 +1,11 @@
 <template>
     <div class="row">
     <q-table
-        class="col-12 q-pl-md q-pr-md"
+        class="col-12 q-pl-md q-pr-md bg-transparent"
+        flat
         :columns="tableColumns"
         :rows="tableData"
+        dense
         row-key="uuid"
         :loading="loading"
         ref="tableRef"
@@ -28,7 +30,7 @@
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
-          <q-btn color="dark" outline label="" icon="menu">
+          <q-btn color="dark" outline label="" icon="menu" size="sm">
             <q-menu>
               <q-list style="">
                 <q-item clickable v-if="editable" v-close-popup @click="deleteCertificate(props.row.uuid)">

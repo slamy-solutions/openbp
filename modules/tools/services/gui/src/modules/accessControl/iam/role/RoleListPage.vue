@@ -5,7 +5,8 @@
       </div>
       <div class="col-10 row">
         <q-table
-          class="col-12 q-ma-none"
+          class="col-12 q-ma-none bg-transparent"
+          flat
           :title="$t('modules.accessControl.iam.role.list.header')"
           :columns="tableColumns"
           :rows="tableData"
@@ -47,7 +48,7 @@
   
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn color="dark" outline label="" icon="menu">
+            <q-btn color="dark" outline label="" icon="menu" size="sm">
               <q-menu>
                 <q-list style="">
                   <q-item clickable v-close-popup @click="roleUUIDToDelete = props.row.uuid; deletionDialog = true;">
@@ -74,7 +75,7 @@
           <RoleDeleteModal :namespace="displayableNamespace" :uuid="roleUUIDToDelete" @deleted="onRoleDeleted" />
         </q-dialog>
 
-        <q-card class="col-12 q-mt-md">
+        <q-card class="col-12 q-mt-md bg-transparent" flat>
           <RoleViewComponent :namespace="displayableNamespace" :uuid="selectedUUID" update-possible />
         </q-card>
       </div>

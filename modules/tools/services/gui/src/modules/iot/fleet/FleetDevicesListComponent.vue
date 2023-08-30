@@ -1,8 +1,7 @@
 <template>
     <q-table
           flat
-          bordered
-          class="col-12 q-ma-none"
+          class="col-12 q-ma-none bg-transparent"
           :title="$t('modules.iot.fleet.deviceList.header')"
           :columns="tableColumns"
           :rows="tableData"
@@ -36,8 +35,7 @@
               class="q-ma-none"
               unelevated
               outline
-              color="positive"
-              size="md"
+              size="sm"
               :disable="creationDialog"
               @click="creationDialog = true"
           />

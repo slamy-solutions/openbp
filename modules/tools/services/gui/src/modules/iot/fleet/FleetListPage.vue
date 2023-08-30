@@ -5,7 +5,8 @@
       </div>
       <div class="col-10">
       <q-table
-          class="row q-ma-none"
+          class="row q-ma-none bg-transparent"
+          flat
           :title="$t('modules.iot.fleet.list.header')"
           :columns="tableColumns"
           :rows="tableData"
@@ -39,7 +40,6 @@
               class="q-ma-none"
               unelevated
               outline
-              color="positive"
               size="md"
               :disable="creationDialog"
               @click="creationDialog = true"
@@ -48,7 +48,7 @@
   
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn color="dark" outline label="" icon="menu">
+            <q-btn color="dark" outline label="" icon="menu" size="xs">
               <q-menu>
                 <q-list style="">
                   <q-item clickable v-close-popup @click="fleetUUIDToDelete = props.row.uuid; deletionDialog = true;">
@@ -62,7 +62,7 @@
       </q-table>
 
       <div class="row full-width q-pt-md">
-      <q-card class="full-width q-pt-xs">
+      <q-card class="full-width q-pt-xs bg-transparent" flat>
        
         <FleetViewComponent
 
