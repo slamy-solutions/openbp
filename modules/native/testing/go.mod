@@ -1,6 +1,6 @@
 module github.com/slamy-solutions/openbp/modules/native/testing
 
-go 1.20
+go 1.21.0
 
 replace github.com/slamy-solutions/openbp/modules/native/libs/golang => ../libs/golang
 

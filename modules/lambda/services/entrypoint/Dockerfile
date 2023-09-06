@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine as build
+FROM golang:1.21-alpine as build
 RUN apk add --no-cache git
 
 COPY modules/system/libs/go /src/modules/system/libs/go

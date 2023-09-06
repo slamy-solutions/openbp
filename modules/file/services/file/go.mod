@@ -1,6 +1,6 @@
 module github.com/slamy-solutions/openbp/modules/native/services/file
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/golang/protobuf v1.5.2

@@ -1,6 +1,6 @@
 module github.com/slamy-solutions/openbp/modules/native/services/keyvaluestorage
 
-go 1.20
+go 1.21.0
 
 replace github.com/slamy-solutions/openbp/modules/system/libs/golang => ../../../system/libs/golang
 

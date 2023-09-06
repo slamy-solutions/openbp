@@ -26,7 +26,7 @@ RUN git checkout ${SOFTHSM2_VERSION} -b ${SOFTHSM2_VERSION} \
     && make install
 
 ###### Build vault code
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.20-alpine as build
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.21-alpine as build
 # gcc, g++, make, build-base are needed for CGO
 RUN apk add --no-cache git gcc g++ make build-base
 

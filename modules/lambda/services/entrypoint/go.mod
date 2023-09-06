@@ -1,6 +1,6 @@
 module github.com/slamy-solutions/openbp/modules/native/services/lambda/entrypoint
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/google/uuid v1.3.0

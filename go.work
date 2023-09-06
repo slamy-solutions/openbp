@@ -1,6 +1,13 @@
-go 1.20
+go 1.21.0
 
 use (
+	./modules/crm/libs/golang
+	./modules/crm/services/core
+	./modules/erp/libs/golang
+	./modules/erp/services/core
+	./modules/iot/libs/golang
+	./modules/iot/services/core
+	./modules/iot/testing
 	./modules/native/libs/golang
 	./modules/native/services/iam
 	./modules/native/services/keyvaluestorage
@@ -13,9 +20,4 @@ use (
 	./modules/tools/services/rest
 	./modules/tools/services/sdk
 	./modules/tools/testing
-	./modules/crm/libs/golang
-	./modules/crm/services/core
-	./modules/iot/services/core
-	./modules/iot/libs/golang
-	./modules/iot/testing
 )
