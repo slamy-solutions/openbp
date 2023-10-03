@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package runtime_manager_runtime;
+
+option go_package = "github.com/slamy-solutions/openbp/modules/runtime/libs/golang/manager/rpc;rpc";
+
+// Message that is passedthrought NATS during the invocation of the RPC
+message RPCRequestMesasge {
+    // JSON foramted payload that will be passd to the invocated runtime method
+    string data = 1;
+}
+// Response that is sended throught the NATS after the invocation of the RPC
+message RPCResponseMessage {
+    // JSON formated error that accured during the invocation of the RPC method. Empty if no error
+    string error = 1;
+    // Short message that describes the error. Empty if no error
+    string errorMessage = 2;
+    // JSON formated response from the RPC method
+    string response = 3;
+}
+
+
+message CallRequest {
+    // Namespace where runtime is located
+    string namespace = 1;
+    // Name of runtime
+    string runtimeName = 2;
+    // Name of method to call (without runtime name)
+    string methodName = 3;
+    // JSON payload
+    string payload = 4;
+    // How much milliseconds to wait for response
+    uint32 timeout = 5;
+}
+message CallResponse {
+    // JSON formated error accured during call. Empty if no error
+    string error = 1;
+    // Short message that describes the error. Empty if no error
+    string errorMessage = 2;
+    // JSON formated response from runtime
+    string response = 3;
+}
+
+service RPCService {
+    rpc Call(CallRequest) returns (CallResponse);
+}

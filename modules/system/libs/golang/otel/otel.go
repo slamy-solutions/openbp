@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
 type telemetry struct {
@@ -28,7 +28,7 @@ type Telemetry interface {
 }
 
 /*
-	Registers OpenTelemetry and adds global hooks.
+Registers OpenTelemetry and adds global hooks.
 */
 func Register(ctx context.Context, endpoint string, serviceModule string, serviceName string, serviceVersion string, serviceInstanceID string) (Telemetry, error) {
 	client := otlptracegrpc.NewClient(

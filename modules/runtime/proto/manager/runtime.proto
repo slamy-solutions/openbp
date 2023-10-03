@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package runtime_manager_runtime;
+
+option go_package = "github.com/slamy-solutions/openbp/modules/runtime/libs/golang/manager/runtime;runtime";
+
+message Runtime {
+    // Namespace where runtime is located
+    string namespace = 1;
+    // Name of the runtime. Unique within namespace
+    string name = 2;
+    // Should runtime be running
+    bool run = 3;
+}
+
+message GetRuntimesForNamespaceReqeust {
+    // Namespace where runtimes are located
+    string namespace = 1;
+}
+message GetRuntimesForNamespaceResponse {
+    // Runtimes in namespace
+    repeated Runtime runtimes = 1;
+}
+
+message GetRuntimeRequest {
+    // Namespace where runtime is located
+    string namespace = 1;
+    // Name of the runtime
+    string name = 2;
+}
+message GetRuntimeResponse {
+    // Runtime
+    Runtime runtime = 1;
+}
+
+message CreateRuntimeRequest {
+    // Runtime to create
+    Runtime runtime = 1;
+}
+message CreateRuntimeResponse {
+}
+
+message UpdateRuntimeRequest {
+    // Namespace where runtime is located
+    string namespace = 1;
+    // Name of the runtime
+    string name = 2;
+    bool newRun = 3;
+}
+message UpdateRuntimeResponse {
+    // Updated runtime
+    Runtime runtime = 1;
+}
+
+message DeleteRuntimeRequest {
+    // Namespace where runtime is located
+    string namespace = 1;
+    // Name of the runtime
+    string name = 2;
+}
+message DeleteRuntimeResponse {
+}
+
+message UploadRuntimeBinaryRequest {
+    // Namespace where runtime is located
+    string namespace = 1;
+    // Name of the runtime
+    string name = 2;
+    // Chunk of binary data
+    bytes binary = 3;
+}
+message UploadRuntimeBinaryResponse {}
+
+message DownloadRuntimeBinaryRequest {
+    // Namespace where runtime is located
+    string namespace = 1;
+    // Name of the runtime
+    string name = 2;
+}
+message DownloadRuntimeBinaryResponse {
+    // Chunk of binary data
+    bytes binary = 1;
+}
+
+service RuntimeService {
+    rpc GetRuntimesForNamespace(GetRuntimesForNamespaceReqeust) returns (GetRuntimesForNamespaceResponse) {}
+    rpc GetRuntime(GetRuntimeRequest) returns (GetRuntimeResponse) {}
+    rpc CreateRuntime(CreateRuntimeRequest) returns (CreateRuntimeResponse) {}
+    rpc UpdateRuntime(UpdateRuntimeRequest) returns (UpdateRuntimeResponse) {}
+    rpc DeleteRuntime(DeleteRuntimeRequest) returns (DeleteRuntimeResponse) {}
+    rpc UploadRuntimeBinary(stream UploadRuntimeBinaryRequest) returns (UploadRuntimeBinaryResponse) {}
+    rpc DownloadRuntimeBinary(DownloadRuntimeBinaryRequest) returns (stream DownloadRuntimeBinaryResponse) {}
+}

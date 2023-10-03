@@ -1,23 +1,18 @@
-module github.com/slamy-solutions/openbp/modules/tools/services/rest
+module github.com/slamy-solutions/openbp/modules/runtime/services/manager
 
 go 1.21.0
 
 replace github.com/slamy-solutions/openbp/modules/system/libs/golang => ../../../system/libs/golang
 
-replace github.com/slamy-solutions/openbp/modules/native/libs/golang => ../../../native/libs/golang
-
-replace github.com/slamy-solutions/openbp/modules/runtime/libs/golang => ../../../runtime/libs/golang
-
-replace github.com/slamy-solutions/openbp/modules/iot/libs/golang => ../../../iot/libs/golang
+replace github.com/slamy-solutions/openbp/modules/runtime/libs/golang => ../../libs/golang
 
 require (
-	github.com/gin-gonic/gin v1.8.1
 	github.com/golang/protobuf v1.5.3
 	github.com/nats-io/nats.go v1.29.0
-	github.com/sirupsen/logrus v1.9.3
-	github.com/slamy-solutions/openbp/modules/iot/libs/golang v0.0.0-00010101000000-000000000000
-	github.com/slamy-solutions/openbp/modules/native/libs/golang v0.0.0-20221205192151-dac4702c21de
 	github.com/slamy-solutions/openbp/modules/runtime/libs/golang v0.0.0-00010101000000-000000000000
+	github.com/slamy-solutions/openbp/modules/system/libs/golang v0.0.0-00010101000000-000000000000
+	go.mongodb.org/mongo-driver v1.12.1
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.44.0
 	google.golang.org/grpc v1.58.1
 )
 
@@ -32,7 +27,7 @@ require (
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/nats-io/jwt/v2 v2.4.1 // indirect
+	github.com/nats-io/jwt/v2 v2.5.0 // indirect
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 // indirect
@@ -42,9 +37,7 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	go.mongodb.org/mongo-driver v1.12.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo v0.44.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.44.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.19.0 // indirect
 	go.opentelemetry.io/otel v1.18.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.18.0 // indirect
@@ -53,34 +46,13 @@ require (
 	go.opentelemetry.io/otel/sdk v1.18.0 // indirect
 	go.opentelemetry.io/otel/trace v1.18.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230913181813-007df8e322eb // indirect
-)
-
-require (
-	github.com/gin-contrib/cors v1.4.0
-	github.com/gin-contrib/gzip v0.0.6
-	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.1 // indirect
-	github.com/goccy/go-json v0.10.0 // indirect
-	github.com/gorilla/websocket v1.5.0
-	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
-	github.com/slamy-solutions/openbp/modules/system/libs/golang v0.0.0-20221205192151-dac4702c21de
-	github.com/ugorji/go/codec v1.2.7 // indirect
-	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.37.0
-	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

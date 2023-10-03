@@ -16,6 +16,10 @@
 
         "IOT_CORE_URL": "127.0.0.1:28285",
 
-        "TOOLS_REST_URL": "127.0.0.1:28300"
+        "TOOLS_REST_URL": "127.0.0.1:28300",
+
+        "ERP_CORE_URL": "127.0.0.1:28310",
+
+        "RUNTIME_MANAGER_URL": "127.0.0.1:28320"
     }
 }

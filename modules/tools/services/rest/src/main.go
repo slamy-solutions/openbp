@@ -14,6 +14,7 @@ import (
 
 	iot "github.com/slamy-solutions/openbp/modules/iot/libs/golang"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
+	runtime "github.com/slamy-solutions/openbp/modules/runtime/libs/golang"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 
 	accesscontrol "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/accessControl"
@@ -22,6 +23,7 @@ import (
 	iotDomain "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/iot"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/me"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/namespace"
+	runtimeDomain "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/runtime"
 )
 
 const (
@@ -45,18 +47,28 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer systemStub.Close(context.Background())
 
 	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
 	err = nativeStub.Connect()
 	if err != nil {
 		panic(err)
 	}
+	defer nativeStub.Close()
 
 	iotStub := iot.NewIOTStub(iot.NewStubConfig().WithCoreService())
 	err = iotStub.Connect()
 	if err != nil {
 		panic(err)
 	}
+	defer iotStub.Close()
+
+	runtimeStub := runtime.NewRuntimeStub(runtime.NewStubConfig().WithManagerService())
+	err = runtimeStub.Connect()
+	if err != nil {
+		panic(err)
+	}
+	defer runtimeStub.Close()
 
 	r := gin.Default()
 
@@ -77,6 +89,7 @@ func main() {
 	accesscontrol.FillRouterGroup(r.Group("/api/accessControl"), nativeStub)
 	iotDomain.FillRouterGroup(logger.WithField("domain.name", "iot"), r.Group("/api/iot"), systemStub, nativeStub, iotStub)
 	me.FillRouterGroup(logger.WithField("domain.name", "me"), r.Group("/api/me"), systemStub, nativeStub, iotStub)
+	runtimeDomain.FillRouterGroup(logger.WithField("domain.name", "runtime"), r.Group("/api/runtime"), nativeStub, systemStub, runtimeStub)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

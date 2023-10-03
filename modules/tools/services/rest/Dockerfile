@@ -17,6 +17,10 @@ COPY modules/iot/libs/golang /src/modules/iot/libs/golang
 RUN cd /src && go work use ./modules/iot/libs/golang
 RUN cd /src/modules/iot/libs/golang && go mod download
 
+COPY modules/runtime/libs/golang /src/modules/runtime/libs/golang
+RUN cd /src && go work use ./modules/runtime/libs/golang
+RUN cd /src/modules/runtime/libs/golang && go mod download
+
 # Setup workspace
 COPY modules/tools/services/rest/go.mod /src/modules/tools/services/rest/go.mod
 COPY modules/tools/services/rest/go.sum /src/modules/tools/services/rest/go.sum

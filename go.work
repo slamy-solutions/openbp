@@ -13,6 +13,8 @@ use (
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/namespace
 	./modules/native/testing
+	./modules/runtime/libs/golang
+	./modules/runtime/services/manager
 	./modules/system/libs/golang
 	./modules/system/services/vault
 	./modules/system/testing
