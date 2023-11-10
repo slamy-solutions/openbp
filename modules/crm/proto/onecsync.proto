@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package crm_onec_sync;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "slamy/openBP/crm/onec_sync;crm_onec_sync_grpc";
+
+message OneCSyncEvent {
+    string uuid = 1;
+    string namespace = 2;
+    bool success = 3;
+    string error = 4;
+    string log = 5;
+    google.protobuf.Timestamp timestamp = 6;
+}
+
+message SyncRequest {
+    string namespace = 1;
+}
+message SyncResponse {
+    bool ok = 1;
+    string errorMessage = 2;
+}
+
+message GetLogRequest {
+    string namespace = 1;
+    int32 skip = 2;
+    int32 limit = 3;
+}
+message GetLogResponse {
+    int32 totalCount = 1;
+    repeated OneCSyncEvent events = 2;
+}
+
+service OneCSyncService {
+    rpc Sync (SyncRequest) returns (SyncResponse) {}
+    rpc GetLog (GetLogRequest) returns (GetLogResponse) {}
+}

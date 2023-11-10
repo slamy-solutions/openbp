@@ -7,8 +7,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
-	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/service"
-	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/ticket"
+	client "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
+	onecsync "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
+	performer "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
+	settings "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/settings"
 )
 
 func getConfigEnv(key string, fallback string) string {
@@ -19,8 +21,11 @@ func getConfigEnv(key string, fallback string) string {
 }
 
 type CoreService struct {
-	Service service.ServiceServiceClient
-	Ticket  ticket.TicketServiceClient
+	Performer performer.PerformerServiceClient
+	Client    client.ClientServiceClient
+
+	Settings settings.SettingsServiceClient
+	OneCSync onecsync.OneCSyncServiceClient
 }
 
 type GrpcServiceConfig struct {

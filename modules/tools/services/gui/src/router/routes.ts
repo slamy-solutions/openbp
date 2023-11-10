@@ -47,6 +47,8 @@ const routes: RouteRecordRaw[] = [
 
       { path: 'iot/fleet/list', name: 'iot_fleet_list', component: () => import('../modules/iot/fleet/FleetListPage.vue') },
       { path: 'iot/integration/balena', name: 'iot_integration_balena', component: () => import('../modules/iot/integration/balena/BalenaIntegrationPage.vue') },
+
+      { path: 'crm/settings', name: 'crm_settings', component: () => import('../modules/crm/settings/SettingsPage.vue') },
     ],
     beforeEnter: [bootstrapGuard, loginGuard]
   },

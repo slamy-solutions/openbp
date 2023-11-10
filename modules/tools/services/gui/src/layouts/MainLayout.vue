@@ -89,6 +89,13 @@ const modules = [
     routerPathName: 'iot_fleet_list',
     icon: 'fa-solid fa-cubes',
     activePrefix: 'iot'
+  },
+  {
+    name: 'layout.main.modules.crm.name',
+    description: 'layout.main.modules.crm.description',
+    routerPathName: 'crm_settings',
+    icon: 'fa-solid fa-cog',
+    activePrefix: 'crm'
   }
 ] as ModuleInfo[]
 

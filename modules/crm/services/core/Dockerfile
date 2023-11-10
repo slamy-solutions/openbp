@@ -13,6 +13,10 @@ COPY modules/native/libs/golang /src/modules/native/libs/golang
 RUN cd /src && go work use ./modules/native/libs/golang
 RUN cd /src/modules/native/libs/golang && go mod download
 
+COPY modules/crm/libs/golang /src/modules/crm/libs/golang
+RUN cd /src && go work use ./modules/crm/libs/golang
+RUN cd /src/modules/crm/libs/golang && go mod download
+
 # Setup workspace
 COPY modules/crm/services/core/go.mod /src/modules/crm/services/core/go.mod
 COPY modules/crm/services/core/go.sum /src/modules/crm/services/core/go.sum
@@ -30,5 +34,6 @@ FROM scratch
 ENV GIN_MODE=release
 ENV PORT=80
 EXPOSE 80
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /src/modules/crm/services/core/src/app /app
 CMD ["/app"]

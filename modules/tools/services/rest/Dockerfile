@@ -21,6 +21,10 @@ COPY modules/runtime/libs/golang /src/modules/runtime/libs/golang
 RUN cd /src && go work use ./modules/runtime/libs/golang
 RUN cd /src/modules/runtime/libs/golang && go mod download
 
+COPY modules/crm/libs/golang /src/modules/crm/libs/golang
+RUN cd /src && go work use ./modules/crm/libs/golang
+RUN cd /src/modules/crm/libs/golang && go mod download
+
 # Setup workspace
 COPY modules/tools/services/rest/go.mod /src/modules/tools/services/rest/go.mod
 COPY modules/tools/services/rest/go.sum /src/modules/tools/services/rest/go.sum
@@ -38,5 +42,6 @@ FROM scratch
 ENV GIN_MODE=release
 ENV PORT=80
 EXPOSE 80
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /src/modules/tools/services/rest/src/app /app
 CMD ["/app"]

@@ -3,10 +3,13 @@ package crm
 import (
 	"errors"
 
-	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/service"
-	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/ticket"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+
+	client "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
+	onecsync "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
+	performer "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
+	settings "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/settings"
 )
 
 func makeGrpcDial(address string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
@@ -39,7 +42,9 @@ func NewCoreConnection(address string, opts ...grpc.DialOption) (*grpc.ClientCon
 	}
 
 	return dial, &CoreService{
-		Service: service.NewServiceServiceClient(dial),
-		Ticket:  ticket.NewTicketServiceClient(dial),
+		Performer: performer.NewPerformerServiceClient(dial),
+		Client:    client.NewClientServiceClient(dial),
+		Settings:  settings.NewSettingsServiceClient(dial),
+		OneCSync:  onecsync.NewOneCSyncServiceClient(dial),
 	}, nil
 }

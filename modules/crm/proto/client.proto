@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package crm_client;
+
+option go_package = "slamy/openBP/crm/client;crm_client_grpc";
+
+message ContactPerson {
+    // Namespace where contact person is located
+    string namespace = 1;
+    // Unique identifier of the contact person
+    string uuid = 2;
+    // Unique identifier of the client
+    string clientUUID = 3;
+    // Human-readable name 
+    string name = 4;
+    // Email address
+    string email = 5;
+    // Phone numbers
+    repeated string phone = 6;
+    // If set to true, the contact person is not relevant anymore
+    bool notRelevant = 7;
+    // Arbitrary comment
+    string comment = 8;
+}
+
+message Client {
+    // Namespace where client is located
+    string namespace = 1;
+    // Unique identifier of the client
+    string uuid = 2;
+    // Human-readable name
+    string name = 3;
+    // Contact persons
+    repeated ContactPerson contactPersons = 4;
+
+    // Timestamp of the creation of the client
+    google.protobuf.Timestamp createdAt = 20;
+    // Timestamp of the last update of the client
+    google.protobuf.Timestamp updatedAt = 21;
+    // Increases every time the client is updated    
+    int64 version = 22;
+}
+
+message GetAllRequest {
+    string namespace = 1;
+    bool useCache = 2;
+}
+message GetAllResponse {
+    // List of all clients
+    repeated Client clients = 1;
+}
+
+message GetRequest {
+    string namespace = 1;
+    // Unique identifier of the client
+    string uuid = 2;
+    bool useCache = 3;
+}
+message GetResponse {
+    // The client
+    Client client = 1;
+}
+
+message CreateRequest {
+    string namespace = 1;
+    // Human-readable name
+    string name = 2;
+    // Contact persons
+    repeated ContactPerson contactPersons = 3;
+}
+message CreateResponse {
+    // The created client
+    Client client = 1;
+}
+
+message UpdateRequest {
+    string namespace = 1;
+    // Unique identifier of the client
+    string uuid = 2;
+    // Human-readable name
+    string name = 3;
+    // Contact persons
+    repeated ContactPerson contactPersons = 4;
+}
+
+message UpdateResponse {
+    // The updated client
+    Client client = 1;
+}
+
+message DeleteRequest {
+    string namespace  = 1;
+    // Unique identifier of the client
+    string uuid = 2;
+}
+message DeleteResponse {}
+
+message AddContactPersonRequest {
+    string namespace = 1;
+    // Unique identifier of the client
+    string clientUUID = 2;
+    // Human-readable name 
+    string name = 3;
+    // Email address
+    string email = 4;
+    // Phone numbers
+    repeated string phone = 5;
+    // Arbitrary comment
+    string comment = 6;
+}
+message AddContactPersonResponse {
+    // New contact person
+    ContactPerson contactPerson = 1;
+}
+
+message UpdateContactPersonRequest {
+    string namespace = 1;
+    // Unique identifier of the client
+    string clientUUID = 2;
+    // Unique identifier of the contact person
+    string contactPersonUUID = 3;
+    // Human-readable name 
+    string name = 4;
+    // Email address
+    string email = 5;
+    // Phone numbers
+    repeated string phone = 6;
+    // If set to true, the contact person is not relevant anymore
+    bool notRelevant = 7;
+    // Arbitrary comment
+    string comment = 8;
+}
+message UpdateContactPersonResponse {
+    // Updated contact person
+    ContactPerson contactPerson = 1;
+}
+
+message DeleteContactPersonRequest {
+    string namespace = 1;
+    // Unique identifier of the contact person
+    string contactPersonUUID = 2;
+}
+message DeleteContactPersonResponse {
+    // Deleted contact person
+    ContactPerson contactPerson = 1;
+}
+
+message GetContactPersonsForClientRequest {
+    // Namespace where client is located
+    string namespace = 1;
+    // Unique identifier of the client
+    string clientUUID = 2;
+    // If set to true, the contact persons are returned from the cache
+    bool useCache = 3;
+}
+message GetContactPersonsForClientResponse {
+    // List of contact persons
+    repeated ContactPerson contactPersons = 1;
+}
+
+
+service ClientService {
+    // Returns a list of all clients
+    rpc GetAll(GetAllRequest) returns (GetAllResponse);
+    // Returns a client by its uuid
+    rpc Get(GetRequest) returns (GetResponse);
+    // Creates a new client
+    rpc Create(CreateRequest) returns (CreateResponse);
+    // Updates an existing client
+    rpc Update(UpdateRequest) returns (UpdateResponse);
+    // Deletes an existing client
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+    // Adds a new contact person to a client
+    rpc AddContactPerson(AddContactPersonRequest) returns (AddContactPersonResponse);
+    // Updates an existing contact person of a client
+    rpc UpdateContactPerson(UpdateContactPersonRequest) returns (UpdateContactPersonResponse);
+    // Deletes an existing contact person of a client
+    rpc DeleteContactPerson(DeleteContactPersonRequest) returns (DeleteContactPersonResponse);
+    // Returns all contact persons of a client
+    rpc GetContactPersonsForClient(GetContactPersonsForClientRequest) returns (GetContactPersonsForClientResponse);
+}

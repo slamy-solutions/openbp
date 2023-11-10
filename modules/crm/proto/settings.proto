@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package crm_settings;
+
+option go_package = "slamy/openBP/crm/settings;crm_settings_grpc";
+
+enum BackendType {
+    NATIVE = 0;
+    ONE_C = 1;
+}
+
+message NativeBackendSettings {}
+
+message OneCBackendSettings {
+    string remoteURL = 1;
+    string token = 2;
+}
+
+message Settings {
+    string namespace = 1;
+    BackendType  backendType = 2;
+
+    oneof backend {
+        NativeBackendSettings native = 3;
+        OneCBackendSettings oneC = 4;
+    }
+}
+
+message GetSettingsRequest {
+    string namespace = 1;
+    bool useCache = 2;
+}
+message GetSettingsResponse {
+    Settings settings = 1;
+}
+
+message SetSettingsRequest {
+    Settings settings = 1;
+}
+message SetSettingsResponse {}
+
+service SettingsService {
+    rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse) {}
+    rpc SetSettings(SetSettingsRequest) returns (SetSettingsResponse) {}
+}

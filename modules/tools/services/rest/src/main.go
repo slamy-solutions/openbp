@@ -12,6 +12,7 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
+	crm "github.com/slamy-solutions/openbp/modules/crm/libs/golang"
 	iot "github.com/slamy-solutions/openbp/modules/iot/libs/golang"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	runtime "github.com/slamy-solutions/openbp/modules/runtime/libs/golang"
@@ -20,6 +21,7 @@ import (
 	accesscontrol "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/accessControl"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/auth"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/bootstrap"
+	crmDomain "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/crm"
 	iotDomain "github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/iot"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/me"
 	"github.com/slamy-solutions/openbp/modules/tools/services/rest/src/domains/namespace"
@@ -70,6 +72,13 @@ func main() {
 	}
 	defer runtimeStub.Close()
 
+	crmStub := crm.NewCRMStub(crm.NewStubConfig().WithCoreService())
+	err = crmStub.Connect()
+	if err != nil {
+		panic(err)
+	}
+	defer crmStub.Close()
+
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
@@ -90,6 +99,7 @@ func main() {
 	iotDomain.FillRouterGroup(logger.WithField("domain.name", "iot"), r.Group("/api/iot"), systemStub, nativeStub, iotStub)
 	me.FillRouterGroup(logger.WithField("domain.name", "me"), r.Group("/api/me"), systemStub, nativeStub, iotStub)
 	runtimeDomain.FillRouterGroup(logger.WithField("domain.name", "runtime"), r.Group("/api/runtime"), nativeStub, systemStub, runtimeStub)
+	crmDomain.FillRouterGroup(logger.WithField("domain.name", "crm"), r.Group("/api/crm"), systemStub, nativeStub, crmStub)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

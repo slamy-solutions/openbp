@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"time"
@@ -12,9 +13,15 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/service"
-	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/ticket"
+	clientGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
+	onecSyncGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
+	performerGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
+	settingsRGPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/settings"
+
+	"github.com/slamy-solutions/openbp/modules/crm/services/core/src/backend"
+	"github.com/slamy-solutions/openbp/modules/crm/services/core/src/backend/onec/sync"
 	"github.com/slamy-solutions/openbp/modules/crm/services/core/src/services"
+	"github.com/slamy-solutions/openbp/modules/crm/services/core/src/settings"
 	native "github.com/slamy-solutions/openbp/modules/native/libs/golang"
 	system "github.com/slamy-solutions/openbp/modules/system/libs/golang"
 )
@@ -34,7 +41,7 @@ func getHostname() string {
 func main() {
 	// Connect to the "system" module services
 	systemStub := system.NewSystemStub(
-		system.NewSystemStubConfig().WithCache().WithDB().WithNats().WithOTel(system.NewOTelConfig("crm", "core", VERSION, getHostname())),
+		system.NewSystemStubConfig().WithCache().WithDB().WithNats().WithOTel(system.NewOTelConfig("crm", "core", VERSION, getHostname())).WithVault(),
 	)
 	systemConnectionContext, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -45,7 +52,7 @@ func main() {
 	defer systemStub.Close(context.Background())
 
 	// Connect to the "native" module services
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithKeyValueStorageService().WithIAMService())
 	err = nativeStub.Connect()
 	if err != nil {
 		panic("Failed to connect to native services: " + err.Error())
@@ -63,11 +70,26 @@ func main() {
 		}),
 	)
 
-	serviceServer := services.NewServiceServer()
-	service.RegisterServiceServiceServer(grpcServer, serviceServer)
+	logger := slog.Default()
 
-	ticketServer := services.NewTicketServer(systemStub, nativeStub)
-	ticket.RegisterTicketServiceServer(grpcServer, ticketServer)
+	backendFactory := backend.NewBackendFactory(logger, systemStub, nativeStub)
+
+	clientService := services.NewClientServer(backendFactory, logger.With(slog.String("service", "client")))
+	clientGRPC.RegisterClientServiceServer(grpcServer, clientService)
+
+	performerService := services.NewPerformerServer(backendFactory, logger.With(slog.String("service", "performer")))
+	performerGRPC.RegisterPerformerServiceServer(grpcServer, performerService)
+
+	settingsRepository := settings.NewSettingsRepository(systemStub, nativeStub)
+	settingsService := services.NewSettingsServer(settingsRepository, logger.With(slog.String("service", "settings")))
+	settingsRGPC.RegisterSettingsServiceServer(grpcServer, settingsService)
+
+	onecSyncEngine := sync.NewSyncEngine(logger.With(slog.String("service", "onec_sync_engine")), systemStub, nativeStub, settingsRepository)
+	onecSyncEngine.Start()
+	defer onecSyncEngine.Stop()
+
+	onecService := services.NewOneCSyncServer(onecSyncEngine, logger.With(slog.String("service", "onec_sync")))
+	onecSyncGRPC.RegisterOneCSyncServiceServer(grpcServer, onecService)
 
 	fmt.Println("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")

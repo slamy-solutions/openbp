@@ -1,10 +1,18 @@
 export PATH="$PATH:$(go env GOPATH)/bin"
 
-# service
-echo "Generating proto for core_service service"
-mkdir -p ./core/service
-protoc --go_out=./core/service --go_opt=paths=source_relative --go-grpc_out=./core/service --go-grpc_opt=paths=source_relative -I ../../proto/core service.proto
-# ticket
-echo "Generating proto for core_ticket service"
-mkdir -p ./core/ticket
-protoc --go_out=./core/ticket --go_opt=paths=source_relative --go-grpc_out=./core/ticket --go-grpc_opt=paths=source_relative -I ../../proto/core ticket.proto
+# client
+echo "Generating proto for core_client service"
+mkdir -p ./core/client
+protoc --go_out=./core/client --go_opt=paths=source_relative --go-grpc_out=./core/client --go-grpc_opt=paths=source_relative -I ../../proto client.proto
+# settings
+echo "Generating proto for settings service"
+mkdir -p ./core/settings
+protoc --go_out=./core/settings --go_opt=paths=source_relative --go-grpc_out=./core/settings --go-grpc_opt=paths=source_relative -I ../../proto settings.proto
+# onecsync
+echo "Generating proto for onecsync service"
+mkdir -p ./core/onecsync
+protoc --go_out=./core/onecsync --go_opt=paths=source_relative --go-grpc_out=./core/onecsync --go-grpc_opt=paths=source_relative -I ../../proto onecsync.proto
+# performer
+echo "Generating proto for performer service"
+mkdir -p ./core/performer
+protoc --go_out=./core/performer --go_opt=paths=source_relative --go-grpc_out=./core/performer --go-grpc_opt=paths=source_relative -I ../../proto performer.proto

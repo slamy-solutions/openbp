@@ -4,6 +4,7 @@ import { NamespaceAPI } from './namespace'
 import { AccessControlAPI } from './accessControl'
 import { IoTAPI } from './iot'
 import { MeAPI } from './me'
+import { CRMAPI } from './crm'
 
 export interface API {
     login: LoginAPI,
@@ -12,6 +13,7 @@ export interface API {
     accessControl: AccessControlAPI
     iot: IoTAPI
     me: MeAPI
+    crm: CRMAPI
 }
 
 export const api = {
@@ -20,7 +22,8 @@ export const api = {
     namespace: new NamespaceAPI(),
     accessControl: new AccessControlAPI(),
     iot: new IoTAPI(),
-    me: new MeAPI()
+    me: new MeAPI(),
+    crm: new CRMAPI(),
 } as API
 
 export default api 

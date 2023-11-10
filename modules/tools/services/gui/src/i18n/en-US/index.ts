@@ -13,6 +13,10 @@ export default {
         iot: {
           name: "IoT",
           description: ""
+        },
+        crm: {
+          name: "CRM",
+          description: ""
         }
       }
     },
@@ -773,6 +777,33 @@ export default {
           deleteOperationNotify: 'Trying to disable password login ...',
           deleteSuccessNotify: 'Successfully disabled password login',
           deleteFailNotify: 'Failed to disable password login. Error: {error}',
+        }
+      }
+    },
+    crm: {
+      settings: {
+        backend: {
+          title: 'Backend',
+          caption: 'Select backend that will be used to store CRM data',
+          backendSelect: 'Backend',
+          native: {
+            title: 'Native',
+            caption: 'This backend will store data inside OpenBP database. This is the default backend and it is recommended to use it if you dont have any specific requirements.',
+          },
+          onec: {
+            title: '1C',
+            caption: 'This backend will store data inside 1C server.',
+
+            urlInput: '1C server URL',
+            tokenInput: '1C server access token',
+            checkConnectionButton: 'Check connection',
+            connectionValid: 'Connection is valid. 1C server identified and responded with successfull status code.',
+          },
+          loadSettingsFailNotify: 'Failed to load CRM settings. Error: {error}',
+          updateButton: 'Update',
+          updateOperationNotify: 'Trying to update CRM settings ...',
+          updateSuccessNotify: 'Successfully updated CRM settings',
+          updateFailNotify: 'Failed to update CRM settings. Error: {error}',
         }
       }
     }

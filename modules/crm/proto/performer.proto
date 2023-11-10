@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package crm_performer;
+
+option go_package = "slamy/openBP/crm/performer;crm_performer_grpc";
+
+/*
+type Performer struct {
+	Namespace       string `json:"namespace"`
+	UUID            string `json:"uuid"`
+	DeparatmentUUID string `json:"departmentUUID"`
+
+	// Associated native_iam_user UUID
+	UserUUID string `json:"userUUID"`
+
+	// Name extracted from user public name
+	Name string `json:"name"`
+	// AvatarURL extracted from user
+	AvatarURL string `json:"avatarURL"`
+}
+*/
+
+message Performer {
+    string namespace = 1;
+    string UUID = 2;
+    string departmentUUID = 3;
+    string userUUID = 4;
+
+    string name = 5;
+    string avatar_url = 6;
+}
+
+message CreatePerformerRequest {
+	string namespace = 1;
+	string departmentUUID = 2;
+	string userUUID = 3;
+}
+message CreatePerformerResponse {
+	Performer performer = 1;
+}
+
+message GetPerformerRequest {
+	string namespace = 1;
+	string UUID = 2;
+	bool useCache = 3;
+}
+message GetPerformerResponse {
+	Performer performer = 1;
+}
+
+message UpdatePerformerRequest {
+	string namespace = 1;
+	string UUID = 2;
+	string departmentUUID = 3;
+}
+message UpdatePerformerResponse {
+	Performer performer = 1;
+}
+
+message DeletePerformerRequest {
+	string namespace = 1;
+	string UUID = 2;
+}
+message DeletePerformerResponse {
+	Performer performer = 1;
+}
+
+message ListPerformersRequest {
+	string namespace = 1;
+	bool useCache = 2;
+}
+message ListPerformersResponse {
+	repeated Performer performers = 1;
+}
+
+service PerformerService {
+	rpc Create(CreatePerformerRequest) returns (CreatePerformerResponse);
+	rpc Get(GetPerformerRequest) returns (GetPerformerResponse);
+	rpc Update(UpdatePerformerRequest) returns (UpdatePerformerResponse);
+	rpc Delete(DeletePerformerRequest) returns (DeletePerformerResponse);
+	rpc List(ListPerformersRequest) returns (ListPerformersResponse);
+}
