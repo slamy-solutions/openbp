@@ -140,6 +140,23 @@ services:
     ports:
       - "127.0.0.1:28252:80"
 
+  native_storage:
+    container_name: native_storage
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/iam/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_storage"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - system_nats
+    ports:
+      - "127.0.0.1:28253:80" # For testing
+
   # --- Tools module
   tools_rest:
     image: openbp/obp-tools-rest:${OPENBP_VERSION:-latest}

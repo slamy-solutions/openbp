@@ -15,6 +15,8 @@ import (
 	iamToken "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
 	"github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
+	storageBucket "github.com/slamy-solutions/openbp/modules/native/libs/golang/storage/bucket"
+	storageFS "github.com/slamy-solutions/openbp/modules/native/libs/golang/storage/fs"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
@@ -85,5 +87,18 @@ func NewIAMConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn
 		Policy:   iamPolicy.NewIAMPolicyServiceClient(dial),
 		Role:     iamRole.NewIAMRoleServiceClient(dial),
 		Token:    iamToken.NewIAMTokenServiceClient(dial),
+	}, nil
+}
+
+// Connect to Storage service
+func NewStorageConnection(address string, opts ...grpc.DialOption) (*grpc.ClientConn, *StorageService, error) {
+	dial, err := makeGrpcDial(address, opts...)
+	if err != nil {
+		return nil, nil, errors.New("failed to connect to service: " + err.Error())
+	}
+
+	return dial, &StorageService{
+		Bucket: storageBucket.NewBucketServiceClient(dial),
+		FS:     storageFS.NewFSServiceClient(dial),
 	}, nil
 }

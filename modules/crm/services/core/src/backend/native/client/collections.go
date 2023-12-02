@@ -8,7 +8,7 @@ import (
 var clientCollectionName = "crm_native_client"
 var clientContactPersonCollectionName = "crm_native_client_contactperson"
 
-func getClientCollection(systemStub *system.SystemStub, namespace string) *mongo.Collection {
+func GetClientCollection(systemStub *system.SystemStub, namespace string) *mongo.Collection {
 	dbName := "openbp_global"
 	if namespace != "" {
 		dbName = "openbp_" + namespace
@@ -17,7 +17,7 @@ func getClientCollection(systemStub *system.SystemStub, namespace string) *mongo
 	return systemStub.DB.Database(dbName).Collection(clientCollectionName)
 }
 
-func getClientContactPersonCollection(systemStub *system.SystemStub, namespace string) *mongo.Collection {
+func GetClientContactPersonCollection(systemStub *system.SystemStub, namespace string) *mongo.Collection {
 	dbName := "openbp_global"
 	if namespace != "" {
 		dbName = "openbp_" + namespace

@@ -1,4 +1,4 @@
-go 1.21.0
+go 1.21.4
 
 use (
 	./modules/crm/libs/golang
@@ -12,6 +12,7 @@ use (
 	./modules/native/services/iam
 	./modules/native/services/keyvaluestorage
 	./modules/native/services/namespace
+	./modules/native/services/storage
 	./modules/native/testing
 	./modules/runtime/libs/golang
 	./modules/runtime/services/manager

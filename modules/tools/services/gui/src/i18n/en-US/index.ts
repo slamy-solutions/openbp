@@ -781,29 +781,64 @@ export default {
       }
     },
     crm: {
-      settings: {
-        backend: {
-          title: 'Backend',
-          caption: 'Select backend that will be used to store CRM data',
-          backendSelect: 'Backend',
-          native: {
-            title: 'Native',
-            caption: 'This backend will store data inside OpenBP database. This is the default backend and it is recommended to use it if you dont have any specific requirements.',
+      adminer: {
+        dashboard: {
+          backend: "Backend",
+          loadSettingsFailNotify: "Failed to load CRM settings. Error: {error}",
+        },
+        settings: {
+          backend: {
+            title: 'Backend',
+            caption: 'Select backend that will be used to store CRM data',
+            backendSelect: 'Backend',
+            native: {
+              title: 'Native',
+              caption: 'This backend will store data inside OpenBP database. This is the default backend and it is recommended to use it if you dont have any specific requirements.',
+            },
+            onec: {
+              title: '1C',
+              caption: 'This backend will store data inside 1C server.',
+
+              urlInput: '1C server URL',
+              tokenInput: '1C server access token',
+              checkConnectionButton: 'Check connection',
+              connectionValid: 'Connection is valid. 1C server identified and responded with successfull status code.',
+            },
+            loadSettingsFailNotify: 'Failed to load CRM settings. Error: {error}',
+            updateButton: 'Update',
+            updateOperationNotify: 'Trying to update CRM settings ...',
+            updateSuccessNotify: 'Successfully updated CRM settings',
+            updateFailNotify: 'Failed to update CRM settings. Error: {error}',
           },
           onec: {
-            title: '1C',
-            caption: 'This backend will store data inside 1C server.',
+            sync: {
+              table: {
+                header: "Sync event log",
+                noData: "There are no sync events yet. Press 'Sync Now' button to start sync process.",
+                failedToLoad: "Failed to load sync events list: {error}",
+                syncNowButton: "Sync Now",
+                timestampColumn: "Timestamp",
+                successColumn: "Success",
+                errorMessageColumn: "Error message",
 
-            urlInput: '1C server URL',
-            tokenInput: '1C server access token',
-            checkConnectionButton: 'Check connection',
-            connectionValid: 'Connection is valid. 1C server identified and responded with successfull status code.',
-          },
-          loadSettingsFailNotify: 'Failed to load CRM settings. Error: {error}',
-          updateButton: 'Update',
-          updateOperationNotify: 'Trying to update CRM settings ...',
-          updateSuccessNotify: 'Successfully updated CRM settings',
-          updateFailNotify: 'Failed to update CRM settings. Error: {error}',
+                syncOperationNotify: "Trying to sync data with 1C server ...",
+                syncSuccessNotify: "Successfully synced data with 1C server",
+                syncFailNotify: "Failed to sync data with 1C server. Error: {error}",
+
+                loadOperationNotify: "Trying to load sync events list ...",
+                loadFailNotify: "Failed to load sync events list. Error: {error}"
+              },
+
+              eventView: {
+                title: "Sync event",
+                caption: "Details of the syync event",
+
+                timestamp: "Timestamp",
+                success: "Success",
+                errorMessage: "Error message",
+              }
+            }
+          }
         }
       }
     }

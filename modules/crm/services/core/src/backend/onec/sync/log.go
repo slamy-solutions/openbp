@@ -76,7 +76,7 @@ func getSyncLog(ctx context.Context, systemStub *system.SystemStub, namespace st
 		opts.SetLimit(int64(limit))
 	}
 
-	cursor, err := syncLogCollection.Find(ctx, nil, opts)
+	cursor, err := syncLogCollection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -87,7 +87,7 @@ func getSyncLog(ctx context.Context, systemStub *system.SystemStub, namespace st
 		return nil, 0, err
 	}
 
-	total, err := syncLogCollection.CountDocuments(ctx, nil)
+	total, err := syncLogCollection.CountDocuments(ctx, bson.M{})
 	if err != nil {
 		return nil, 0, err
 	}

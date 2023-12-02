@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -14,8 +13,10 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	clientGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
+	departmentGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/department"
 	onecSyncGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
 	performerGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
+	projectRGPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/project"
 	settingsRGPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/settings"
 
 	"github.com/slamy-solutions/openbp/modules/crm/services/core/src/backend"
@@ -91,7 +92,13 @@ func main() {
 	onecService := services.NewOneCSyncServer(onecSyncEngine, logger.With(slog.String("service", "onec_sync")))
 	onecSyncGRPC.RegisterOneCSyncServiceServer(grpcServer, onecService)
 
-	fmt.Println("Start listening for gRPC connections")
+	departmentService := services.NewDepartmentServer(backendFactory, logger.With(slog.String("service", "department")))
+	departmentGRPC.RegisterDepartmentServiceServer(grpcServer, departmentService)
+
+	projectService := services.NewProjectServer(backendFactory, logger.With(slog.String("service", "project")))
+	projectRGPC.RegisterProjectServiceServer(grpcServer, projectService)
+
+	logger.Info("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
 		panic(err)

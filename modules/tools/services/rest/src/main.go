@@ -51,7 +51,7 @@ func main() {
 	}
 	defer systemStub.Close(context.Background())
 
-	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService())
+	nativeStub := native.NewNativeStub(native.NewStubConfig().WithNamespaceService().WithIAMService().WithStorageService())
 	err = nativeStub.Connect()
 	if err != nil {
 		panic(err)

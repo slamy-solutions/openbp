@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package crm_department;
+
+option go_package = "slamy/openBP/crm/department;crm_department_grpc";
+
+message Project {
+    // Namespace where project is located
+    string namespace = 1;
+    // Unique identifier of the project
+    string uuid = 2;
+    // Human-readable name 
+    string name = 4;
+
+    // Unique identifier of the client
+    string clientUUID = 5;
+    // Unique identifier of the client contact person 
+    string contactUUID = 6;
+    // Unique identifier of the department responsible for the project
+    string departmentUUID = 7;
+
+    // If this project still relevant or not
+    bool notRelevant = 8;
+}
+
+message CreateProjectRequest {
+    string namespace = 1;
+    string name = 2;
+    string clientUUID = 3;
+    string contactUUID = 4;
+    string departmentUUID = 5;
+}
+message CreateProjectResponse {
+    Project project = 1;
+}
+
+message GetProjectRequest {
+    string namespace = 1;
+    string uuid = 2;
+    bool useCache = 3;
+}
+message GetProjectResponse {
+    Project project = 1;
+}
+
+message GetAllProjectsRequest {
+    string namespace = 1;
+    string clientUUID = 2;
+    string departmentUUID = 3;
+    bool useCache = 4;
+}
+message GetAllProjectsResponse {
+    repeated Project projects = 1;
+}
+
+message UpdateProjectRequest {
+    string namespace = 1;
+    string uuid = 2;
+    string name = 3;
+    string clientUUID = 4;
+    string contactUUID = 5;
+    string departmentUUID = 6;
+    bool notRelevant = 7;
+}
+message UpdateProjectResponse {
+    Project project = 1;
+}
+
+message DeleteProjectRequest {
+    string namespace = 1;
+    string uuid = 2;
+}
+message DeleteProjectResponse {
+    Project project = 1;
+}
+
+service ProjectService {
+    rpc Create(CreateProjectRequest) returns (CreateProjectResponse) {}
+    rpc Get(GetProjectRequest) returns (GetProjectResponse) {}
+    rpc GetAll(GetAllProjectsRequest) returns (GetAllProjectsResponse) {}
+    rpc Update(UpdateProjectRequest) returns (UpdateProjectResponse) {}
+    rpc Delete(DeleteProjectRequest) returns (DeleteProjectResponse) {}
+}

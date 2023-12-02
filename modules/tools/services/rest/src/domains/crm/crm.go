@@ -29,4 +29,18 @@ func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *s
 	onecSyncRouter := onecsyncRouter{nativeStub: nativeStub, crmStub: crmStub, logger: logger.WithField("domain.service", "onec_sync")}
 	group.POST("/onec/sync/now", onecSyncRouter.syncNow)
 	group.GET("/onec/sync/log", onecSyncRouter.getLog)
+
+	projectRouter := projectRouter{crmStub: crmStub, nativeStub: nativeStub, logger: logger.WithField("domain.service", "project")}
+	group.POST("/projects/project", projectRouter.createProject)
+	group.GET("/projects", projectRouter.getProjects)
+	group.GET("/projects/project", projectRouter.getProject)
+	group.PATCH("/projects/project", projectRouter.updateProject)
+	group.DELETE("/projects/project", projectRouter.deleteProject)
+
+	departmentRouter := departmentRouter{crmStub: crmStub, nativeStub: nativeStub, logger: logger.WithField("domain.service", "department")}
+	group.POST("/departments/department", departmentRouter.createDepartment)
+	group.GET("/departments", departmentRouter.getDepartments)
+	group.GET("/departments/department", departmentRouter.getDepartment)
+	group.PATCH("/departments/department", departmentRouter.updateDepartment)
+	group.DELETE("/departments/department", departmentRouter.deleteDepartment)
 }

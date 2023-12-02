@@ -15,6 +15,7 @@ services:
       - system_db
       - system_cache
       - system_telemetry
+      - system_nats
     ports:
       - "127.0.0.1:28250:80" # For testing
 
@@ -52,3 +53,20 @@ services:
       - native_namespace
     ports:
       - "127.0.0.1:28252:80" # For testing
+
+  native_storage:
+    container_name: native_storage
+    restart: always
+    build:
+      context: .
+      dockerfile: modules/native/services/storage/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "system_telemetry:55680"
+      OTEL_SERVICE_NAME: "native_storage"
+    depends_on:
+      - system_db
+      - system_cache
+      - system_telemetry
+      - system_nats
+    ports:
+      - "127.0.0.1:28253:80" # For testing

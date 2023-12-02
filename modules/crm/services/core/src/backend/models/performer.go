@@ -8,9 +8,9 @@ import (
 )
 
 type Performer struct {
-	Namespace       string `json:"namespace"`
-	UUID            string `json:"uuid"`
-	DeparatmentUUID string `json:"departmentUUID"`
+	Namespace      string `json:"namespace"`
+	UUID           string `json:"uuid"`
+	DepartmentUUID string `json:"departmentUUID"`
 
 	// Associated native_iam_user UUID
 	UserUUID string `json:"userUUID"`
@@ -23,6 +23,7 @@ type Performer struct {
 
 var ErrPerformerNotFound = errors.New("perofrmer not found")
 var ErrPerformerAlreadyExists = errors.New("perofrmer already exists. Use diferrent user to create performer")
+var ErrPerformerUUIDInvalid = errors.New("perofrmer uuid is invalid")
 
 var ErrPerformerBadDepartmentUUID = errors.New("bad department UUID")
 var ErrPerformerBadUserUUID = errors.New("bad user UUID")
@@ -40,7 +41,7 @@ func (p *Performer) ToGRPC() *performer.Performer {
 	return &performer.Performer{
 		UUID:           p.UUID,
 		Namespace:      p.Namespace,
-		DepartmentUUID: p.DeparatmentUUID,
+		DepartmentUUID: p.DepartmentUUID,
 		UserUUID:       p.UserUUID,
 		Name:           p.Name,
 		AvatarUrl:      p.AvatarURL,

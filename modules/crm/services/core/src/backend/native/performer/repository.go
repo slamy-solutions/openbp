@@ -59,11 +59,11 @@ func (r *PerformerRepository) Create(ctx context.Context, departmentUUID string,
 		return nil, err
 	}
 
-	performer := performerInMongo{
+	performer := PerformerInMongo{
 		DepartmentUUID: departmentUUIDObject,
 		UserUUID:       userUUIDObject,
 	}
-	insertResult, err := getPerformerCollection(r.systemStub, r.namespace).InsertOne(ctx, performer)
+	insertResult, err := GetPerformerCollection(r.systemStub, r.namespace).InsertOne(ctx, performer)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return nil, models.ErrPerformerAlreadyExists
@@ -75,12 +75,12 @@ func (r *PerformerRepository) Create(ctx context.Context, departmentUUID string,
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            insertResult.InsertedID.(primitive.ObjectID).Hex(),
-		DeparatmentUUID: departmentUUID,
-		UserUUID:        userUUID,
-		Name:            userResponse.User.FullName,
-		AvatarURL:       userResponse.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           insertResult.InsertedID.(primitive.ObjectID).Hex(),
+		DepartmentUUID: departmentUUID,
+		UserUUID:       userUUID,
+		Name:           userResponse.User.FullName,
+		AvatarURL:      userResponse.User.Avatar,
 	}, nil
 }
 func (r *PerformerRepository) Get(ctx context.Context, uuid string, useCache bool) (*models.Performer, error) {
@@ -89,8 +89,8 @@ func (r *PerformerRepository) Get(ctx context.Context, uuid string, useCache boo
 		return nil, models.ErrPerformerNotFound
 	}
 
-	performer := performerInMongo{}
-	err = getPerformerCollection(r.systemStub, r.namespace).FindOne(ctx, bson.M{"_id": performerUUIDObject}).Decode(&performer)
+	performer := PerformerInMongo{}
+	err = GetPerformerCollection(r.systemStub, r.namespace).FindOne(ctx, bson.M{"_id": performerUUIDObject}).Decode(&performer)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, models.ErrPerformerNotFound
@@ -117,18 +117,18 @@ func (r *PerformerRepository) Get(ctx context.Context, uuid string, useCache boo
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            performer.UUID.Hex(),
-		DeparatmentUUID: performer.DepartmentUUID.Hex(),
-		UserUUID:        performer.UserUUID.Hex(),
-		Name:            userResponse.User.FullName,
-		AvatarURL:       userResponse.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           performer.UUID.Hex(),
+		DepartmentUUID: performer.DepartmentUUID.Hex(),
+		UserUUID:       performer.UserUUID.Hex(),
+		Name:           userResponse.User.FullName,
+		AvatarURL:      userResponse.User.Avatar,
 	}, nil
 
 }
 func (r *PerformerRepository) GetAll(ctx context.Context, useCache bool) ([]models.Performer, error) {
-	performers := []performerInMongo{}
-	cursor, err := getPerformerCollection(r.systemStub, r.namespace).Find(ctx, bson.M{})
+	performers := []PerformerInMongo{}
+	cursor, err := GetPerformerCollection(r.systemStub, r.namespace).Find(ctx, bson.M{})
 	if err != nil {
 		err = errors.Join(errors.New("failed to get performers"), err)
 		r.logger.Error(err.Error())
@@ -162,12 +162,12 @@ func (r *PerformerRepository) GetAll(ctx context.Context, useCache bool) ([]mode
 		}
 
 		performersResponse[i] = models.Performer{
-			Namespace:       r.namespace,
-			UUID:            performer.UUID.Hex(),
-			DeparatmentUUID: performer.DepartmentUUID.Hex(),
-			UserUUID:        performer.UserUUID.Hex(),
-			Name:            userResponse.User.FullName,
-			AvatarURL:       userResponse.User.Avatar,
+			Namespace:      r.namespace,
+			UUID:           performer.UUID.Hex(),
+			DepartmentUUID: performer.DepartmentUUID.Hex(),
+			UserUUID:       performer.UserUUID.Hex(),
+			Name:           userResponse.User.FullName,
+			AvatarURL:      userResponse.User.Avatar,
 		}
 	}
 
@@ -184,8 +184,8 @@ func (r *PerformerRepository) Update(ctx context.Context, uuid string, departmen
 		return nil, models.ErrPerformerBadDepartmentUUID
 	}
 
-	performer := performerInMongo{}
-	err = getPerformerCollection(r.systemStub, r.namespace).FindOneAndUpdate(ctx, bson.M{"_id": performerUUIDObject}, bson.M{"$set": bson.M{"departmentUUID": departmentUUIDObject}}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&performer)
+	performer := PerformerInMongo{}
+	err = GetPerformerCollection(r.systemStub, r.namespace).FindOneAndUpdate(ctx, bson.M{"_id": performerUUIDObject}, bson.M{"$set": bson.M{"departmentUUID": departmentUUIDObject}}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&performer)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, models.ErrPerformerNotFound
@@ -212,12 +212,12 @@ func (r *PerformerRepository) Update(ctx context.Context, uuid string, departmen
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            performer.UUID.Hex(),
-		DeparatmentUUID: performer.DepartmentUUID.Hex(),
-		UserUUID:        performer.UserUUID.Hex(),
-		Name:            userResponse.User.FullName,
-		AvatarURL:       userResponse.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           performer.UUID.Hex(),
+		DepartmentUUID: performer.DepartmentUUID.Hex(),
+		UserUUID:       performer.UserUUID.Hex(),
+		Name:           userResponse.User.FullName,
+		AvatarURL:      userResponse.User.Avatar,
 	}, nil
 
 }
@@ -227,8 +227,8 @@ func (r *PerformerRepository) Delete(ctx context.Context, uuid string) (*models.
 		return nil, models.ErrPerformerNotFound
 	}
 
-	performer := performerInMongo{}
-	err = getPerformerCollection(r.systemStub, r.namespace).FindOneAndDelete(ctx, bson.M{"_id": performerUUIDObject}).Decode(&performer)
+	performer := PerformerInMongo{}
+	err = GetPerformerCollection(r.systemStub, r.namespace).FindOneAndDelete(ctx, bson.M{"_id": performerUUIDObject}).Decode(&performer)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, models.ErrPerformerNotFound
@@ -255,11 +255,11 @@ func (r *PerformerRepository) Delete(ctx context.Context, uuid string) (*models.
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            performer.UUID.Hex(),
-		DeparatmentUUID: performer.DepartmentUUID.Hex(),
-		UserUUID:        performer.UserUUID.Hex(),
-		Name:            userResponse.User.FullName,
-		AvatarURL:       userResponse.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           performer.UUID.Hex(),
+		DepartmentUUID: performer.DepartmentUUID.Hex(),
+		UserUUID:       performer.UserUUID.Hex(),
+		Name:           userResponse.User.FullName,
+		AvatarURL:      userResponse.User.Avatar,
 	}, nil
 }

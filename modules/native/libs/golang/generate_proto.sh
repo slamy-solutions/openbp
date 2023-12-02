@@ -49,3 +49,12 @@ protoc --go_out=./iam/authentication/oauth2 --go_opt=paths=source_relative --go-
 echo "Generating proto for iam_actor_user service"
 mkdir -p ./iam/actor/user
 protoc --go_out=./iam/actor/user --go_opt=paths=source_relative --go-grpc_out=./iam/actor/user --go-grpc_opt=paths=source_relative -I ../../proto/iam/actor user.proto
+
+# storage_bucket
+echo "Generating proto for storage_bucket service"
+mkdir -p ./storage/bucket
+protoc --go_out=./storage/bucket --go_opt=paths=source_relative --go-grpc_out=./storage/bucket --go-grpc_opt=paths=source_relative -I ../../proto/storage bucket.proto
+# storage_fs
+echo "Generating proto for storage_fs service"
+mkdir -p ./storage/fs
+protoc --go_out=./storage/fs --go_opt=paths=source_relative --go-grpc_out=./storage/fs --go-grpc_opt=paths=source_relative -I ../../proto/storage fs.proto

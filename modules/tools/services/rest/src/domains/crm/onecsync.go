@@ -87,9 +87,9 @@ func (r *onecsyncRouter) syncNow(ctx *gin.Context) {
 }
 
 type oneCSyncGetLogRequest struct {
-	Namespace string `json:"namespace"`
-	Skip      int32  `json:"skip" binding:"gte=0"`
-	Limit     int32  `json:"limit" binding:"gte=0,lte=100"`
+	Namespace string `form:"namespace"`
+	Skip      int32  `form:"skip" binding:"gte=0"`
+	Limit     int32  `form:"limit" binding:"gte=0,lte=100"`
 }
 type oneCSyncGetLogResponse struct {
 	Events     []formatedOneCSyncLogEvent `json:"events"`
@@ -98,7 +98,7 @@ type oneCSyncGetLogResponse struct {
 
 func (r *onecsyncRouter) getLog(ctx *gin.Context) {
 	var request oneCSyncGetLogRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
+	if err := ctx.ShouldBind(&request); err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}

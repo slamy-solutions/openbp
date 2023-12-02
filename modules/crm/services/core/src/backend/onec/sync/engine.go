@@ -67,6 +67,7 @@ func (e *syncEngine) Stop() {
 }
 
 func (e *syncEngine) syncWorker() {
+	e.logger.Info("Sync worker started")
 	defer e.syncWorkerWaiter.Done()
 	for {
 		select {
@@ -109,6 +110,10 @@ func (e *syncEngine) SyncAllNow(ctx context.Context) error {
 		if err != nil {
 			e.logger.Error(err.Error())
 		}
+	}
+	err = e.SyncNow(ctx, "")
+	if err != nil {
+		e.logger.Error(err.Error())
 	}
 
 	return nil

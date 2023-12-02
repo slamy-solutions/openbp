@@ -1,8 +1,8 @@
 <template>
     <q-card flat bordered class="bg-transparent">
         <q-card-section>
-            <div class="text-h6">{{ $t('modules.crm.settings.backend.title') }}</div>
-            <div class="text-caption">{{ $t('modules.crm.settings.backend.caption') }}</div> 
+            <div class="text-h6">{{ $t('modules.crm.adminer.settings.backend.title') }}</div>
+            <div class="text-caption">{{ $t('modules.crm.adminer.settings.backend.caption') }}</div> 
         </q-card-section>
 
         <q-card-section v-if="loading">
@@ -10,26 +10,26 @@
         </q-card-section>
 
         <q-card-section v-if="!loading">
-            <q-select filled  v-model="backend" class="fit" :label="$t('modules.crm.settings.backend.backendSelect')" :options="['NATIVE', 'ONE_C']" :disable="updating" @update:model-value="settingsModifiedByUser" />
+            <q-select filled  v-model="backend" class="fit" :label="$t('modules.crm.adminer.settings.backend.backendSelect')" :options="['NATIVE', 'ONE_C']" :disable="updating" @update:model-value="settingsModifiedByUser" />
         </q-card-section>
 
         <q-card-section v-if="!loading && backend == 'NATIVE'">
-            <div>{{ $t('modules.crm.settings.backend.native.caption') }}</div>
+            <div>{{ $t('modules.crm.adminer.settings.backend.native.caption') }}</div>
         </q-card-section>
 
         <q-card-section v-if="!loading && backend == 'ONE_C'">
-            <div>{{ $t('modules.crm.settings.backend.onec.caption') }}</div>
+            <div>{{ $t('modules.crm.adminer.settings.backend.onec.caption') }}</div>
         </q-card-section>
         <q-card-section v-if="!loading && backend == 'ONE_C'" class="q-gutter-sm">
-            <q-input class="fit q-mr-md" filled v-model="backendURL" :label="$t('modules.crm.settings.backend.onec.urlInput')" :disabled="updating" @update:model-value="settingsModifiedByUser" />
-            <q-input class="fit" filled v-model="backendToken" type="password" :label="$t('modules.crm.settings.backend.onec.tokenInput')" :disabled="updating" @update:model-value="settingsModifiedByUser" />
-            <q-btn class="fit" v-if="!oneCConnectionValid" outline @click="checkOneCConnection" :label="$t('modules.crm.settings.backend.onec.checkConnectionButton')" :disable="updating"></q-btn>
+            <q-input class="fit q-mr-md" filled v-model="backendURL" :label="$t('modules.crm.adminer.settings.backend.onec.urlInput')" :disabled="updating" @update:model-value="settingsModifiedByUser" />
+            <q-input class="fit" filled v-model="backendToken" type="password" :label="$t('modules.crm.adminer.settings.backend.onec.tokenInput')" :disabled="updating" @update:model-value="settingsModifiedByUser" />
+            <q-btn class="fit" v-if="!oneCConnectionValid" outline @click="checkOneCConnection" :label="$t('modules.crm.adminer.settings.backend.onec.checkConnectionButton')" :disable="updating"></q-btn>
             <div v-if="oneCConnectionError != '' && !oneCConnectionValid" class="text-negative text-center text-bold">{{ `[${oneCConnectionStatusCode}]: ${oneCConnectionError}` }}</div>
-            <div v-if="oneCConnectionError != '' && oneCConnectionValid" class="text-positive text-center">{{ $t('modules.crm.settings.backend.onec.connectionValid') }}</div>
+            <div v-if="oneCConnectionError != '' && oneCConnectionValid" class="text-positive text-center">{{ $t('modules.crm.adminer.settings.backend.onec.connectionValid') }}</div>
         </q-card-section>
 
         <q-card-actions v-if="settingsModified && (backend !== 'ONE_C' || oneCConnectionValid)">
-            <q-btn outline @click="updateSettings" class="fit q-ml-sm" :disabled="updating" :loading="updating" :label="$t('modules.crm.settings.backend.updateButton')" />
+            <q-btn outline @click="updateSettings" class="fit q-ml-sm" :disabled="updating" :loading="updating" :label="$t('modules.crm.adminer.settings.backend.updateButton')" />
         </q-card-actions>
     </q-card>
 </template>
@@ -38,8 +38,8 @@
 import { useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { onMounted, ref } from 'vue';
-import { BackendType } from '../../../boot/api/crm/settings'
-import { api } from '../../../boot/api'
+import { BackendType } from '../../../../boot/api/crm/settings'
+import { api } from '../../../../boot/api'
 
 const props = defineProps<{
     namespaceName: string
@@ -72,7 +72,7 @@ async function loadSettings() {
     } catch (error) {
         $q.notify({
             type: 'negative',
-            message: $i18n.t('modules.crm.settings.backend.loadSettingsFailNotify', { error }),
+            message: $i18n.t('modules.crm.adminer.settings.backend.loadSettingsFailNotify', { error }),
             timeout: 5000
         })
         console.error(error)
@@ -85,7 +85,7 @@ async function updateSettings() {
     updating.value = true
     const notif = $q.notify({
         type: 'ongoing',
-        message: $i18n.t('modules.crm.settings.backend.updateOperationNotify'),
+        message: $i18n.t('modules.crm.adminer.settings.backend.updateOperationNotify'),
     })
 
     try {
@@ -99,14 +99,14 @@ async function updateSettings() {
         })
         notif({
             type: 'positive',
-            message: $i18n.t('modules.crm.settings.backend.updateSuccessNotify'),
+            message: $i18n.t('modules.crm.adminer.settings.backend.updateSuccessNotify'),
             timeout: 5000
         })
         settingsModified.value = false
     } catch (error) {
         notif({
             type: 'negative',
-            message: $i18n.t('modules.crm.settings.backend.updateFailNotify', { error }),
+            message: $i18n.t('modules.crm.adminer.settings.backend.updateFailNotify', { error }),
             timeout: 5000
         })
         console.error(error)

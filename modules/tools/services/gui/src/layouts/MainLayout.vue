@@ -93,8 +93,8 @@ const modules = [
   {
     name: 'layout.main.modules.crm.name',
     description: 'layout.main.modules.crm.description',
-    routerPathName: 'crm_settings',
-    icon: 'fa-solid fa-cog',
+    routerPathName: 'crm_adminer_dashboard',
+    icon: 'support_agent',
     activePrefix: 'crm'
   }
 ] as ModuleInfo[]

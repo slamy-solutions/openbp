@@ -36,3 +36,14 @@ services:
       - native_namespace
     networks:
       - internal
+
+  native_storage:
+    image: openbp/obp-native-storage:${OPENBP_VERSION:-latest}
+    container_name: native_storage
+    restart: always
+    depends_on:
+      - system_db
+      - system_cache
+      - system_nats
+    networks:
+      - internal

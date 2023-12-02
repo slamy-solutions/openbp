@@ -116,12 +116,12 @@ func (r *PerformerRepository) Create(ctx context.Context, departmentUUID string,
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            createdPerformer.UUID,
-		DeparatmentUUID: departmentUUID,
-		UserUUID:        userUUID,
-		Name:            userData.User.FullName,
-		AvatarURL:       userData.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           createdPerformer.UUID,
+		DepartmentUUID: departmentUUID,
+		UserUUID:       userUUID,
+		Name:           userData.User.FullName,
+		AvatarURL:      userData.User.Avatar,
 	}, nil
 }
 func (r *PerformerRepository) Get(ctx context.Context, uuid string, useCache bool) (*models.Performer, error) {
@@ -156,12 +156,12 @@ func (r *PerformerRepository) Get(ctx context.Context, uuid string, useCache boo
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            performer.UUID,
-		DeparatmentUUID: performer.DepartmentUUID,
-		UserUUID:        performer.UserUUID,
-		Name:            userResponse.User.FullName,
-		AvatarURL:       userResponse.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           performer.UUID,
+		DepartmentUUID: performer.DepartmentUUID,
+		UserUUID:       performer.UserUUID,
+		Name:           userResponse.User.FullName,
+		AvatarURL:      userResponse.User.Avatar,
 	}, nil
 }
 func (r *PerformerRepository) GetAll(ctx context.Context, useCache bool) ([]models.Performer, error) {
@@ -202,12 +202,12 @@ func (r *PerformerRepository) GetAll(ctx context.Context, useCache bool) ([]mode
 		}
 
 		performers = append(performers, models.Performer{
-			Namespace:       r.namespace,
-			UUID:            performer.UUID,
-			DeparatmentUUID: performer.DepartmentUUID,
-			UserUUID:        performer.UserUUID,
-			Name:            userResponse.User.FullName,
-			AvatarURL:       userResponse.User.Avatar,
+			Namespace:      r.namespace,
+			UUID:           performer.UUID,
+			DepartmentUUID: performer.DepartmentUUID,
+			UserUUID:       performer.UserUUID,
+			Name:           userResponse.User.FullName,
+			AvatarURL:      userResponse.User.Avatar,
 		})
 	}
 
@@ -269,12 +269,12 @@ func (r *PerformerRepository) Update(ctx context.Context, uuid string, departmen
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            existingPerformer.UUID,
-		DeparatmentUUID: departmentUUID,
-		UserUUID:        existingPerformer.UserUUID,
-		Name:            userResponse.User.FullName,
-		AvatarURL:       userResponse.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           existingPerformer.UUID,
+		DepartmentUUID: departmentUUID,
+		UserUUID:       existingPerformer.UserUUID,
+		Name:           userResponse.User.FullName,
+		AvatarURL:      userResponse.User.Avatar,
 	}, nil
 }
 func (r *PerformerRepository) Delete(ctx context.Context, uuid string) (*models.Performer, error) {
@@ -329,11 +329,11 @@ func (r *PerformerRepository) Delete(ctx context.Context, uuid string) (*models.
 	}
 
 	return &models.Performer{
-		Namespace:       r.namespace,
-		UUID:            existingPerformer.UUID,
-		DeparatmentUUID: existingPerformer.DepartmentUUID,
-		UserUUID:        existingPerformer.UserUUID,
-		Name:            userResponse.User.FullName,
-		AvatarURL:       userResponse.User.Avatar,
+		Namespace:      r.namespace,
+		UUID:           existingPerformer.UUID,
+		DepartmentUUID: existingPerformer.DepartmentUUID,
+		UserUUID:       existingPerformer.UserUUID,
+		Name:           userResponse.User.FullName,
+		AvatarURL:      userResponse.User.Avatar,
 	}, nil
 }

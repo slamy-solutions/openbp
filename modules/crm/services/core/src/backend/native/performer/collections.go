@@ -7,7 +7,7 @@ import (
 
 var performerCollectionName = "crm_native_performer"
 
-func getPerformerCollection(systemStub *system.SystemStub, namespace string) *mongo.Collection {
+func GetPerformerCollection(systemStub *system.SystemStub, namespace string) *mongo.Collection {
 	dbName := "openbp_global"
 	if namespace != "" {
 		dbName = "openbp_" + namespace

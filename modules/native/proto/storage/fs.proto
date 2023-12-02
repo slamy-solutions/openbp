@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package native_storage_fs;
+
+option go_package = "slamy/openBP/native/storage/fs;native_storage_fs_grpc";
+
+message File {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique identifier of the file
+    string uuid = 2;
+    // Unique full path of the file inside bucket.
+    string path = 3;
+    // Bucket UUID where the file is stored
+    string bucket = 4;
+    // Long random string that can be used by other services to allow user to directly download file (for example making CDN link)
+    string directDownloadSecret = 5;
+
+
+    // Mime type of the file
+    string mimeType = 6;
+    // File size in bytes
+    int64 size = 7;
+
+    // When file was creted
+    google.protobuf.Timestamp _created = 100;
+    // When file was updated last time
+    google.protobuf.Timestamp _updated = 101;
+    // Version of the file. Automatically increases on every update to the file binary data or file information
+    int64 _version = 102;
+}
+
+message CreateFileRequest {
+    // Namespace where the file should be stored
+    string namespace = 1;
+    // Unique full path of the file inside bucket.
+    string path = 2;
+    // Bucket UUID where the file should be stored
+    string bucket = 3;
+    // Mime type of the file
+    string mimeType = 4;
+}
+message CreateFileResponse {
+    File file = 1;
+}
+
+message UploadFileRequest {
+    // Namespace where the file should be stored
+    string namespace = 1;
+    // Unique identifier of the file
+    string uuid = 2;
+    // File binary data
+    bytes dataChunk = 3;
+}
+message UploadFileResponse {
+    File file = 1;
+}
+
+message StatFileRequest {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique identifier of the file
+    string uuid = 2;
+    // If true, file information will be loaded from cache if possible
+    bool useCache = 3;
+}
+message StatFileResponse {
+    File file = 1;
+}
+
+message UpdateFileRequest {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique identifier of the file
+    string uuid = 2;
+    // New file path
+    string path = 3;
+    // New mime type of the file
+    string mimeType = 4;
+}
+message UpdateFileResponse {
+    File file = 1;
+}
+
+message DeleteFileRequest {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique identifier of the file
+    string uuid = 2;
+}
+message DeleteFileResponse {
+    File file = 1;
+}
+
+message ListFilesRequest {
+    // Namespace where the files are stored
+    string namespace = 1;
+    // Bucket UUID where the files are stored
+    string bucket = 2;
+
+    uint32 skip = 3;
+    uint32 limit = 4;
+}
+message ListFilesResponse {
+    File file = 1;
+}
+
+message CountFilesRequest {
+    // Namespace where the files are stored
+    string namespace = 1;
+    // Bucket UUID where the files are stored
+    string bucket = 2;
+}
+message CountFilesResponse {
+    uint32 count = 1;
+}
+
+message DownloadFileRequest {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique identifier of the file
+    string uuid = 2;
+
+    // How much bytes to skip from beginning of the file. 0 means start from beginning
+    uint64 seek = 3;
+    // How much bytes (at most) to read from the file. 0 means read all bytes from seek position
+    uint64 limit = 4;
+}
+message DownloadFileResponse {
+    // File binary data
+    bytes dataChunk = 1;
+}
+
+message DownloadFileByPathRequest {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique full path of the file inside bucket.
+    string path = 2;
+
+    string bucket = 3;
+
+    // How much bytes to skip from beginning of the file. 0 means start from beginning
+    uint64 seek = 4;
+    // How much bytes (at most) to read from the file. 0 means read all bytes from seek position
+    uint64 limit = 5;
+}
+message DownloadFileByPathResponse {
+    // File binary data
+    bytes dataChunk = 1;
+}
+
+message DownloadDirectFileRequest {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique identifier of the file
+    string uuid = 2;
+    // Direct download secret of the file
+    string directDownloadSecret = 3;
+
+    // How much bytes to skip from beginning of the file. 0 means start from beginning
+    uint64 seek = 4;
+    // How much bytes (at most) to read from the file. 0 means read all bytes from seek position
+    uint64 limit = 5;
+}
+message DownloadDirectFileResponse {
+    // File binary data
+    bytes dataChunk = 1;
+}
+
+message DownloadDirectFileByPathRequest {
+    // Namespace where the file is stored
+    string namespace = 1;
+    // Unique full path of the file inside bucket.
+    string path = 2;
+    // Direct download secret of the file
+    string directDownloadSecret = 3;
+
+    string bucket = 4;
+
+    // How much bytes to skip from beginning of the file. 0 means start from beginning
+    uint64 seek = 5;
+    // How much bytes (at most) to read from the file. 0 means read all bytes from seek position
+    uint64 limit = 6;
+}
+message DownloadDirectFileByPathResponse {
+    // File binary data
+    bytes dataChunk = 1;
+}
+
+service FSService {
+    rpc CreateFile(CreateFileRequest) returns (CreateFileResponse) {}
+    rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse) {}
+    rpc StatFile(StatFileRequest) returns (StatFileResponse) {}
+    rpc UpdateFile(UpdateFileRequest) returns (UpdateFileResponse) {}
+    rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse) {}
+    rpc ListFiles(ListFilesRequest) returns (stream ListFilesResponse) {}
+    rpc CountFiles(CountFilesRequest) returns (CountFilesResponse) {}
+
+    rpc Download(DownloadFileRequest) returns (stream DownloadFileResponse) {}
+    rpc DownloadByPath(DownloadFileByPathRequest) returns (stream DownloadFileByPathResponse) {}
+    rpc DownloadDirect(DownloadDirectFileRequest) returns (stream DownloadDirectFileResponse) {}
+    rpc DownloadDirectByPath(DownloadDirectFileByPathRequest) returns (stream DownloadDirectFileByPathResponse) {}
+}

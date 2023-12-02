@@ -8,8 +8,10 @@ import (
 	"google.golang.org/grpc"
 
 	client "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
+	department "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/department"
 	onecsync "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
 	performer "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
+	project "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/project"
 	settings "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/settings"
 )
 
@@ -21,8 +23,10 @@ func getConfigEnv(key string, fallback string) string {
 }
 
 type CoreService struct {
-	Performer performer.PerformerServiceClient
-	Client    client.ClientServiceClient
+	Project    project.ProjectServiceClient
+	Performer  performer.PerformerServiceClient
+	Client     client.ClientServiceClient
+	Department department.DepartmentServiceClient
 
 	Settings settings.SettingsServiceClient
 	OneCSync onecsync.OneCSyncServiceClient

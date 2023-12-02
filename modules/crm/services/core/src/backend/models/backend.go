@@ -23,6 +23,9 @@ type Backend interface {
 
 	ClientRepository() ClientRepository
 	PerformerRepository() PerformerRepository
+	DepartmentRepository() DepartmentRepository
+	ProjectRepository() ProjectRepository
+	KanbanRepository() KanbanRepository
 }
 
 func BackendTypeToGRPC(backendType BackendType) settingsGRPC.BackendType {

@@ -27,7 +27,7 @@ func NewPerformerServer(backend backend.BackendFactory, logger *slog.Logger) *Pe
 }
 
 func (s *PerformerService) Create(ctx context.Context, in *performer.CreatePerformerRequest) (*performer.CreatePerformerResponse, error) {
-	bkd, err := getBackend(ctx, s.backend, in.Namespace, s.logger.With(slog.String("route", "GetAll")))
+	bkd, err := getBackend(ctx, s.backend, in.Namespace, s.logger.With(slog.String("route", "Create")))
 	if err != nil {
 		return nil, err
 	}

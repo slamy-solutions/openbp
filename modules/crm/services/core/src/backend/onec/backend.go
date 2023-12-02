@@ -17,8 +17,10 @@ type OneCBackend struct {
 
 	connector *connector.OneCConnector
 
-	clientRepository    *clientRepository
-	performerRepository performer.PerformerRepository
+	clientRepository     *clientRepository
+	performerRepository  performer.PerformerRepository
+	departmentRepository *departmentRepository
+	projectRepository    *projectRepository
 }
 
 // Factory for OneCBackends. You should use only one factor instance per entire application. Factory makes sure, that backend shares same connections pool between all the servers thus greatly increasing performance.
@@ -39,6 +41,18 @@ func NewOneCBackendFactory(systemStub *system.SystemStub, nativeStub *native.Nat
 
 		backend.performerRepository = performer.NewPerformerRepository(logger.With("repository", "performer"), namespace, systemStub, nativeStub, backend.connector)
 
+		backend.departmentRepository = &departmentRepository{
+			logger:    logger.With("repository", "department"),
+			connector: backend.connector,
+			namespace: namespace,
+		}
+
+		backend.projectRepository = &projectRepository{
+			logger:    logger.With("repository", "project"),
+			connector: backend.connector,
+			namespace: namespace,
+		}
+
 		return &backend
 	}
 }
@@ -53,4 +67,12 @@ func (b *OneCBackend) ClientRepository() models.ClientRepository {
 
 func (b *OneCBackend) PerformerRepository() models.PerformerRepository {
 	return &b.performerRepository
+}
+
+func (b *OneCBackend) DepartmentRepository() models.DepartmentRepository {
+	return b.departmentRepository
+}
+
+func (b *OneCBackend) ProjectRepository() models.ProjectRepository {
+	return b.projectRepository
 }

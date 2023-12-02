@@ -35,6 +35,9 @@ type Client struct {
 var ErrClientNotFound = errors.New("client not found")
 var ErrClientContactPersonNotFound = errors.New("client contact person not found")
 
+var ErrClientUUIDInvalid = errors.New("client uuid is invalid")
+var ErrClientContactPersonUUIDInvalid = errors.New("client contact person uuid is invalid")
+
 type ClientRepository interface {
 	Create(ctx context.Context, name string) (*Client, error)
 	Get(ctx context.Context, uuid string, useCache bool) (*Client, error)

@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ClientRepository struct {
@@ -28,9 +29,9 @@ func NewClientRepository(logger *slog.Logger, namespace string, systemStub *syst
 }
 
 func (r *ClientRepository) Create(ctx context.Context, name string) (*models.Client, error) {
-	collection := getClientCollection(r.systemStub, r.namespace)
+	collection := GetClientCollection(r.systemStub, r.namespace)
 	currentTile := time.Now().UTC()
-	client := &clientInMongo{
+	client := &ClientInMongo{
 		Name:           name,
 		LastUpdateTime: currentTile,
 		CreationTime:   currentTile,
@@ -55,14 +56,14 @@ func (r *ClientRepository) Create(ctx context.Context, name string) (*models.Cli
 	}, nil
 }
 func (r *ClientRepository) Get(ctx context.Context, uuid string, useCache bool) (*models.Client, error) {
-	collection := getClientCollection(r.systemStub, r.namespace)
+	collection := GetClientCollection(r.systemStub, r.namespace)
 
 	clientUUID, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
 		return nil, models.ErrClientNotFound
 	}
 
-	var client clientInMongo
+	var client ClientInMongo
 	err = collection.FindOne(ctx, primitive.M{"_id": clientUUID}).Decode(&client)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -90,7 +91,7 @@ func (r *ClientRepository) Get(ctx context.Context, uuid string, useCache bool) 
 	}, nil
 }
 func (r *ClientRepository) GetAll(ctx context.Context, useCache bool) ([]models.Client, error) {
-	collection := getClientCollection(r.systemStub, r.namespace)
+	collection := GetClientCollection(r.systemStub, r.namespace)
 
 	cursor, err := collection.Find(ctx, primitive.M{})
 	if err != nil {
@@ -104,7 +105,7 @@ func (r *ClientRepository) GetAll(ctx context.Context, useCache bool) ([]models.
 
 	var clients []models.Client
 	for cursor.Next(ctx) {
-		var client clientInMongo
+		var client ClientInMongo
 		err := cursor.Decode(&client)
 		if err != nil {
 			err = errors.Join(errors.New("failed to get clients from the database. failed to decode client"), err)
@@ -131,14 +132,14 @@ func (r *ClientRepository) GetAll(ctx context.Context, useCache bool) ([]models.
 	return clients, nil
 }
 func (r *ClientRepository) Update(ctx context.Context, uuid string, name string) (*models.Client, error) {
-	collection := getClientCollection(r.systemStub, r.namespace)
+	collection := GetClientCollection(r.systemStub, r.namespace)
 
 	clientUUID, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
 		return nil, models.ErrClientNotFound
 	}
 
-	var client clientInMongo
+	var client ClientInMongo
 	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": clientUUID}, primitive.M{
 		"$set":         bson.M{"name": name},
 		"$inc":         bson.M{"version": 1},
@@ -170,7 +171,7 @@ func (r *ClientRepository) Update(ctx context.Context, uuid string, name string)
 	}, nil
 }
 func (r *ClientRepository) Delete(ctx context.Context, uuid string) (*models.Client, error) {
-	collection := getClientCollection(r.systemStub, r.namespace)
+	collection := GetClientCollection(r.systemStub, r.namespace)
 
 	clientUUID, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
@@ -182,7 +183,7 @@ func (r *ClientRepository) Delete(ctx context.Context, uuid string) (*models.Cli
 		return nil, err
 	}
 
-	var client clientInMongo
+	var client ClientInMongo
 	err = collection.FindOneAndDelete(ctx, bson.M{"_id": clientUUID}).Decode(&client)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -206,14 +207,14 @@ func (r *ClientRepository) Delete(ctx context.Context, uuid string) (*models.Cli
 }
 
 func (r *ClientRepository) AddContactPerson(ctx context.Context, clientUUID string, name string, email string, phone []string, comment string) (*models.ContactPerson, error) {
-	collection := getClientContactPersonCollection(r.systemStub, r.namespace)
+	collection := GetClientContactPersonCollection(r.systemStub, r.namespace)
 
 	clientUUIDBson, err := primitive.ObjectIDFromHex(clientUUID)
 	if err != nil {
 		return nil, models.ErrClientNotFound
 	}
 
-	contactPerson := &contactPersonInMongo{
+	contactPerson := &ContactPersonInMongo{
 		ClientUUID:  clientUUIDBson,
 		Name:        name,
 		Email:       email,
@@ -229,21 +230,11 @@ func (r *ClientRepository) AddContactPerson(ctx context.Context, clientUUID stri
 		return nil, err
 	}
 
-	contactPersonUUID := result.InsertedID.(primitive.ObjectID).Hex()
-
-	return &models.ContactPerson{
-		Namespace:   r.namespace,
-		UUID:        contactPersonUUID,
-		ClientUUID:  clientUUID,
-		Name:        name,
-		Email:       email,
-		Phone:       phone,
-		NotRelevant: false,
-		Comment:     comment,
-	}, nil
+	contactPerson.UUID = result.InsertedID.(primitive.ObjectID)
+	return contactPerson.ToBackendModel(r.namespace), nil
 }
 func (r *ClientRepository) UpdateContactPerson(ctx context.Context, clientUUID string, contactPersonUUID string, name string, email string, phone []string, notRelevant bool, comment string) (*models.ContactPerson, error) {
-	collection := getClientContactPersonCollection(r.systemStub, r.namespace)
+	collection := GetClientContactPersonCollection(r.systemStub, r.namespace)
 
 	clientUUIDBson, err := primitive.ObjectIDFromHex(clientUUID)
 	if err != nil {
@@ -255,10 +246,10 @@ func (r *ClientRepository) UpdateContactPerson(ctx context.Context, clientUUID s
 		return nil, models.ErrClientContactPersonNotFound
 	}
 
-	var contactPerson contactPersonInMongo
+	var contactPerson ContactPersonInMongo
 	err = collection.FindOneAndUpdate(ctx, bson.M{"_id": contactPersonID}, primitive.M{
 		"$set": bson.M{"name": name, "email": email, "phone": phone, "notRelevant": notRelevant, "comment": comment, "clientUUID": clientUUIDBson},
-	}).Decode(&contactPerson)
+	}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&contactPerson)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, models.ErrClientContactPersonNotFound
@@ -269,26 +260,17 @@ func (r *ClientRepository) UpdateContactPerson(ctx context.Context, clientUUID s
 		return nil, err
 	}
 
-	return &models.ContactPerson{
-		Namespace:   r.namespace,
-		UUID:        contactPersonUUID,
-		ClientUUID:  clientUUID,
-		Name:        name,
-		Email:       email,
-		Phone:       phone,
-		NotRelevant: notRelevant,
-		Comment:     comment,
-	}, nil
+	return contactPerson.ToBackendModel(r.namespace), nil
 }
 func (r *ClientRepository) DeleteContactPerson(ctx context.Context, contactPersonUUID string) (*models.ContactPerson, error) {
-	collection := getClientContactPersonCollection(r.systemStub, r.namespace)
+	collection := GetClientContactPersonCollection(r.systemStub, r.namespace)
 
 	contactPersonID, err := primitive.ObjectIDFromHex(contactPersonUUID)
 	if err != nil {
 		return nil, models.ErrClientContactPersonNotFound
 	}
 
-	var contactPerson contactPersonInMongo
+	var contactPerson ContactPersonInMongo
 	err = collection.FindOneAndDelete(ctx, bson.M{"_id": contactPersonID}).Decode(&contactPerson)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -300,19 +282,10 @@ func (r *ClientRepository) DeleteContactPerson(ctx context.Context, contactPerso
 		return nil, err
 	}
 
-	return &models.ContactPerson{
-		Namespace:   r.namespace,
-		UUID:        contactPersonUUID,
-		ClientUUID:  contactPerson.ClientUUID.Hex(),
-		Name:        contactPerson.Name,
-		Email:       contactPerson.Email,
-		Phone:       contactPerson.Phone,
-		NotRelevant: contactPerson.NotRelevant,
-		Comment:     contactPerson.Comment,
-	}, nil
+	return contactPerson.ToBackendModel(r.namespace), nil
 }
 func (r *ClientRepository) GetContactPersonsForClient(ctx context.Context, clientUUID string, useCache bool) ([]models.ContactPerson, error) {
-	collection := getClientContactPersonCollection(r.systemStub, r.namespace)
+	collection := GetClientContactPersonCollection(r.systemStub, r.namespace)
 
 	clientUUIDBson, err := primitive.ObjectIDFromHex(clientUUID)
 	if err != nil {
@@ -329,7 +302,7 @@ func (r *ClientRepository) GetContactPersonsForClient(ctx context.Context, clien
 
 	var contactPersons []models.ContactPerson
 	for cursor.Next(ctx) {
-		var contactPerson contactPersonInMongo
+		var contactPerson ContactPersonInMongo
 		err := cursor.Decode(&contactPerson)
 		if err != nil {
 			err = errors.Join(errors.New("failed to get contact persons from the database. failed to decode contact person"), err)
@@ -337,17 +310,47 @@ func (r *ClientRepository) GetContactPersonsForClient(ctx context.Context, clien
 			return nil, err
 		}
 
-		contactPersons = append(contactPersons, models.ContactPerson{
-			Namespace:   r.namespace,
-			UUID:        contactPerson.UUID.Hex(),
-			ClientUUID:  contactPerson.ClientUUID.Hex(),
-			Name:        contactPerson.Name,
-			Email:       contactPerson.Email,
-			Phone:       contactPerson.Phone,
-			NotRelevant: contactPerson.NotRelevant,
-			Comment:     contactPerson.Comment,
-		})
+		contactPersons = append(contactPersons, *contactPerson.ToBackendModel(r.namespace))
 	}
 
 	return contactPersons, nil
+}
+
+func (r *ClientRepository) GetContactPersonsForClients(ctx context.Context, clientUUIDs []string) (map[string][]models.ContactPerson, error) {
+	collection := GetClientContactPersonCollection(r.systemStub, r.namespace)
+
+	clientUUIDsBson := make([]primitive.ObjectID, 0, len(clientUUIDs))
+	for _, clientUUID := range clientUUIDs {
+		clientUUIDBson, err := primitive.ObjectIDFromHex(clientUUID)
+		if err != nil {
+			clientUUIDsBson = append(clientUUIDsBson, clientUUIDBson)
+		}
+	}
+
+	cursor, err := collection.Find(ctx, primitive.M{"clientUUID": bson.M{"$in": clientUUIDsBson}})
+	if err != nil {
+		err = errors.Join(errors.New("failed to get contact persons from the database. failed to open cursor"), err)
+		r.logger.Error(err.Error())
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	contactPersonsPerClient := make(map[string][]models.ContactPerson, len(clientUUIDs))
+	for _, clientUUID := range clientUUIDs {
+		contactPersonsPerClient[clientUUID] = make([]models.ContactPerson, 0, 1)
+	}
+
+	for cursor.Next(ctx) {
+		var contactPerson ContactPersonInMongo
+		err := cursor.Decode(&contactPerson)
+		if err != nil {
+			err = errors.Join(errors.New("failed to get contact persons from the database. failed to decode contact person"), err)
+			r.logger.Error(err.Error())
+			return nil, err
+		}
+
+		contactPersonsPerClient[contactPerson.ClientUUID.Hex()] = append(contactPersonsPerClient[contactPerson.ClientUUID.Hex()], *contactPerson.ToBackendModel(r.namespace))
+	}
+
+	return contactPersonsPerClient, nil
 }

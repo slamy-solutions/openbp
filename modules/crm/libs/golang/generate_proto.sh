@@ -16,3 +16,11 @@ protoc --go_out=./core/onecsync --go_opt=paths=source_relative --go-grpc_out=./c
 echo "Generating proto for performer service"
 mkdir -p ./core/performer
 protoc --go_out=./core/performer --go_opt=paths=source_relative --go-grpc_out=./core/performer --go-grpc_opt=paths=source_relative -I ../../proto performer.proto
+# department
+echo "Generating proto for department service"
+mkdir -p ./core/department
+protoc --go_out=./core/department --go_opt=paths=source_relative --go-grpc_out=./core/department --go-grpc_opt=paths=source_relative -I ../../proto department.proto
+# project
+echo "Generating proto for project service"
+mkdir -p ./core/project
+protoc --go_out=./core/project --go_opt=paths=source_relative --go-grpc_out=./core/project --go-grpc_opt=paths=source_relative -I ../../proto project.proto

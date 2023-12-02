@@ -66,7 +66,7 @@ func (r *clientRepository) Create(ctx context.Context, name string) (*models.Cli
 	}
 
 	return &models.Client{
-		Namespace:      r.backend.Namespace,
+		Namespace:      r.namespace,
 		UUID:           response.UUID,
 		Name:           response.Name,
 		ContactPersons: []models.ContactPerson{},
@@ -116,7 +116,7 @@ func (r *clientRepository) Get(ctx context.Context, uuid string, useCache bool) 
 	}
 
 	return &models.Client{
-		Namespace:      r.connector.Namespace,
+		Namespace:      r.namespace,
 		UUID:           (*response)[0].UUID,
 		Name:           (*response)[0].Name,
 		ContactPersons: contactPersons,
@@ -161,7 +161,7 @@ func (r *clientRepository) GetAll(ctx context.Context, useCache bool) ([]models.
 		}
 
 		clients[i] = models.Client{
-			Namespace:      r.backend.Namespace,
+			Namespace:      r.namespace,
 			UUID:           client.UUID,
 			Name:           client.Name,
 			ContactPersons: contactPersons,
@@ -186,11 +186,11 @@ func (r *clientRepository) Update(ctx context.Context, uuid string, name string)
 		Telephone:    "",
 	}
 
-	_, statusCode, err := MakeRequest[interface{}](
+	_, statusCode, err := connector.MakeRequest[interface{}](
 		ctx,
-		r.backend,
+		r.connector,
 		"POST",
-		fmt.Sprintf("%s/client/%s?clientId=", r.backend.ServerURL, r.backend.ServerToken),
+		fmt.Sprintf("%s/client/%s?clientId=", r.connector.ServerURL, r.connector.ServerToken),
 		clientUpdateRequest,
 	)
 	if err != nil {
@@ -207,7 +207,7 @@ func (r *clientRepository) Update(ctx context.Context, uuid string, name string)
 	}
 
 	return &models.Client{
-		Namespace:      r.backend.Namespace,
+		Namespace:      r.namespace,
 		UUID:           uuid,
 		Name:           name,
 		ContactPersons: []models.ContactPerson{},
@@ -222,11 +222,11 @@ func (r *clientRepository) Delete(ctx context.Context, uuid string) (*models.Cli
 		return nil, err
 	}
 
-	_, statusCode, err := MakeRequest[interface{}](
+	_, statusCode, err := connector.MakeRequest[interface{}](
 		ctx,
-		r.backend,
+		r.connector,
 		"DELETE",
-		fmt.Sprintf("%s/client/%s?clientId=", r.backend.ServerURL, r.backend.ServerToken),
+		fmt.Sprintf("%s/client/%s?clientId=", r.connector.ServerURL, r.connector.ServerToken),
 		nil,
 	)
 	if err != nil {
@@ -270,11 +270,11 @@ func (r *clientRepository) AddContactPerson(ctx context.Context, clientUUID stri
 		NotRelevant: false,
 	}
 
-	createdContact, statusCode, err := MakeRequest[clientContact](
+	createdContact, statusCode, err := connector.MakeRequest[clientContact](
 		ctx,
-		r.backend,
+		r.connector,
 		"POST",
-		fmt.Sprintf("%s/contact/%s", r.backend.ServerURL, r.backend.ServerToken),
+		fmt.Sprintf("%s/contact/%s", r.connector.ServerURL, r.connector.ServerToken),
 		contactAddRequest,
 	)
 	if err != nil {
@@ -291,7 +291,7 @@ func (r *clientRepository) AddContactPerson(ctx context.Context, clientUUID stri
 	}
 
 	return &models.ContactPerson{
-		Namespace:  r.backend.Namespace,
+		Namespace:  r.namespace,
 		UUID:       createdContact.UUID,
 		ClientUUID: clientUUID,
 		Name:       createdContact.Name,
@@ -325,11 +325,11 @@ func (r *clientRepository) UpdateContactPerson(ctx context.Context, clientUUID s
 		NotRelevant: notRelevant,
 	}
 
-	_, statusCode, err := MakeRequest[interface{}](
+	_, statusCode, err := connector.MakeRequest[interface{}](
 		ctx,
-		r.backend,
+		r.connector,
 		"POST",
-		fmt.Sprintf("%s/contact/%s", r.backend.ServerURL, r.backend.ServerToken),
+		fmt.Sprintf("%s/contact/%s", r.connector.ServerURL, r.connector.ServerToken),
 		contactUpdateRequest,
 	)
 	if err != nil {
@@ -346,7 +346,7 @@ func (r *clientRepository) UpdateContactPerson(ctx context.Context, clientUUID s
 	}
 
 	return &models.ContactPerson{
-		Namespace:   r.backend.Namespace,
+		Namespace:   r.namespace,
 		UUID:        contactPersonUUID,
 		ClientUUID:  clientUUID,
 		Name:        name,
@@ -374,11 +374,11 @@ func (r *clientRepository) DeleteContactPerson(ctx context.Context, contactPerso
 		return nil, models.ErrClientContactPersonNotFound
 	}
 
-	_, statusCode, err := MakeRequest[struct{}](
+	_, statusCode, err := connector.MakeRequest[struct{}](
 		ctx,
-		r.backend,
+		r.connector,
 		"DELETE",
-		fmt.Sprintf("%s/contact/%s&id=%s", r.backend.ServerURL, r.backend.ServerToken, contactPersonUUID),
+		fmt.Sprintf("%s/contact/%s&id=%s", r.connector.ServerURL, r.connector.ServerToken, contactPersonUUID),
 		nil,
 	)
 	if err != nil {
@@ -399,11 +399,11 @@ func (r *clientRepository) DeleteContactPerson(ctx context.Context, contactPerso
 func (r *clientRepository) GetContactPersonsForClient(ctx context.Context, clientUUID string, useCache bool) ([]models.ContactPerson, error) {
 	clientUUID = url.QueryEscape(clientUUID)
 
-	response, statusCode, err := MakeRequest[[]clientContact](
+	response, statusCode, err := connector.MakeRequest[[]clientContact](
 		ctx,
-		r.backend,
+		r.connector,
 		"GET",
-		fmt.Sprintf("%s/contact/%s&clientId=%s", r.backend.ServerURL, r.backend.ServerToken, clientUUID),
+		fmt.Sprintf("%s/contact/%s&clientId=%s", r.connector.ServerURL, r.connector.ServerToken, clientUUID),
 		nil,
 	)
 	if err != nil {

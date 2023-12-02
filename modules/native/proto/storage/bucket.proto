@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package native_storage_bucket;
+
+option go_package = "slamy/openBP/native/storage/bucket;native_storage_bucket_grpc";
+
+/*
+    Bucket is a place to store multiple files. It is a logical grouping of files.
+*/
+message Bucket {
+    // Namespace where the bucket is located
+    string namespace = 1;
+    // Unique identifier of the bucket
+    string uuid = 2;
+    // Unique name of the bucket
+    string name = 3;
+
+    // Inidicates that the bucket should be hidden to the user by default (for example this bucket stores internal information that may be not interesting for user).
+    bool hidden = 4;
+
+    // When file was creted
+    google.protobuf.Timestamp _created = 100;
+    // When file was updated last time
+    google.protobuf.Timestamp _updated = 101;
+    // Version of the file. Automatically increases on every update to the file binary data or file information
+    int64 _version = 102;
+}
+
+message CreateBucketRequest {
+    string namespace = 1;
+    string name = 2;
+    bool hidden = 3;
+}
+message CreateBucketResponse {
+    Bucket bucket = 1;
+}
+
+message EnsureBucketRequest {
+    string namespace = 1;
+    string name = 2;
+    bool hidden = 3;
+}
+message EnsureBucketResponse {
+    Bucket bucket = 1;
+}
+
+message GetBucketRequest {
+    string namespace = 1;
+    string name = 2;
+    bool useCache = 3;
+}
+message GetBucketResponse {
+    Bucket bucket = 1;
+}
+
+message GetBucketByUUIDRequest {
+    string namespace = 1;
+    string uuid = 2;
+    bool useCache = 3;
+}
+message GetBucketByUUIDResponse {
+    Bucket bucket = 1;
+}
+
+message ListBucketsRequest {
+    string namespace = 1;
+    uint32 skip = 2;
+    uint32 limit = 3;
+}
+message ListBucketsResponse {
+    Bucket bucket = 1;
+}
+
+message CountBucketsRequest {
+    string namespace = 1;
+}
+message CountBucketsResponse {
+    uint32 count = 1;
+}
+
+message UpdateBucketRequest {
+    string namespace = 1;
+    string uuid = 2;
+    string name = 3;
+    bool hidden = 4;
+}
+message UpdateBucketResponse {
+    Bucket bucket = 1;
+}
+
+message DeleteBucketRequest {
+    string namespace = 1;
+    string name = 2;
+}
+message DeleteBucketResponse {
+    Bucket bucket = 1;
+}
+
+message DeleteBucketByUUIDRequest {
+    string namespace = 1;
+    string uuid = 2;
+}
+message DeleteBucketByUUIDResponse {
+    Bucket bucket = 1;
+}
+
+service BucketService {
+    rpc Create(CreateBucketRequest) returns (CreateBucketResponse);
+    rpc Ensure(EnsureBucketRequest) returns (EnsureBucketResponse);
+    rpc Get(GetBucketRequest) returns (GetBucketResponse);
+    rpc GetByUUID(GetBucketByUUIDRequest) returns (GetBucketByUUIDResponse);
+    rpc List(ListBucketsRequest) returns (stream ListBucketsResponse);
+    rpc Count(CountBucketsRequest) returns (CountBucketsResponse);
+    rpc Update(UpdateBucketRequest) returns (UpdateBucketResponse);
+    rpc Delete(DeleteBucketRequest) returns (DeleteBucketResponse);
+    rpc DeleteByUUID(DeleteBucketByUUIDRequest) returns (DeleteBucketByUUIDResponse);
+}

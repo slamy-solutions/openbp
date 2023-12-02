@@ -18,6 +18,8 @@ import (
 	iamTokenGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/iam/token"
 	keyvaluestorageGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/keyvaluestorage"
 	namespaceGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/namespace"
+	storageBucketGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/storage/bucket"
+	storageFSGrpc "github.com/slamy-solutions/openbp/modules/native/libs/golang/storage/fs"
 )
 
 func getConfigEnv(key string, fallback string) string {
@@ -52,7 +54,13 @@ type IAMService struct {
 	Token          iamTokenGrpc.IAMTokenServiceClient
 }
 
+type StorageService struct {
+	Bucket storageBucketGrpc.BucketServiceClient
+	FS     storageFSGrpc.FSServiceClient
+}
+
 type services struct {
+	Storage         *StorageService
 	IAM             *IAMService
 	Keyvaluestorage keyvaluestorageGrpc.KeyValueStorageServiceClient
 	Namespace       namespaceGrpc.NamespaceServiceClient
@@ -70,6 +78,8 @@ type StubConfig struct {
 	keyValueStorage GrpcServiceConfig
 
 	iam GrpcServiceConfig
+
+	storage GrpcServiceConfig
 }
 
 func NewStubConfig() *StubConfig {
@@ -84,6 +94,10 @@ func NewStubConfig() *StubConfig {
 			url:     "",
 		},
 		iam: GrpcServiceConfig{
+			enabled: false,
+			url:     "",
+		},
+		storage: GrpcServiceConfig{
 			enabled: false,
 			url:     "",
 		},
@@ -126,6 +140,18 @@ func (sc *StubConfig) WithIAMService(conf ...GrpcServiceConfig) *StubConfig {
 		sc.iam = GrpcServiceConfig{
 			enabled: true,
 			url:     getConfigEnv("NATIVE_IAM_URL", "native_iam:80"),
+		}
+	}
+	return sc
+}
+
+func (sc *StubConfig) WithStorageService(conf ...GrpcServiceConfig) *StubConfig {
+	if len(conf) != 0 {
+		sc.storage = conf[0]
+	} else {
+		sc.storage = GrpcServiceConfig{
+			enabled: true,
+			url:     getConfigEnv("NATIVE_STORAGE_URL", "native_storage:80"),
 		}
 	}
 	return sc
@@ -193,6 +219,18 @@ func (n *NativeStub) Connect() error {
 		n.log.Info("Successfully connected to the native_iam service")
 		n.dials = append(n.dials, conn)
 		n.Services.IAM = services
+	}
+
+	if n.config.storage.enabled {
+		conn, service, err := NewStorageConnection(n.config.storage.url)
+		if err != nil {
+			n.log.Error("Error while connecting to the native_storage service: " + err.Error())
+			n.closeConnections()
+			return err
+		}
+		n.log.Info("Successfully connected to the native_storage service")
+		n.dials = append(n.dials, conn)
+		n.Services.Storage = service
 	}
 
 	n.connected = true

@@ -7,8 +7,10 @@ import (
 	"google.golang.org/grpc"
 
 	client "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
+	department "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/department"
 	onecsync "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
 	performer "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
+	project "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/project"
 	settings "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/settings"
 )
 
@@ -42,9 +44,11 @@ func NewCoreConnection(address string, opts ...grpc.DialOption) (*grpc.ClientCon
 	}
 
 	return dial, &CoreService{
-		Performer: performer.NewPerformerServiceClient(dial),
-		Client:    client.NewClientServiceClient(dial),
-		Settings:  settings.NewSettingsServiceClient(dial),
-		OneCSync:  onecsync.NewOneCSyncServiceClient(dial),
+		Project:    project.NewProjectServiceClient(dial),
+		Performer:  performer.NewPerformerServiceClient(dial),
+		Client:     client.NewClientServiceClient(dial),
+		Department: department.NewDepartmentServiceClient(dial),
+		Settings:   settings.NewSettingsServiceClient(dial),
+		OneCSync:   onecsync.NewOneCSyncServiceClient(dial),
 	}, nil
 }

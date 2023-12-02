@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package crm_department;
+
+option go_package = "slamy/openBP/crm/department;crm_department_grpc";
+
+message Department {
+    // Namespace where department is located
+    string namespace = 1;
+    // Unique identifier of the department
+    string uuid = 2;
+    // Human-readable name 
+    string name = 4;
+}
+
+/*
+	Create(ctx context.Context, name string) (*Department, error)
+	Get(ctx context.Context, uuid string, useCache bool) (*Department, error)
+	GetAll(ctx context.Context, useCache bool) ([]Department, error)
+	Update(ctx context.Context, uuid string, name string) (*Department, error)
+	Delete(ctx context.Context, uuid string) (*Department, error)
+*/
+
+message CreateDepartmentRequest {
+    string namespace = 1;
+    string name = 2;
+}
+message CreateDepartmentResponse {
+    Department department = 1;
+}
+
+message GetDepartmentRequest {
+    string namespace = 1;
+    string uuid = 2;
+    bool useCache = 3;
+}
+message GetDepartmentResponse {
+    Department department = 1;
+}
+
+message GetAllDepartmentsRequest {
+    string namespace = 1;
+    bool useCache = 2;
+}
+message GetAllDepartmentsResponse {
+    repeated Department departments = 1;
+}
+
+message UpdateDepartmentRequest {
+    string namespace = 1;
+    string uuid = 2;
+    string name = 3;
+}
+message UpdateDepartmentResponse {
+    Department department = 1;
+}
+
+message DeleteDepartmentRequest {
+    string namespace = 1;
+    string uuid = 2;
+}
+message DeleteDepartmentResponse {
+    Department department = 1;
+}
+
+service DepartmentService {
+    rpc Create(CreateDepartmentRequest) returns (CreateDepartmentResponse) {}
+    rpc Get(GetDepartmentRequest) returns (GetDepartmentResponse) {}
+    rpc GetAll(GetAllDepartmentsRequest) returns (GetAllDepartmentsResponse) {}
+    rpc Update(UpdateDepartmentRequest) returns (UpdateDepartmentResponse) {}
+    rpc Delete(DeleteDepartmentRequest) returns (DeleteDepartmentResponse) {}
+}
