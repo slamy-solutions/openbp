@@ -43,4 +43,16 @@ func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *s
 	group.GET("/departments/department", departmentRouter.getDepartment)
 	group.PATCH("/departments/department", departmentRouter.updateDepartment)
 	group.DELETE("/departments/department", departmentRouter.deleteDepartment)
+
+	performerRouter := performerRouter{crmStub: crmStub, nativeStub: nativeStub, logger: logger.WithField("domain.service", "performer")}
+	group.GET("/performers", performerRouter.GetAll)
+	group.POST("/performers/performer", performerRouter.Create)
+	group.DELETE("/performers/performer", performerRouter.Delete)
+
+	kanbanRouter := kanbanRouter{crmStub: crmStub, nativeStub: nativeStub, logger: logger.WithField("domain.service", "kanban")}
+	group.GET("/kanban/stages", kanbanRouter.GetStages)
+	group.POST("/kanban/stage", kanbanRouter.CreateStage)
+	group.DELETE("/kanban/stage", kanbanRouter.DeleteStage)
+	group.PATCH("/kanban/stage", kanbanRouter.UpdateStage)
+	group.PATCH("/kanban/stage/swapPriority", kanbanRouter.SwapStagesPriority)
 }

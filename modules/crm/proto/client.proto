@@ -4,7 +4,7 @@ import "google/protobuf/timestamp.proto";
 
 package crm_client;
 
-option go_package = "slamy/openBP/crm/client;crm_client_grpc";
+option go_package = "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client;client";
 
 message ContactPerson {
     // Namespace where contact person is located

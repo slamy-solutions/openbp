@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: department.proto
 
-package crm_department_grpc
+package department
 
 import (
 	context "context"

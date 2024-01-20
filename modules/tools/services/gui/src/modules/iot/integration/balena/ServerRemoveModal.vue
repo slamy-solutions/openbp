@@ -41,13 +41,13 @@ async function removeServer() {
       })
       notif({
           type: 'positive',
-          message: $i18n.t('modulesiot.integration.balena.server.remove.deleteSuccessNotify')
+          message: $i18n.t('modules.iot.integration.balena.server.remove.deleteSuccessNotify')
       })
       emit('removed', props.uuid)
   } catch (error) {
       notif({
           type: 'negative',
-          message: $i18n.t('modulesiot.integration.balena.server.remove.deleteFailNotify', { error }),
+          message: $i18n.t('modules.iot.integration.balena.server.remove.deleteFailNotify', { error }),
           timeout: 5000
       })
   } finally {

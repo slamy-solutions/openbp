@@ -2,23 +2,7 @@ syntax = "proto3";
 
 package crm_performer;
 
-option go_package = "slamy/openBP/crm/performer;crm_performer_grpc";
-
-/*
-type Performer struct {
-	Namespace       string `json:"namespace"`
-	UUID            string `json:"uuid"`
-	DeparatmentUUID string `json:"departmentUUID"`
-
-	// Associated native_iam_user UUID
-	UserUUID string `json:"userUUID"`
-
-	// Name extracted from user public name
-	Name string `json:"name"`
-	// AvatarURL extracted from user
-	AvatarURL string `json:"avatarURL"`
-}
-*/
+option go_package = "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer;performer";
 
 message Performer {
     string namespace = 1;

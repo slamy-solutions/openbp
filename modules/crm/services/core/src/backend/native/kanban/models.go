@@ -18,7 +18,7 @@ type stageInMongo struct {
 	UUID primitive.ObjectID `bson:"_id,omitempty"`
 	Name string             `bson:"name"`
 
-	ArrangementIndex uint32             `bson:"arrangementIndex"`
+	ArrangementIndex int64              `bson:"arrangementIndex"`
 	DepartmentUUID   primitive.ObjectID `bson:"departmentUUID"`
 }
 
@@ -172,10 +172,10 @@ func (t *ticketInMongo) ToBackendModel(namespace string, clientContactPersons []
 
 		Feed: feed,
 
-		CloseDate:   t.CloseDate,
-		CreatedDate: t.Created,
-		UpdatedDate: t.Updated,
-		Version:     t.Version,
+		CloseDate: t.CloseDate,
+		Created:   t.Created,
+		Updated:   t.Updated,
+		Version:   t.Version,
 	}
 }
 
@@ -282,9 +282,9 @@ func (t *ticketInMongo) ToBackendModelWithFetch(ctx context.Context, namespace s
 
 		Feed: feed,
 
-		CloseDate:   t.CloseDate,
-		CreatedDate: t.Created,
-		UpdatedDate: t.Updated,
-		Version:     t.Version,
+		CloseDate: t.CloseDate,
+		Created:   t.Created,
+		Updated:   t.Updated,
+		Version:   t.Version,
 	}, nil
 }

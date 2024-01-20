@@ -47,7 +47,7 @@
         </template>
   
         <template v-slot:body-cell-actions="props">
-          <q-td :props="props">
+          <q-td :props="props" >
             <q-btn color="dark" outline label="" icon="menu" size="xs">
               <q-menu>
                 <q-list style="">

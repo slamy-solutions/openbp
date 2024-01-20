@@ -14,6 +14,7 @@ import (
 
 	clientGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
 	departmentGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/department"
+	kanbanRGPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/kanban"
 	onecSyncGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
 	performerGRPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
 	projectRGPC "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/project"
@@ -73,17 +74,17 @@ func main() {
 
 	logger := slog.Default()
 
-	backendFactory := backend.NewBackendFactory(logger, systemStub, nativeStub)
+	settingsRepository := settings.NewSettingsRepository(systemStub, nativeStub)
+	settingsService := services.NewSettingsServer(settingsRepository, logger.With(slog.String("service", "settings")))
+	settingsRGPC.RegisterSettingsServiceServer(grpcServer, settingsService)
+
+	backendFactory := backend.NewBackendFactory(logger, systemStub, nativeStub, settingsRepository)
 
 	clientService := services.NewClientServer(backendFactory, logger.With(slog.String("service", "client")))
 	clientGRPC.RegisterClientServiceServer(grpcServer, clientService)
 
 	performerService := services.NewPerformerServer(backendFactory, logger.With(slog.String("service", "performer")))
 	performerGRPC.RegisterPerformerServiceServer(grpcServer, performerService)
-
-	settingsRepository := settings.NewSettingsRepository(systemStub, nativeStub)
-	settingsService := services.NewSettingsServer(settingsRepository, logger.With(slog.String("service", "settings")))
-	settingsRGPC.RegisterSettingsServiceServer(grpcServer, settingsService)
 
 	onecSyncEngine := sync.NewSyncEngine(logger.With(slog.String("service", "onec_sync_engine")), systemStub, nativeStub, settingsRepository)
 	onecSyncEngine.Start()
@@ -97,6 +98,9 @@ func main() {
 
 	projectService := services.NewProjectServer(backendFactory, logger.With(slog.String("service", "project")))
 	projectRGPC.RegisterProjectServiceServer(grpcServer, projectService)
+
+	kanbanService := services.NewKanbanServer(backendFactory, logger.With(slog.String("service", "kanban")))
+	kanbanRGPC.RegisterKanbanServiceServer(grpcServer, kanbanService)
 
 	logger.Info("Start listening for gRPC connections")
 	lis, err := net.Listen("tcp", ":80")

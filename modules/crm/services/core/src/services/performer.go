@@ -42,6 +42,10 @@ func (s *PerformerService) Create(ctx context.Context, in *performer.CreatePerfo
 			return nil, status.Errorf(codes.NotFound, "user not found")
 		}
 
+		if err == models.ErrPerformerBadUserUUID {
+			return nil, status.Errorf(codes.InvalidArgument, "bad user uuid")
+		}
+
 		err := errors.Join(errors.New("failed to create performer"), err)
 		s.logger.With(slog.String("route", "Create")).Error(err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to create performer: %s", err.Error())

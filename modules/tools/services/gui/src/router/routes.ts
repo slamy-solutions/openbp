@@ -50,6 +50,8 @@ const routes: RouteRecordRaw[] = [
 
       { path: 'crm/adminer/dashboard', name: 'crm_adminer_dashboard', component: () => import('../modules/crm/adminer/dashboard/DashboardPage.vue') },
       { path: 'crm/adminer/settings', name: 'crm_adminer_settings', component: () => import('../modules/crm/adminer/settings/SettingsPage.vue') },
+      { path: 'crm/adminer/departments', name: 'crm_adminer_departments', component: () => import('../modules/crm/adminer/department/DepartmentsListPage.vue') },
+      { path: 'crm/adminer/department/:departmentUUID', name: 'crm_adminer_department', component: () => import('../modules/crm/adminer/department/DepartmentViewPage.vue') },
     ],
     beforeEnter: [bootstrapGuard, loginGuard]
   },

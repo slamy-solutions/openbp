@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: performer.proto
 
-package crm_performer_grpc
+package performer
 
 import (
 	context "context"

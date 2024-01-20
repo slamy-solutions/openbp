@@ -166,6 +166,24 @@ export default {
               loadOperationNotify: 'Trying to load users list ...',
               loadFailNotify: 'Failed to load users list. Error: {error}'
             },
+            select: {
+              header: "Select user",
+              uuidColumn: "UUID",
+              loginColumn: "Login",
+              fullNameColumn: "Full name",
+  
+              noData: "There are no users in this namespace",
+              failedToLoad: "Failed to load users list: {error}",
+  
+              loadOperationNotify: 'Trying to load users list ...',
+              loadFailNotify: 'Failed to load users list. Error: {error}',
+
+              cancelButton: "Cancel",
+              selectButton: "Select",
+            },
+            selectInput: {
+              label: "Select user",
+            },
             create: {
               header: "Create user",
 
@@ -837,6 +855,122 @@ export default {
                 success: "Success",
                 errorMessage: "Error message",
               }
+            }
+          }
+        },
+        department: {
+          list: {
+            header: "Departments",
+            nameColumn: "Name",
+            actionsColumn: "Actions",
+
+            noData: "There are no departments yet.",
+            failedToLoad: "Failed to load departments list: {error}",
+            createButton: "Create",
+            loadFailNotify: "Failed to load departments list. Error: {error}",
+          },
+
+          select: {
+            header: "Select department",
+            nameColumn: "Name",
+
+            noData: "There are no departments yet.",
+            failedToLoad: "Failed to load departments list: {error}",
+            loadFailNotify: "Failed to load departments list. Error: {error}",
+
+            cancelButton: "Cancel",
+            selectButton: "Select",
+          },
+
+          selectInput: {
+            label: "Select department",
+          },
+
+          create: {
+            title: "Create department",
+            nameInput: "Name",
+            createButton: "Create",
+
+            createOperationNotify: "Trying to create department ...",
+            createSuccessNotify: "Successfully created department",
+            createFailNotify: "Failed to create department. Error: {error}",
+          },
+
+          delete: {
+            title: "Delete department?",
+            bodyText: 'You are about to delete "{name}" department. This action can not be undone - all the data related to the department will be lost.',
+            deleteButton: "Delete",
+
+            deleteOperationNotify: "Trying to delete department ...",
+            deleteSuccessNotify: "Successfully deleted department",
+            deleteFailNotify: "Failed to delete department. Error: {error}",
+          }
+        },
+        performer: {
+          list: {
+            header: "Performers",
+            nameColumn: "Name",
+            actionsColumn: "Actions",
+
+            noData: "There are no performers yet.",
+            failedToLoad: "Failed to load performers list: {error}",
+            createButton: "Create",
+            loadFailNotify: "Failed to load performers list. Error: {error}",
+          },
+
+          create: {
+            title: "Create performer",
+
+            createButton: "Create",
+
+            createOperationNotify: "Trying to create performer ...",
+            createSuccessNotify: "Successfully created performer",
+            createFailNotify: "Failed to create performer. Error: {error}",
+          },
+
+          delete: {
+            title: "Delete performer?",
+            bodyText: 'You are about to delete "{name}" performer. This action can not be undone - all the data related to the performer will be lost.',
+            deleteButton: "Delete",
+
+            deleteOperationNotify: "Trying to delete performer ...",
+            deleteSuccessNotify: "Successfully deleted performer",
+            deleteFailNotify: "Failed to delete performer. Error: {error}",
+          }
+        }, 
+        kanban: {
+          stage: {
+            list: {
+              header: "Ticket stages",
+              nameColumn: "Name",
+              actionsColumn: "Actions",
+  
+              noData: "There are no ticket stages yet.",
+              failedToLoad: "Failed to load ticket stages list: {error}",
+              createButton: "Create",
+              loadFailNotify: "Failed to load ticketstages list. Error: {error}",
+
+              moveFailNotify: "Failed to change stage priority. Error: {error}",
+            },
+
+            create: {
+              title: "Create ticket stage",
+              nameInput: "Name",
+              createButton: "Create",
+
+              createOperationNotify: "Trying to create ticket stage ...",
+              createSuccessNotify: "Successfully created ticket stage",
+              createFailNotify: "Failed to create ticket stage. Error: {error}",
+            },
+
+            delete: {
+              title: "Delete ticket stage?",
+              bodyText: 'You are about to delete "{name}" ticket stage. If you have ticket within this stage it will NOT disapear and will be moved to the undefined stage.',
+              deleteButton: "Delete",
+
+              deleteOperationNotify: "Trying to delete ticket stage ...",
+              deleteSuccessNotify: "Successfully deleted ticket stage",
+              deleteFailNotify: "Failed to delete ticket stage. Error: {error}",
             }
           }
         }

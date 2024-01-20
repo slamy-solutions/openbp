@@ -8,6 +8,7 @@ import (
 
 	client "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
 	department "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/department"
+	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/kanban"
 	onecsync "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
 	performer "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
 	project "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/project"
@@ -44,6 +45,7 @@ func NewCoreConnection(address string, opts ...grpc.DialOption) (*grpc.ClientCon
 	}
 
 	return dial, &CoreService{
+		Kanban:     kanban.NewKanbanServiceClient(dial),
 		Project:    project.NewProjectServiceClient(dial),
 		Performer:  performer.NewPerformerServiceClient(dial),
 		Client:     client.NewClientServiceClient(dial),

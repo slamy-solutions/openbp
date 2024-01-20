@@ -31,12 +31,13 @@ type BackendFactory interface {
 	GetOneCBackendFactory() onec.OneCBackendFactory
 }
 
-func NewBackendFactory(logger *slog.Logger, systemStub *system.SystemStub, nativeStub *native.NativeStub) BackendFactory {
+func NewBackendFactory(logger *slog.Logger, systemStub *system.SystemStub, nativeStub *native.NativeStub, settingsRepository settings.SettingsRepository) BackendFactory {
 	return &backendFactory{
 		logger:             logger,
 		systemStub:         systemStub,
 		nativeStub:         nativeStub,
 		onecBackendFactory: onec.NewOneCBackendFactory(systemStub, nativeStub),
+		settingsRepository: settingsRepository,
 	}
 }
 

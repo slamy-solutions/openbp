@@ -2,6 +2,7 @@ import { APIModuleBase } from "../../model"
 
 export interface User {
     namespace: string
+    uuid: string
     login: string
     identity: string
 

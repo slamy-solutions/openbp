@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: client.proto
 
-package crm_client_grpc
+package client
 
 import (
 	context "context"

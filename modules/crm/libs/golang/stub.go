@@ -9,6 +9,7 @@ import (
 
 	client "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/client"
 	department "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/department"
+	"github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/kanban"
 	onecsync "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/onecsync"
 	performer "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/performer"
 	project "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/project"
@@ -23,6 +24,7 @@ func getConfigEnv(key string, fallback string) string {
 }
 
 type CoreService struct {
+	Kanban     kanban.KanbanServiceClient
 	Project    project.ProjectServiceClient
 	Performer  performer.PerformerServiceClient
 	Client     client.ClientServiceClient

@@ -63,20 +63,28 @@ func (r *PerformerRepository) Create(ctx context.Context, departmentUUID string,
 		DepartmentUUID: departmentUUIDObject,
 		UserUUID:       userUUIDObject,
 	}
-	insertResult, err := GetPerformerCollection(r.systemStub, r.namespace).InsertOne(ctx, performer)
+	var newPerformer PerformerInMongo
+	err = GetPerformerCollection(r.systemStub, r.namespace).FindOneAndUpdate(
+		ctx,
+		bson.M{"userUUID": userUUIDObject},
+		bson.M{
+			"$setOnInsert": performer,
+		},
+		options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After),
+	).Decode(&newPerformer)
 	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return nil, models.ErrPerformerAlreadyExists
-		}
-
 		err = errors.Join(errors.New("failed to insert performer"), err)
 		r.logger.Error(err.Error())
 		return nil, err
 	}
 
+	if newPerformer.DepartmentUUID != departmentUUIDObject {
+		return nil, models.ErrPerformerAlreadyExists
+	}
+
 	return &models.Performer{
 		Namespace:      r.namespace,
-		UUID:           insertResult.InsertedID.(primitive.ObjectID).Hex(),
+		UUID:           performer.UUID.Hex(),
 		DepartmentUUID: departmentUUID,
 		UserUUID:       userUUID,
 		Name:           userResponse.User.FullName,

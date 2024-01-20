@@ -1,0 +1,227 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+import "client.proto";
+import "department.proto";
+import "performer.proto";
+import "project.proto";
+
+package kanban;
+
+option go_package = "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/kanban;kanban";
+
+message TicketStage {
+    string namespace = 1;
+    string uuid = 2;
+    string name = 3;
+    string departmentUUID = 4;
+    int64 arrangementIndex = 5;
+}
+
+enum TicketFeedEntryType {
+    commentPerformer = 0;
+    commentClient = 1;
+    callIn = 2;
+    callOut = 3;
+}
+
+message TicketFeedEntry {
+    TicketFeedEntryType type = 1;
+    repeated string files = 2;
+    google.protobuf.Timestamp timestamp = 3;
+}
+
+message Ticket {
+    message Planning {
+        google.protobuf.Timestamp expectedStartDate = 1;
+    }
+
+    message Tracking {
+        uint32 storyPointsPlan = 1;
+        uint32 storyPointsFact = 2;
+
+        uint64 trackedTime = 3;
+    }
+
+    string namespace = 1;
+    string UUID = 2;
+    
+    string name = 3;
+    string description = 4;
+    repeated string files = 5;
+    int32 priority = 6;
+
+    string clientUUID = 7;
+    optional crm_client.Client client = 8;
+    string contactPersonUUID = 9;
+    optional crm_client.ContactPerson contactPerson = 10;
+    string departmentUUID = 11;
+    optional crm_department.Department department = 12;
+    string performerUUID = 13;
+    optional crm_performer.Performer performer = 14;
+    string projectUUID = 15;
+    optional crm_project.Project project = 16;
+    string stageUUID = 17;
+    optional TicketStage stage = 18;
+
+    repeated TicketFeedEntry feed = 19;
+    Planning planning = 20;
+    Tracking tracking = 21;
+
+    optional google.protobuf.Timestamp closeDate = 22;
+    google.protobuf.Timestamp created = 23;
+    google.protobuf.Timestamp updated = 24;
+    int32 version = 25;
+}
+
+message CreateStageRequest {
+    string namespace = 1;
+    string name = 2;
+    string departmentUUID = 3;
+    uint32 arrangementIndex = 4;
+}
+message CreateStageResponse {
+    TicketStage stage = 1;
+}
+
+message GetStageRequest {
+    string namespace = 1;
+    string UUID = 2;
+    bool useCache = 3;
+}
+message GetStageResponse {
+    TicketStage stage = 1;
+}
+
+message GetStagesRequest {
+    string namespace = 1;
+    string departmentUUID = 2;
+    bool useCache = 3;
+}
+message GetStagesResponse {
+    repeated TicketStage stages = 1;
+}
+
+message UpdateStageRequest {
+    string namespace = 1;
+    string UUID = 2;
+    string name = 3;
+}
+message UpdateStageResponse {
+    TicketStage stage = 1;
+}
+
+message DeleteStageRequest {
+    string namespace = 1;
+    string UUID = 2;
+}
+message DeleteStageResponse {}
+
+message SwapStagesOrderRequest {
+    string namespace = 1;
+    string stageUUID1 = 2;
+    string stageUUID2 = 3;
+}
+message SwapStagesOrderResponse {}
+
+
+message CreateTicketRequest {
+    string namespace = 1;
+    string name = 2;
+    string description = 3;
+    repeated string files = 4;
+    int32 priority = 5;
+
+    string clientUUID = 6;
+    string contactPersonUUID = 7;
+    string departmentUUID = 8;
+    string performerUUID = 9;
+    string projectUUID = 10;
+
+    uint32 trackingStoryPointsPlan = 11;
+}
+message CreateTicketResponse {
+    Ticket ticket = 1;
+}
+
+message GetTicketRequest {
+    string namespace = 1;
+    string UUID = 2;
+    bool useCache = 3;
+}
+message GetTicketResponse {
+    Ticket ticket = 1;
+}
+
+message GetTicketsRequest {
+    string namespace = 1;
+    optional string departmentUUID = 2;
+    optional string performerUUID = 3;
+    bool useCache = 6;
+}
+message GetTicketsResponse {
+    repeated Ticket tickets = 1;
+}
+
+message UpdateTicketBasicInfoRequest {
+    string namespace = 1;
+    string UUID = 2;
+    string name = 3;
+    string description = 4;
+    repeated string files = 5;
+}
+message UpdateTicketBasicInfoResponse {
+    Ticket ticket = 1;
+}
+
+message DeleteTicketRequest {
+    string namespace = 1;
+    string UUID = 2;
+}
+message DeleteTicketResponse {}
+
+message UpdateTicketStageRequest {
+    string namespace = 1;
+    string UUID = 2;
+    string ticketStageUUID = 3;
+}
+message UpdateTicketStageResponse {
+    Ticket ticket = 1;
+}
+
+message UpdateTicketPriorityRequest {
+    string namespace = 1;
+    string UUID = 2;
+    int32 priority = 3;
+}
+message UpdateTicketPriorityResponse {
+    Ticket ticket = 1;
+}
+
+message CloseTicketRequest {
+    string namespace = 1;
+    string UUID = 2;
+}
+message CloseTicketResponse {
+    Ticket ticket = 1;
+}
+
+service KanbanService {
+    rpc CreateStage(CreateStageRequest) returns (CreateStageResponse) {}
+    rpc GetStage(GetStageRequest) returns (GetStageResponse) {}
+    rpc GetStages(GetStagesRequest) returns (GetStagesResponse) {}
+    rpc UpdateStage(UpdateStageRequest) returns (UpdateStageResponse) {}
+    rpc DeleteStage(DeleteStageRequest) returns (DeleteStageResponse) {}
+    rpc SwapStagesOrder(SwapStagesOrderRequest) returns (SwapStagesOrderResponse) {}
+
+    rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse) {}
+    rpc GetTicket(GetTicketRequest) returns (GetTicketResponse) {}
+    rpc GetTickets(GetTicketsRequest) returns (GetTicketsResponse) {}
+    rpc UpdateTicketBasicInfo(UpdateTicketBasicInfoRequest) returns (UpdateTicketBasicInfoResponse) {}
+    rpc DeleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse) {}
+
+    rpc UpdateTicketStage(UpdateTicketStageRequest) returns (UpdateTicketStageResponse) {}
+    rpc UpdateTicketPriority(UpdateTicketPriorityRequest) returns (UpdateTicketPriorityResponse) {}
+    rpc CloseTicket(CloseTicketRequest) returns (CloseTicketResponse) {}
+}

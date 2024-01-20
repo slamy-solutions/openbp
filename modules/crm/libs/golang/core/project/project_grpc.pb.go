@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: project.proto
 
-package crm_department_grpc
+package project
 
 import (
 	context "context"
@@ -39,7 +39,7 @@ func NewProjectServiceClient(cc grpc.ClientConnInterface) ProjectServiceClient {
 
 func (c *projectServiceClient) Create(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error) {
 	out := new(CreateProjectResponse)
-	err := c.cc.Invoke(ctx, "/crm_department.ProjectService/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/crm_project.ProjectService/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *projectServiceClient) Create(ctx context.Context, in *CreateProjectRequ
 
 func (c *projectServiceClient) Get(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*GetProjectResponse, error) {
 	out := new(GetProjectResponse)
-	err := c.cc.Invoke(ctx, "/crm_department.ProjectService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/crm_project.ProjectService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (c *projectServiceClient) Get(ctx context.Context, in *GetProjectRequest, o
 
 func (c *projectServiceClient) GetAll(ctx context.Context, in *GetAllProjectsRequest, opts ...grpc.CallOption) (*GetAllProjectsResponse, error) {
 	out := new(GetAllProjectsResponse)
-	err := c.cc.Invoke(ctx, "/crm_department.ProjectService/GetAll", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/crm_project.ProjectService/GetAll", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (c *projectServiceClient) GetAll(ctx context.Context, in *GetAllProjectsReq
 
 func (c *projectServiceClient) Update(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*UpdateProjectResponse, error) {
 	out := new(UpdateProjectResponse)
-	err := c.cc.Invoke(ctx, "/crm_department.ProjectService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/crm_project.ProjectService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (c *projectServiceClient) Update(ctx context.Context, in *UpdateProjectRequ
 
 func (c *projectServiceClient) Delete(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error) {
 	out := new(DeleteProjectResponse)
-	err := c.cc.Invoke(ctx, "/crm_department.ProjectService/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/crm_project.ProjectService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func _ProjectService_Create_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/crm_department.ProjectService/Create",
+		FullMethod: "/crm_project.ProjectService/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProjectServiceServer).Create(ctx, req.(*CreateProjectRequest))
@@ -154,7 +154,7 @@ func _ProjectService_Get_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/crm_department.ProjectService/Get",
+		FullMethod: "/crm_project.ProjectService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProjectServiceServer).Get(ctx, req.(*GetProjectRequest))
@@ -172,7 +172,7 @@ func _ProjectService_GetAll_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/crm_department.ProjectService/GetAll",
+		FullMethod: "/crm_project.ProjectService/GetAll",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProjectServiceServer).GetAll(ctx, req.(*GetAllProjectsRequest))
@@ -190,7 +190,7 @@ func _ProjectService_Update_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/crm_department.ProjectService/Update",
+		FullMethod: "/crm_project.ProjectService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProjectServiceServer).Update(ctx, req.(*UpdateProjectRequest))
@@ -208,7 +208,7 @@ func _ProjectService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/crm_department.ProjectService/Delete",
+		FullMethod: "/crm_project.ProjectService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProjectServiceServer).Delete(ctx, req.(*DeleteProjectRequest))
@@ -220,7 +220,7 @@ func _ProjectService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ProjectService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "crm_department.ProjectService",
+	ServiceName: "crm_project.ProjectService",
 	HandlerType: (*ProjectServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package crm_department;
 
-option go_package = "slamy/openBP/crm/department;crm_department_grpc";
+option go_package = "github.com/slamy-solutions/openbp/modules/crm/libs/golang/core/department;department";
 
 message Department {
     // Namespace where department is located

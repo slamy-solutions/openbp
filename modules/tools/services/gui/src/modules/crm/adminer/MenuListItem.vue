@@ -19,13 +19,19 @@ const props = defineProps<{
     title: string,
     selected: boolean,
     route: string
+    query?: Record<string, string>
 }>()
 
 const $router = useRouter()
 
 async function goToPage() {
     if (props.route != "" && !props.selected) {
-        await $router.push({ name: props.route, params: { currentNamespace: $route.params.currentNamespace } })
+        let params = props.query
+        if (!params) {
+            params = {}
+        }
+        params.currentNamespace = $route.params.currentNamespace as string
+        await $router.push({ name: props.route, params  })
     }
 }
 </script>

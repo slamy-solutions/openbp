@@ -78,7 +78,7 @@ func (r *RPCRouter) Call(ctx *gin.Context) {
 	if err != nil {
 		err := errors.New("failed to marshal payload: " + err.Error())
 		logger.Error(err.Error())
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (r *RPCRouter) Call(ctx *gin.Context) {
 
 		err := errors.New("failed to call method: " + err.Error())
 		logger.Error(err.Error())
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

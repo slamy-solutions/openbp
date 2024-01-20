@@ -80,8 +80,8 @@ type kanbanRepository struct {
 	systemStub        *system.SystemStub
 }
 
-func (r *kanbanRepository) CreateStage(ctx context.Context, name string, departmentUUID string, arrangementIndex uint32) (*models.TicketStage, error) {
-	stage, err := r.wrapedRespository.CreateStage(ctx, name, departmentUUID, arrangementIndex)
+func (r *kanbanRepository) CreateStage(ctx context.Context, name string, departmentUUID string) (*models.TicketStage, error) {
+	stage, err := r.wrapedRespository.CreateStage(ctx, name, departmentUUID)
 	if err == nil {
 		r.systemStub.Cache.Remove(ctx, MakeKanbanStageListCacheKey(r.namespace, departmentUUID))
 	}
@@ -143,8 +143,8 @@ func (r *kanbanRepository) GetStages(ctx context.Context, departmentUUID string,
 
 	return stages, err
 }
-func (r *kanbanRepository) UpdateStage(ctx context.Context, uuid string, name string, arrangementIndex uint32) (*models.TicketStage, error) {
-	stage, err := r.wrapedRespository.UpdateStage(ctx, uuid, name, arrangementIndex)
+func (r *kanbanRepository) UpdateStage(ctx context.Context, uuid string, name string) (*models.TicketStage, error) {
+	stage, err := r.wrapedRespository.UpdateStage(ctx, uuid, name)
 	if err == nil {
 		cacheRemoveErr := r.systemStub.Cache.Remove(ctx, MakeKanbanStageListCacheKey(r.namespace, stage.DepartmentUUID), MakeKanbanTicketListCacheKey(r.namespace, models.TicketsFilter{DepartmentUUID: &stage.DepartmentUUID}), MakeKanbanStageDataCacheKey(r.namespace, uuid))
 		if cacheRemoveErr != nil {
@@ -162,6 +162,10 @@ func (r *kanbanRepository) DeleteStage(ctx context.Context, uuid string) (*model
 		}
 	}
 	return stage, err
+}
+
+func (r *kanbanRepository) SwapStagesOrder(ctx context.Context, uuid1 string, uuid2 string) error {
+	return r.wrapedRespository.SwapStagesOrder(ctx, uuid1, uuid2)
 }
 
 func (r *kanbanRepository) CreateTicket(ctx context.Context, ticket *models.TicketCreationInfo) (*models.Ticket, error) {
@@ -229,6 +233,17 @@ func (r *kanbanRepository) GetTickets(ctx context.Context, useCache bool, filter
 
 	return tickets, err
 }
+func (r *kanbanRepository) UpdateTicketBasicInfo(ctx context.Context, uuid string, name string, description string, files []string) (*models.Ticket, error) {
+	tiket, err := r.wrapedRespository.UpdateTicketBasicInfo(ctx, uuid, name, description, files)
+	if err == nil {
+		cacheRemoveErr := r.systemStub.Cache.Remove(ctx, MakePossibleCacheKeysForKanbanTicket(tiket)...)
+		if cacheRemoveErr != nil {
+			r.logger.Warn("failed to remove ticket from cache", "error", cacheRemoveErr.Error())
+		}
+	}
+	return tiket, err
+}
+
 func (r *kanbanRepository) DeleteTicket(ctx context.Context, uuid string) (*models.Ticket, error) {
 	tiket, err := r.wrapedRespository.DeleteTicket(ctx, uuid)
 	if err == nil {

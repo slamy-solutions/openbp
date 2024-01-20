@@ -81,7 +81,7 @@ func (r *departmentRouter) createDepartment(ctx *gin.Context) {
 		Name:      req.Name,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (r *departmentRouter) getDepartments(ctx *gin.Context) {
 	})
 	if err != nil {
 		logger.Error("Failed to get departments: " + err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -200,7 +200,7 @@ func (r *departmentRouter) getDepartment(ctx *gin.Context) {
 	})
 	if err != nil {
 		logger.Error("Failed to get department: " + err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -259,7 +259,7 @@ func (r *departmentRouter) updateDepartment(ctx *gin.Context) {
 	})
 	if err != nil {
 		logger.Error("Failed to update department: " + err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -316,7 +316,7 @@ func (r *departmentRouter) deleteDepartment(ctx *gin.Context) {
 	})
 	if err != nil {
 		logger.Error("Failed to delete department: " + err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

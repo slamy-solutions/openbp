@@ -24,3 +24,7 @@ protoc --go_out=./core/department --go_opt=paths=source_relative --go-grpc_out=.
 echo "Generating proto for project service"
 mkdir -p ./core/project
 protoc --go_out=./core/project --go_opt=paths=source_relative --go-grpc_out=./core/project --go-grpc_opt=paths=source_relative -I ../../proto project.proto
+# kanban
+echo "Generating proto for kanban service"
+mkdir -p ./core/kanban
+protoc --go_out=./core/kanban --experimental_allow_proto3_optional --go_opt=paths=source_relative --go-grpc_out=./core/kanban --go-grpc_opt=paths=source_relative -I ../../proto kanban.proto

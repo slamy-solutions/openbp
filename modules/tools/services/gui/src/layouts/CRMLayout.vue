@@ -1,6 +1,6 @@
 <template>
 <q-layout view="hHh Lpr lFf">
-    <q-header elevated style="background: #333333;">
+    <q-header bordered class="header-bar text-black">
     <q-toolbar>
         <q-btn
         flat
@@ -12,12 +12,12 @@
         />
 
         <q-toolbar-title class="text-bold">
-        OpenBP
+        Kanban CRM
         </q-toolbar-title>
 
         <div>v0.0.3</div>
         <LayoutChangePopUpComponet class="q-ml-md"/>
-        <q-btn icon="logout" dense class="q-ml-md" @click="goToLogout()"></q-btn>
+        <CurrentUserBadgeComponent dense class="q-ml-sm"/>
     </q-toolbar>
     </q-header>
 
@@ -53,7 +53,7 @@
     </q-list>
     </q-drawer>
 
-    <q-page-container class="bg-primary">
+    <q-page-container class="layout-container">
     <router-view />
     </q-page-container>
 </q-layout>
@@ -64,6 +64,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import LayoutChangePopUpComponet from './LayoutChangePopUpComponet.vue';
+import CurrentUserBadgeComponent from 'src/modules/me/CurrentUserBadgeComponent.vue';
 
 interface ModuleInfo {
 name: string
@@ -90,3 +91,12 @@ await $router.push({name: "logout"})
 }
 
 </script>
+
+<style lang="scss" scoped>
+.layout-container {
+    background-color: $crm-background;
+}
+.header-bar {
+    background-color: $crm-background-panel;
+}
+</style>

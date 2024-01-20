@@ -48,13 +48,15 @@ func NewKanbanRepository(logger *slog.Logger, namespace string, systemStub *syst
 	}
 }
 
-func (r *KanbanRepository) CreateStage(ctx context.Context, name string, departmentUUID string, arrangementIndex uint32) (*models.TicketStage, error) {
+func (r *KanbanRepository) CreateStage(ctx context.Context, name string, departmentUUID string) (*models.TicketStage, error) {
 	defaprtmentUUIDObject, err := primitive.ObjectIDFromHex(departmentUUID)
 	if err != nil {
 		return nil, models.ErrDepartmentUUIDInvalid
 	}
 
 	collection := GetStageCollection(r.systemStub, r.namespace)
+
+	arrangementIndex := time.Now().UnixMilli()
 
 	stage := stageInMongo{
 		Name:             name,
@@ -129,7 +131,7 @@ func (r *KanbanRepository) GetStages(ctx context.Context, departmentUUID string,
 
 	return stagesResponse, nil
 }
-func (r *KanbanRepository) UpdateStage(ctx context.Context, uuid string, name string, arrangementIndex uint32) (*models.TicketStage, error) {
+func (r *KanbanRepository) UpdateStage(ctx context.Context, uuid string, name string) (*models.TicketStage, error) {
 	stageUUID, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
 		return nil, models.ErrTicketStageUUIDInvalid
@@ -142,8 +144,7 @@ func (r *KanbanRepository) UpdateStage(ctx context.Context, uuid string, name st
 		"_id": stageUUID,
 	}, bson.M{
 		"$set": bson.M{
-			"name":             name,
-			"arrangementIndex": arrangementIndex,
+			"name": name,
 		},
 	}).Decode(&stage)
 	if err != nil {
@@ -158,6 +159,53 @@ func (r *KanbanRepository) UpdateStage(ctx context.Context, uuid string, name st
 
 	return stage.ToBackendModel(r.namespace), nil
 }
+
+func (r *KanbanRepository) SwapStagesOrder(ctx context.Context, uuid1 string, uuid2 string) error {
+	stage1UUID, err := primitive.ObjectIDFromHex(uuid1)
+	if err != nil {
+		return models.ErrTicketStageUUIDInvalid
+	}
+
+	stage2UUID, err := primitive.ObjectIDFromHex(uuid2)
+	if err != nil {
+		return models.ErrTicketStageUUIDInvalid
+	}
+
+	stage1, err := r.GetStage(ctx, uuid1, false)
+	if err != nil {
+		return err
+	}
+	stage2, err := r.GetStage(ctx, uuid2, false)
+	if err != nil {
+		return err
+	}
+
+	collection := GetStageCollection(r.systemStub, r.namespace)
+	_, err = collection.BulkWrite(ctx, []mongo.WriteModel{
+		mongo.NewUpdateOneModel().SetFilter(bson.M{
+			"_id": stage1UUID,
+		}).SetUpdate(bson.M{
+			"$set": bson.M{
+				"arrangementIndex": stage2.ArrangementIndex,
+			},
+		}),
+		mongo.NewUpdateOneModel().SetFilter(bson.M{
+			"_id": stage2UUID,
+		}).SetUpdate(bson.M{
+			"$set": bson.M{
+				"arrangementIndex": stage1.ArrangementIndex,
+			},
+		}),
+	})
+	if err != nil {
+		err = errors.Join(errors.New("failed to swap stages in the database"), err)
+		r.logger.Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
 func (r *KanbanRepository) DeleteStage(ctx context.Context, uuid string) (*models.TicketStage, error) {
 	stageUUID, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
@@ -475,6 +523,46 @@ func (r *KanbanRepository) GetTickets(ctx context.Context, useCache bool, filter
 
 	return ticketsResponse, nil
 }
+func (r *KanbanRepository) UpdateTicketBasicInfo(ctx context.Context, uuid string, name string, description string, files []string) (*models.Ticket, error) {
+	ticketUUID, err := primitive.ObjectIDFromHex(uuid)
+	if err != nil {
+		return nil, models.ErrTicketNotFound
+	}
+
+	collection := GetTicketCollection(r.systemStub, r.namespace)
+
+	var ticket ticketInMongo
+	err = collection.FindOneAndUpdate(ctx, bson.M{
+		"_id": ticketUUID,
+	}, bson.M{
+		"$set": bson.M{
+			"name":        name,
+			"description": description,
+			"files":       files,
+		},
+		"$inc":         bson.M{"version": 1},
+		"$currentDate": bson.M{"updated": bson.M{"$type": "timestamp"}},
+	}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&ticket)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, models.ErrTicketNotFound
+		}
+
+		err = errors.Join(errors.New("failed to update ticket in the database"), err)
+		r.logger.Error(err.Error())
+		return nil, err
+	}
+
+	ticketModel, err := ticket.ToBackendModelWithFetch(ctx, r.namespace, false, r.clientRepository, r.departmentRepository, r.performerRepository, r.projectRepository, r)
+	if err != nil {
+		err = errors.Join(errors.New("failed to update ticket in the database: failed to fetch ticket information"), err)
+		r.logger.Error(err.Error())
+		return nil, err
+	}
+
+	return ticketModel, nil
+}
+
 func (r *KanbanRepository) DeleteTicket(ctx context.Context, uuid string) (*models.Ticket, error) {
 	ticketUUID, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
