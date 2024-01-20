@@ -25,6 +25,10 @@ COPY modules/crm/libs/golang /src/modules/crm/libs/golang
 RUN cd /src && go work use ./modules/crm/libs/golang
 RUN cd /src/modules/crm/libs/golang && go mod download
 
+COPY modules/erp/libs/golang /src/modules/erp/libs/golang
+RUN cd /src && go work use ./modules/erp/libs/golang
+RUN cd /src/modules/erp/libs/golang && go mod download
+
 # Setup workspace
 COPY modules/tools/services/rest/go.mod /src/modules/tools/services/rest/go.mod
 COPY modules/tools/services/rest/go.sum /src/modules/tools/services/rest/go.sum

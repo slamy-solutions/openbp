@@ -57,8 +57,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useModulesStore } from 'src/stores/modules-store';
 
 import LayoutChangePopUpComponet from './LayoutChangePopUpComponet.vue';
 import CurrentUserBadgeComponent from '../modules/me/CurrentUserBadgeComponent.vue';
@@ -73,41 +74,52 @@ interface ModuleInfo {
 
 const $router = useRouter()
 const $route = useRoute()
+const modulesStore = useModulesStore()
 
 const leftDrawerOpen = ref(false)
-const modules = [
-  {
-    name: 'layout.main.modules.accessControl.name',
-    description: 'layout.main.modules.accessControl.description',
-    routerPathName: 'accessControl_iam_identity_list',
-    icon: 'fingerprint',
-    activePrefix: 'accessControl'
-  },
-  {
-    name: 'layout.main.modules.iot.name',
-    description: 'layout.main.modules.iot.description',
-    routerPathName: 'iot_fleet_list',
-    icon: 'fa-solid fa-cubes',
-    activePrefix: 'iot'
-  },
-  {
-    name: 'layout.main.modules.crm.name',
-    description: 'layout.main.modules.crm.description',
-    routerPathName: 'crm_adminer_dashboard',
-    icon: 'support_agent',
-    activePrefix: 'crm'
-  }
-] as ModuleInfo[]
+const modules = computed(() => {
+  const base = [
+    {
+      name: 'layout.main.modules.accessControl.name',
+      description: 'layout.main.modules.accessControl.description',
+      routerPathName: 'accessControl_iam_identity_list',
+      icon: 'fingerprint',
+      activePrefix: 'accessControl'
+    }
+  ] as ModuleInfo[]
 
-if ($route.params.currentNamespace === '_global') {
-  modules.unshift({
-    name: 'layout.main.modules.namespace.name',
-    description: 'layout.main.modules.namespace.description',
-    routerPathName: 'namespaceList',
-    icon: 'grid_view',
-    activePrefix: 'namespace'
-  })
-}
+  if (modulesStore.iot) {
+    base.push({
+      name: 'layout.main.modules.iot.name',
+      description: 'layout.main.modules.iot.description',
+      routerPathName: 'iot_fleet_list',
+      icon: 'fa-solid fa-cubes',
+      activePrefix: 'iot'
+    })
+  }
+
+  if (modulesStore.crm) {
+    base.push({
+      name: 'layout.main.modules.crm.name',
+      description: 'layout.main.modules.crm.description',
+      routerPathName: 'crm_adminer_dashboard',
+      icon: 'support_agent',
+      activePrefix: 'crm'
+    })
+  }
+
+  if ($route.params.currentNamespace === '_global') {
+    base.unshift({
+      name: 'layout.main.modules.namespace.name',
+      description: 'layout.main.modules.namespace.description',
+      routerPathName: 'namespaceList',
+      icon: 'grid_view',
+      activePrefix: 'namespace'
+    })
+  }
+
+  return base
+})
 
 function isModuleRouteActive(prefix: string) {
   return $route.name?.toString().startsWith(prefix) ?? false

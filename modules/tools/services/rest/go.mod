@@ -10,6 +10,8 @@ replace github.com/slamy-solutions/openbp/modules/runtime/libs/golang => ../../.
 
 replace github.com/slamy-solutions/openbp/modules/iot/libs/golang => ../../../iot/libs/golang
 
+replace github.com/slamy-solutions/openbp/modules/erp/libs/golang => ../../../erp/libs/golang
+
 require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang/protobuf v1.5.3

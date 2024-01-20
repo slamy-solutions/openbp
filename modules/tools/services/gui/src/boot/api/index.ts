@@ -5,6 +5,7 @@ import { AccessControlAPI } from './accessControl'
 import { IoTAPI } from './iot'
 import { MeAPI } from './me'
 import { CRMAPI } from './crm'
+import { ModulesAPI } from './modules'
 
 export interface API {
     login: LoginAPI,
@@ -14,6 +15,7 @@ export interface API {
     iot: IoTAPI
     me: MeAPI
     crm: CRMAPI
+    modules: ModulesAPI
 }
 
 export const api = {
@@ -24,6 +26,7 @@ export const api = {
     iot: new IoTAPI(),
     me: new MeAPI(),
     crm: new CRMAPI(),
+    modules: new ModulesAPI()
 } as API
 
 export default api 
