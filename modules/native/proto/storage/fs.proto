@@ -2,9 +2,9 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-package native_storage_fs;
+package fs;
 
-option go_package = "slamy/openBP/native/storage/fs;native_storage_fs_grpc";
+option go_package = "slamy/openBP/native/storage/fs;fs";
 
 message File {
     // Namespace where the file is stored

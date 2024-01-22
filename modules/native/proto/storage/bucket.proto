@@ -2,9 +2,9 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-package native_storage_bucket;
+package bucket;
 
-option go_package = "slamy/openBP/native/storage/bucket;native_storage_bucket_grpc";
+option go_package = "slamy/openBP/native/storage/bucket;bucket";
 
 /*
     Bucket is a place to store multiple files. It is a logical grouping of files.
