@@ -259,7 +259,7 @@
   watch([props],
     async () => {
       await loadStages();
-    }
+    }, { deep: true }
   );
   
   </script>

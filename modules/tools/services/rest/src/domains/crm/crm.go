@@ -55,4 +55,9 @@ func FillRouterGroup(logger *logrus.Entry, group *gin.RouterGroup, systemStub *s
 	group.DELETE("/kanban/stage", kanbanRouter.DeleteStage)
 	group.PATCH("/kanban/stage", kanbanRouter.UpdateStage)
 	group.PATCH("/kanban/stage/swapPriority", kanbanRouter.SwapStagesPriority)
+	group.GET("/kanban/tickets", kanbanRouter.GetTickets)
+	group.POST("/kanban/ticket", kanbanRouter.CreateTicket)
+	group.DELETE("/kanban/ticket", kanbanRouter.DeleteTicket)
+	group.PATCH("/kanban/ticket", kanbanRouter.UpdateTicketBasicInfo)
+	group.PATCH("/kanban/ticket/close", kanbanRouter.CloseTicket)
 }

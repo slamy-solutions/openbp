@@ -70,7 +70,7 @@ const routes: RouteRecordRaw[] = [
     path: '/crm',
     component: () => import('layouts/CRMLayout.vue'),
     children: [
-      { path: '', name: 'crm_home', component: () => import('../modules/crm/IndexPage.vue') }
+      { path: '', name: 'crm_home', component: () => import('../modules/crm/kanban/KanbanPage.vue') }
     ],
     beforeEnter: [bootstrapGuard, loginGuard]
   },

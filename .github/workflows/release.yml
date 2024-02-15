@@ -59,6 +59,14 @@ jobs:
       dockerfile: modules/native/services/iam/Dockerfile
       tags: openbp/obp-native-iam:latest,openbp/obp-native-iam:${{ needs.setup.outputs.tag }}
     secrets: inherit
+  publish-native-storage:
+    needs: [tests,setup]
+    name: Publish native_storage docker image
+    uses: ./.github/workflows/publish-service.yml
+    with:
+      dockerfile: modules/native/services/storage/Dockerfile
+      tags: openbp/obp-native-storage:latest,openbp/obp-native-storage:${{ needs.setup.outputs.tag }}
+    secrets: inherit
 
   # Tools
   publish-tools-rest:
@@ -94,7 +102,7 @@ jobs:
       - publish-native-namespace
       - publish-native-keyvaluestorage
       - publish-native-iam
-      - publish-native-actor-user
+      - publish-native-storage
       - publish-tools-rest
       - publish-tools-gui
       - publish-crm-core

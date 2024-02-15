@@ -17,7 +17,7 @@ import (
 
 type ticketStage struct {
 	ID             string `json:"id,omitempty"`
-	IDX            string `json:"idx"`
+	IDX            int64  `json:"idx"`
 	Name           string `json:"name"`
 	DepartmentUUID string `json:"departmentId"`
 }
@@ -277,7 +277,7 @@ func (r *kanbanRepository) CreateStage(ctx context.Context, name string, departm
 	arrangementIndex := time.Now().UnixMilli()
 
 	columnCreateRequest := ticketStage{
-		IDX:            fmt.Sprintf("%d", arrangementIndex),
+		IDX:            arrangementIndex,
 		Name:           name,
 		DepartmentUUID: departmentUUID,
 	}
@@ -333,15 +333,10 @@ func (r *kanbanRepository) GetStage(ctx context.Context, uuid string, useCache b
 	}
 
 	for _, stage := range *response {
-		arrangementIndex, err := strconv.ParseInt(stage.IDX, 10, 64)
-		if err != nil {
-			return nil, errors.Join(errors.New("failed to parse arrangement index"), err)
-		}
-
 		if stage.ID == uuid {
 			return &models.TicketStage{
 				Namespace:        r.namespace,
-				ArrangementIndex: int64(arrangementIndex),
+				ArrangementIndex: stage.IDX,
 				UUID:             stage.ID,
 				Name:             stage.Name,
 				DepartmentUUID:   stage.DepartmentUUID,
@@ -374,14 +369,9 @@ func (r *kanbanRepository) GetStages(ctx context.Context, departmentUUID string,
 
 	ticketStage := make([]models.TicketStage, len(*response))
 	for i, stage := range *response {
-		arrangementIndex, err := strconv.ParseInt(stage.IDX, 10, 64)
-		if err != nil {
-			return nil, errors.Join(errors.New("failed to parse arrangement index"), err)
-		}
-
 		ticketStage[i] = models.TicketStage{
 			Namespace:        r.namespace,
-			ArrangementIndex: arrangementIndex,
+			ArrangementIndex: stage.IDX,
 			UUID:             stage.ID,
 			Name:             stage.Name,
 			DepartmentUUID:   stage.DepartmentUUID,

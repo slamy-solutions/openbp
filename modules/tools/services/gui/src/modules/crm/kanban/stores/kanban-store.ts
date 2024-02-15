@@ -1,7 +1,9 @@
 import { AxiosResponse } from 'axios';
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
-import { useUserStore } from './user-store';
+
+import { Ticket, CreateTicketRequest, UpdateTicketBasicInfoRequest } from 'src/boot/api/crm/kanban'
+
 // import { formatDate, formatDateWithTime } from 'src/boot/axios';
 import { 
     
@@ -19,9 +21,9 @@ export interface ITasksFilter {
   type?: 'work' | 'plan';
 }
 
-export const useKanbanStore = defineStore('kanban', {
+export const useKanbanStore = defineStore('crm_kanban', {
   state: () => ({
-    kanban: [] as ITask[],
+    kanban: [] as Ticket[],
     entitiesFilter: {} as ITasksFilter,
     typesKanban: [
       { id: 'work', name: 'В роботі' },
@@ -33,18 +35,18 @@ export const useKanbanStore = defineStore('kanban', {
   }),
 
   getters: {
-    getColumnById: (state) => (columnId: number) => {
-      let kanban = state.kanban.filter((task) => task.columnId === columnId);
+    getColumnById: (state) => (columnId: string) => {
+      let kanban = state.kanban.filter((task) => task.ticketStageUUID === columnId);
       const filters = state.entitiesFilter;
       if (filters.clientId)
-        kanban = kanban.filter((task) => task.client.id === filters.clientId);
+        kanban = kanban.filter((task) => task.clientUUID === filters.clientId);
       if (filters.performerId)
         kanban = kanban.filter(
-          (task) => task.performer.id === filters.performerId
+          (task) => task.performerUUID === filters.performerId
         );
       if (filters.departmentId)
         kanban = kanban.filter(
-          (task) => task.department.id === filters.departmentId
+          (task) => task.departmentUUID === filters.departmentId
         );
       if (filters.isDayTask)
         kanban = kanban.filter((task) => task.isDayTask === filters.isDayTask);
@@ -79,7 +81,7 @@ export const useKanbanStore = defineStore('kanban', {
     },
 
     getTaskById: (state) => (id: string) => {
-      const task = state.kanban.find((task) => task.id === id);
+      const task = state.kanban.find((task) => task.UUID === id);
       if (!task) return undefined;
       return task;
 
@@ -94,14 +96,14 @@ export const useKanbanStore = defineStore('kanban', {
       let kanban = state.kanban;
       const filters = state.entitiesFilter;
       if (filters.clientId)
-        kanban = kanban.filter((task) => task.client.id === filters.clientId);
+        kanban = kanban.filter((task) => task.clientUUID === filters.clientId);
       if (filters.performerId)
         kanban = kanban.filter(
-          (task) => task.performer.id === filters.performerId
+          (task) => task.performerUUID === filters.performerId
         );
       if (filters.departmentId)
         kanban = kanban.filter(
-          (task) => task.department.id === filters.departmentId
+          (task) => task.departmentUUID === filters.departmentId
         );
       if (filters.isDayTask)
         kanban = kanban.filter((task) => task.isDayTask === filters.isDayTask);
@@ -143,11 +145,11 @@ export const useKanbanStore = defineStore('kanban', {
       const filters = state.entitiesFilter;
       if (filters.performerId)
         kanban = kanban.filter(
-          (task) => task.performer.id === filters.performerId
+          (task) => task.performerUUID === filters.performerId
         );
       if (filters.departmentId)
         kanban = kanban.filter(
-          (task) => task.department.id === filters.departmentId
+          (task) => task.departmentUUID === filters.departmentId
         );
       if (filters.isDayTask)
         kanban = kanban.filter((task) => task.isDayTask === filters.isDayTask);
@@ -156,8 +158,8 @@ export const useKanbanStore = defineStore('kanban', {
           (task) => task.isStartTiming === filters.isStartTiming
         );
       const clients = kanban.map((task) => ({
-        id: task.client.id,
-        name: task.client.name,
+        id: task.clientUUID,
+        name: task.client?.name || '~~~CLIENT DELETED~~~',
       }));
       const clientsToReturn = [] as { id: string; name: string }[];
       clients.forEach(({ id, name }) => {
@@ -173,51 +175,31 @@ export const useKanbanStore = defineStore('kanban', {
   },
 
   actions: {
-    async getKanban() {
-      const res: AxiosResponse<ITask[]> = await api.get(
-        `/kanban/${useUserStore().token}`,
-        {
-          params: {
-            type: this.entitiesFilter.type,
-            departmentId: this.entitiesFilter.departmentId,
-          },
-        }
-      );
-      this.kanban = this.kanban
-        .filter(
-          (storeTask) => !res.data.some((task) => storeTask.id === task.id)
-        )
-        .concat(res.data);
+    async getKanban(namespace: string) {
+      const res = await api.crm.kanban.getTickets({ namespace, departmentUUID: this.entitiesFilter.departmentId })
+      this.kanban = res.tickets
     },
 
-    async createTask(task: ITask) {
-      const res: AxiosResponse<ITask> = await api.post(
-        '/kanban/' + useUserStore().token,
-        { task, typeKanban: this.entitiesFilter.type }
-      );
-      this.kanban.push(res.data);
+    async createTask(task: CreateTicketRequest) {
+      const res = await api.crm.kanban.createTicket(task)
+      this.kanban.push(res.ticket)
     },
 
-    async deleteTask(id: string) {
-      await api.delete('/kanban/' + useUserStore().token, { data: id });
-      await Router.push({ query: { id: undefined } });
-      this.kanban = this.kanban.filter((task) => task.id !== id);
+    async deleteTask(namespace: string, uuid: string) {
+      await api.crm.kanban.deleteTicket({ namespace, uuid })
+      this.kanban = this.kanban.filter((task) => task.UUID !== uuid);
     },
 
-    async closeTask(data: ITask) {
-      await api.patch('/kanban/' + useUserStore().token, data);
-      await Router.push({ query: { id: undefined } });
-      this.kanban = this.kanban.filter((task) => task.id !== data.id);
+    async closeTask(namespace: string, uuid: string) {
+      await api.crm.kanban.closeTicket({ namespace, uuid })
+      this.kanban = this.kanban.filter((task) => task.UUID !== uuid);
     },
 
-    async updateTask(data: unknown) {
-      const res: AxiosResponse<ITask> = await api.post(
-        '/kanban/' + useUserStore().token,
-        { task: data, typeKanban: this.entitiesFilter.type }
-      );
-      const task = this.kanban.find((task) => task.id === res.data.id);
-      if (task) Object.assign(task, res.data);
-      else this.kanban.push(res.data);
+    async updateTask(data: UpdateTicketBasicInfoRequest) {
+      const res = await api.crm.kanban.updateTicketBasicInfo(data)
+      const task = this.kanban.find((task) => task.UUID === res.ticket.UUID);
+      if (task) Object.assign(task, res.ticket);
+      else this.kanban.push(res.ticket);
     },
 
     addTaskFile(data: { id: string; sourceId: string; name: string }) {
