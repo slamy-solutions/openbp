@@ -31,7 +31,7 @@ jobs:
       - name: Run integration tests
         run: env $(cat ./modules/.test.env) go test -v 2>&1 ./modules/native/testing/integration/... ./modules/system/testing/integration/... | go-junit-report -set-exit-code > TestResults-integration.xml
       - name: Upload test summary
-        uses: test-summary/action@v1
+        uses: test-summary/action@v2
         with:
           paths: "TestResults-*.xml"
         if: always()
